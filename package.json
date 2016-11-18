@@ -1,0 +1,15 @@
+{
+  "name": "Newsgirl",
+  "version": "1.0.0",
+  "description": "RSS reader built with Angular 2",
+  "main": "index.js",
+  "repository": {
+    "url": "https://HristoKolev@github.com/HristoKolev/Newsgirl.git",
+    "type": "git"
+  },
+  "author": "Hristo Kolev",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^2.0.10"
+  }
+}

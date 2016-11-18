@@ -1,1 +1,1 @@
-# Newsgirl
+# Newsgirl is an RSS reader built with Angular 2
