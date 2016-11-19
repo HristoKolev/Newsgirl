@@ -37,7 +37,3 @@ jspm_packages
 
 # WebStorm project folder
 .idea
-
-# All javascript, map and css files
-**/*.js
-**/*.map
