@@ -10,10 +10,11 @@
   "author": "Hristo Kolev",
   "license": "MIT",
   "scripts": {
-    "start": "tsc && concurrently \"tsc -w\" \"lite-server\" ",
-    "lite": "lite-server",
-    "tsc": "tsc",
-    "tsc:w": "tsc -w"
+    "start": "npm run tsc && npm run dev-server",
+    "tsc": "npm-run tsc",
+    "dev-server": "npm-run concurrently \"npm run tsc:w\" \"npm run lite\"",
+    "tsc:w": "npm-run tsc -w",
+    "lite": "npm-run lite-server"
   },
   "dependencies": {
     "@angular/common": "~2.2.0",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@types/core-js": "^0.9.34",
+    "@types/jquery": "^2.0.34",
     "@types/node": "^6.0.45",
     "@types/systemjs": "^0.19.31",
     "concurrently": "^3.0.0",
