@@ -37,3 +37,13 @@ jspm_packages
 
 # WebStorm project folder
 .idea
+
+# Generated files
+**/app/**/*.js
+**/app/**/*.js.map
+
+# Temporary files
+.awcache/
+**/src/compiled/
+dist/
+dll/
