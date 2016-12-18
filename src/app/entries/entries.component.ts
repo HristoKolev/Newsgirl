@@ -1,4 +1,5 @@
-import {Component} from '@angular/core';
+import {Component, Input} from '@angular/core';
+import {Entry} from '../data-models';
 
 @Component({
     moduleId: module.id,
@@ -7,4 +8,7 @@ import {Component} from '@angular/core';
     styleUrls: ['entries.component.css']
 })
 export class EntriesComponent {
+
+    @Input()
+    public entries : Entry[];
 }

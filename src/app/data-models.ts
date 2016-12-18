@@ -1,16 +1,16 @@
-interface DataStore {
+export interface DataStore {
 
     folders : Folder[];
 }
 
-interface Folder {
+export interface Folder {
 
     feeds : Feed[];
 
     name : string;
 }
 
-interface Feed {
+export interface Feed {
 
     name : string;
 
@@ -27,7 +27,7 @@ interface Feed {
     lastUpdated : Date;
 }
 
-interface Entry {
+export interface Entry {
 
     title : string;
 
@@ -36,4 +36,4 @@ interface Entry {
     date : Date;
 }
 
-type FilterType = 'none' | 'contains' | 'regexp';
+export type FilterType = 'none' | 'contains' | 'regexp';
