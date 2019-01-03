@@ -1,0 +1,72 @@
+version: '3.7'
+
+networks:
+  br0:
+
+volumes:
+  backend-src:
+    driver_opts:
+      type: none
+      device: ${backend_src}
+      o: bind
+  frontend-src:
+    driver_opts:
+      type: none
+      device: ${frontend_src}
+      o: bind
+  db-data:
+  data:
+
+services:
+  db:
+    image: postgres:11
+    restart: unless-stopped
+    networks:
+      br0:
+        aliases:
+          - db
+    ports:
+      - "4401:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${db_username}
+      - POSTGRES_PASSWORD=${db_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${db_username}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  cron:
+    build: ./cron
+    restart: unless-stopped
+    networks:
+      - br0
+    depends_on:
+      - backend
+    volumes:
+      - backend-src:/app
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    volumes:
+      - backend-src:/app
+      - data:/data
+    networks:
+      br0:
+        aliases:
+          - backend
+    depends_on:
+      - db
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    volumes:
+      - frontend-src:/app
+    networks:
+      - br0
+    working_dir: /app
+    depends_on:
+      - backend
+    ports:
+      - "4400:80"

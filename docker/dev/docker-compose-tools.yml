@@ -1,0 +1,19 @@
+version: '3.7'
+
+volumes:
+   frontend-src:
+    driver_opts:
+      type: none
+      device: ${frontend_src}
+      o: bind
+
+services: 
+  restore-frontend:
+    build: ./restore
+    volumes:
+      - frontend-src:/app
+    working_dir: /app
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "rm -rf node_modules && npm i"
