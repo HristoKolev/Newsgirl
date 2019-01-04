@@ -1,0 +1,59 @@
+@import "../../../global/variables";
+
+.error-container__message {
+  color: white;
+  padding: .5rem;
+
+  &:not(:last-of-type) {
+    border-bottom: 1px solid white;
+  }
+}
+
+.error-messages-modal {
+
+  &__close-button {
+    margin-top: 1rem;
+    margin-right: auto;
+    margin-left: auto;
+    margin-bottom: 0;
+  }
+}
+
+.error-modal {
+
+  &__panel {
+
+    margin-top: 1rem;
+
+    div {
+      padding: .5rem;
+      border: 1px solid #686868;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #686868;
+    }
+
+    pre {
+      border: 1px #686868;
+
+      border-right-style: solid;
+      border-bottom-style: solid;
+      border-left-style: solid;
+
+      overflow: scroll;
+      padding: .5rem;
+
+      color: white;
+      background-color: #f44336;
+    }
+  }
+
+  .btn {
+    width: 100%;
+
+    &:last-child {
+      margin-top: 1rem;
+    }
+  }
+}

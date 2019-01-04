@@ -1,0 +1,32 @@
+/* Responsive screen breaks. */
+
+$break-phone: 480px;
+$break-tablet: 1000px;
+
+@mixin respond($media) {
+  @if $media == phone {
+    @media only screen and (max-width: $break-phone - 1) {
+      @content;
+    }
+  } @else if $media == tablet {
+    @media only screen and (min-width: $break-phone) and (max-width: $break-tablet - 1) {
+      @content;
+    }
+  } @else if $media == mobile {
+    @media only screen and (max-width: $break-tablet - 1) {
+      @content;
+    }
+  } @else if $media == wide {
+    @media only screen and (min-width: $break-tablet) {
+      @content;
+    }
+  } @else if $media == not-phone {
+    @media only screen and (min-width: $break-phone) {
+      @content;
+    }
+  }
+}
+
+$primary-color: #ff4300;
+$primary-inverse-color: #eee;
+$header-height: 3rem;

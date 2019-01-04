@@ -1,0 +1,23 @@
+@import "../../variables";
+
+.editor-field {
+  padding: 1.2rem 0;
+
+  label {
+    width: 100%;
+  }
+
+  &__label {
+    font-size: .8rem;
+    width: 100%;
+    background-color: $primary-color;
+    padding: .2rem;
+    color: $primary-inverse-color;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  .ace_gutter, .ace_scroller {
+    z-index: 0;
+  }
+}

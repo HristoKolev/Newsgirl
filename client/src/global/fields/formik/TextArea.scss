@@ -1,0 +1,39 @@
+@import "../../variables";
+
+$inputPadding: 2rem;
+
+.textarea-field {
+  display: block;
+  padding: 1.2rem 0;
+
+  position: relative;
+
+  label {
+    width: 100%;
+  }
+
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    font-size: 1rem;
+    padding: .7rem;
+    background-color: #fff;
+    border: 1px solid #97d5ff;
+    outline-color: $primary-color;
+    min-height: 10rem;
+  }
+
+  div {
+    font-size: .8rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: $primary-color;
+    padding: .2rem;
+    color: $primary-inverse-color;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+}

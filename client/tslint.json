@@ -1,0 +1,70 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended"
+  ],
+  "jsRules": {},
+  "rules": {
+    "indent": [true, "spaces", 2],
+    "quotemark": {
+      "options": [
+        "single",
+        "jsx-double"
+      ]
+    },
+    "ordered-imports": {
+      "options": {
+        "import-sources-order": "any",
+        "named-imports-order": "any"
+      }
+    },
+    "object-literal-sort-keys": false,
+    "interface-name": {
+      "options": [
+        "never-prefix"
+      ]
+    },
+    "no-empty-interface": false,
+    "variable-name": {
+      "options": [
+        "ban-keywords",
+        "check-format",
+        "allow-pascal-case",
+        "allow-leading-underscore",
+        "allow-snake-case"
+      ]
+    },
+    "callable-types": false,
+    "no-console": false,
+    "object-literal-key-quotes": {
+      "options": [
+        "as-needed"
+      ]
+    },
+    "member-access": false,
+    "semicolon": {
+      "options": [
+        "always",
+        "ignore-bound-class-methods"
+      ]
+    },
+    "member-ordering": false,
+    "array-type": {
+      "options": [
+        "array"
+      ]
+    },
+    "space-before-function-paren": {
+      "options": {
+        "anonymous": "always",
+        "asyncArrow": "always",
+        "constructor": "never",
+        "method": "never",
+        "named": "never"
+      }
+    },
+    "no-bitwise": false,
+    "no-empty": false
+  },
+  "rulesDirectory": []
+}
