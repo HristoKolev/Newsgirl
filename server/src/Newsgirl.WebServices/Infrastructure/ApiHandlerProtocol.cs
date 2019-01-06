@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newsgirl.WebServices.Infrastructure.Data;
+using Newtonsoft.Json.Linq;
 
 namespace Newsgirl.WebServices.Infrastructure
 {
@@ -23,33 +24,35 @@ namespace Newsgirl.WebServices.Infrastructure
         };
 
         public static async Task<ApiResult> ProcessRequest(
-            ApiRequest request,
+            string requestBody,
             HandlerCollection handlers,
             IServiceProvider serviceProvider)
         {
-            if (request == null)
+            if (string.IsNullOrWhiteSpace(requestBody))
             {
                 return ApiResult.FromErrorMessage("The request body is empty.");
             }
-
-            if (string.IsNullOrWhiteSpace(request.Type))
-            {
-                return ApiResult.FromErrorMessage("The request type is empty.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Payload))
-            {
-                return ApiResult.FromErrorMessage("The request payload is empty.");
-            }
+            
+            var jsonRequest = JObject.Parse(requestBody);
+            string requestType = jsonRequest.GetValue("type").ToString();
 
             try
             {
-                var handler = handlers.GetHandler(request.Type);
-
+                if (string.IsNullOrWhiteSpace(requestType))
+                {
+                    return ApiResult.FromErrorMessage("The request type is empty.");
+                }
+                
+                var handler = handlers.GetHandler(requestType);
+                
                 if (handler == null)
                 {
-                    return ApiResult.FromErrorMessage($"No handler found for request type `{request.Type}`.");
+                    return ApiResult.FromErrorMessage($"No handler found for request type `{requestType}`.");
                 }
+                
+                string requestPayloadJson = jsonRequest.GetValue("payload").ToString();
+                
+                var requestPayload = JsonConvert.DeserializeObject(requestPayloadJson, handler.RequestType, SerializerSettings);
 
                 var context = serviceProvider.GetService<IHttpContextAccessor>().HttpContext;
 
@@ -57,14 +60,12 @@ namespace Newsgirl.WebServices.Infrastructure
 
                 if (handler.RequireAuthentication && !session.IsAuthenticated)
                 {
-                    return ApiResult.FromErrorMessage($"Access denied for request type `{request.Type}`.");
+                    return ApiResult.FromErrorMessage($"Access denied for request type `{requestType}`.");
                 }
 
                 var handlerInstance = serviceProvider.GetService(handler.Method.DeclaringType);
 
-                var requestModel = JsonConvert.DeserializeObject(request.Payload, handler.RequestType, SerializerSettings);
-
-                var (isValid, validationErrorMessages) = DataValidator.Validate(requestModel);
+                var (isValid, validationErrorMessages) = DataValidator.Validate(requestPayload);
 
                 if (!isValid)
                 {                              
@@ -76,14 +77,9 @@ namespace Newsgirl.WebServices.Infrastructure
                         {
                             if (info.ParameterType == handler.RequestType)
                             {
-                                return requestModel;
+                                return requestPayload;
                             }
-
-                            if (info.ParameterType == typeof(ApiRequest))
-                            {
-                                return request;
-                            }
-
+                            
                             if (info.ParameterType == typeof(RequestSession))
                             {
                                 return session;
@@ -145,7 +141,7 @@ namespace Newsgirl.WebServices.Infrastructure
                 }
                 else
                 {
-                    message = $"An error occurred while executing request with type `{request.Type}`.";
+                    message = $"An error occurred while executing request with type `{requestType}`.";
                 }
                 #pragma warning restore 162
 
@@ -406,7 +402,7 @@ namespace Newsgirl.WebServices.Infrastructure
 
     public class ApiRequest
     {
-        public string Payload { get; set; }
+        public object Payload { get; set; }
 
         public string Type { get; set; }
     }

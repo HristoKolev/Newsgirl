@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 set -exu
 
-cd /app/src/Newsgirl.Invoke
+cd /app/src/Newsgirl.ApiInvoke
 
 dotnet run "$@"

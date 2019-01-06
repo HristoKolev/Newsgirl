@@ -23,7 +23,7 @@ FROM microsoft/dotnet:2.2-sdk-alpine
 
 COPY ./backend-src /workspace
 
-WORKDIR /workspace/src/Newsgirl.Invoke
+WORKDIR /workspace/src/Newsgirl.ApiInvoke
 
 RUN dotnet restore
 RUN dotnet publish -c Release -r alpine-x64 -o /build

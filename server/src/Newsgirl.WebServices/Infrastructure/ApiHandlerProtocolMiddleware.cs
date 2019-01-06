@@ -32,10 +32,8 @@ namespace Newsgirl.WebServices.Infrastructure
                 body = await streamReader.ReadToEndAsync();
             }
 
-            var message = JsonConvert.DeserializeObject<ApiRequest>(body, ApiHandlerProtocol.SerializerSettings);
-
             var result = await ApiHandlerProtocol.ProcessRequest(
-                message,
+                body,
                 Global.Handlers,
                 serviceProvider
             );

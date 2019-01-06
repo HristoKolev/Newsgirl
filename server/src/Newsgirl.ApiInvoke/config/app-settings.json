@@ -1,0 +1,4 @@
+﻿{
+  "ApiUrl": "http://backend:5000/api/endpoint",
+  "SentryDsn": "http://3ab140a9462c4a48a81bddf067199f61@home-sentry.lan/7"
+}

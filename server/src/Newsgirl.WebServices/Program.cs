@@ -1,31 +1,28 @@
-﻿namespace Newsgirl.WebServices
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Newsgirl.WebServices.Infrastructure;
+using Newtonsoft.Json;
+using Npgsql;
+using StructureMap;
+
+namespace Newsgirl.WebServices
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Net;
-    using System.Reflection;
-    using System.Threading.Tasks;
-
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.Server.Kestrel.Core;
-
-    using Newtonsoft.Json;
-
-    using Npgsql;
-
-    using Newsgirl.WebServices.Infrastructure;
-    using StructureMap;
-
     public class Program
     {
         public static async Task<int> Main(string[] args)
         {
-            Global.AppConfig = JsonConvert.DeserializeObject<AppConfig>(File.ReadAllText(Path.Join(Global.DataDirectory, "appsettings.json")));
+            Global.AppConfig =
+                JsonConvert.DeserializeObject<AppConfig>(
+                    File.ReadAllText(Path.Join(Global.DataDirectory, "appsettings.json")));
             Global.AppConfig.ConnectionString = CreateConnectionString(Global.AppConfig.ConnectionString);
 
             MainLogger.Initialize(Assembly.GetExecutingAssembly());
-            
+
             Global.Handlers = ApiHandlerProtocol.ScanForHandlers(Assembly.GetExecutingAssembly());
 
             using (var container = new Container(x => x.AddRegistry<MainRegistry>()))
@@ -33,7 +30,7 @@
                 var settingsService = container.GetInstance<SystemSettingsService>();
                 Global.Settings = await settingsService.ReadSettings<SystemSettings>();
             }
- 
+
             return await RunWebServer();
         }
 
@@ -41,7 +38,7 @@
         {
             var builder = new NpgsqlConnectionStringBuilder(connectionString)
             {
-                Enlist = false,
+                Enlist = false
             };
 
             return builder.ToString();
