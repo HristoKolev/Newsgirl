@@ -34,7 +34,8 @@ namespace Newsgirl.WebServices.Infrastructure
             }
             
             var jsonRequest = JObject.Parse(requestBody);
-            string requestType = jsonRequest.GetValue("type").ToString();
+      
+            string requestType = jsonRequest.GetValue("type", StringComparison.InvariantCultureIgnoreCase).ToString();
 
             try
             {
@@ -50,7 +51,7 @@ namespace Newsgirl.WebServices.Infrastructure
                     return ApiResult.FromErrorMessage($"No handler found for request type `{requestType}`.");
                 }
                 
-                string requestPayloadJson = jsonRequest.GetValue("payload").ToString();
+                string requestPayloadJson = jsonRequest.GetValue("payload", StringComparison.InvariantCultureIgnoreCase).ToString();
                 
                 var requestPayload = JsonConvert.DeserializeObject(requestPayloadJson, handler.RequestType, SerializerSettings);
 

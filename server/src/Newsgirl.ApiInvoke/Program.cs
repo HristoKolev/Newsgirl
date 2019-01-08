@@ -45,6 +45,7 @@ namespace Newsgirl.ApiInvoke
                 Console.WriteLine(JsonConvert.SerializeObject(response, Formatting.Indented));
 
                 if (!response.Success)
+                {
                     throw new DetailedLogException("A request failed.")
                     {
                         Context =
@@ -53,6 +54,7 @@ namespace Newsgirl.ApiInvoke
                             {"response-json", response}
                         }
                     };
+                }
             }
             catch (Exception exception)
             {
@@ -63,19 +65,22 @@ namespace Newsgirl.ApiInvoke
             return 0;
         }
 
-        private static (string, string) ParseRequest(string[] args)
+        private static (string, object) ParseRequest(string[] args)
         {
             var type = args[0];
 
-            var arguments = args.Skip(1).Select(a => a.Split('=')).ToDictionary(pair => pair[0], pair => pair[1]);
+            var arguments = args.Skip(1)
+                                .Select(a => a.Split('='))
+                                .ToDictionary(pair => pair[0], pair => pair[1]);
 
             var obj = new JObject();
 
-            foreach (var pair in arguments) obj[pair.Key] = pair.Value;
-
-            var payload = JsonConvert.SerializeObject(obj, Formatting.Indented);
-
-            return (type, payload);
+            foreach (var pair in arguments)
+            {
+                obj[pair.Key] = pair.Value;
+            }
+            
+            return (type, obj);
         }
     }
 }

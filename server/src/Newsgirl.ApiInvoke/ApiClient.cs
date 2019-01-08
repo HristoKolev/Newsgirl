@@ -91,7 +91,7 @@ namespace Newsgirl.ApiInvoke
 
     public class ApiRequest
     {
-        public string Payload { get; set; }
+        public object Payload { get; set; }
 
         public string Type { get; set; }
     }
