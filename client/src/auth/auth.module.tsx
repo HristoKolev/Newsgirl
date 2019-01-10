@@ -1,6 +1,6 @@
 import React, { SFC } from 'react';
 import { Route } from 'react-router-dom';
-import SessionComponent from '../global/SessionComponent';
+import SessionComponent from '../infrastructure/components/SessionComponent';
 import { LoginComponent} from './LoginComponent';
 
 import { ContextInjectorProps } from '../infrastructure/context';

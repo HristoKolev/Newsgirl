@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import { CustomModal } from '../../../global/components/CustomModal';
+import { CustomModal } from '../../components/CustomModal';
 import { ReactRenderingError, ReducerErrorOptions, SagaError } from '../errors';
 
 import './ErrorComponents.scss';

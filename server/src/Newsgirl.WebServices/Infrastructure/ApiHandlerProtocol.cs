@@ -1,19 +1,24 @@
 ﻿namespace Newsgirl.WebServices.Infrastructure
 {
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.DependencyInjection;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
-    using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
     using System.Threading.Tasks;
-    using Newsgirl.WebServices.Infrastructure.Data;
+
+    using Auth;
+
+    using Data;
+
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
+
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using Newsgirl.WebServices.Auth;
-    
+    using Newtonsoft.Json.Serialization;
+
+    using Npgsql;
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ApiHandlerProtocol
     {
@@ -31,9 +36,9 @@
             {
                 return ApiResult.FromErrorMessage("The request body is empty.");
             }
-            
+
             var jsonRequest = JObject.Parse(requestBody);
-      
+
             string requestType = jsonRequest.GetValue("type", StringComparison.InvariantCultureIgnoreCase).ToString();
 
             try
@@ -42,17 +47,19 @@
                 {
                     return ApiResult.FromErrorMessage("The request type is empty.");
                 }
-                
+
                 var handler = handlers.GetHandler(requestType);
-                
+
                 if (handler == null)
                 {
                     return ApiResult.FromErrorMessage($"No handler found for request type `{requestType}`.");
                 }
-                
-                string requestPayloadJson = jsonRequest.GetValue("payload", StringComparison.InvariantCultureIgnoreCase).ToString();
-                
-                var requestPayload = JsonConvert.DeserializeObject(requestPayloadJson, handler.RequestType, SerializerSettings);
+
+                string requestPayloadJson =
+                    jsonRequest.GetValue("payload", StringComparison.InvariantCultureIgnoreCase).ToString();
+
+                var requestPayload =
+                    JsonConvert.DeserializeObject(requestPayloadJson, handler.RequestType, SerializerSettings);
 
                 var context = serviceProvider.GetService<IHttpContextAccessor>().HttpContext;
 
@@ -65,30 +72,31 @@
 
                 var handlerInstance = serviceProvider.GetService(handler.Method.DeclaringType);
 
-                var (isValid, validationErrorMessages) = DataValidator.Validate(requestPayload);
+                (bool isValid, var validationErrorMessages) = DataValidator.Validate(requestPayload);
 
                 if (!isValid)
-                {                              
+                {
                     return ApiResult.FromErrorMessages(validationErrorMessages);
                 }
 
                 var parameters = handler.Method.GetParameters()
-                        .Select(info =>
-                        {
-                            if (info.ParameterType == handler.RequestType)
-                            {
-                                return requestPayload;
-                            }
-                            
-                            if (info.ParameterType == typeof(RequestSession))
-                            {
-                                return session;
-                            }
+                                        .Select(info =>
+                                        {
+                                            if (info.ParameterType == handler.RequestType)
+                                            {
+                                                return requestPayload;
+                                            }
 
-                            throw new NotSupportedException(
-                                string.Format("Parameters don't match for handler method {0}.{1}",
-                                              handler.Method.DeclaringType.Name, handler.Method.Name));
-                        }).ToArray();
+                                            if (info.ParameterType == typeof(RequestSession))
+                                            {
+                                                return session;
+                                            }
+
+                                            throw new NotSupportedException(
+                                                string.Format("Parameters don't match for handler method {0}.{1}",
+                                                              handler.Method.DeclaringType.Name,
+                                                              handler.Method.Name));
+                                        }).ToArray();
 
                 if (handler.ExecuteInTransaction)
                 {
@@ -134,6 +142,7 @@
                 string message;
 
                 #pragma warning disable 162
+
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (Global.Debug)
                 {
@@ -148,15 +157,20 @@
                 return ApiResult.FromErrorMessage(message);
             }
         }
-        
+
 
         public static HandlerCollection ScanForHandlers(params Assembly[] assemblies)
         {
             var methods = assemblies.SelectMany(assembly => assembly.GetTypes())
                                     .SelectMany(type =>
-                                                    type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static |
-                                                                    BindingFlags.NonPublic))
-                                    .Where(info => info.GetCustomAttribute<BindRequestAttribute>() != null);
+                                                    type.GetMethods(
+                                                        BindingFlags.Instance |
+                                                        BindingFlags.Public |
+                                                        BindingFlags.Static |
+                                                        BindingFlags.NonPublic))
+                                    .Where(info =>
+                                               info.GetCustomAttribute<BindRequestAttribute>() !=
+                                               null);
 
             var handlerMap = new Dictionary<Type, MethodInfo>();
 
@@ -211,10 +225,12 @@
                         "Handler binding conflict. 2 request types are bound to the same handler method." +
 
                         // ReSharper disable once PossibleNullReferenceException
-                        string.Format("{0} => {1}.{2}", requestType.Name, existingMethodInfo.DeclaringType.Name, existingMethodInfo.Name) +
+                        string.Format("{0} => {1}.{2}", requestType.Name, existingMethodInfo.DeclaringType.Name,
+                                      existingMethodInfo.Name) +
 
                         // ReSharper disable once PossibleNullReferenceException
-                        string.Format("{0} => {1}.{2}", requestType.Name, methodInfo.DeclaringType.Name, methodInfo.Name));
+                        string.Format("{0} => {1}.{2}", requestType.Name, methodInfo.DeclaringType.Name,
+                                      methodInfo.Name));
                 }
 
                 var returnType = methodInfo.ReturnType;
@@ -249,13 +265,14 @@
             return new HandlerCollection(handlers);
         }
 
-        private static async Task<ApiResult> ExecuteHandlerMethod(MethodInfo methodInfo, object handlerInstance, object[] parameters)
+        private static async Task<ApiResult> ExecuteHandlerMethod(MethodInfo methodInfo, object handlerInstance,
+                                                                  object[] parameters)
         {
             if (typeof(Task).IsAssignableFrom(methodInfo.ReturnType))
             {
                 if (methodInfo.ReturnType == typeof(Task))
                 {
-                    await ((Task) methodInfo.Invoke(handlerInstance, parameters));
+                    await (Task) methodInfo.Invoke(handlerInstance, parameters);
 
                     return ApiResult.SuccessfulResult();
                 }
@@ -386,7 +403,7 @@
             return new ApiResult
             {
                 Success = false,
-                ErrorMessages = new []{message}
+                ErrorMessages = new[] {message}
             };
         }
 

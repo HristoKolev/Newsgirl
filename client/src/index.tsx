@@ -12,18 +12,18 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'mdbreact/dist/css/mdb.css';
 import 'react-toastify/dist/ReactToastify.css';
 
-import './global/styles.scss';
+import './infrastructure/styles.scss';
 
 import { apiClient } from './infrastructure/api-client';
 import { createContextObjectFactory } from './infrastructure/context';
 import { configureStore } from './infrastructure/store';
 import ErrorGuardComponent from './infrastructure/errors/components/ErrorGuardComponent';
-import { routerActionCreators, toastActionCreators, toastSagas } from './global/global.state';
+import { routerActionCreators, toastActionCreators, toastSagas } from './infrastructure/global.state';
 import { errorsActionCreators, errorsReducer, errorsSagas } from './infrastructure/errors/errors.state';
-import { sessionActionCreators, sessionReducer } from './global/session.state';
-import { settingsReducer } from './global/settings.state';
+import { sessionActionCreators, sessionReducer } from './infrastructure/session.state';
+import { settingsReducer } from './infrastructure/settings.state';
 
-import { App } from './global/layout/App';
+import { App } from './infrastructure/layout/App';
 
 import { AuthRoutes } from './auth/auth.module';
 import { freezeMiddleware } from './infrastructure/freeze-middleware';

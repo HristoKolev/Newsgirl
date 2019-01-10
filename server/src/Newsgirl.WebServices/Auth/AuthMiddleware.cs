@@ -3,11 +3,11 @@
     using System;
     using System.Threading.Tasks;
 
+    using Infrastructure;
+    using Infrastructure.Data;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Http;
-
-    using Newsgirl.WebServices.Infrastructure;
-    using Newsgirl.WebServices.Infrastructure.Data;
 
     public class AuthMiddleware
     {
@@ -57,15 +57,17 @@
             catch (Exception exception)
             {
                 logger.LogError(exception);
+
                 return null;
             }
         }
 
-        public async Task InvokeAsync(HttpContext context, JwtService jwtService, AuthService authService, MainLogger logger)
+        public async Task InvokeAsync(HttpContext context, JwtService jwtService, AuthService authService,
+                                      MainLogger logger)
         {
             var requestSession = new RequestSession
             {
-                IsAuthenticated = false,
+                IsAuthenticated = false
             };
 
             context.SetRequestSession(requestSession);
@@ -76,6 +78,7 @@
             {
                 // Invalid authorization header
                 await this.next(context);
+
                 return;
             }
 
@@ -85,6 +88,7 @@
             {
                 // Invalid/Expired token.
                 await this.next(context);
+
                 return;
             }
 
@@ -94,6 +98,7 @@
             {
                 // No such session.
                 await this.next(context);
+
                 return;
             }
 
@@ -118,7 +123,7 @@
 
         public static RequestSession GetRequestSession(this HttpContext ctx)
         {
-            return (RequestSession)ctx.Items[RequestClientKey];
+            return (RequestSession) ctx.Items[RequestClientKey];
         }
 
         public static void SetRequestSession(this HttpContext ctx, RequestSession requestSession)

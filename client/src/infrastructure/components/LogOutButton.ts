@@ -1,8 +1,8 @@
 import { connect } from 'react-redux';
-import { wrapActions } from '../infrastructure/store';
-import { SessionActionCreators, sessionActionCreators } from './session.state';
+import { wrapActions } from '../store';
+import { SessionActionCreators, sessionActionCreators } from '../session.state';
 import { SFC } from 'react';
-import { RenderProps } from '../infrastructure/redux-types';
+import { RenderProps } from '../redux-types';
 
 interface RenderComponentProps {
   onClick: (e: any) => void;

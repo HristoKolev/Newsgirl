@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 
 import { Collapse, Navbar, NavbarBrand, NavbarNav, NavbarToggler, NavItem, NavLink } from 'mdbreact';
 
-import SessionComponent from '../SessionComponent';
-import LogOutButton from '../LogOutButton';
+import SessionComponent from '../components/SessionComponent';
+import LogOutButton from '../components/LogOutButton';
 
 interface State {
 }

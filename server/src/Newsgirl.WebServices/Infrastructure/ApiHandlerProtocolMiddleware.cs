@@ -3,10 +3,12 @@
     using System;
     using System.IO;
     using System.Threading.Tasks;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Http;
+
     using Newtonsoft.Json;
-    
+
     public class ApiHandlerProtocolMiddleware
     {
         private readonly RequestDelegate next;
@@ -21,6 +23,7 @@
             if (context.Request.Path != "/api/endpoint")
             {
                 await this.next(context);
+
                 return;
             }
 

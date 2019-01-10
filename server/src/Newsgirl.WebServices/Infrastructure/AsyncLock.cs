@@ -16,6 +16,7 @@
         public async Task<AsyncLockInstance> Lock()
         {
             await this.semaphore.WaitAsync();
+
             return new AsyncLockInstance(this.semaphore);
         }
     }

@@ -12,7 +12,7 @@
     public class CustomExceptionHandlerMiddleware
     {
         /// <summary>
-        /// This calls the internal ASP.NET mechanism for logging.
+        ///     This calls the internal ASP.NET mechanism for logging.
         /// </summary>
         private readonly ILogger<CustomExceptionHandlerMiddleware> logger;
 
@@ -33,7 +33,9 @@
             catch (Exception exception)
             {
                 await Global.Log.LogError(exception);
-                this.logger.LogError(exception, "An error occurred and was caught by the CustomExceptionHandlerMiddleware.");
+
+                this.logger.LogError(
+                    exception, "An error occurred and was caught by the CustomExceptionHandlerMiddleware.");
 
                 var result = ApiResult.FromErrorMessage("An error occurred on the server.");
 

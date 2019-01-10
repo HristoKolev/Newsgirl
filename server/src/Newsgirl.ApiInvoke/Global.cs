@@ -1,8 +1,8 @@
-﻿using System.IO;
-using System.Reflection;
-
-namespace Newsgirl.ApiInvoke
+﻿namespace Newsgirl.ApiInvoke
 {
+    using System.IO;
+    using System.Reflection;
+
     public static class Global
     {
         private const string AppConfigFileName = "app-settings.json";

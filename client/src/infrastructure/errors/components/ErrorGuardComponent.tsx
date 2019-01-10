@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ErrorBoundaryComponent } from './ErrorBoundaryComponent';
 import { ReactErrorComponent } from './ErrorComponents';
 import { wrapActions } from '../../store';
-import { routerActionCreators } from '../../../global/global.state';
+import { routerActionCreators } from '../../global.state';
 import { errorsActionCreators } from '../errors.state';
 import { logErrorEvent } from '../error-logger';
 

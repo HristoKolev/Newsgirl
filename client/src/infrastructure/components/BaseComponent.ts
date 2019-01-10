@@ -1,6 +1,6 @@
 import {Component} from 'react';
-import {ComponentUnmountedError, isComponentUnmountedError} from './errors/ComponentUnmountedError';
-import {logErrorEvent} from './errors/error-logger';
+import {ComponentUnmountedError, isComponentUnmountedError} from '../errors/ComponentUnmountedError';
+import {logErrorEvent} from '../errors/error-logger';
 
 export class BaseComponent<P = {}, S = {}> extends Component<P, S> {
   _isMounted: boolean = false;

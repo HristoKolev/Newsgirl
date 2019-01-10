@@ -4,9 +4,9 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using LinqToDB;
+    using Infrastructure.Data;
 
-    using Newsgirl.WebServices.Infrastructure.Data;
+    using LinqToDB;
 
     public class AuthService
     {
@@ -20,13 +20,14 @@
         public async Task<UserBM> GetUser(int sessionID)
         {
             var objects = await (from session in this.Db.Poco.UserSessions
-                                 join user in this.Db.Poco.Users on session.UserID equals user.UserID
-                                 where session.SessionID == sessionID
-                                 select new
-                                 {
-                                     user,
-                                     session
-                                 }).FirstOrDefaultAsync();
+                join user in this.Db.Poco.Users on session.UserID equals user.UserID
+                where session.SessionID == sessionID
+                select new
+                {
+                    user,
+                    session
+                }).FirstOrDefaultAsync();
+
             if (objects == null)
             {
                 return null;
@@ -40,7 +41,8 @@
 
         public async Task<UserBM> Login(string username, string password)
         {
-            var user = await this.Db.Poco.Users.Where(x => x.Username == username && x.Password == password).FirstOrDefaultAsync();
+            var user = await this.Db.Poco.Users.Where(x => x.Username == username && x.Password == password)
+                                 .FirstOrDefaultAsync();
 
             var bm = user?.ToBm();
 
@@ -52,7 +54,7 @@
             var session = new UserSessionPoco
             {
                 UserID = user.UserID,
-                LoginDate = DateTime.Now,
+                LoginDate = DateTime.Now
             };
 
             await this.Db.Insert(session);

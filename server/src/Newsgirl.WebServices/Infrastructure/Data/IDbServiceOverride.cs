@@ -1,8 +1,9 @@
 ﻿namespace Newsgirl.WebServices.Infrastructure.Data
 {
     using Npgsql;
+
     using PgNet;
-    
+
     public interface IDbService : IDbService<DbPocos>
     {
     }

@@ -13,9 +13,9 @@
 
     public class MainLogger
     {
-        public static readonly MainLogger Instance = new MainLogger();
-
         private const string LoggerFilePath = "log4net-config.xml";
+
+        public static readonly MainLogger Instance = new MainLogger();
 
         private static readonly object SyncLock = new object();
 

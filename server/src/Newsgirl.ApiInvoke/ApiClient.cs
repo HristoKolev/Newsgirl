@@ -1,13 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-
-namespace Newsgirl.ApiInvoke
+﻿namespace Newsgirl.ApiInvoke
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json;
+
     public class ApiClient
     {
         public ApiClient(AppConfig config)
@@ -29,7 +30,7 @@ namespace Newsgirl.ApiInvoke
             using (var requestStream = await request.GetRequestStreamAsync())
             using (var writer = new StreamWriter(requestStream, Encoding.UTF8))
             {
-                var requestJson = JsonConvert.SerializeObject(dto);
+                string requestJson = JsonConvert.SerializeObject(dto);
 
                 await writer.WriteAsync(requestJson);
             }
@@ -38,7 +39,7 @@ namespace Newsgirl.ApiInvoke
             using (var responseStream = response.GetResponseStream())
             using (var streamReader = new StreamReader(responseStream, Encoding.UTF8))
             {
-                var responseJson = await streamReader.ReadToEndAsync();
+                string responseJson = await streamReader.ReadToEndAsync();
 
                 return JsonConvert.DeserializeObject<ApiResult>(responseJson);
             }

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ReducerErrorOptions, SagaError } from '../errors';
 import { RenderProps } from '../../redux-types';
 import { errorsActionCreators, ErrorsActionCreators, ErrorsState } from '../errors.state';
-import { routerActionCreators, RouterActionCreators } from '../../../global/global.state';
+import { routerActionCreators, RouterActionCreators } from '../../global.state';
 import { select } from '../../store-helpers';
 import { wrapActions } from '../../store';
 

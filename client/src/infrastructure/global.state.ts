@@ -1,8 +1,8 @@
 import { Action, ActionCreatorsMapObject } from 'redux';
 import { LocationDescriptor, LocationState } from 'history';
 import { push } from 'react-router-redux';
-import { SagaMap } from '../infrastructure/redux-types';
-import { AppContext } from '../infrastructure/context';
+import { SagaMap } from './redux-types';
+import { AppContext } from './context';
 import { toast } from 'react-toastify';
 
 export interface RouterActionCreators extends ActionCreatorsMapObject {
@@ -49,7 +49,7 @@ export const toastSagas: SagaMap = {
   },
 };
 
-declare module '../infrastructure/redux-types' {
+declare module './redux-types' {
 
   interface AllActionCreators {
     toast: ToastActionCreators;

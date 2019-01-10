@@ -1,7 +1,7 @@
 import { Component, ErrorInfo } from 'react';
 import { isReducerError, ReactRenderingError } from '../errors';
 import { DefaultProps, RenderProps } from '../../redux-types';
-import { RouterActionCreators } from '../../../global/global.state';
+import { RouterActionCreators } from '../../global.state';
 import { ErrorsActionCreators } from '../errors.state';
 
 interface RenderComponentProps {

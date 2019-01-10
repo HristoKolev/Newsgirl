@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ChildrenProps } from '../../infrastructure/redux-types';
+import { ChildrenProps } from '../redux-types';
 
 import './LoadingSpinner.css';
 

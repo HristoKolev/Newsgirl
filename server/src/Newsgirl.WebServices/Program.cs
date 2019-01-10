@@ -5,13 +5,18 @@
     using System.Net;
     using System.Reflection;
     using System.Threading.Tasks;
+
+    using Infrastructure;
+
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Server.Kestrel.Core;
-    using Newsgirl.WebServices.Infrastructure;
+
     using Newtonsoft.Json;
+
     using Npgsql;
+
     using StructureMap;
-    
+
     public class Program
     {
         public static async Task<int> Main(string[] args)
@@ -19,6 +24,7 @@
             Global.AppConfig =
                 JsonConvert.DeserializeObject<AppConfig>(
                     File.ReadAllText(Path.Join(Global.DataDirectory, "appsettings.json")));
+
             Global.AppConfig.ConnectionString = CreateConnectionString(Global.AppConfig.ConnectionString);
 
             MainLogger.Initialize(Assembly.GetExecutingAssembly());
@@ -65,6 +71,7 @@
             catch (Exception ex)
             {
                 await Global.Log.LogError(ex);
+
                 return 1;
             }
 

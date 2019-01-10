@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using log4net;
-using log4net.Config;
-using SharpRaven;
-using SharpRaven.Data;
-
-namespace Newsgirl.ApiInvoke
+﻿namespace Newsgirl.ApiInvoke
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
+
+    using log4net;
+    using log4net.Config;
+
+    using SharpRaven;
+    using SharpRaven.Data;
+
     public class MainLogger
     {
-        public static readonly MainLogger Instance = new MainLogger();
-
         private const string LoggerFilePath = "log4net-config.xml";
+
+        public static readonly MainLogger Instance = new MainLogger();
 
         private static readonly object SyncLock = new object();
 
@@ -64,7 +66,8 @@ namespace Newsgirl.ApiInvoke
         {
             var list = GetExceptionChain(exception);
 
-            Log4NetLogger.Error($"Exception was handled. (ExceptionMessage: {exception.Message}, ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))})");
+            Log4NetLogger.Error(
+                $"Exception was handled. (ExceptionMessage: {exception.Message}, ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))})");
 
             var detailed = exception as DetailedLogException;
 

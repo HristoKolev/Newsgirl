@@ -1,9 +1,9 @@
 ﻿namespace Newsgirl.WebServices.Infrastructure
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
-    using System;
     using System.Reflection;
 
     public static class DataValidator
@@ -18,7 +18,8 @@
             {
                 var validResults = new List<ValidationResult>();
 
-                bool innerIsValid = Validator.TryValidateObject(instance, new ValidationContext(instance), validResults, true);
+                bool innerIsValid =
+                    Validator.TryValidateObject(instance, new ValidationContext(instance), validResults, true);
 
                 var innerErrorMessages = validResults.Select(v => v.ErrorMessage).ToArray();
 

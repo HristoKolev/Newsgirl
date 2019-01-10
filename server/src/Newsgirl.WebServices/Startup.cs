@@ -1,13 +1,17 @@
 namespace Newsgirl.WebServices
 {
-    using Newsgirl.WebServices.Auth;
     using System;
     using System.Threading.Tasks;
+
+    using Auth;
+
+    using Infrastructure;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
-    using Newsgirl.WebServices.Infrastructure;
+
     using StructureMap;
 
     public class Startup
@@ -35,6 +39,7 @@ namespace Newsgirl.WebServices
             app.Run(ctx =>
             {
                 ctx.Response.StatusCode = 404;
+
                 return Task.CompletedTask;
             });
         }

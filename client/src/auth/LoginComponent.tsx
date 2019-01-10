@@ -1,15 +1,15 @@
 import React from 'react';
-import LoadingSpinner from '../global/components/LoadingSpinner';
+import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 
 import './LoginComponent.scss';
 import {ErrorMessagesContainer} from '../infrastructure/errors/components/ErrorComponents';
-import {fields} from '../global/fields/formik/fields';
+import {fields} from '../infrastructure/fields/fields';
 import {Button, Card, CardBody} from 'mdbreact';
-import {LoginRequest, LoginResponse} from '../global/auth-dto';
+import {LoginRequest, LoginResponse} from '../infrastructure/auth-dto';
 import {AppContext} from '../infrastructure/context';
 import {Field, Form, Formik} from 'formik';
 import {RouteComponentProps} from 'react-router';
-import {BaseComponent} from '../infrastructure/BaseComponent';
+import {BaseComponent} from '../infrastructure/components/BaseComponent';
 
 interface Props extends RouteComponentProps<{}> {
   context: AppContext;

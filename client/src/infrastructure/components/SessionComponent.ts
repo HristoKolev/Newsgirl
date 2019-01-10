@@ -1,8 +1,8 @@
 import { connect } from 'react-redux';
 import { SFC } from 'react';
-import { select } from '../infrastructure/store-helpers';
-import { SessionState } from './session.state';
-import { ChildrenProps } from '../infrastructure/redux-types';
+import { select } from '../store-helpers';
+import { SessionState } from '../session.state';
+import { ChildrenProps } from '../redux-types';
 
 interface Props extends ChildrenProps {
   isLoggedIn?: boolean;

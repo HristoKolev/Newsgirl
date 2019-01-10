@@ -1,8 +1,9 @@
 ﻿namespace Newsgirl.WebServices.Auth
 {
-    using System.Threading.Tasks;
-    using Newsgirl.WebServices.Infrastructure;
     using System.ComponentModel.DataAnnotations;
+    using System.Threading.Tasks;
+
+    using Infrastructure;
 
     // ReSharper disable once UnusedMember.Global
     public class AuthHandler
@@ -17,7 +18,9 @@
 
         private JwtService JwtService { get; }
 
-        [BindRequest(typeof(LoginRequest)), InTransaction]
+        [BindRequest(typeof(LoginRequest))]
+        [InTransaction]
+
         // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> Login(LoginRequest request)
         {
@@ -30,13 +33,13 @@
 
             string token = this.JwtService.EncodeSession(new PublicUserModel
             {
-                SessionID = user.Session.SessionID,
+                SessionID = user.Session.SessionID
             });
 
             return ApiResult.SuccessfulResult(new LoginResponse
             {
                 Token = token,
-                Username = user.Username,
+                Username = user.Username
             });
         }
     }

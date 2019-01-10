@@ -1,10 +1,10 @@
-import { settings, SettingsState } from '../infrastructure/settings';
+import { settings, SettingsState } from './settings';
 
 const initialState = settings;
 
 export const settingsReducer = (state = initialState) => state;
 
-declare module '../infrastructure/redux-types' {
+declare module './redux-types' {
 
   interface ReduxState {
     settings: SettingsState;

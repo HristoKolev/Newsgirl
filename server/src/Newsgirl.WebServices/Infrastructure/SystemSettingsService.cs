@@ -4,7 +4,7 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Newsgirl.WebServices.Infrastructure.Data;
+    using Data;
 
     public class SystemSettingsService
     {
@@ -30,10 +30,11 @@
 
                 if (entry == null)
                 {
-                    throw new ApplicationException($"No system_settings entry found for property '{propertyInfo.Name}' of type '{modelType.Name}').");
+                    throw new ApplicationException(
+                        $"No system_settings entry found for property '{propertyInfo.Name}' of type '{modelType.Name}').");
                 }
 
-                object value = Convert.ChangeType(entry.SettingValue, propertyInfo.PropertyType);
+                var value = Convert.ChangeType(entry.SettingValue, propertyInfo.PropertyType);
 
                 propertyInfo.SetValue(instance, value);
             }

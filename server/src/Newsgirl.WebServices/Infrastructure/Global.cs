@@ -25,6 +25,7 @@
         public static HandlerCollection Handlers { get; set; }
 
         #if DEBUG
+
         // ReSharper disable once InconsistentNaming
         private const bool debug = true;
         #else

@@ -1,13 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-namespace Newsgirl.ApiInvoke
+﻿namespace Newsgirl.ApiInvoke
 {
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     public class Program
     {
         private static async Task<int> Main(string[] args)
@@ -16,6 +17,7 @@ namespace Newsgirl.ApiInvoke
             if (!File.Exists(Global.AppConfigLocation))
             {
                 Console.WriteLine("`app-config.json` is missing...");
+
                 return 1;
             }
 
@@ -31,7 +33,7 @@ namespace Newsgirl.ApiInvoke
 
             try
             {
-                var (type, payload) = ParseRequest(args);
+                (string type, var payload) = ParseRequest(args);
                 var apiClient = new ApiClient(Global.AppConfig);
 
                 var request = new ApiRequest
@@ -57,6 +59,7 @@ namespace Newsgirl.ApiInvoke
             catch (Exception exception)
             {
                 await MainLogger.Instance.LogError(exception);
+
                 return 1;
             }
 
@@ -65,7 +68,7 @@ namespace Newsgirl.ApiInvoke
 
         private static (string, object) ParseRequest(string[] args)
         {
-            var type = args[0];
+            string type = args[0];
 
             var arguments = args.Skip(1)
                                 .Select(a => a.Split('='))
@@ -77,7 +80,7 @@ namespace Newsgirl.ApiInvoke
             {
                 obj[pair.Key] = pair.Value;
             }
-            
+
             return (type, obj);
         }
     }

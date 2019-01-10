@@ -1,4 +1,4 @@
-import { Result } from '../global/api-result';
+import { Result } from './api-result';
 
 const networkIsDownMessage = 'Network error, please try again later.';
 const serverErrorMessage = 'An error occurred while reading the response from the server.';

@@ -1,7 +1,7 @@
 import { SFC } from 'react';
 import { withRouter } from 'react-router-dom';
 import { RouteComponentProps } from 'react-router';
-import { RenderProps } from '../infrastructure/redux-types';
+import { RenderProps } from '../redux-types';
 
 interface RenderComponentProps {
   onClick: (e: any) => void;

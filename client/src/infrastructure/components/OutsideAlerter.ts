@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import * as ReactDOM from 'react-dom';
-import { ChildrenProps, DefaultProps } from '../infrastructure/redux-types';
+import { ChildrenProps, DefaultProps } from '../redux-types';
 
 interface Props extends ChildrenProps {
   onLeave: () => void;

@@ -1,12 +1,11 @@
 namespace Newsgirl.WebServices.Infrastructure
 {
-    using System;
     using System.Linq;
     using System.Reflection;
 
-    using Npgsql;
+    using Data;
 
-    using Newsgirl.WebServices.Infrastructure.Data;
+    using Npgsql;
 
     using StructureMap;
 
@@ -37,13 +36,13 @@ namespace Newsgirl.WebServices.Infrastructure
             {
                 this.For(handler.HandlerType).ContainerScoped();
             }
-            
+
             // Services
             var serviceTypes = Assembly.GetExecutingAssembly().DefinedTypes.Select(info => info.AsType())
-                                .Where(type => type.IsClass && type.Name.EndsWith("Service"))
-                                .ToList();
+                                       .Where(type => type.IsClass && type.Name.EndsWith("Service"))
+                                       .ToList();
 
-            foreach (Type type in serviceTypes)
+            foreach (var type in serviceTypes)
             {
                 this.For(type).ContainerScoped();
             }

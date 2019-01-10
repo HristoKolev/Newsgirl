@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import { ChildrenProps } from '../../infrastructure/redux-types';
+import { ChildrenProps } from '../redux-types';
 
 import { Modal, ModalBody } from 'mdbreact';
 

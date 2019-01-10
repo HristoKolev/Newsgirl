@@ -1,5 +1,5 @@
 import { Action, ActionCreatorsMapObject, Reducer } from 'redux';
-import { distributeAction } from '../infrastructure/distribute-helpers';
+import { distributeAction } from './distribute-helpers';
 import { LoginResponse } from './auth-dto';
 
 export const sessionActions = {
@@ -50,7 +50,7 @@ export const sessionReducer: Reducer<SessionState> = (state = initialState, acti
   }
 };
 
-declare module '../infrastructure/redux-types' {
+declare module './redux-types' {
 
   interface ReduxState {
     session: SessionState;

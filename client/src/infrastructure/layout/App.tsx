@@ -3,13 +3,13 @@ import { ToastContainer } from 'react-toastify';
 
 import { FooterComponent } from './FooterComponent';
 import { Header } from './Header';
-import { ChildrenProps } from '../../infrastructure/redux-types';
-import GlobalErrorComponent from '../../infrastructure/errors/components/GlobalErrorComponent';
+import { ChildrenProps } from '../redux-types';
+import GlobalErrorComponent from '../errors/components/GlobalErrorComponent';
 import {
   ErrorMessagesModal,
   ReducerErrorModal,
   SagaErrorModal,
-} from '../../infrastructure/errors/components/ErrorComponents';
+} from '../errors/components/ErrorComponents';
 
 export const App: SFC<ChildrenProps> = ({children}) => (
   <React.Fragment>
