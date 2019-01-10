@@ -1,11 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Newsgirl.WebServices.Infrastructure;
-
-namespace Newsgirl.WebServices.Auth
+﻿namespace Newsgirl.WebServices.Auth
 {
     using System.Threading.Tasks;
-
     using Newsgirl.WebServices.Infrastructure;
+    using System.ComponentModel.DataAnnotations;
 
     // ReSharper disable once UnusedMember.Global
     public class AuthHandler

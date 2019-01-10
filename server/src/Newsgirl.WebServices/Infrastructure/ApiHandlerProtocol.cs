@@ -1,20 +1,19 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Newsgirl.WebServices.Infrastructure.Data;
-using Newtonsoft.Json.Linq;
-
-namespace Newsgirl.WebServices.Infrastructure
+﻿namespace Newsgirl.WebServices.Infrastructure
 {
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
+    using Npgsql;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
+    using Newsgirl.WebServices.Infrastructure.Data;
+    using Newtonsoft.Json.Linq;
     using Newsgirl.WebServices.Auth;
-
+    
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ApiHandlerProtocol
     {

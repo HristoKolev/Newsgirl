@@ -1,6 +1,4 @@
-﻿using Newsgirl.WebServices.Infrastructure;
-
-namespace Newsgirl.WebServices.Auth
+﻿namespace Newsgirl.WebServices.Auth
 {
     using System;
     using System.IO;

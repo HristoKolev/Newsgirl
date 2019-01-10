@@ -1,17 +1,17 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Newsgirl.WebServices.Infrastructure;
-using Newtonsoft.Json;
-using Npgsql;
-using StructureMap;
-
-namespace Newsgirl.WebServices
+﻿namespace Newsgirl.WebServices
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Reflection;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Server.Kestrel.Core;
+    using Newsgirl.WebServices.Infrastructure;
+    using Newtonsoft.Json;
+    using Npgsql;
+    using StructureMap;
+    
     public class Program
     {
         public static async Task<int> Main(string[] args)

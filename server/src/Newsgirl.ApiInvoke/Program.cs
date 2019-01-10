@@ -42,8 +42,6 @@ namespace Newsgirl.ApiInvoke
 
                 var response = await apiClient.Send(request);
 
-                Console.WriteLine(JsonConvert.SerializeObject(response, Formatting.Indented));
-
                 if (!response.Success)
                 {
                     throw new DetailedLogException("A request failed.")

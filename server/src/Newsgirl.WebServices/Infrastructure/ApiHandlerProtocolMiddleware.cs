@@ -1,12 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-
-namespace Newsgirl.WebServices.Infrastructure
+﻿namespace Newsgirl.WebServices.Infrastructure
 {
+    using System;
+    using System.IO;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Http;
+    using Newtonsoft.Json;
+    
     public class ApiHandlerProtocolMiddleware
     {
         private readonly RequestDelegate next;

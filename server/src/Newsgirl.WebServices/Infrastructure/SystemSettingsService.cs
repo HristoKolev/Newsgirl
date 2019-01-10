@@ -1,6 +1,4 @@
-﻿using Newsgirl.WebServices.Infrastructure.Data;
-
-namespace Newsgirl.WebServices.Infrastructure
+﻿namespace Newsgirl.WebServices.Infrastructure
 {
     using System;
     using System.Linq;

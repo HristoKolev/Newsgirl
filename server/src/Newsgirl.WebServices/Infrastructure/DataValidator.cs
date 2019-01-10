@@ -1,11 +1,10 @@
-﻿using System;
-using System.Reflection;
-
-namespace Newsgirl.WebServices.Infrastructure
+﻿namespace Newsgirl.WebServices.Infrastructure
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
+    using System;
+    using System.Reflection;
 
     public static class DataValidator
     {

@@ -4,25 +4,34 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class AsyncLock : IDisposable
+    public class AsyncLock
     {
-        private SemaphoreSlim Semaphore { get; }
+        private readonly SemaphoreSlim semaphore;
 
-        private AsyncLock(SemaphoreSlim semaphore)
+        public AsyncLock()
         {
-            this.Semaphore = semaphore;
+            this.semaphore = new SemaphoreSlim(1, 1);
         }
 
-        public static async Task<AsyncLock> Create(SemaphoreSlim semaphore)
+        public async Task<AsyncLockInstance> Lock()
         {
-            var instance = new AsyncLock(semaphore);
-            await instance.Semaphore.WaitAsync();
-            return instance;
+            await this.semaphore.WaitAsync();
+            return new AsyncLockInstance(this.semaphore);
+        }
+    }
+
+    public class AsyncLockInstance : IDisposable
+    {
+        private readonly SemaphoreSlim semaphore;
+
+        public AsyncLockInstance(SemaphoreSlim semaphore)
+        {
+            this.semaphore = semaphore;
         }
 
         public void Dispose()
         {
-            this.Semaphore.Release();
+            this.semaphore.Release();
         }
     }
 }

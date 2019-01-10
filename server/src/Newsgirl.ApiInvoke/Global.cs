@@ -9,7 +9,7 @@ namespace Newsgirl.ApiInvoke
 
         public static AppConfig AppConfig { get; set; }
 
-        public static string ConfigDirectory => Path.Combine(Global.AssemblyDirectory, "config");
+        public static string ConfigDirectory => Path.Combine(AssemblyDirectory, "config");
 
         public static string AppConfigLocation => Path.Combine(ConfigDirectory, AppConfigFileName);
 
