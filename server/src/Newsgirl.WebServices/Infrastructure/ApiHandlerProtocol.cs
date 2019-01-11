@@ -265,8 +265,10 @@
             return new HandlerCollection(handlers);
         }
 
-        private static async Task<ApiResult> ExecuteHandlerMethod(MethodInfo methodInfo, object handlerInstance,
-                                                                  object[] parameters)
+        private static async Task<ApiResult> ExecuteHandlerMethod(
+            MethodInfo methodInfo, 
+            object handlerInstance,
+            object[] parameters)
         {
             if (typeof(Task).IsAssignableFrom(methodInfo.ReturnType))
             {
@@ -281,7 +283,7 @@
 
                 await task;
 
-                object returnValue = ((dynamic) task).Result;
+                object returnValue = task.GetType().GetProperty("Result").GetValue(task);
 
                 if (returnValue is ApiResult result)
                 {

@@ -38,9 +38,11 @@ namespace Newsgirl.WebServices.Infrastructure
             }
 
             // Services
-            var serviceTypes = Assembly.GetExecutingAssembly().DefinedTypes.Select(info => info.AsType())
-                                       .Where(type => type.IsClass && type.Name.EndsWith("Service"))
-                                       .ToList();
+            var serviceTypes = Assembly.GetExecutingAssembly()
+                               .DefinedTypes
+                               .Select(info => info.AsType())
+                               .Where(type => type.IsClass && type.Name.EndsWith("Service"))
+                               .ToList();
 
             foreach (var type in serviceTypes)
             {

@@ -8,7 +8,6 @@ namespace Newsgirl.WebServices
     using Infrastructure;
 
     using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
@@ -16,15 +15,8 @@ namespace Newsgirl.WebServices
 
     public class Startup
     {
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app)
         {
-            loggerFactory.AddConsole(GetAspCoreLogLevel());
-
-            if (env.IsDevelopment())
-            {
-                loggerFactory.AddDebug();
-            }
-
             app.Use(async (context, func) =>
             {
                 context.Response.Headers["Content-Type"] = "application/json";
@@ -47,7 +39,12 @@ namespace Newsgirl.WebServices
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            services.AddLogging();
+
+            services.AddLogging(opt =>
+            {
+                opt.AddConsole();
+                opt.AddDebug();
+            });
 
             var container = new Container(config =>
             {
@@ -56,20 +53,6 @@ namespace Newsgirl.WebServices
             });
 
             return container.GetInstance<IServiceProvider>();
-        }
-
-        private static LogLevel GetAspCoreLogLevel()
-        {
-            LogLevel logLevel;
-
-            const string DefaultLevel = "Debug";
-
-            if (!Enum.TryParse(Global.AppConfig.AspNetLoggingLevel ?? DefaultLevel, out logLevel))
-            {
-                logLevel = LogLevel.Debug;
-            }
-
-            return logLevel;
         }
     }
 }
