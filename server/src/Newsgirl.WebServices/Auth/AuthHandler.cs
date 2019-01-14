@@ -18,6 +18,7 @@
 
         private JwtService JwtService { get; }
 
+
         [BindRequest(typeof(LoginRequest))]
         [InTransaction]
 
@@ -31,7 +32,7 @@
                 return ApiResult.FromErrorMessage("Wrong username/password.");
             }
 
-            string token = this.JwtService.EncodeSession(new PublicUserModel
+            string token = await this.JwtService.EncodeSession(new PublicUserModel
             {
                 SessionID = user.Session.SessionID
             });

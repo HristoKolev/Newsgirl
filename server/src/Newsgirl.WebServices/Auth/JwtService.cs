@@ -1,8 +1,8 @@
 ﻿namespace Newsgirl.WebServices.Auth
 {
     using System;
-    using System.IO;
     using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     using Infrastructure;
 
@@ -19,47 +19,51 @@
         // ReSharper disable once StaticMemberInGenericType
         private static readonly byte[] DummyKeyArray = new byte[1];
 
-        public JwtService(MainLogger logger)
+        public JwtService(MainLogger logger, ObjectPool<X509Certificate2> certPool)
         {
             this.Logger = logger;
+            this.CertPool = certPool;
         }
 
         private MainLogger Logger { get; }
 
-        public T DecodeSession(string jwt)
+        private ObjectPool<X509Certificate2> CertPool { get; }
+
+        public async Task<T> DecodeSession(string jwt)
         {
             try
             {
                 var serializer = new JsonNetSerializer();
                 var validator = new JwtValidator(serializer, new UtcDateTimeProvider());
 
-                var decoder = new JwtDecoder(serializer, validator, new JwtBase64UrlEncoder(),
-                                             new RSAlgorithmFactory(GetCertificate));
+                using (var certWrapper = await this.CertPool.Get())
+                {
+                    var decoder = new JwtDecoder(serializer, validator, new JwtBase64UrlEncoder(),
+                                                 new RSAlgorithmFactory(() => certWrapper.Instance));
 
-                return decoder.DecodeToObject<T>(jwt, DummyKeyArray, true);
+                    return decoder.DecodeToObject<T>(jwt, DummyKeyArray, true);
+                }
             }
             catch (Exception exception)
             {
-                this.Logger.LogError(exception);
+                await this.Logger.LogError(exception);
 
                 return null;
             }
         }
 
-        public string EncodeSession(T session)
+        public async Task<string> EncodeSession(T session)
         {
-            var encoder = new JwtEncoder(
-                new RS256Algorithm(GetCertificate()),
-                new JsonNetSerializer(),
-                new JwtBase64UrlEncoder()
-            );
+            using (var certWrapper = await this.CertPool.Get())
+            {
+                var encoder = new JwtEncoder(
+                    new RS256Algorithm(certWrapper.Instance),
+                    new JsonNetSerializer(),
+                    new JwtBase64UrlEncoder()
+                );
 
-            return encoder.Encode(session, DummyKeyArray);
-        }
-
-        private static X509Certificate2 GetCertificate()
-        {
-            return new X509Certificate2(Path.Combine(Global.DataDirectory, "certificate.pfx"));
+                return encoder.Encode(session, DummyKeyArray);
+            }
         }
     }
 }

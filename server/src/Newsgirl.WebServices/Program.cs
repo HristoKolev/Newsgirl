@@ -4,6 +4,7 @@
     using System.IO;
     using System.Net;
     using System.Reflection;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
 
     using Infrastructure;
@@ -27,7 +28,19 @@
 
             Global.AppConfig.ConnectionString = CreateConnectionString(Global.AppConfig.ConnectionString);
 
-            MainLogger.Initialize(Assembly.GetExecutingAssembly());
+            ObjectPool<X509Certificate2>.SetFactory(async () =>
+            {
+                var certBytes = await File.ReadAllBytesAsync(Path.Combine(Global.DataDirectory, "certificate.pfx"));
+                
+                return new X509Certificate2(certBytes);
+            });
+            
+            MainLogger.Initialize(new LoggerConfigModel
+            {
+                Assembly = Assembly.GetExecutingAssembly(),
+                SentryDsn = Global.AppConfig.SentryDsn,
+                LogRootDirectory = Global.DataDirectory
+            });
 
             Global.Handlers = ApiHandlerProtocol.ScanForHandlers(Assembly.GetExecutingAssembly());
 

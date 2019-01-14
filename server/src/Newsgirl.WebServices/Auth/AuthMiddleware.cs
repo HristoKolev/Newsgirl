@@ -1,6 +1,7 @@
 ﻿namespace Newsgirl.WebServices.Auth
 {
     using System;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
 
     using Infrastructure;
@@ -82,7 +83,7 @@
                 return;
             }
 
-            var publicSession = jwtService.DecodeSession(token);
+            var publicSession = await jwtService.DecodeSession(token);
 
             if (publicSession == null)
             {
@@ -141,8 +142,8 @@
 
     public class JwtService : JwtService<PublicUserModel>
     {
-        public JwtService(MainLogger logger)
-            : base(logger)
+        public JwtService(MainLogger logger, ObjectPool<X509Certificate2> certPool)
+            : base(logger, certPool)
         {
         }
     }

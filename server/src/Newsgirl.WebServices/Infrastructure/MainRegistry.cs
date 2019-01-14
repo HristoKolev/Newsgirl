@@ -30,6 +30,7 @@ namespace Newsgirl.WebServices.Infrastructure
         private void Infrastructure()
         {
             this.For<MainLogger>().Singleton();
+            this.For(typeof(ObjectPool<>)).Singleton();
 
             // Handlers
             foreach (var handler in Global.Handlers.GetAllHandlers())
