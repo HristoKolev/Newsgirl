@@ -15,9 +15,9 @@
 
     public class MainLogger
     {
-        private const string LoggerFilePath = "log4net-config.xml";
-
         public static readonly MainLogger Instance = new MainLogger();
+
+        private const string LoggerFilePath = "log4net-config.xml";
 
         private static readonly object SyncLock = new object();
 
@@ -62,12 +62,16 @@
             Log4NetLogger.Debug(message);
         }
 
+        public void LogError(string message)
+        {
+            Log4NetLogger.Error(message);
+        }
+
         public Task LogError(Exception exception)
         {
             var list = GetExceptionChain(exception);
 
-            Log4NetLogger.Error(
-                $"Exception was handled. (ExceptionMessage: {exception.Message}, ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))})");
+            this.LogError($"Exception was handled. (ExceptionMessage: {exception.Message}, ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))}) View the Sentry entry for more details.");
 
             var detailed = exception as DetailedLogException;
 

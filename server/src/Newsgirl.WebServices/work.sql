@@ -25,8 +25,15 @@ create table user_sessions (
   primary key (session_id)
 );
 
-create index fk__user_sessions__users__user_id on user_sessions using btree (user_id);
- 
+create table feeds (
+  feed_id serial,
+  feed_name text not NULL,
+  update_interval int NOT NULL,
+  feed_url text NOT NULL,
+
+  primary key(feed_id)
+);
+
 -- Views
 
 drop view if exists "public"."db_columns";
