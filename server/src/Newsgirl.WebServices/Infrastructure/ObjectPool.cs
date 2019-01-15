@@ -10,20 +10,8 @@ namespace Newsgirl.WebServices.Infrastructure
 
         private ConcurrentQueue<T> Queue { get; } = new ConcurrentQueue<T>();
 
-        public static void SetFactory(Func<Task<T>> factory)
+        public ObjectPool()
         {
-            Factory = factory;
-        }
-
-        public async Task<ObjectPoolInstanceWrapper<T>> Get()
-        {
-            Console.WriteLine(this.Queue.Count);
-            
-            if (this.Queue.TryDequeue(out var result))
-            {
-                return new ObjectPoolInstanceWrapper<T>(result, this.Queue);
-            }
-
             if (Factory == null)
             {
                 throw new DetailedLogException("An ObjectPool factory is not configured for the requested type.")
@@ -36,9 +24,22 @@ namespace Newsgirl.WebServices.Infrastructure
                     }
                 };
             }
+        }
 
-            var instance = await Factory();
+        public static void SetFactory(Func<Task<T>> factory)
+        {
+            Factory = factory;
+        }
 
+        public async Task<ObjectPoolInstanceWrapper<T>> Get()
+        {
+            T instance;
+            
+            if (!this.Queue.TryDequeue(out instance))
+            {
+                instance = await Factory();   
+            }
+            
             return new ObjectPoolInstanceWrapper<T>(instance, this.Queue);
         }
     }
