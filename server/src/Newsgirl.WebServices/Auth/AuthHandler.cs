@@ -18,7 +18,6 @@
 
         private JwtService JwtService { get; }
 
-
         [BindRequest(typeof(LoginRequest))]
         [InTransaction]
 
