@@ -59,19 +59,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [Column(Name = "feed_url", DataType = DataType.Text)]
         public string FeedUrl { get; set; }
 
-        /// <summary>
-        /// <para>Column name: 'update_interval'.</para>
-        /// <para>Table name: 'feeds'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "update_interval", DataType = DataType.Int32)]
-        public int UpdateInterval { get; set; }
-
         public static TableMetadataModel<FeedPoco> Metadata => DbMetadata.FeedPocoMetadata;
 
         public FeedBM ToBm()
@@ -81,7 +68,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                 FeedID = this.FeedID,
                 FeedName = this.FeedName,
                 FeedUrl = this.FeedUrl,
-                UpdateInterval = this.UpdateInterval,
             };
         }
     }
@@ -327,17 +313,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// </summary>
         public string FeedUrl { get; set; }
 
-        /// <summary>
-        /// <para>Column name: 'update_interval'.</para>
-        /// <para>Table name: 'feeds'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        public int UpdateInterval { get; set; }
-
     }
 
     /// <summary>
@@ -571,30 +546,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.IsNotIn, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
         public string[] FeedUrl_IsNotIn { get; set; }
-
-        [FilterOperator(QueryOperatorType.Equal, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval { get; set; }
-
-        [FilterOperator(QueryOperatorType.NotEqual, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval_NotEqual { get; set; }
-
-        [FilterOperator(QueryOperatorType.LessThan, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval_LessThan { get; set; }
-
-        [FilterOperator(QueryOperatorType.LessThanOrEqual, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval_LessThanOrEqual { get; set; }
-
-        [FilterOperator(QueryOperatorType.GreaterThan, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval_GreaterThan { get; set; }
-
-        [FilterOperator(QueryOperatorType.GreaterThanOrEqual, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int? UpdateInterval_GreaterThanOrEqual { get; set; }
-
-        [FilterOperator(QueryOperatorType.IsIn, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int[] UpdateInterval_IsIn { get; set; }
-
-        [FilterOperator(QueryOperatorType.IsNotIn, "UpdateInterval", NpgsqlDbType.Integer, "update_interval")]
-        public int[] UpdateInterval_IsNotIn { get; set; }
 
     }
 
@@ -927,17 +878,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// </summary>
         public string FeedUrl { get; set; }
 
-        /// <summary>
-        /// <para>Column name: 'update_interval'.</para>
-        /// <para>Table name: 'feeds'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        public int UpdateInterval { get; set; }
-
         public FeedPoco ToPoco()
         {
             return new FeedPoco
@@ -945,7 +885,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                 FeedID = this.FeedID,
                 FeedName = this.FeedName,
                 FeedUrl = this.FeedUrl,
-                UpdateInterval = this.UpdateInterval,
             };
         }
     }
@@ -1319,37 +1258,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         NpgsDataTypeName = "NpgsqlDbType.Text",
                         NpgsDataType = NpgsqlDbType.Text,
                         PropertyName = "FeedUrl",
-                        TableName = "feeds",
-                        TableSchema = "public",
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ClrTypeName = "int",
-                        ClrType = typeof(int),
-                        ClrNonNullableTypeName = "int",
-                        ClrNonNullableType = typeof(int),
-                        ClrNullableTypeName = "int?",
-                        ClrNullableType = typeof(int?),
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "update_interval",
-                        DbDataType = "integer",
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        IsNullable = bool.Parse("False"),
-                        IsClrValueType = bool.Parse("True"),
-                        IsClrNullableType = bool.Parse("False"),
-                        IsClrReferenceType = bool.Parse("False"),
-                        Linq2dbDataTypeName = "DataType.Int32",
-                        Linq2dbDataType = DataType.Int32,
-                        NpgsDataTypeName = "NpgsqlDbType.Integer",
-                        NpgsDataType = NpgsqlDbType.Integer,
-                        PropertyName = "UpdateInterval",
                         TableName = "feeds",
                         TableSchema = "public",
                     },
