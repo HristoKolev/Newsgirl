@@ -42,7 +42,7 @@ namespace Newsgirl.WebServices.Feeds
         }
 
         [BindRequest(typeof(NewFeedRequest))]
-        public   Task<NewFeedResponse> GetNewFeed()
+        public Task<NewFeedResponse> GetNewFeed()
         {
             return Task.FromResult(new NewFeedResponse
             {
