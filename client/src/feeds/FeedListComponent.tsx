@@ -39,7 +39,7 @@ export class FeedListComponent extends BaseComponent<Props, State> {
     });
 
     const response = await api.send<SearchFeedsRequest, SearchFeedsResponse>(
-      'SearchFeedRequest',
+      'SearchFeedsRequest',
       this.state.filter,
     );
 

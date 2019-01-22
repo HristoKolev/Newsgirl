@@ -29,6 +29,7 @@ import { AuthRoutes } from './auth/auth.module';
 import { freezeMiddleware } from './infrastructure/freeze-middleware';
 import createHistory from 'history/createBrowserHistory';
 import { distributeMiddleware, distributeDispatch } from './infrastructure/distribute-dispatch';
+import { FeedsRoutes } from './feeds/feeds.module';
 
 if (process.env.NODE_ENV === 'development') {
   registerObserver();
@@ -83,6 +84,7 @@ const Root = () => (
           <ErrorGuardComponent>
             <Route exact path="/" component={Home}/>
             <AuthRoutes ctof={ctof}/>
+            <FeedsRoutes ctof={ctof}/>
           </ErrorGuardComponent>
         </App>
       </ConnectedRouter>

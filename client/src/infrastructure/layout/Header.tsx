@@ -29,7 +29,13 @@ export class Header extends Component<any, State> {
         </NavbarBrand>
         {!this.state.isWideEnough && <NavbarToggler onClick={this.onClick}/>}
         <Collapse isOpen={this.state.collapse} navbar>
-          <NavbarNav left/>
+          <NavbarNav left>
+            <NavItem>
+              <SessionComponent>
+                <NavLink to={'/feeds'}>Feeds</NavLink>
+              </SessionComponent>
+            </NavItem>
+          </NavbarNav>
           <NavbarNav right>
             <NavItem>
               <SessionComponent>
