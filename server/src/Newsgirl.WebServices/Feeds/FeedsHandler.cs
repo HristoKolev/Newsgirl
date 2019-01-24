@@ -135,7 +135,6 @@ namespace Newsgirl.WebServices.Feeds
     public class NewFeedResponse
     {
         public FeedDto Item { get; set; }
-
     }
 
     public class GetFeedRequest
@@ -146,7 +145,6 @@ namespace Newsgirl.WebServices.Feeds
     public class GetFeedResponse
     {
         public FeedDto Item { get; set; }
-
     }
 
     public class SearchFeedsRequest

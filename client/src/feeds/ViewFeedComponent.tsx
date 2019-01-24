@@ -112,7 +112,7 @@ export class ViewFeedComponent extends BaseComponent<Props, State> {
                   </tr>
                   <tr>
                     <td>URL:</td>
-                    <td>{model.feedUrl}</td>
+                    <td><a href={model.feedUrl} target="_blank">{model.feedUrl}</a></td>
                   </tr>
 
                 </TableBody>

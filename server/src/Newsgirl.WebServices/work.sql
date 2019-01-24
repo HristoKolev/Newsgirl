@@ -33,6 +33,16 @@ create table feeds (
   primary key(feed_id)
 );
 
+CREATE TABLE feed_items (
+  feed_item_id serial,
+  feed_item_title text NOT NULL,
+  feed_item_url text NOT NULL,
+  feed_id INTEGER NOT NULL REFERENCES feeds,
+  feed_item_added_time timestamp NOT NULL,
+
+  PRIMARY KEY (feed_item_id)
+);
+
 -- Views
 
 drop view if exists "public"."db_columns";
