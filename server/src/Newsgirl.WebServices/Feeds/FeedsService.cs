@@ -43,5 +43,10 @@ namespace Newsgirl.WebServices.Feeds
         {
             await this.Db.Delete<FeedPoco>(feedID);
         }
+
+        public async Task SaveBulk()
+        {
+            
+        }
     }
 }
