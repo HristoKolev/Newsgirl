@@ -1,8 +1,10 @@
 namespace Newsgirl.WebServices.Feeds
 {
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
+    using Infrastructure;
     using Infrastructure.Data;
 
     using LinqToDB;
@@ -44,9 +46,16 @@ namespace Newsgirl.WebServices.Feeds
             await this.Db.Delete<FeedPoco>(feedID);
         }
 
-        public async Task SaveBulk()
+        public async Task SaveBulk(List<FeedItemBM> items, int feedID)
         {
-            
+            var urls = items.Select(x => x.FeedItemUrl).ToList();
+
+            var existing = await this.Db.Poco.FeedItems
+                                     .Where(x => x.FeedID == feedID && urls.Contains(x.FeedItemUrl))
+                                     .ToListAsync();
+
+            var forUpdate = items.IntersectBy(existing, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl).ToList();
+            var forInsert = items.ExceptBy(existing, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl).ToList();
         }
     }
 }
