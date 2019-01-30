@@ -1,5 +1,6 @@
 namespace Newsgirl.WebServices.Feeds
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -50,12 +51,32 @@ namespace Newsgirl.WebServices.Feeds
         {
             var urls = items.Select(x => x.FeedItemUrl).ToList();
 
-            var existing = await this.Db.Poco.FeedItems
+            var existingItems = await this.Db.Poco.FeedItems
                                      .Where(x => x.FeedID == feedID && urls.Contains(x.FeedItemUrl))
                                      .ToListAsync();
 
-            var forUpdate = items.IntersectBy(existing, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl).ToList();
-            var forInsert = items.ExceptBy(existing, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl).ToList();
+            var forUpdate = items.IntersectBy(existingItems, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl).ToList();
+
+            foreach (var itemBm in forUpdate)
+            {
+                var existingItem = existingItems.FirstOrDefault(x => x.FeedItemUrl == itemBm.FeedItemUrl);
+                existingItem.FeedItemTitle = itemBm.FeedItemTitle;
+                await this.Db.UpdateChangesOnly(existingItem);
+            }
+            
+            var forInsert = items.ExceptBy(existingItems, (bm, poco) => bm.FeedItemUrl == poco.FeedItemUrl)
+                                 .Select(x => x.ToPoco())
+                                 .ToList();
+
+            var now = DateTime.UtcNow;
+            
+            foreach (var itemPoco in forInsert)
+            {
+                itemPoco.FeedID = feedID;
+                itemPoco.FeedItemAddedTime = now;
+
+                await this.Db.Insert(itemPoco);
+            }
         }
     }
 }

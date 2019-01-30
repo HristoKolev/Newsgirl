@@ -14,13 +14,13 @@ namespace Newsgirl.WebServices.Feeds
 
         private FeedItemsClient FeedsClient { get; }
  
-        public FeedsHandler(FeedsService feedsService, FeedItemsClient feedsClient, IDbService db)
+        public FeedsHandler(FeedsService feedsService, FeedItemsClient feedsClient)
         {    
             this.FeedsService = feedsService;
             this.FeedsClient = feedsClient;
         }
         
-        [BindRequest(typeof(RefreshFeedsRequest))]
+        [BindRequest(typeof(RefreshFeedsRequest)), InTransaction]
         public async Task<ApiResult> RefreshFeeds(RefreshFeedsRequest req)
         {
             var feeds = await this.FeedsService.GetFeeds(new FeedFM());
@@ -29,10 +29,7 @@ namespace Newsgirl.WebServices.Feeds
             {
                 var items = await this.FeedsClient.GetFeedItems(feed.FeedUrl);
 
-                foreach (var item in items)
-                {
-                    MainLogger.Instance.LogDebug(item.FeedItemTitle);
-                }
+                await this.FeedsService.SaveBulk(items, feed.FeedID);
             }
 
             return ApiResult.SuccessfulResult();
