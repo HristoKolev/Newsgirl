@@ -21,6 +21,19 @@ namespace Newsgirl.WebServices.Feeds
 
             var materialized = FeedReader.ReadFromString(feedContent);
 
+            var item = materialized.Items.FirstOrDefault(x => x.Link == null);
+
+            if (item != null)
+            {
+                await Global.Log.LogError(new DetailedLogException("Links is null.")
+                {
+                    Context =
+                    {
+                        {"item", item}
+                    }
+                });
+            }
+            
             var items = materialized.Items.Select(x => new FeedItemBM
             {
                 FeedItemUrl = x.Link,

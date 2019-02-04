@@ -125,6 +125,32 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         public int FeedID { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'feed_last_failed_reason'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [Nullable]
+        [Column(Name = "feed_last_failed_reason", DataType = DataType.Text)]
+        public string FeedLastFailedReason { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_last_failed_time'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>CLR type: 'DateTime?'.</para>
+        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
+        /// </summary>
+        [Nullable]
+        [Column(Name = "feed_last_failed_time", DataType = DataType.DateTime2)]
+        public DateTime? FeedLastFailedTime { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_name'.</para>
         /// <para>Table name: 'feeds'.</para>
         /// <para>This column is not nullable.</para>
@@ -157,6 +183,8 @@ namespace Newsgirl.WebServices.Infrastructure.Data
             return new FeedBM
             {
                 FeedID = this.FeedID,
+                FeedLastFailedReason = this.FeedLastFailedReason,
+                FeedLastFailedTime = this.FeedLastFailedTime,
                 FeedName = this.FeedName,
                 FeedUrl = this.FeedUrl,
             };
@@ -448,6 +476,28 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
         public int FeedID { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_last_failed_reason'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        public string FeedLastFailedReason { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_last_failed_time'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>CLR type: 'DateTime?'.</para>
+        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
+        /// </summary>
+        public DateTime? FeedLastFailedTime { get; set; }
 
         /// <summary>
         /// <para>Column name: 'feed_name'.</para>
@@ -784,6 +834,60 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.IsNotIn, "FeedID", NpgsqlDbType.Integer, "feed_id")]
         public int[] FeedID_IsNotIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.Equal, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason { get; set; }
+
+        [FilterOperator(QueryOperatorType.NotEqual, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_NotEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.StartsWith, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_StartsWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWith, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotStartWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWith, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_EndsWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWith, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotEndWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.Contains, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_Contains { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContain, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotContain { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNull, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public bool? FeedLastFailedReason_IsNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotNull, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public bool? FeedLastFailedReason_IsNotNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsIn, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string[] FeedLastFailedReason_IsIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotIn, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string[] FeedLastFailedReason_IsNotIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.Equal, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime { get; set; }
+
+        [FilterOperator(QueryOperatorType.NotEqual, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime_NotEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNull, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public bool? FeedLastFailedTime_IsNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotNull, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public bool? FeedLastFailedTime_IsNotNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsIn, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime[] FeedLastFailedTime_IsIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotIn, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime[] FeedLastFailedTime_IsNotIn { get; set; }
 
         [FilterOperator(QueryOperatorType.Equal, "FeedName", NpgsqlDbType.Text, "feed_name")]
         public string FeedName { get; set; }
@@ -1233,6 +1337,28 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         public int FeedID { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'feed_last_failed_reason'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        public string FeedLastFailedReason { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_last_failed_time'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>CLR type: 'DateTime?'.</para>
+        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
+        /// </summary>
+        public DateTime? FeedLastFailedTime { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_name'.</para>
         /// <para>Table name: 'feeds'.</para>
         /// <para>This column is not nullable.</para>
@@ -1259,6 +1385,8 @@ namespace Newsgirl.WebServices.Infrastructure.Data
             return new FeedPoco
             {
                 FeedID = this.FeedID,
+                FeedLastFailedReason = this.FeedLastFailedReason,
+                FeedLastFailedTime = this.FeedLastFailedTime,
                 FeedName = this.FeedName,
                 FeedUrl = this.FeedUrl,
             };
@@ -1769,6 +1897,68 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         NpgsDataTypeName = "NpgsqlDbType.Integer",
                         NpgsDataType = NpgsqlDbType.Integer,
                         PropertyName = "FeedID",
+                        TableName = "feeds",
+                        TableSchema = "public",
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ClrTypeName = "string",
+                        ClrType = typeof(string),
+                        ClrNonNullableTypeName = "string",
+                        ClrNonNullableType = typeof(string),
+                        ClrNullableTypeName = "string",
+                        ClrNullableType = typeof(string),
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_last_failed_reason",
+                        DbDataType = "text",
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        IsNullable = bool.Parse("True"),
+                        IsClrValueType = bool.Parse("False"),
+                        IsClrNullableType = bool.Parse("False"),
+                        IsClrReferenceType = bool.Parse("True"),
+                        Linq2dbDataTypeName = "DataType.Text",
+                        Linq2dbDataType = DataType.Text,
+                        NpgsDataTypeName = "NpgsqlDbType.Text",
+                        NpgsDataType = NpgsqlDbType.Text,
+                        PropertyName = "FeedLastFailedReason",
+                        TableName = "feeds",
+                        TableSchema = "public",
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ClrTypeName = "DateTime?",
+                        ClrType = typeof(DateTime?),
+                        ClrNonNullableTypeName = "DateTime",
+                        ClrNonNullableType = typeof(DateTime),
+                        ClrNullableTypeName = "DateTime?",
+                        ClrNullableType = typeof(DateTime?),
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_last_failed_time",
+                        DbDataType = "timestamp without time zone",
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        IsNullable = bool.Parse("True"),
+                        IsClrValueType = bool.Parse("True"),
+                        IsClrNullableType = bool.Parse("True"),
+                        IsClrReferenceType = bool.Parse("True"),
+                        Linq2dbDataTypeName = "DataType.DateTime2",
+                        Linq2dbDataType = DataType.DateTime2,
+                        NpgsDataTypeName = "NpgsqlDbType.Timestamp",
+                        NpgsDataType = NpgsqlDbType.Timestamp,
+                        PropertyName = "FeedLastFailedTime",
                         TableName = "feeds",
                         TableSchema = "public",
                     },

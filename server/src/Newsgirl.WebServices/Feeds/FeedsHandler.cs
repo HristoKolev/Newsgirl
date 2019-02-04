@@ -1,5 +1,6 @@
 namespace Newsgirl.WebServices.Feeds
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
@@ -13,28 +14,75 @@ namespace Newsgirl.WebServices.Feeds
         private FeedsService FeedsService { get; }
 
         private FeedItemsClient FeedsClient { get; }
- 
-        public FeedsHandler(FeedsService feedsService, FeedItemsClient feedsClient)
+
+        private IDbService Db { get; }
+
+        private AsyncLock DbLock { get; }
+
+        public FeedsHandler(
+            FeedsService feedsService, 
+            FeedItemsClient feedsClient,
+            IDbService db)
         {    
             this.FeedsService = feedsService;
             this.FeedsClient = feedsClient;
+            this.Db = db;
+            
+            this.DbLock = new AsyncLock();
         }
         
-        [BindRequest(typeof(RefreshFeedsRequest)), InTransaction]
-        public async Task<ApiResult> RefreshFeeds(RefreshFeedsRequest req)
+        [BindRequest(typeof(RefreshFeedsRequest))]
+        public async Task<ApiResult> RefreshFeeds()
         {
-            var feeds = await this.FeedsService.GetFeeds(new FeedFM());
+            var allFeeds = await this.FeedsService.GetFeeds(new FeedFM());
 
-            foreach (var feed in feeds)
+            async Task processFeed(int feedID)
             {
-                var items = await this.FeedsClient.GetFeedItems(feed.FeedUrl);
+                try
+                {
+                    FeedBM feed;
 
-                await this.FeedsService.SaveBulk(items, feed.FeedID);
+                    using (await this.DbLock.Lock())
+                    {
+                        feed = await this.FeedsService.Get(feedID);
+                    }
+                    
+                    var items = await this.FeedsClient.GetFeedItems(feed.FeedUrl);
+                    
+                    using (await this.DbLock.Lock()) 
+                    {
+                        await this.Db.ExecuteInTransactionAndCommit(async () =>
+                        {
+                            await this.FeedsService.SaveBulk(items, feedID);
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Global.Log.LogError(ex);
+
+                    using (await this.DbLock.Lock())
+                    {
+                        await this.Db.ExecuteInTransactionAndCommit(async () =>
+                        {
+                            var feed = await this.FeedsService.Get(feedID);
+                            
+                            feed.FeedLastFailedTime = DateTime.UtcNow;
+                            feed.FeedLastFailedReason = ex.Message;
+
+                            await this.FeedsService.Save(feed);
+                        });
+                    }
+                }
             }
+            
+            var tasks = allFeeds.Select(x => processFeed(x.FeedID)).ToList();
 
+            await Task.WhenAll(tasks);
+     
             return ApiResult.SuccessfulResult();
         }
-        
+
         [BindRequest(typeof(DeleteFeedRequest)), InTransaction]
         public async Task<ApiResult> DeleteFeed(DeleteFeedRequest req)
         {

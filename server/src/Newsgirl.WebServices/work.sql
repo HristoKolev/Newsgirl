@@ -29,6 +29,8 @@ create table feeds (
   feed_id serial,
   feed_name text not NULL,
   feed_url text NOT NULL,
+  feed_last_failed_time timestamp,
+  feed_last_failed_reason text,
   
   primary key(feed_id)
 );
@@ -105,9 +107,4 @@ create view "public"."db_columns" as
 INSERT INTO users (username, password, registration_date)
 VALUES ('kenny', 'test123', current_timestamp);
 
-INSERT INTO feeds (feed_name, feed_url)
-VALUES
-       ('Stack Exchange', 'http://blog.stackoverflow.com/feed/'),
-       ('.NET Foundation', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCiaZbznpWV1o-KLxj8zqR6A')
-       ;
 commit;

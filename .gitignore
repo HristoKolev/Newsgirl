@@ -226,3 +226,5 @@ logs/
 *.DotSettings
 
 
+
+server/src/Newsgirl\.WebServices/feeds\.sql

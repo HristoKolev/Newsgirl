@@ -60,7 +60,9 @@ namespace Newsgirl.WebServices.Feeds
             foreach (var itemBm in forUpdate)
             {
                 var existingItem = existingItems.FirstOrDefault(x => x.FeedItemUrl == itemBm.FeedItemUrl);
+                
                 existingItem.FeedItemTitle = itemBm.FeedItemTitle;
+                
                 await this.Db.UpdateChangesOnly(existingItem);
             }
             
