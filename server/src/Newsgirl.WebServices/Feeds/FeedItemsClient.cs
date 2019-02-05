@@ -4,6 +4,7 @@ namespace Newsgirl.WebServices.Feeds
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Http;
+    using System.Text;
     using System.Threading.Tasks;
 
     using CodeHollow.FeedReader;
@@ -11,32 +12,34 @@ namespace Newsgirl.WebServices.Feeds
     using Infrastructure;
     using Infrastructure.Data;
 
-    using Newtonsoft.Json;
-
     public class FeedItemsClient
     {
         public async Task<List<FeedItemBM>> GetFeedItems(string url)
         {
             string feedContent = await GetFeedContent(url);
 
-            var materialized = FeedReader.ReadFromString(feedContent);
+            Feed materialized;
 
-            var item = materialized.Items.FirstOrDefault(x => x.Link == null);
-
-            if (item != null)
+            try
             {
-                await Global.Log.LogError(new DetailedLogException("Links is null.")
+                materialized = FeedReader.ReadFromString(feedContent);
+            }
+            catch (Exception exception)
+            {
+                throw new DetailedLogException("Failed to parse feed content.",
+                                               exception)
                 {
                     Context =
                     {
-                        {"item", item}
+                        {"url", url},
+                        {"content", feedContent},
                     }
-                });
+                };
             }
             
             var items = materialized.Items.Select(x => new FeedItemBM
             {
-                FeedItemUrl = x.Link,
+                FeedItemUrl = string.IsNullOrWhiteSpace(x.Link) ? null : x.Link,
                 FeedItemTitle = x.Title,
             }).ToList();
 
@@ -57,7 +60,9 @@ namespace Newsgirl.WebServices.Feeds
                         {
                             try
                             {
-                                return await content.ReadAsStringAsync();
+                                var responseBody = await content.ReadAsByteArrayAsync();
+
+                                return Encoding.UTF8.GetString(responseBody);
                             }
                             catch (Exception exception)
                             {
@@ -93,10 +98,14 @@ namespace Newsgirl.WebServices.Feeds
 
         private static HttpClient CreateHttpClient()
         {
-            return new HttpClient
+            var client = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(30)
+                Timeout = TimeSpan.FromSeconds(60)
             };
+            
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36");
+                 
+            return client ;
         }
     }
 }
