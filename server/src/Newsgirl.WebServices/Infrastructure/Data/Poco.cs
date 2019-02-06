@@ -77,15 +77,28 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_url'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [Nullable]
         [Column(Name = "feed_item_url", DataType = DataType.Text)]
         public string FeedItemUrl { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'was_null'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'boolean'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
+        /// <para>CLR type: 'bool'.</para>
+        /// <para>linq2db data type: 'DataType.Boolean'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "was_null", DataType = DataType.Boolean)]
+        public bool WasNull { get; set; }
 
         public static TableMetadataModel<FeedItemPoco> Metadata => DbMetadata.FeedItemPocoMetadata;
 
@@ -98,6 +111,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                 FeedItemID = this.FeedItemID,
                 FeedItemTitle = this.FeedItemTitle,
                 FeedItemUrl = this.FeedItemUrl,
+                WasNull = this.WasNull,
             };
         }
     }
@@ -448,13 +462,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_url'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
         public string FeedItemUrl { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'was_null'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'boolean'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
+        /// <para>CLR type: 'bool'.</para>
+        /// <para>linq2db data type: 'DataType.Boolean'.</para>
+        /// </summary>
+        public bool WasNull { get; set; }
 
     }
 
@@ -797,11 +822,29 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
         public string FeedItemUrl_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.IsNull, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public bool? FeedItemUrl_IsNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotNull, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public bool? FeedItemUrl_IsNotNull { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
         public string[] FeedItemUrl_IsIn { get; set; }
 
         [FilterOperator(QueryOperatorType.IsNotIn, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
         public string[] FeedItemUrl_IsNotIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.Equal, "WasNull", NpgsqlDbType.Boolean, "was_null")]
+        public bool? WasNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.NotEqual, "WasNull", NpgsqlDbType.Boolean, "was_null")]
+        public bool? WasNull_NotEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsIn, "WasNull", NpgsqlDbType.Boolean, "was_null")]
+        public bool[] WasNull_IsIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotIn, "WasNull", NpgsqlDbType.Boolean, "was_null")]
+        public bool[] WasNull_IsNotIn { get; set; }
 
     }
 
@@ -1296,13 +1339,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_url'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
         public string FeedItemUrl { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'was_null'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'boolean'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
+        /// <para>CLR type: 'bool'.</para>
+        /// <para>linq2db data type: 'DataType.Boolean'.</para>
+        /// </summary>
+        public bool WasNull { get; set; }
 
         public FeedItemPoco ToPoco()
         {
@@ -1313,6 +1367,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                 FeedItemID = this.FeedItemID,
                 FeedItemTitle = this.FeedItemTitle,
                 FeedItemUrl = this.FeedItemUrl,
+                WasNull = this.WasNull,
             };
         }
     }
@@ -1834,7 +1889,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        IsNullable = bool.Parse("False"),
+                        IsNullable = bool.Parse("True"),
                         IsClrValueType = bool.Parse("False"),
                         IsClrNullableType = bool.Parse("False"),
                         IsClrReferenceType = bool.Parse("True"),
@@ -1843,6 +1898,37 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         NpgsDataTypeName = "NpgsqlDbType.Text",
                         NpgsDataType = NpgsqlDbType.Text,
                         PropertyName = "FeedItemUrl",
+                        TableName = "feed_items",
+                        TableSchema = "public",
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ClrTypeName = "bool",
+                        ClrType = typeof(bool),
+                        ClrNonNullableTypeName = "bool",
+                        ClrNonNullableType = typeof(bool),
+                        ClrNullableTypeName = "bool?",
+                        ClrNullableType = typeof(bool?),
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "was_null",
+                        DbDataType = "boolean",
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        IsNullable = bool.Parse("False"),
+                        IsClrValueType = bool.Parse("True"),
+                        IsClrNullableType = bool.Parse("False"),
+                        IsClrReferenceType = bool.Parse("False"),
+                        Linq2dbDataTypeName = "DataType.Boolean",
+                        Linq2dbDataType = DataType.Boolean,
+                        NpgsDataTypeName = "NpgsqlDbType.Boolean",
+                        NpgsDataType = NpgsqlDbType.Boolean,
+                        PropertyName = "WasNull",
                         TableName = "feed_items",
                         TableSchema = "public",
                     },

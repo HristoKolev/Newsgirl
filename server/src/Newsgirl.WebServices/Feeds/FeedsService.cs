@@ -76,6 +76,7 @@ namespace Newsgirl.WebServices.Feeds
             {
                 itemPoco.FeedID = feedID;
                 itemPoco.FeedItemAddedTime = now;
+                itemPoco.WasNull = true;
 
                 await this.Db.Insert(itemPoco);
             }

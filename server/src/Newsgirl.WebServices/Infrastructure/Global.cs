@@ -49,6 +49,8 @@
         public string SentryDsn { get; set; }
 
         public int Port { get; set; }
+
+        public string HttpClientUserAgent { get; set; }
     }
 
     public class SystemSettings
