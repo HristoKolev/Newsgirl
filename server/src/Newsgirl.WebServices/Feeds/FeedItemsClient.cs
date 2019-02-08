@@ -20,11 +20,6 @@ namespace Newsgirl.WebServices.Feeds
 
             Feed materialized;
 
-            if (url == "http://www.pcper.com/rss/podcasts.rss")
-            {
-                
-            }
-
             try
             {
                 materialized = FeedReader.ReadFromString(feedContent);
@@ -56,14 +51,8 @@ namespace Newsgirl.WebServices.Feeds
             {
                 return item.Link;
             }
-
-            //return null;
-
-            string feedItemUrl = item.SpecificItem.Element.Element("guid")?.Value;
-
-            Console.WriteLine(feedItemUrl);
             
-            return feedItemUrl;
+            return null;
         }
 
         private static async Task<string> GetFeedContent(string url)

@@ -1,6 +1,5 @@
 namespace Newsgirl.WebServices.Feeds
 {
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
@@ -11,79 +10,15 @@ namespace Newsgirl.WebServices.Feeds
 
     public class FeedsHandler
     {
+        public FeedsHandler(FeedsService feedsService)
+        {
+            this.FeedsService = feedsService;
+        }
+
         private FeedsService FeedsService { get; }
 
-        private FeedItemsClient FeedsClient { get; }
-
-        private IDbService Db { get; }
-
-        private AsyncLock DbLock { get; }
-
-        public FeedsHandler(
-            FeedsService feedsService, 
-            FeedItemsClient feedsClient,
-            IDbService db)
-        {    
-            this.FeedsService = feedsService;
-            this.FeedsClient = feedsClient;
-            this.Db = db;
-            
-            this.DbLock = new AsyncLock();
-        }
-        
-        [BindRequest(typeof(RefreshFeedsRequest))]
-        public async Task<ApiResult> RefreshFeeds()
-        {
-            var allFeeds = await this.FeedsService.GetFeeds(new FeedFM());
-
-            async Task processFeed(int feedID)
-            {
-                try
-                {
-                    FeedBM feed;
-
-                    using (await this.DbLock.Lock())
-                    {
-                        feed = await this.FeedsService.Get(feedID);
-                    }
-                    
-                    var items = await this.FeedsClient.GetFeedItems(feed.FeedUrl);
-                    
-                    using (await this.DbLock.Lock()) 
-                    {
-                        await this.Db.ExecuteInTransactionAndCommit(async () =>
-                        {
-                            await this.FeedsService.SaveBulk(items, feedID);
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await Global.Log.LogError(ex);
-
-                    using (await this.DbLock.Lock())
-                    {
-                        await this.Db.ExecuteInTransactionAndCommit(async () =>
-                        {
-                            var feed = await this.FeedsService.Get(feedID);
-                            
-                            feed.FeedLastFailedTime = DateTime.UtcNow;
-                            feed.FeedLastFailedReason = ex.Message;
-
-                            await this.FeedsService.Save(feed);
-                        });
-                    }
-                }
-            }
-            
-            var tasks = allFeeds.Select(x => processFeed(x.FeedID)).ToList();
-
-            await Task.WhenAll(tasks);
-     
-            return ApiResult.SuccessfulResult();
-        }
-
-        [BindRequest(typeof(DeleteFeedRequest)), InTransaction]
+        [BindRequest(typeof(DeleteFeedRequest))]
+        [InTransaction]
         public async Task<ApiResult> DeleteFeed(DeleteFeedRequest req)
         {
             var poco = await this.FeedsService.Get(req.ID);
@@ -109,11 +44,11 @@ namespace Newsgirl.WebServices.Feeds
                 Item = new FeedDto
                 {
                     FeedName = "",
-                    FeedUrl = "",
-                },
+                    FeedUrl = ""
+                }
             });
         }
- 
+
         [BindRequest(typeof(GetFeedRequest))]
         public async Task<ApiResult> GetFeed(GetFeedRequest req)
         {
@@ -131,11 +66,12 @@ namespace Newsgirl.WebServices.Feeds
                     FeedID = bm.FeedID,
                     FeedName = bm.FeedName,
                     FeedUrl = bm.FeedUrl
-                },
+                }
             });
         }
 
-        [BindRequest(typeof(SaveFeedRequest)), InTransaction]
+        [BindRequest(typeof(SaveFeedRequest))]
+        [InTransaction]
         public async Task<SaveFeedResponse> SaveFeed(SaveFeedRequest req)
         {
             var bm = new FeedBM
@@ -158,15 +94,15 @@ namespace Newsgirl.WebServices.Feeds
         {
             var items = await this.FeedsService.GetFeeds(new FeedFM
             {
-                FeedName_Contains = req.Query,
+                FeedName_Contains = req.Query
             });
-            
+
             return new SearchFeedsResponse
             {
                 Items = items.Select(x => new FeedDto
                 {
-                    FeedID = x.FeedID, 
-                    FeedName = x.FeedName, 
+                    FeedID = x.FeedID,
+                    FeedName = x.FeedName,
                     FeedUrl = x.FeedUrl
                 }).ToList()
             };
@@ -180,14 +116,14 @@ namespace Newsgirl.WebServices.Feeds
     public class FeedDto
     {
         public int FeedID { get; set; }
-        
+
         [Required(ErrorMessage = "Please, enter a feed name.")]
         public string FeedName { get; set; }
-        
+
         [Required(ErrorMessage = "Please, enter a feed url.")]
         public string FeedUrl { get; set; }
     }
-    
+
     public class NewFeedRequest
     {
     }
