@@ -41,6 +41,7 @@ CREATE TABLE feed_items (
   feed_item_url text,
   feed_id INTEGER NOT NULL REFERENCES feeds,
   feed_item_added_time timestamp NOT NULL,
+  feed_item_description text,
 
   PRIMARY KEY (feed_item_id)
 );

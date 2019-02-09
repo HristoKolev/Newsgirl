@@ -47,6 +47,19 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         public DateTime FeedItemAddedTime { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'feed_item_description'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "feed_item_description", DataType = DataType.Text)]
+        public string FeedItemDescription { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_item_id'.</para>
         /// <para>Table name: 'feed_items'.</para>
         /// <para>Primary key of table: 'feed_items'.</para>
@@ -95,6 +108,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
             {
                 FeedID = this.FeedID,
                 FeedItemAddedTime = this.FeedItemAddedTime,
+                FeedItemDescription = this.FeedItemDescription,
                 FeedItemID = this.FeedItemID,
                 FeedItemTitle = this.FeedItemTitle,
                 FeedItemUrl = this.FeedItemUrl,
@@ -422,6 +436,17 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         public DateTime FeedItemAddedTime { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'feed_item_description'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        public string FeedItemDescription { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_item_id'.</para>
         /// <para>Table name: 'feed_items'.</para>
         /// <para>Primary key of table: 'feed_items'.</para>
@@ -718,6 +743,36 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.IsNotIn, "FeedItemAddedTime", NpgsqlDbType.Timestamp, "feed_item_added_time")]
         public DateTime[] FeedItemAddedTime_IsNotIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.Equal, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription { get; set; }
+
+        [FilterOperator(QueryOperatorType.NotEqual, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_NotEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.StartsWith, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_StartsWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWith, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotStartWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWith, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_EndsWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWith, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotEndWith { get; set; }
+
+        [FilterOperator(QueryOperatorType.Contains, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_Contains { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContain, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotContain { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsIn, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string[] FeedItemDescription_IsIn { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotIn, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string[] FeedItemDescription_IsNotIn { get; set; }
 
         [FilterOperator(QueryOperatorType.Equal, "FeedItemID", NpgsqlDbType.Integer, "feed_item_id")]
         public int? FeedItemID { get; set; }
@@ -1276,6 +1331,17 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         public DateTime FeedItemAddedTime { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'feed_item_description'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        public string FeedItemDescription { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_item_id'.</para>
         /// <para>Table name: 'feed_items'.</para>
         /// <para>Primary key of table: 'feed_items'.</para>
@@ -1316,6 +1382,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
             {
                 FeedID = this.FeedID,
                 FeedItemAddedTime = this.FeedItemAddedTime,
+                FeedItemDescription = this.FeedItemDescription,
                 FeedItemID = this.FeedItemID,
                 FeedItemTitle = this.FeedItemTitle,
                 FeedItemUrl = this.FeedItemUrl,
@@ -1756,6 +1823,37 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         NpgsDataTypeName = "NpgsqlDbType.Timestamp",
                         NpgsDataType = NpgsqlDbType.Timestamp,
                         PropertyName = "FeedItemAddedTime",
+                        TableName = "feed_items",
+                        TableSchema = "public",
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ClrTypeName = "string",
+                        ClrType = typeof(string),
+                        ClrNonNullableTypeName = "string",
+                        ClrNonNullableType = typeof(string),
+                        ClrNullableTypeName = "string",
+                        ClrNullableType = typeof(string),
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_item_description",
+                        DbDataType = "text",
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        IsNullable = bool.Parse("False"),
+                        IsClrValueType = bool.Parse("False"),
+                        IsClrNullableType = bool.Parse("False"),
+                        IsClrReferenceType = bool.Parse("True"),
+                        Linq2dbDataTypeName = "DataType.Text",
+                        Linq2dbDataType = DataType.Text,
+                        NpgsDataTypeName = "NpgsqlDbType.Text",
+                        NpgsDataType = NpgsqlDbType.Text,
+                        PropertyName = "FeedItemDescription",
                         TableName = "feed_items",
                         TableSchema = "public",
                     },

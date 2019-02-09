@@ -38,21 +38,12 @@ namespace Newsgirl.WebServices.Feeds
             
             var items = materialized.Items.Select(x => new FeedItemBM
             {
-                FeedItemUrl = GetFeedItemUrl(x),
+                FeedItemUrl = x.Link.SomethingOrNull(),
                 FeedItemTitle = x.Title,
+                FeedItemDescription = x.Description.SomethingOrNull()
             }).ToList();
 
             return items;
-        }
-
-        private static string GetFeedItemUrl(FeedItem item)
-        {
-            if (!string.IsNullOrWhiteSpace(item.Link))
-            {
-                return item.Link;
-            }
-            
-            return null;
         }
 
         private static async Task<string> GetFeedContent(string url)
