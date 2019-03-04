@@ -2,7 +2,6 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading.Tasks;
     using System.Linq;
     using LinqToDB;
     using LinqToDB.Mapping;
@@ -49,13 +48,13 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_description'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [Nullable]
         [Column(Name = "feed_item_description", DataType = DataType.Text)]
         public string FeedItemDescription { get; set; }
 
@@ -438,7 +437,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_description'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
@@ -768,6 +767,30 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
         public string FeedItemDescription_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public string FeedItemDescription_DoesNotContainCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNull, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public bool? FeedItemDescription_IsNull { get; set; }
+
+        [FilterOperator(QueryOperatorType.IsNotNull, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
+        public bool? FeedItemDescription_IsNotNull { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "FeedItemDescription", NpgsqlDbType.Text, "feed_item_description")]
         public string[] FeedItemDescription_IsIn { get; set; }
 
@@ -822,6 +845,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
         public string FeedItemTitle_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
+        public string FeedItemTitle_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "FeedItemTitle", NpgsqlDbType.Text, "feed_item_title")]
         public string[] FeedItemTitle_IsIn { get; set; }
 
@@ -851,6 +892,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
         public string FeedItemUrl_DoesNotContain { get; set; }
+
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
+        public string FeedItemUrl_DoesNotContainCaseSensitive { get; set; }
 
         [FilterOperator(QueryOperatorType.IsNull, "FeedItemUrl", NpgsqlDbType.Text, "feed_item_url")]
         public bool? FeedItemUrl_IsNull { get; set; }
@@ -920,6 +979,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
         public string FeedLastFailedReason_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
+        public string FeedLastFailedReason_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsNull, "FeedLastFailedReason", NpgsqlDbType.Text, "feed_last_failed_reason")]
         public bool? FeedLastFailedReason_IsNull { get; set; }
 
@@ -937,6 +1014,18 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.NotEqual, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
         public DateTime? FeedLastFailedTime_NotEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.LessThan, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime_LessThan { get; set; }
+
+        [FilterOperator(QueryOperatorType.LessThanOrEqual, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime_LessThanOrEqual { get; set; }
+
+        [FilterOperator(QueryOperatorType.GreaterThan, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime_GreaterThan { get; set; }
+
+        [FilterOperator(QueryOperatorType.GreaterThanOrEqual, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
+        public DateTime? FeedLastFailedTime_GreaterThanOrEqual { get; set; }
 
         [FilterOperator(QueryOperatorType.IsNull, "FeedLastFailedTime", NpgsqlDbType.Timestamp, "feed_last_failed_time")]
         public bool? FeedLastFailedTime_IsNull { get; set; }
@@ -974,6 +1063,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedName", NpgsqlDbType.Text, "feed_name")]
         public string FeedName_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedName", NpgsqlDbType.Text, "feed_name")]
+        public string FeedName_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "FeedName", NpgsqlDbType.Text, "feed_name")]
         public string[] FeedName_IsIn { get; set; }
 
@@ -1003,6 +1110,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.DoesNotContain, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
         public string FeedUrl_DoesNotContain { get; set; }
+
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
+        public string FeedUrl_DoesNotContainCaseSensitive { get; set; }
 
         [FilterOperator(QueryOperatorType.IsIn, "FeedUrl", NpgsqlDbType.Text, "feed_url")]
         public string[] FeedUrl_IsIn { get; set; }
@@ -1066,6 +1191,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
         public string SettingName_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
+        public string SettingName_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "SettingName", NpgsqlDbType.Varchar, "setting_name")]
         public string[] SettingName_IsIn { get; set; }
 
@@ -1095,6 +1238,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
 
         [FilterOperator(QueryOperatorType.DoesNotContain, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
         public string SettingValue_DoesNotContain { get; set; }
+
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
+        public string SettingValue_DoesNotContainCaseSensitive { get; set; }
 
         [FilterOperator(QueryOperatorType.IsIn, "SettingValue", NpgsqlDbType.Varchar, "setting_value")]
         public string[] SettingValue_IsIn { get; set; }
@@ -1214,6 +1375,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "Password", NpgsqlDbType.Varchar, "password")]
         public string Password_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "Password", NpgsqlDbType.Varchar, "password")]
+        public string Password_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "Password", NpgsqlDbType.Varchar, "password")]
         public string[] Password_IsIn { get; set; }
 
@@ -1292,6 +1471,24 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         [FilterOperator(QueryOperatorType.DoesNotContain, "Username", NpgsqlDbType.Varchar, "username")]
         public string Username_DoesNotContain { get; set; }
 
+        [FilterOperator(QueryOperatorType.StartsWithCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_StartsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotStartWithCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_DoesNotStartWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.EndsWithCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_EndsWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotEndWithCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_DoesNotEndWithCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.ContainsCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_ContainsCaseSensitive { get; set; }
+
+        [FilterOperator(QueryOperatorType.DoesNotContainCaseSensitive, "Username", NpgsqlDbType.Varchar, "username")]
+        public string Username_DoesNotContainCaseSensitive { get; set; }
+
         [FilterOperator(QueryOperatorType.IsIn, "Username", NpgsqlDbType.Varchar, "username")]
         public string[] Username_IsIn { get; set; }
 
@@ -1333,7 +1530,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Column name: 'feed_item_description'.</para>
         /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
+        /// <para>This column is nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
         /// <para>CLR type: 'string'.</para>
@@ -1641,65 +1838,30 @@ namespace Newsgirl.WebServices.Infrastructure.Data
         /// <summary>
         /// <para>Database table 'feed_items'.</para>
         /// </summary>
-        public IQueryable<FeedItemPoco> FeedItems => this.DbService.GetTable<FeedItemPoco>();
-
-        /// <summary>
-        /// <para>Database table 'feed_items'.</para>
-        /// <para>Filter model 'FeedItemFM'.</para>
-        /// <para>Catalog model 'FeedItemCM'.</para>
-        /// </summary>
-        public Task<List<FeedItemCM>> Filter(FeedItemFM filter) => this.DbService.FilterInternal<FeedItemPoco, FeedItemCM>(filter);
+        public IQueryable<FeedItemPoco> FeedItems => this.LinqProvider.GetTable<FeedItemPoco>();
 
         /// <summary>
         /// <para>Database table 'feeds'.</para>
         /// </summary>
-        public IQueryable<FeedPoco> Feeds => this.DbService.GetTable<FeedPoco>();
-
-        /// <summary>
-        /// <para>Database table 'feeds'.</para>
-        /// <para>Filter model 'FeedFM'.</para>
-        /// <para>Catalog model 'FeedCM'.</para>
-        /// </summary>
-        public Task<List<FeedCM>> Filter(FeedFM filter) => this.DbService.FilterInternal<FeedPoco, FeedCM>(filter);
+        public IQueryable<FeedPoco> Feeds => this.LinqProvider.GetTable<FeedPoco>();
 
         /// <summary>
         /// <para>Database table 'system_settings'.</para>
         /// </summary>
-        public IQueryable<SystemSettingPoco> SystemSettings => this.DbService.GetTable<SystemSettingPoco>();
-
-        /// <summary>
-        /// <para>Database table 'system_settings'.</para>
-        /// <para>Filter model 'SystemSettingFM'.</para>
-        /// <para>Catalog model 'SystemSettingCM'.</para>
-        /// </summary>
-        public Task<List<SystemSettingCM>> Filter(SystemSettingFM filter) => this.DbService.FilterInternal<SystemSettingPoco, SystemSettingCM>(filter);
+        public IQueryable<SystemSettingPoco> SystemSettings => this.LinqProvider.GetTable<SystemSettingPoco>();
 
         /// <summary>
         /// <para>Database table 'user_sessions'.</para>
         /// </summary>
-        public IQueryable<UserSessionPoco> UserSessions => this.DbService.GetTable<UserSessionPoco>();
-
-        /// <summary>
-        /// <para>Database table 'user_sessions'.</para>
-        /// <para>Filter model 'UserSessionFM'.</para>
-        /// <para>Catalog model 'UserSessionCM'.</para>
-        /// </summary>
-        public Task<List<UserSessionCM>> Filter(UserSessionFM filter) => this.DbService.FilterInternal<UserSessionPoco, UserSessionCM>(filter);
+        public IQueryable<UserSessionPoco> UserSessions => this.LinqProvider.GetTable<UserSessionPoco>();
 
         /// <summary>
         /// <para>Database table 'users'.</para>
         /// </summary>
-        public IQueryable<UserPoco> Users => this.DbService.GetTable<UserPoco>();
-
-        /// <summary>
-        /// <para>Database table 'users'.</para>
-        /// <para>Filter model 'UserFM'.</para>
-        /// <para>Catalog model 'UserCM'.</para>
-        /// </summary>
-        public Task<List<UserCM>> Filter(UserFM filter) => this.DbService.FilterInternal<UserPoco, UserCM>(filter);
+        public IQueryable<UserPoco> Users => this.LinqProvider.GetTable<UserPoco>();
 
 
-        public IDbService<DbPocos> DbService { private get; set; }
+        public ILinqProvider LinqProvider { private get; set; }
     }
 
     public static class DbPocosExtensions
@@ -1845,7 +2007,7 @@ namespace Newsgirl.WebServices.Infrastructure.Data
                         ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        IsNullable = bool.Parse("False"),
+                        IsNullable = bool.Parse("True"),
                         IsClrValueType = bool.Parse("False"),
                         IsClrNullableType = bool.Parse("False"),
                         IsClrReferenceType = bool.Parse("True"),

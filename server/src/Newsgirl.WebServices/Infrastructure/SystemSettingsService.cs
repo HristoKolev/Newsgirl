@@ -6,6 +6,10 @@
 
     using Data;
 
+    using LinqToDB;
+
+    using PgNet;
+
     public class SystemSettingsService
     {
         public SystemSettingsService(IDbService db)
@@ -20,7 +24,7 @@
         {
             var modelType = typeof(T);
 
-            var entries = await this.Db.Poco.Filter(new SystemSettingFM());
+            var entries = await this.Db.Poco.SystemSettings.Filter(new SystemSettingFM()).ToArrayAsync();
 
             var instance = new T();
 
