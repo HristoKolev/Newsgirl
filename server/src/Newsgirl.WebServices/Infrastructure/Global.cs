@@ -51,6 +51,8 @@
         public int Port { get; set; }
 
         public string HttpClientUserAgent { get; set; }
+
+        public string ApiUrl { get; set; }
     }
 
     public class SystemSettings

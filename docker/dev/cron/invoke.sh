@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -exu
 
-cd /app/src/Newsgirl.ApiInvoke
+cd /app/src/Newsgirl.WebServices
 
-dotnet run "$@"
+dotnet restore
+
+dotnet run --no-build api-call "$@"

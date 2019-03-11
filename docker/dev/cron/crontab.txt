@@ -1,2 +1,2 @@
 
-# */1 * * * * /invoke.sh RefreshFeedsRequest
+*/1 * * * * /invoke.sh RefreshFeedsRequest
