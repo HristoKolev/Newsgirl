@@ -9,32 +9,67 @@ namespace Newsgirl.WebServices.Infrastructure
 
     using Newtonsoft.Json;
 
+    interface IApiClient
+    {
+        Task<ApiResult> Call(ApiRequest req);
+    }
+    
     public class ApiClient
     {
-        public async Task<ApiResult> Send(ApiRequest dto)
+        private class RemoteApiClient : IApiClient
         {
-            var request = WebRequest.CreateHttp(new Uri(Global.AppConfig.ApiUrl));
-            request.Method = "POST";
-            request.Timeout = Timeout.Infinite;
+            private string ApiUrl { get; }
 
-            request.ContentType = "application/json";
-            request.Accept = "application/json";
-
-            using (var requestStream = await request.GetRequestStreamAsync())
-            using (var writer = new StreamWriter(requestStream, Encoding.UTF8))
+            public RemoteApiClient(string apiUrl)
             {
-                string requestJson = JsonConvert.SerializeObject(dto);
-
-                await writer.WriteAsync(requestJson);
+                this.ApiUrl = apiUrl;
             }
-
-            using (var response = await request.GetResponseAsync())
-            using (var responseStream = response.GetResponseStream())
-            using (var streamReader = new StreamReader(responseStream, Encoding.UTF8))
+        
+            public async Task<ApiResult> Call(ApiRequest req)
             {
-                string responseJson = await streamReader.ReadToEndAsync();
+                var request = WebRequest.CreateHttp(new Uri(this.ApiUrl));
+                request.Method = "POST";
+                request.Timeout = Timeout.Infinite;
 
-                return JsonConvert.DeserializeObject<ApiResult>(responseJson);
+                request.ContentType = "application/json";
+                request.Accept = "application/json";
+
+                using (var requestStream = await request.GetRequestStreamAsync())
+                using (var writer = new StreamWriter(requestStream, Encoding.UTF8))
+                {
+                    string requestJson = JsonConvert.SerializeObject(req);
+
+                    await writer.WriteAsync(requestJson);
+                }
+
+                using (var response = await request.GetResponseAsync())
+                using (var responseStream = response.GetResponseStream())
+                using (var streamReader = new StreamReader(responseStream, Encoding.UTF8))
+                {
+                    string responseJson = await streamReader.ReadToEndAsync();
+
+                    return JsonConvert.DeserializeObject<ApiResult>(responseJson);
+                }
+            }
+        }
+
+        private class DirectApiClient : IApiClient
+        {
+            private IServiceProvider ServiceProvider { get; }
+
+            public DirectApiClient(IServiceProvider serviceProvider)
+            {
+                this.ServiceProvider = serviceProvider;
+            }
+            
+            public async Task<ApiResult> Call(ApiRequest req)
+            {
+                return await ApiHandlerProtocol.ProcessRequest(
+                    req.Type,
+                    req.Payload,
+                    Global.Handlers, 
+                    this.ServiceProvider
+                );
             }
         }
     }

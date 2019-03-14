@@ -9,7 +9,7 @@ namespace Newsgirl.WebServices.Infrastructure
         private static Func<Task<T>> _factory;
 
         private ConcurrentQueue<T> Queue { get; } = new ConcurrentQueue<T>();
-
+        
         public ObjectPool()
         {
             if (_factory == null)

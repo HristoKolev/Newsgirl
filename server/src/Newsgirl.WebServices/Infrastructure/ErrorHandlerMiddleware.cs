@@ -39,7 +39,7 @@
 
                 var result = ApiResult.FromErrorMessage("An error occurred on the server.");
 
-                string json = JsonConvert.SerializeObject(result, ApiHandlerProtocol.SerializerSettings);
+                string json = JsonConvert.SerializeObject(result, SerializerSettings);
 
                 ctx.Response.ContentType = "application/json";
                 ctx.Response.StatusCode = 200;

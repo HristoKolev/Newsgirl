@@ -22,45 +22,16 @@
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ApiHandlerProtocol
     {
-        public static JsonSerializerSettings SerializerSettings { get; } = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
-
         public static async Task<ApiResult> ProcessRequest(
-            string requestBody,
+            string requestType,
+            object requestPayload, 
             HandlerCollection handlers,
             IServiceProvider serviceProvider)
         {
-            if (string.IsNullOrWhiteSpace(requestBody))
-            {
-                return ApiResult.FromErrorMessage("The request body is empty.");
-            }
-
-            var jsonRequest = JObject.Parse(requestBody);
-
-            string requestType = jsonRequest.GetValue("type", StringComparison.InvariantCultureIgnoreCase).ToString();
-
             try
             {
-                if (string.IsNullOrWhiteSpace(requestType))
-                {
-                    return ApiResult.FromErrorMessage("The request type is empty.");
-                }
-
                 var handler = handlers.GetHandler(requestType);
-
-                if (handler == null)
-                {
-                    return ApiResult.FromErrorMessage($"No handler found for request type `{requestType}`.");
-                }
-
-                string requestPayloadJson =
-                    jsonRequest.GetValue("payload", StringComparison.InvariantCultureIgnoreCase).ToString();
-
-                var requestPayload =
-                    JsonConvert.DeserializeObject(requestPayloadJson, handler.RequestType, SerializerSettings);
-
+                
                 var context = serviceProvider.GetService<IHttpContextAccessor>().HttpContext;
 
                 var session = context.GetRequestSession();

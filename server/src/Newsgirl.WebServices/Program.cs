@@ -31,13 +31,6 @@
                     File.ReadAllText(Path.Join(Global.DataDirectory, "appsettings.json")));
 
             Global.AppConfig.ConnectionString = CreateConnectionString(Global.AppConfig.ConnectionString);
-
-            ObjectPool<X509Certificate2>.SetFactory(async () =>
-            {
-                var certBytes = await File.ReadAllBytesAsync(Path.Combine(Global.DataDirectory, "certificate.pfx"));
-                
-                return new X509Certificate2(certBytes);
-            });
             
             MainLogger.Initialize(new LoggerConfigModel
             {
@@ -72,7 +65,7 @@
             {
                 var apiClient = new ApiClient();
                 
-                (string type, var payload) = ParseRequest(args);
+                (string type, object payload) = ParseRequest(args);
 
                 var request = new ApiRequest
                 {
