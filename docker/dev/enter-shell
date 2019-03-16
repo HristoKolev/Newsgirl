@@ -2,6 +2,6 @@
 
 containerName=$1
 
-. ./env.sh
+. ./env
 
 docker-compose -p $stack_name exec $containerName sh

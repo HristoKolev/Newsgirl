@@ -19,7 +19,7 @@ volumes:
 
 services:
   db:
-    image: postgres:11
+    image: postgres
     restart: unless-stopped
     networks:
       br0:
@@ -37,15 +37,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  cron:
-    build: ./cron
-    restart: unless-stopped
-    networks:
-      - br0
-    depends_on:
-      - backend
-    volumes:
-      - backend-src:/app
   backend:
     build: ./backend
     restart: unless-stopped

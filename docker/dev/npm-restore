@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. ./env.sh
+. ./env
 
 docker-compose -p $stack_name down
 
