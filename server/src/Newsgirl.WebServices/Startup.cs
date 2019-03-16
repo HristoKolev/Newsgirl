@@ -6,6 +6,7 @@ namespace Newsgirl.WebServices
     using Auth;
 
     using Infrastructure;
+    using Infrastructure.Api;
 
     using Microsoft.AspNetCore.Builder;
     using Microsoft.Extensions.DependencyInjection;

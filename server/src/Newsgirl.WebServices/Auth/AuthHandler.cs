@@ -3,7 +3,7 @@
     using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
 
-    using Infrastructure;
+    using Infrastructure.Api;
 
     // ReSharper disable once UnusedMember.Global
     public class AuthHandler

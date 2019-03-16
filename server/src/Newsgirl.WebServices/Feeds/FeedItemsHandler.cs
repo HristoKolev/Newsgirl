@@ -5,6 +5,7 @@ namespace Newsgirl.WebServices.Feeds
     using System.Threading.Tasks;
 
     using Infrastructure;
+    using Infrastructure.Api;
     using Infrastructure.Data;
 
     public class FeedItemsHandler

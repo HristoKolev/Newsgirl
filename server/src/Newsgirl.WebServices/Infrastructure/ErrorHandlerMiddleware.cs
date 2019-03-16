@@ -3,6 +3,8 @@
     using System;
     using System.Threading.Tasks;
 
+    using Api;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
@@ -39,11 +41,11 @@
 
                 var result = ApiResult.FromErrorMessage("An error occurred on the server.");
 
-                string json = JsonConvert.SerializeObject(result, SerializerSettings);
-
                 ctx.Response.ContentType = "application/json";
                 ctx.Response.StatusCode = 200;
 
+                string json = ApiResultJsonHelper.Serialize(result);
+                
                 await ctx.Response.WriteAsync(json);
             }
         }

@@ -3,6 +3,8 @@
     using System.IO;
     using System.Runtime.InteropServices;
 
+    using Api;
+
     public static class Global
     {
         public static AppConfig AppConfig { get; set; }

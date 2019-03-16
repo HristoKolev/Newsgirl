@@ -21,22 +21,22 @@
 
         private static readonly object SyncLock = new object();
 
-        private static bool IsInitialized;
+        private static bool _isInitialized;
 
-        private static ILog Log4NetLogger;
+        private static ILog _log4NetLogger;
 
-        private static RavenClient RavenClient;
+        private static RavenClient _ravenClient;
 
         public static void Initialize(LoggerConfigModel config)
         {
-            if (IsInitialized)
+            if (_isInitialized)
             {
                 return;
             }
 
             lock (SyncLock)
             {
-                if (IsInitialized)
+                if (_isInitialized)
                 {
                     return;
                 }
@@ -48,23 +48,23 @@
 
                 XmlConfigurator.ConfigureAndWatch(logRepository, configFile);
 
-                Log4NetLogger = LogManager.GetLogger(config.Assembly, "Global logger");
+                _log4NetLogger = LogManager.GetLogger(config.Assembly, "Global logger");
 
                 // Configure Sentry.
-                RavenClient = new RavenClient(config.SentryDsn);
+                _ravenClient = new RavenClient(config.SentryDsn);
 
-                IsInitialized = true;
+                _isInitialized = true;
             }
         }
 
         public void LogDebug(string message)
         {
-            Log4NetLogger.Debug(message);
+            _log4NetLogger.Debug(message);
         }
 
         public void LogError(string message)
         {
-            Log4NetLogger.Error(message);
+            _log4NetLogger.Error(message);
         }
 
         public Task LogError(Exception exception)
@@ -87,7 +87,7 @@
                 detailed = detailed.InnerException as DetailedLogException;
             }
 
-            return RavenClient.CaptureAsync(new SentryEvent(exception)
+            return _ravenClient.CaptureAsync(new SentryEvent(exception)
             {
                 Level = ErrorLevel.Error,
                 Extra = extra

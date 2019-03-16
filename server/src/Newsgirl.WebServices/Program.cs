@@ -5,10 +5,10 @@
     using System.Linq;
     using System.Net;
     using System.Reflection;
-    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
 
     using Infrastructure;
+    using Infrastructure.Api;
 
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -41,7 +41,7 @@
 
             Global.Handlers = ApiHandlerProtocol.ScanForHandlers(Assembly.GetExecutingAssembly());
 
-            using (var container = new Container(x => x.AddRegistry<MainRegistry>()))
+            using (var container = CreateIoC())
             {
                 var settingsService = container.GetInstance<SystemSettingsService>();
                 Global.Settings = await settingsService.ReadSettings<SystemSettings>();
@@ -59,34 +59,42 @@
             return await RunWebServer();
         }
 
+        private static Container CreateIoC()
+        {
+            return new Container(x => x.AddRegistry<MainRegistry>());
+        }
+
         private static async Task<int> ApiCall(string[] args)
         {
             try
             {
-                var apiClient = new ApiClient();
+                using (var container = CreateIoC())
+                {
+                    var apiClient = container.GetInstance<IApiClient>();
                 
-                (string type, object payload) = ParseRequest(args);
+                    (string type, object payload) = ParseRequest(args);
 
-                var request = new ApiRequest
-                {
-                    Type = type,
-                    Payload = payload
-                };
-
-                var response = await apiClient.Send(request);
-
-                if (!response.Success)
-                {
-                    throw new DetailedLogException("A request failed.")
+                    var request = new ApiRequest
                     {
-                        Context =
-                        {
-                            {"request-json", request},
-                            {"response-json", response}
-                        }
+                        Type = type,
+                        Payload = payload
                     };
-                }
 
+                    var response = await apiClient.Call(request);
+
+                    if (!response.Success)
+                    {
+                        throw new DetailedLogException("A request failed.")
+                        {
+                            Context =
+                            {
+                                {"request-json", request},
+                                {"response-json", response}
+                            }
+                        };
+                    }
+                }
+                
                 return 0;
             }
             catch (Exception exception)

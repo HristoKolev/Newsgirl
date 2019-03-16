@@ -1,4 +1,4 @@
-﻿namespace Newsgirl.WebServices.Infrastructure
+﻿namespace Newsgirl.WebServices.Infrastructure.Api
 {
     using System;
     using System.Collections.Generic;
@@ -6,44 +6,21 @@
     using System.Reflection;
     using System.Threading.Tasks;
 
-    using Auth;
-
     using Data;
-
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.DependencyInjection;
-
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using Newtonsoft.Json.Serialization;
 
     using Npgsql;
 
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class ApiHandlerProtocol
+    public static class ApiHandlerProtocol
     {
-        public static async Task<ApiResult> ProcessRequest(
-            string requestType,
-            object requestPayload, 
-            HandlerCollection handlers,
-            IServiceProvider serviceProvider)
+        public static async Task<ApiResult> ProcessRequest(ApiRequest req, HandlerCollection handlers, TypeResolver resolver)
         {
             try
             {
-                var handler = handlers.GetHandler(requestType);
+                var handler = handlers.GetHandler(req.Type);
                 
-                var context = serviceProvider.GetService<IHttpContextAccessor>().HttpContext;
+                var handlerInstance = resolver.Resolve(handler.Method.DeclaringType);
 
-                var session = context.GetRequestSession();
-
-                if (handler.RequireAuthentication && !session.IsAuthenticated)
-                {
-                    return ApiResult.FromErrorMessage($"Access denied for request type `{requestType}`.");
-                }
-
-                var handlerInstance = serviceProvider.GetService(handler.Method.DeclaringType);
-
-                (bool isValid, var validationErrorMessages) = DataValidator.Validate(requestPayload);
+                (bool isValid, var validationErrorMessages) = DataValidator.Validate(req.Payload);
 
                 if (!isValid)
                 {
@@ -55,23 +32,16 @@
                                         {
                                             if (info.ParameterType == handler.RequestType)
                                             {
-                                                return requestPayload;
-                                            }
-
-                                            if (info.ParameterType == typeof(RequestSession))
-                                            {
-                                                return session;
+                                                return req.Payload;
                                             }
 
                                             throw new NotSupportedException(
-                                                string.Format("Parameters don't match for handler method {0}.{1}",
-                                                              handler.Method.DeclaringType.Name,
-                                                              handler.Method.Name));
+                                                $"Parameters don't match for handler method {handler.Method.DeclaringType.Name}.{handler.Method.Name}");
                                         }).ToArray();
 
                 if (handler.ExecuteInTransaction)
                 {
-                    var db = serviceProvider.GetService<IDbService>();
+                    var db = resolver.Resolve<IDbService>();
 
                     NpgsqlTransaction tx = null;
 
@@ -107,7 +77,7 @@
             }
             catch (Exception ex)
             {
-                var log = serviceProvider.GetService<MainLogger>();
+                var log = resolver.Resolve<MainLogger>();
                 await log.LogError(ex);
 
                 string message;
@@ -121,14 +91,13 @@
                 }
                 else
                 {
-                    message = $"An error occurred while executing request with type `{requestType}`.";
+                    message = $"An error occurred while executing request with type `{req.Type}`.";
                 }
                 #pragma warning restore 162
 
                 return ApiResult.FromErrorMessage(message);
             }
         }
-
 
         public static HandlerCollection ScanForHandlers(params Assembly[] assemblies)
         {
@@ -196,12 +165,10 @@
                         "Handler binding conflict. 2 request types are bound to the same handler method." +
 
                         // ReSharper disable once PossibleNullReferenceException
-                        string.Format("{0} => {1}.{2}", requestType.Name, existingMethodInfo.DeclaringType.Name,
-                                      existingMethodInfo.Name) +
+                        $"{requestType.Name} => {existingMethodInfo.DeclaringType.Name}.{existingMethodInfo.Name}" +
 
                         // ReSharper disable once PossibleNullReferenceException
-                        string.Format("{0} => {1}.{2}", requestType.Name, methodInfo.DeclaringType.Name,
-                                      methodInfo.Name));
+                        $"{requestType.Name} => {methodInfo.DeclaringType.Name}.{methodInfo.Name}");
                 }
 
                 var returnType = methodInfo.ReturnType;
