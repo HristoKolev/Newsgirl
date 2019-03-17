@@ -49,6 +49,16 @@ services:
           - backend
     depends_on:
       - db
+  cron:
+    build: ./cron
+    restart: unless-stopped
+    volumes:
+      - backend-src:/app
+      - data:/data
+    networks:
+      - br0
+    depends_on:
+      - db
   frontend:
     build: ./frontend
     restart: unless-stopped
