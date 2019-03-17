@@ -71,3 +71,20 @@ services:
       - backend
     ports:
       - "4400:80"
+  browser-sync:
+    build: ./browser-sync
+    restart: unless-stopped
+    volumes:
+      - frontend-src:/app      
+    networks:
+      br0:
+        aliases:
+          - browser-sync
+  inject-settings:
+    build: ./inject-settings
+    restart: unless-stopped
+    volumes:
+      - frontend-src:/app      
+    networks:
+      - br0
+     
