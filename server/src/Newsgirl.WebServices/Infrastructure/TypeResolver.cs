@@ -4,6 +4,9 @@ namespace Newsgirl.WebServices.Infrastructure
 
     using StructureMap;
 
+    /// <summary>
+    /// Wraps around the IoC interface. Resolves instances on demand.
+    /// </summary>
     public class TypeResolver
     {
         private IContainer Container { get; }

@@ -20,7 +20,7 @@
     <PackageReference Include="JWT" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="PgNet" Version="1.0.1" />
+    <PackageReference Include="PgNet" Version="1.0.2" />
     <PackageReference Include="SharpRaven" Version="2.4.0" />
     <PackageReference Include="StructureMap.Microsoft.DependencyInjection" Version="2.0.0" />
   </ItemGroup>

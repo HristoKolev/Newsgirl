@@ -9,12 +9,14 @@
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
 
-    using Newtonsoft.Json;
-
+    /// <summary>
+    /// Exception handling middleware. 
+    /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class CustomExceptionHandlerMiddleware
     {
         /// <summary>
-        ///     This calls the internal ASP.NET mechanism for logging.
+        /// This calls the internal ASP.NET mechanism for logging.
         /// </summary>
         private readonly ILogger<CustomExceptionHandlerMiddleware> logger;
 
@@ -26,6 +28,7 @@
             this.next = next;
         }
 
+        // ReSharper disable once UnusedMember.Global
         public async Task InvokeAsync(HttpContext ctx)
         {
             try
@@ -37,7 +40,9 @@
                 await Global.Log.LogError(exception);
 
                 this.logger.LogError(
-                    exception, "An error occurred and was caught by the CustomExceptionHandlerMiddleware.");
+                    exception, 
+                    $"An error occurred and was caught by the {nameof(CustomExceptionHandlerMiddleware)}."
+                );
 
                 var result = ApiResult.FromErrorMessage("An error occurred on the server.");
 

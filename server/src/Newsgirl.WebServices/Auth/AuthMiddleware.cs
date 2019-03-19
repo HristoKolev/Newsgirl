@@ -10,6 +10,7 @@
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Http;
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class AuthMiddleware
     {
         private const string AuthorizationHeaderName = "Authorization";
@@ -63,6 +64,7 @@
             }
         }
 
+        // ReSharper disable once UnusedMember.Global
         public async Task InvokeAsync(HttpContext context, JwtService jwtService, AuthService authService,
                                       MainLogger logger)
         {
@@ -140,6 +142,7 @@
         public bool IsAuthenticated { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class JwtService : JwtService<PublicUserModel>
     {
         public JwtService(MainLogger logger, ObjectPool<X509Certificate2> certPool)

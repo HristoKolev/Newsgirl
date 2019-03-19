@@ -8,6 +8,7 @@ namespace Newsgirl.WebServices.Feeds
     using Infrastructure.Api;
     using Infrastructure.Data;
 
+    // ReSharper disable once UnusedMember.Global
     public class FeedItemsHandler
     {
         public FeedItemsHandler(
@@ -31,11 +32,12 @@ namespace Newsgirl.WebServices.Feeds
         private AsyncLock DbLock { get; }
 
         [BindRequest(typeof(RefreshFeedsRequest))]
+        // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> RefreshFeeds()
         {
             var allFeeds = await this.FeedsService.GetFeeds(new FeedFM());
 
-            async Task processFeed(int feedID)
+            async Task ProcessFeed(int feedID)
             {
                 try
                 {
@@ -75,12 +77,11 @@ namespace Newsgirl.WebServices.Feeds
                 }
             }
             
-            var tasks = allFeeds.Select(x => processFeed(x.FeedID)).ToList();
+            var tasks = allFeeds.Select(x => ProcessFeed(x.FeedID)).ToList();
 
             await Task.WhenAll(tasks);
      
             return ApiResult.SuccessfulResult();
         }
-
     }
 }

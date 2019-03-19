@@ -8,8 +8,6 @@
 
     using LinqToDB;
 
-    using PgNet;
-
     public class SystemSettingsService
     {
         public SystemSettingsService(IDbService db)
@@ -19,12 +17,15 @@
 
         private IDbService Db { get; }
 
+        /// <summary>
+        /// Reads the settings from the database.
+        /// </summary>
         public async Task<T> ReadSettings<T>()
             where T : new()
         {
             var modelType = typeof(T);
 
-            var entries = await this.Db.Poco.SystemSettings.Filter(new SystemSettingFM()).ToArrayAsync();
+            var entries = await this.Db.Poco.SystemSettings.ToArrayAsync();
 
             var instance = new T();
 

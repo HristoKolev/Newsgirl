@@ -25,7 +25,7 @@ namespace Newsgirl.WebServices.Infrastructure
         private void DataAccess()
         {
             this.For<NpgsqlConnection>()
-                .Use("Postgres connection.", ctx => new NpgsqlConnection(Global.AppConfig.ConnectionString))
+                .Use("Postgres connection.", ctx => DbHelper.CreateConnection())
                 .ContainerScoped();
 
             this.For<IDbService>().Use<DbService>();

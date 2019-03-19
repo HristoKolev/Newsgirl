@@ -8,6 +8,7 @@
 
     using LinqToDB;
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class AuthService
     {
         public AuthService(IDbService db)

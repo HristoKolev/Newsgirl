@@ -14,6 +14,9 @@ namespace Newsgirl.WebServices.Infrastructure.Api
         Task<ApiResult> Call(ApiRequest req);
     }
     
+    /// <summary>
+    /// ApiClient that uses HTTP to call a remote server that supports the API handler protocol.
+    /// </summary>
     public class RemoteApiClient : IApiClient
     {
         private string ApiUrl { get; }
@@ -51,22 +54,21 @@ namespace Newsgirl.WebServices.Infrastructure.Api
         }
     }
 
+    /// <summary>
+    /// A direct way of using the api protocol internally. 
+    /// </summary>
     public class DirectApiClient : IApiClient
     {
-        private TypeResolver ServiceProvider { get; }
+        private TypeResolver Resolver { get; }
 
-        public DirectApiClient(TypeResolver serviceProvider)
+        public DirectApiClient(TypeResolver resolver)
         {
-            this.ServiceProvider = serviceProvider;
+            this.Resolver = resolver;
         }
             
         public async Task<ApiResult> Call(ApiRequest req)
         {
-            return await ApiHandlerProtocol.ProcessRequest(
-                req,
-                Global.Handlers, 
-                this.ServiceProvider
-            );
+            return await ApiHandlerProtocol.ProcessRequest(req, Global.Handlers, this.Resolver);
         }
     }
 }

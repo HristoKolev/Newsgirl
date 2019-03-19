@@ -6,9 +6,13 @@
     using System.Linq;
     using System.Reflection;
 
+    /// <summary>
+    /// Validates objects with DataAnnotations.
+    /// If a property has a `ValidateObjectAttribute` then it gets recursively validated.
+    /// </summary>
     public static class DataValidator
     {
-        public static (bool, string[]) Validate<T>(T obj)
+        public static Result Validate<T>(T obj)
         {
             bool isValid = true;
 
@@ -43,10 +47,19 @@
 
             InnerValidate(obj);
 
-            return (isValid, errorMessages.ToArray());
+            if (!isValid)
+            {
+                return Result.FromErrorMessages(errorMessages.ToArray());
+            }
+
+            return Result.Success();
         }
     }
 
+    /// <summary>
+    /// Use on properties to have them validated. Works recursively.
+    /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class ValidateObjectAttribute : Attribute
     {
     }

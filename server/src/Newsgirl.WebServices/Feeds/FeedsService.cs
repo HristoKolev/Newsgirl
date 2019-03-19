@@ -12,6 +12,7 @@ namespace Newsgirl.WebServices.Feeds
 
     using PgNet;
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class FeedsService
     {
         public FeedsService(IDbService db)

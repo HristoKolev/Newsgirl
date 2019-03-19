@@ -6,6 +6,9 @@ namespace Newsgirl.WebServices.Infrastructure.Api
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
 
+    /// <summary>
+    /// A helper created to handle Serializing/Deserializing of objects related to the Api Handler protocol.
+    /// </summary>
     public static class ApiResultJsonHelper
     {
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
@@ -13,11 +16,18 @@ namespace Newsgirl.WebServices.Infrastructure.Api
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
         
+        /// <summary>
+        /// It serializes a ApiResult using special settings.
+        /// </summary>
         public static string Serialize(ApiResult result)
         {
             return JsonConvert.SerializeObject(result, SerializerSettings);
         }
         
+        /// <summary>
+        /// Parses a json string to get the `ApiRequest`.
+        /// If there is something missing or otherwise wrong it reruns a failure.
+        /// </summary>
         public static Result<ApiRequest> TryParse(string json)
         {
             if (string.IsNullOrWhiteSpace(json))

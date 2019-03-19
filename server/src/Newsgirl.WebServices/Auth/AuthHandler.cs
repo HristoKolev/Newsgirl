@@ -18,9 +18,8 @@
 
         private JwtService JwtService { get; }
 
-        [BindRequest(typeof(LoginRequest))]
         [InTransaction]
-
+        [BindRequest(typeof(LoginRequest))]
         // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> Login(LoginRequest request)
         {

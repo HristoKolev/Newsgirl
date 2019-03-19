@@ -12,6 +12,7 @@ namespace Newsgirl.WebServices.Feeds
     using Infrastructure;
     using Infrastructure.Data;
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class FeedItemsClient
     {
         public async Task<List<FeedItemBM>> GetFeedItems(string url)
@@ -97,7 +98,7 @@ namespace Newsgirl.WebServices.Feeds
                 Timeout = TimeSpan.FromSeconds(60)
             };
             
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(Global.AppConfig.HttpClientUserAgent);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(Global.Settings.HttpClientUserAgent);
                  
             return client ;
         }

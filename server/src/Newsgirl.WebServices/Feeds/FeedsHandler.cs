@@ -5,10 +5,10 @@ namespace Newsgirl.WebServices.Feeds
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Infrastructure;
     using Infrastructure.Api;
     using Infrastructure.Data;
 
+    // ReSharper disable once UnusedMember.Global
     public class FeedsHandler
     {
         public FeedsHandler(FeedsService feedsService)
@@ -18,8 +18,9 @@ namespace Newsgirl.WebServices.Feeds
 
         private FeedsService FeedsService { get; }
 
-        [BindRequest(typeof(DeleteFeedRequest))]
         [InTransaction]
+        [BindRequest(typeof(DeleteFeedRequest))]
+        // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> DeleteFeed(DeleteFeedRequest req)
         {
             var poco = await this.FeedsService.Get(req.ID);
@@ -38,6 +39,7 @@ namespace Newsgirl.WebServices.Feeds
         }
 
         [BindRequest(typeof(NewFeedRequest))]
+        // ReSharper disable once UnusedMember.Global
         public Task<NewFeedResponse> GetNewFeed()
         {
             return Task.FromResult(new NewFeedResponse
@@ -51,6 +53,7 @@ namespace Newsgirl.WebServices.Feeds
         }
 
         [BindRequest(typeof(GetFeedRequest))]
+        // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> GetFeed(GetFeedRequest req)
         {
             var bm = await this.FeedsService.Get(req.ID);
@@ -71,8 +74,9 @@ namespace Newsgirl.WebServices.Feeds
             });
         }
 
-        [BindRequest(typeof(SaveFeedRequest))]
         [InTransaction]
+        [BindRequest(typeof(SaveFeedRequest))]
+        // ReSharper disable once UnusedMember.Global
         public async Task<SaveFeedResponse> SaveFeed(SaveFeedRequest req)
         {
             var bm = new FeedBM
@@ -91,6 +95,7 @@ namespace Newsgirl.WebServices.Feeds
         }
 
         [BindRequest(typeof(SearchFeedsRequest))]
+        // ReSharper disable once UnusedMember.Global
         public async Task<SearchFeedsResponse> SearchFeeds(SearchFeedsRequest req)
         {
             var items = await this.FeedsService.GetFeeds(new FeedFM

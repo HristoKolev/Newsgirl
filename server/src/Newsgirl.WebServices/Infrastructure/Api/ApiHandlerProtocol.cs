@@ -17,28 +17,33 @@
             try
             {
                 var handler = handlers.GetHandler(req.Type);
-                
                 var handlerInstance = resolver.Resolve(handler.Method.DeclaringType);
-
-                (bool isValid, var validationErrorMessages) = DataValidator.Validate(req.Payload);
-
-                if (!isValid)
+                
+                // Request payload validation.
+                var validationResult = DataValidator.Validate(req.Payload);
+                if (!validationResult.IsSuccess)
                 {
-                    return ApiResult.FromErrorMessages(validationErrorMessages);
+                    return ApiResult.FromErrorMessages(validationResult.ErrorMessages);
                 }
 
-                var parameters = handler.Method.GetParameters()
-                                        .Select(info =>
-                                        {
-                                            if (info.ParameterType == handler.RequestType)
-                                            {
-                                                return req.Payload;
-                                            }
+                // Resolve the parameters.
+                var parameters = handler.Method.GetParameters().Select(info =>
+                {
+                    if (info.ParameterType == handler.RequestType)
+                    {
+                        return req.Payload;
+                    }
 
-                                            throw new NotSupportedException(
-                                                $"Parameters don't match for handler method {handler.Method.DeclaringType.Name}.{handler.Method.Name}");
-                                        }).ToArray();
+                    string message = $"Parameters don't match for handler method {handler.Method.DeclaringType.Name}.{handler.Method.Name}";
 
+                    throw new NotSupportedException(message);
+                }).ToArray();
+
+                // In case of a transaction.
+                // Call the handler's method,
+                // if it throws - rollback,
+                // if it runs and produces a failed response - rollback,
+                // if it returns a successful response - commit.
                 if (handler.ExecuteInTransaction)
                 {
                     var db = resolver.Resolve<IDbService>();
@@ -75,16 +80,16 @@
 
                 return await ExecuteHandlerMethod(handler.Method, handlerInstance, parameters);
             }
-            catch (Exception ex)
+            catch (Exception ex) // In case of an error.
             {
+                // Log the error.
                 var log = resolver.Resolve<MainLogger>();
                 await log.LogError(ex);
-
+                
+                // In a debug environment - return the stack trace as an error message.
+                // In release - just return an acknowledgment that an error has occured.
                 string message;
-
-                #pragma warning disable 162
-
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                
                 if (Global.Debug)
                 {
                     message = ex.ToString();
@@ -93,7 +98,6 @@
                 {
                     message = $"An error occurred while executing request with type `{req.Type}`.";
                 }
-                #pragma warning restore 162
 
                 return ApiResult.FromErrorMessage(message);
             }
@@ -101,18 +105,15 @@
 
         public static HandlerCollection ScanForHandlers(params Assembly[] assemblies)
         {
+            var allMethodsFilter = BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic;
+            
+            // Gets all methods that have `BindRequestAttribute` of all types in the provided assemblies.
             var methods = assemblies.SelectMany(assembly => assembly.GetTypes())
-                                    .SelectMany(type =>
-                                                    type.GetMethods(
-                                                        BindingFlags.Instance |
-                                                        BindingFlags.Public |
-                                                        BindingFlags.Static |
-                                                        BindingFlags.NonPublic))
-                                    .Where(info =>
-                                               info.GetCustomAttribute<BindRequestAttribute>() !=
-                                               null);
-
-            var handlerMap = new Dictionary<Type, MethodInfo>();
+                                    .SelectMany(type => type.GetMethods(allMethodsFilter))
+                                    .Where(info => info.GetCustomAttribute<BindRequestAttribute>() != null)
+                                    .ToList();
+            
+            var requestTypeByHandlerMethodInfo = new Dictionary<Type, MethodInfo>();
 
             var handlers = new List<HandlerCollection.ApiHandlerModel>();
 
@@ -157,9 +158,9 @@
                     }
                 }
 
-                if (handlerMap.ContainsKey(requestType))
+                if (requestTypeByHandlerMethodInfo.ContainsKey(requestType))
                 {
-                    var existingMethodInfo = handlerMap[requestType];
+                    var existingMethodInfo = requestTypeByHandlerMethodInfo[requestType];
 
                     throw new NotSupportedException(
                         "Handler binding conflict. 2 request types are bound to the same handler method." +
@@ -183,7 +184,7 @@
                     }
                 }
 
-                handlerMap.Add(requestType, methodInfo);
+                requestTypeByHandlerMethodInfo.Add(requestType, methodInfo);
 
                 var handlerTypeAttributes = methodInfo.DeclaringType.GetCustomAttributes().ToList();
                 var handlerMethodAttributes = methodInfo.GetCustomAttributes().ToList();
@@ -203,26 +204,33 @@
             return new HandlerCollection(handlers);
         }
 
+        /// <summary>
+        /// An abstraction around calling the handler's method.
+        /// The idea is that it may return (void or an object) or Task (of something)
+        /// and it should be handled accordingly.
+        /// If the return value is `ApiResult` then return it, else - wrap it in a successful `ApiResult`. 
+        /// </summary>
         private static async Task<ApiResult> ExecuteHandlerMethod(
             MethodInfo methodInfo, 
             object handlerInstance,
             object[] parameters)
         {
+            // If it's an awaitable.
             if (typeof(Task).IsAssignableFrom(methodInfo.ReturnType))
             {
+                // If it's a simple task - just await it and if it does not throw - return success. 
                 if (methodInfo.ReturnType == typeof(Task))
                 {
                     await (Task) methodInfo.Invoke(handlerInstance, parameters);
-
                     return ApiResult.SuccessfulResult();
                 }
 
+                // If it's a Task<T>, await the task and then get the Result with reflection.
                 var task = (Task) methodInfo.Invoke(handlerInstance, parameters);
-
                 await task;
-
                 object returnValue = task.GetType().GetProperty("Result").GetValue(task);
 
+                // Wrap if needed.
                 if (returnValue is ApiResult result)
                 {
                     return result;
@@ -230,12 +238,11 @@
 
                 return ApiResult.SuccessfulResult(returnValue);
             }
-            else
+            else // Just a normal value.
             {
                 if (methodInfo.ReturnType == typeof(void))
                 {
                     methodInfo.Invoke(handlerInstance, parameters);
-
                     return ApiResult.SuccessfulResult();
                 }
 
@@ -251,11 +258,20 @@
         }
     }
 
+    /// <summary>
+    /// Put this on a handler method in order to run it in a transaction.
+    /// You can also put it on a handler class,
+    /// that way every handler method wil run in a transaction.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
     public class InTransactionAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// Put this on a method to mark it as a handler method.
+    /// You have to specify the request Dto type. 
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
     public class BindRequestAttribute : Attribute
     {
@@ -267,11 +283,20 @@
         public Type RequestType { get; }
     }
 
+    /// <summary>
+    /// Use this in order to specify that the handler method have to be called by an authenticated user.
+    /// This is used for handler methods that are designed to be called from HTTP.
+    /// Calls coming from the `DirectApiClient` will aways be executed.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class AuthenticateHandlerAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// A master type that holds handler metadata.
+    /// </summary>
     public class HandlerCollection
     {
         public HandlerCollection(IReadOnlyCollection<ApiHandlerModel> handlers)

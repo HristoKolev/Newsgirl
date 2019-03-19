@@ -4,6 +4,11 @@
     using System.Threading;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// Provides asynchronous locking functionality without any extras.
+    /// Uses `SemaphoreSlim` under the hood.
+    /// To use create a new instance and call the `await Lock()` method in a using statement.
+    /// </summary>
     public class AsyncLock
     {
         private readonly SemaphoreSlim semaphore;
@@ -21,6 +26,11 @@
         }
     }
 
+    /// <summary>
+    /// The object that gets returned by the AsyncLock's Lock() method.
+    /// The only point of this class is to implement the `IDisposable` interface,
+    /// releasing the lock on Disposing.  
+    /// </summary>
     public class AsyncLockInstance : IDisposable
     {
         private readonly SemaphoreSlim semaphore;
