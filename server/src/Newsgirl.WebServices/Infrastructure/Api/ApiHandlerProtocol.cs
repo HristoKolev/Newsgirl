@@ -119,7 +119,9 @@
 
             foreach (var methodInfo in methods)
             {
-                var requestType = methodInfo.GetCustomAttribute<BindRequestAttribute>().RequestType;
+                var bindRequestAttribute = methodInfo.GetCustomAttribute<BindRequestAttribute>();
+                
+                var requestType = bindRequestAttribute.RequestType;
 
                 if (!methodInfo.IsPublic)
                 {
@@ -194,6 +196,7 @@
                 handlers.Add(new HandlerCollection.ApiHandlerModel
                 {
                     RequestType = requestType,
+                    ResponseType = bindRequestAttribute.ResponseType,
                     Method = methodInfo,
                     HandlerType = methodInfo.DeclaringType,
                     ExecuteInTransaction = allAttributes.OfType<InTransactionAttribute>().Any(),
@@ -275,12 +278,20 @@
     [AttributeUsage(AttributeTargets.Method)]
     public class BindRequestAttribute : Attribute
     {
+        public BindRequestAttribute(Type requestType, Type responseType)
+        {
+            this.RequestType = requestType;
+            this.ResponseType = responseType;
+        }
+        
         public BindRequestAttribute(Type requestType)
         {
             this.RequestType = requestType;
         }
 
         public Type RequestType { get; }
+
+        public Type ResponseType { get; }
     }
 
     /// <summary>
@@ -335,6 +346,8 @@
             public Type RequestType { get; set; }
 
             public bool RequireAuthentication { get; set; }
+
+            public Type ResponseType { get; set; }
         }
     }
 

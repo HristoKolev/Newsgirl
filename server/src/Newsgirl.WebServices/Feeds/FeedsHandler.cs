@@ -19,7 +19,7 @@ namespace Newsgirl.WebServices.Feeds
         private FeedsService FeedsService { get; }
 
         [InTransaction]
-        [BindRequest(typeof(DeleteFeedRequest))]
+        [BindRequest(typeof(DeleteFeedRequest), typeof(DeleteFeedResponse))]
         // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> DeleteFeed(DeleteFeedRequest req)
         {
@@ -38,7 +38,7 @@ namespace Newsgirl.WebServices.Feeds
             });
         }
 
-        [BindRequest(typeof(NewFeedRequest))]
+        [BindRequest(typeof(NewFeedRequest), typeof(NewFeedResponse))]
         // ReSharper disable once UnusedMember.Global
         public Task<NewFeedResponse> GetNewFeed()
         {
@@ -52,7 +52,7 @@ namespace Newsgirl.WebServices.Feeds
             });
         }
 
-        [BindRequest(typeof(GetFeedRequest))]
+        [BindRequest(typeof(GetFeedRequest), typeof(GetFeedResponse))]
         // ReSharper disable once UnusedMember.Global
         public async Task<ApiResult> GetFeed(GetFeedRequest req)
         {
@@ -75,7 +75,7 @@ namespace Newsgirl.WebServices.Feeds
         }
 
         [InTransaction]
-        [BindRequest(typeof(SaveFeedRequest))]
+        [BindRequest(typeof(SaveFeedRequest), typeof(SaveFeedResponse))]
         // ReSharper disable once UnusedMember.Global
         public async Task<SaveFeedResponse> SaveFeed(SaveFeedRequest req)
         {
@@ -94,7 +94,7 @@ namespace Newsgirl.WebServices.Feeds
             };
         }
 
-        [BindRequest(typeof(SearchFeedsRequest))]
+        [BindRequest(typeof(SearchFeedsRequest), typeof(SearchFeedsResponse))]
         // ReSharper disable once UnusedMember.Global
         public async Task<SearchFeedsResponse> SearchFeeds(SearchFeedsRequest req)
         {

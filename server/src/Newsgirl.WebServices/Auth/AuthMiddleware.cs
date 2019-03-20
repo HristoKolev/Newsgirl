@@ -10,6 +10,9 @@
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Http;
 
+    /// <summary>
+    /// The middleware responsible for authenticating new requests.
+    /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
     public class AuthMiddleware
     {
@@ -24,6 +27,9 @@
             this.next = next;
         }
 
+        /// <summary>
+        /// Returns the JWT if found from the `Authorization` header or NULL if not found. 
+        /// </summary>
         public string GetToken(HttpContext context, MainLogger logger)
         {
             try
@@ -65,8 +71,7 @@
         }
 
         // ReSharper disable once UnusedMember.Global
-        public async Task InvokeAsync(HttpContext context, JwtService jwtService, AuthService authService,
-                                      MainLogger logger)
+        public async Task InvokeAsync(HttpContext context,  JwtService jwtService, AuthService authService, MainLogger logger)
         {
             var requestSession = new RequestSession
             {
@@ -95,11 +100,12 @@
                 return;
             }
 
+            // The session is decoded and validated.
             var user = await authService.GetUser(publicSession.SessionID);
 
             if (user == null)
             {
-                // No such session.
+                // No such session in the database.
                 await this.next(context);
 
                 return;
@@ -120,21 +126,24 @@
         }
     }
 
+    /// <summary>
+    /// Extension methods that hide the fact the session is stored in the HttpContext.Items.
+    /// </summary>
     public static class RequestExtensions
     {
-        private const string RequestClientKey = "__request_client__";
+        private const string RequestSessionKey = "__request_session__";
 
         public static RequestSession GetRequestSession(this HttpContext ctx)
         {
-            return (RequestSession) ctx.Items[RequestClientKey];
+            return (RequestSession) ctx.Items[RequestSessionKey];
         }
 
         public static void SetRequestSession(this HttpContext ctx, RequestSession requestSession)
         {
-            ctx.Items[RequestClientKey] = requestSession;
+            ctx.Items[RequestSessionKey] = requestSession;
         }
     }
-
+    
     public class RequestSession
     {
         public UserBM CurrentUser { get; set; }
@@ -151,6 +160,9 @@
         }
     }
 
+    /// <summary>
+    /// The model stored in the JWT.
+    /// </summary>
     public class PublicUserModel
     {
         public int SessionID { get; set; }

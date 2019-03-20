@@ -2,6 +2,9 @@
 {
     using Microsoft.AspNetCore.Http;
 
+    /// <summary>
+    /// Provides access to the current user session. 
+    /// </summary>
     public class SessionService
     {
         public SessionService(IHttpContextAccessor contextAccessor)
