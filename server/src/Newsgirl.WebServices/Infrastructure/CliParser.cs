@@ -12,7 +12,8 @@ namespace Newsgirl.WebServices.Infrastructure
     {
         private static readonly Dictionary<string, CliOption> CliMap = new Dictionary<string, CliOption>
         {
-            {"api-call", CliOption.ApiCall}
+            {"api-call", CliOption.ApiCall},
+            {"generate-client-rpc", CliOption.GenerateClientRpcCode},
         };
 
         public static (CliOption, string[]) Parse(string[] args)
@@ -34,5 +35,6 @@ namespace Newsgirl.WebServices.Infrastructure
     {
         WebServer,
         ApiCall,
+        GenerateClientRpcCode
     }
 }

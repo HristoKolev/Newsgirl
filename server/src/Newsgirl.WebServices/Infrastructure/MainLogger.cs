@@ -63,18 +63,15 @@
                 {
                     return;
                 }
-
-                const string log4NetRepositoryName = "MainRepository";
-                const string log4NetLoggerName = "GlobalLogger";
                 
                 // Configure log4net.
-                var logRepository = LogManager.GetRepository(log4NetRepositoryName);
+                var logRepository = LogManager.GetRepository(typeof(MainLogger).Assembly);
 
                 var configFile = new FileInfo(Path.Combine(config.LogRootDirectory, LoggerFilePath));
 
                 XmlConfigurator.ConfigureAndWatch(logRepository, configFile);
                 
-                _log4NetLogger = LogManager.GetLogger(log4NetRepositoryName, log4NetLoggerName);
+                _log4NetLogger = LogManager.GetLogger(typeof(MainLogger));
 
                 // Configure Sentry.
                 _ravenClient = new RavenClient(config.SentryDsn);
@@ -97,28 +94,32 @@
         {
             var list = GetExceptionChain(exception);
 
-            this.LogError($"Exception was handled. (ExceptionMessage: {exception.Message}, ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))}) View the Sentry entry for more details.");
+            this.LogError($"Exception was handled. (ExceptionMessage: {exception.Message}, " +
+                          $"ExceptionType: {string.Join(", ", list.Select(x => x.GetType().Name))}) " +
+                          "View the Sentry entry for more details.");
 
-            var detailed = exception as DetailedLogException;
+            var detailedExceptions = list.Where(x => x is DetailedLogException)
+                                         .Cast<DetailedLogException>().ToList();
 
             var extra = new Dictionary<string, object>();
-
-            while (detailed != null)
+            
+            foreach (var detailedException in detailedExceptions)
             {
-                foreach (var pair in detailed.Context)
+                foreach (var pair in detailedException.Context)
                 {
                     extra[pair.Key] = pair.Value;
-                }
-
-                detailed = detailed.InnerException as DetailedLogException;
+                }                
             }
-
+            
             return _ravenClient.CaptureAsync(new SentryEvent(exception)
             {
                 Level = ErrorLevel.Error,
                 Extra = extra
             });
         }
+
+        public void LogErrorSync(Exception exception) => 
+            this.LogError(exception).GetAwaiter().GetResult();
 
         /// <summary>
         /// Walks the exception tree and produces all Exception objects in it.
@@ -151,6 +152,11 @@
         /// The DNS used to connect to the Sentry error tracking system.
         /// </summary>
         public string SentryDsn { get; set; }
+
+        /// <summary>
+        /// Should the full stacks be printed in the logs when errors occur.
+        /// </summary>
+        public bool FullStackTracesInLogs { get; set; }
     }
 
     /// <summary>

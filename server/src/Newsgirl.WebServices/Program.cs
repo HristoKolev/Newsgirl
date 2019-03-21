@@ -46,6 +46,11 @@
                     // Run an api call.
                     return await ApiCall.Run(restArgs);
                 }
+                case CliOption.GenerateClientRpcCode:
+                {
+                    // Generate client rpc code.
+                    return await RpcCodeGenerator.Generate(restArgs);
+                }
                 default:
                 {
                     throw new ArgumentOutOfRangeException(nameof(cliOption));
