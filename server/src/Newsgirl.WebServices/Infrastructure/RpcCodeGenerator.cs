@@ -19,15 +19,87 @@ namespace Newsgirl.WebServices.Infrastructure
 
             var allTypes = GetAllTypes(types);
 
-            foreach (Type type in allTypes)
-            {
-                MainLogger.Instance.LogDebug($"TYPE: {type.Name}");
-            }
-
+            string contents = string.Join("\n\n", allTypes.Select(ScriptType));
+            
+            MainLogger.Instance.LogDebug(contents);
+            
             return 0;
         }
 
-        private static HashSet<Type> GetAllTypes(List<Type> types)
+        private static string ScriptType(Type targetType)
+        {
+            var props = targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            var scriptedProperties = props.Select(x => $"  {x.Name}: {ResolveType(x.PropertyType)};").ToList();
+
+            return $"export interface {targetType.Name} {{\n" + string.Join("\n", scriptedProperties) + "\n}";
+        }
+
+        private static string ResolveType(Type type)
+        {
+            var typeMap = new Dictionary<Type, string>()
+            {
+                { typeof(int), "number" },
+                { typeof(long), "number" },
+                { typeof(string), "string" },
+                { typeof(bool), "boolean" },
+                { typeof(decimal), "number" },
+                { typeof(DateTime), "Date" },
+            };
+
+            if (typeMap.ContainsKey(type))
+            {
+                return typeMap[type];
+            }
+
+            if (type.IsArray)
+            {
+                if (type.GetArrayRank() != 1)
+                {
+                    throw new DetailedLogException("Multidimensional arrays are not supported.");
+                }
+                
+                var t = type.GetElementType();
+                
+                return ResolveType(t) + "[]";
+            }
+
+            if (type.IsGenericType)
+            {
+                var genericDefinition = type.GetGenericTypeDefinition();
+
+                if (genericDefinition == typeof(List<>))
+                {
+                    var genericArguments = type.GetGenericArguments();
+                    var t = genericArguments[0];
+
+                    return ResolveType(t) + "[]";
+                }
+
+                if (genericDefinition == typeof(Dictionary<,>))
+                {
+                    var genericArguments = type.GetGenericArguments();
+                    
+                    var tKey = genericArguments[0];
+                    var tValue = genericArguments[1];
+
+                    return "{ [key: " + ResolveType(tKey) + "]: " + ResolveType(tValue) + " }";
+                }
+                
+                throw new DetailedLogException("Generic type not supported.")
+                {
+                    Context =
+                    {
+                        {"TypeName", genericDefinition.Name},
+                    }
+                };
+            }
+
+            // If it's not a simple type - return it's name.
+            return type.Name;
+        }
+
+        private static List<Type> GetAllTypes(List<Type> types)
         {
             var bannedTypes = new[]
             {
@@ -72,8 +144,34 @@ namespace Newsgirl.WebServices.Infrastructure
                     return;
                 }
 
+                if (targetType.IsArray)
+                {
+                    if (targetType.GetArrayRank() != 1)
+                    {
+                        throw new DetailedLogException("Multidimensional arrays are not supported.");
+                    }
+                
+                    var t = targetType.GetElementType();
+                    
+                    Recurse(t);
+                    return;
+                }
+
                 if (targetType.IsGenericType)
                 {
+                    var genericTypeDefinition = targetType.GetGenericTypeDefinition();
+
+                    if (genericTypeDefinition != typeof(List<>) && genericTypeDefinition != typeof(Dictionary<,>))
+                    {
+                        throw new DetailedLogException("Generic type not supported.")
+                        {
+                            Context =
+                            {
+                                {"TypeName", targetType},
+                            }
+                        };
+                    }
+                    
                     foreach (var t in targetType.GetGenericArguments())
                     {
                         Recurse(t);
@@ -98,7 +196,7 @@ namespace Newsgirl.WebServices.Infrastructure
                 Recurse(type);
             }
 
-            return allTypes;
+            return allTypes.ToList();
         }
     }
 }
