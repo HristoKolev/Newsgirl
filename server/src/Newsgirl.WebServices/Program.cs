@@ -1,7 +1,6 @@
 ﻿namespace Newsgirl.WebServices
 {
     using System;
-    using System.Reflection;
     using System.Threading.Tasks;
 
     using Infrastructure;
