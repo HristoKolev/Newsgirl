@@ -4,6 +4,7 @@ namespace Newsgirl.WebServices.Infrastructure
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     public class RpcCodeGenerator
@@ -30,7 +31,7 @@ namespace Newsgirl.WebServices.Infrastructure
         {
             var props = targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-            var scriptedProperties = props.Select(x => $"  {x.Name}: {ResolveType(x.PropertyType)};").ToList();
+            var scriptedProperties = props.Select(x => $"  {CamelCase(x.Name)}: {ResolveType(x.PropertyType)};").ToList();
 
             return $"export interface {targetType.Name} {{\n" + string.Join("\n", scriptedProperties) + "\n}";
         }
@@ -99,6 +100,18 @@ namespace Newsgirl.WebServices.Infrastructure
             return type.Name;
         }
 
+        private static string CamelCase(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+		
+            text = Regex.Replace(text, "([A-Z])([A-Z]+)($|[A-Z])", m => m.Groups[1].Value + m.Groups[2].Value.ToLower() + m.Groups[3].Value);
+		
+            return char.ToLower(text[0]) + text.Substring(1);
+        }
+        
         private static List<Type> GetAllTypes(List<Type> types)
         {
             var bannedTypes = new[]
