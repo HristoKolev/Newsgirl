@@ -45,6 +45,12 @@ namespace Newsgirl.WebServices.Feeds
 
         public async Task Delete(int feedID)
         {
+            var itemIds = await this.Db.Poco.FeedItems
+                                    .Filter(new FeedItemFM { FeedID = feedID })
+                                    .Select(x => x.FeedItemID)
+                                    .ToArrayAsync();
+
+            await this.Db.Delete<FeedItemPoco>(itemIds);
             await this.Db.Delete<FeedPoco>(feedID);
         }
 
