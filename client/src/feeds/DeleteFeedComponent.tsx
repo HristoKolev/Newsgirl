@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from 'mdbreact';
 import BackButton from '../infrastructure/components/BackButton';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import {AppContext} from '../infrastructure/context';
-import { GetFeedRequest, GetFeedResponse, FeedDto, DeleteFeedRequest, DeleteFeedResponse } from './feeds.dto';
+import { GetFeedRequest, GetFeedResponse, FeedDto, DeleteFeedRequest, DeleteFeedResponse } from '../dto';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
 
 interface RouterParams {

@@ -5,7 +5,7 @@ import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import {RouteComponentProps} from 'react-router';
 import {AppContext} from '../infrastructure/context';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
-import { FeedDto, NewFeedRequest, NewFeedResponse, SaveFeedRequest, SaveFeedResponse } from './feeds.dto';
+import { FeedDto, NewFeedRequest, NewFeedResponse, SaveFeedRequest, SaveFeedResponse } from '../dto';
 import { PostFormComponent } from './FeedFormComponent';
 
 interface Props extends RouteComponentProps<{}> {

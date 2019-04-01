@@ -8,7 +8,7 @@ import { AppContext } from '../infrastructure/context';
 import {
   FeedDto, GetFeedRequest, GetFeedResponse, SaveFeedRequest, SaveFeedResponse,
 
-} from './feeds.dto';
+} from '../dto';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
 
 interface RouterParams {

@@ -5,7 +5,7 @@ import {Card, CardBody, CardHeader, Table, TableBody, TableHead} from 'mdbreact'
 import {AppContext} from '../infrastructure/context';
 import {Field, Form, Formik} from 'formik';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
-import { SearchFeedsRequest, FeedDto, SearchFeedsResponse } from './feeds.dto';
+import { SearchFeedsRequest, FeedDto, SearchFeedsResponse } from '../dto';
 import { fields } from '../infrastructure/fields/fields';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 

@@ -5,7 +5,7 @@ import './LoginComponent.scss';
 import {ErrorMessagesContainer} from '../infrastructure/errors/components/ErrorComponents';
 import {fields} from '../infrastructure/fields/fields';
 import {Button, Card, CardBody} from 'mdbreact';
-import {LoginRequest, LoginResponse} from '../infrastructure/auth-dto';
+import {LoginRequest, LoginResponse} from '../dto';
 import {AppContext} from '../infrastructure/context';
 import {Field, Form, Formik} from 'formik';
 import {RouteComponentProps} from 'react-router';

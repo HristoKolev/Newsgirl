@@ -19,41 +19,37 @@
                 LogRootDirectory = Global.DataDirectory
             });
 
-            // Gather handler related metadata.
-            Global.LoadHandlers();
-
-            // Read settings from the database.
-            using (var container = Global.CreateIoC())
+            try
             {
-                var settingsService = container.GetInstance<SystemSettingsService>();
-                Global.Settings = await settingsService.ReadSettings<SystemSettings>();
-            }
+                // Gather handler related metadata.
+                Global.LoadHandlers();
+          
+                // Scan for cli tasks.
+                CliParser.Scan();
             
-            // Parse the commandline arguments and decide
-            // what kind of process this is going to be.
-            var (cliOption, restArgs) = CliParser.Parse(args);
+                // Parse the commandline arguments and decide
+                // what kind of process this is going to be.
+                var (commandModel, restArgs) = CliParser.Parse(args);
 
-            switch (cliOption)
+                if (!commandModel.SkipSettingsLoading)
+                {
+                    // Read settings from the database.
+                    using (var container = Global.CreateIoC())
+                    {
+                        var settingsService = container.GetInstance<SystemSettingsService>();
+                        Global.Settings = await settingsService.ReadSettings<SystemSettings>();
+                    }    
+                }
+                
+                var command = (ICliCommand) Activator.CreateInstance(commandModel.CommandType);
+            
+                return await command.Run(restArgs);
+            }
+            catch (Exception exception)
             {
-                case CliOption.WebServer:
-                {
-                    // Run the web server.
-                    return await WebServer.Run(restArgs);
-                }
-                case CliOption.ApiCall:
-                {
-                    // Run an api call.
-                    return await ApiCall.Run(restArgs);
-                }
-                case CliOption.GenerateClientRpcCode:
-                {
-                    // Generate client rpc code.
-                    return await RpcCodeGenerator.Generate(restArgs);
-                }
-                default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(cliOption));
-                }
+                await MainLogger.Instance.LogError(exception);
+
+                return 1;
             }
         }
     }

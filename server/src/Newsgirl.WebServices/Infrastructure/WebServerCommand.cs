@@ -13,12 +13,13 @@ namespace Newsgirl.WebServices.Infrastructure
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
-    public static class WebServer
+    [CliCommand("web-server", IsDefault = true)]
+    public class WebServerCommand : ICliCommand
     {
         /// <summary>
         /// Runs the web server. Logs to Sentry on failure to start.
         /// </summary>
-        public static async Task<int> Run(string[] args)
+        public async Task<int> Run(string[] args)
         {
             try
             {

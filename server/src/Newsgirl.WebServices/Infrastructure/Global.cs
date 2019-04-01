@@ -34,7 +34,7 @@
         /// <summary>
         /// The data directory.
         /// </summary>
-        public static string DataDirectory => Debug ? RootDirectory : Path.Combine(RootDirectory, "/data");
+        public static string DataDirectory => Debug ? RootDirectory : "/data";
 
         /// <summary>
         /// The root directory of the project.

@@ -1,7 +1,10 @@
 namespace Newsgirl.WebServices.Infrastructure
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Top level cli argument parser.
@@ -10,31 +13,108 @@ namespace Newsgirl.WebServices.Infrastructure
     /// </summary>
     public static class CliParser
     {
-        private static readonly Dictionary<string, CliOption> CliMap = new Dictionary<string, CliOption>
+        private static List<CliCommandModel> CommandMap; 
+        
+        private static readonly object SyncLock = new object();
+        
+        public static void Scan()
         {
-            {"api-call", CliOption.ApiCall},
-            {"generate-client-rpc", CliOption.GenerateClientRpcCode},
-        };
+            if (CommandMap != null)
+            {
+                return;
+            }
 
-        public static (CliOption, string[]) Parse(string[] args)
+            lock (SyncLock)
+            {
+                if (CommandMap != null)
+                {
+                    return;
+                }
+
+                var commandMap = new List<CliCommandModel>();
+            
+                var cliCommandTypes = typeof(ICliCommand)
+                                      .Assembly.DefinedTypes
+                                      .Where(x => x.IsClass && typeof(ICliCommand).IsAssignableFrom(x))
+                                      .ToList();
+
+                foreach (var commandType in cliCommandTypes)
+                {
+                    var attribute = commandType.GetCustomAttribute<CliCommandAttribute>();
+
+                    if (attribute == null)
+                    {
+                        throw new DetailedLogException($"No `{nameof(CliCommandAttribute)} found for command type.`")
+                        {
+                            Context =
+                            {
+                                {"CommandType", commandType.Name }
+                            }
+                        };
+                    }
+                
+                    commandMap.Add(new CliCommandModel
+                    {
+                        CommandName = attribute.CommandName,
+                        CommandType = commandType,
+                        IsDefault = attribute.IsDefault,
+                        SkipSettingsLoading = attribute.SkipSettingsLoading
+                    });
+                }
+
+                CommandMap = commandMap;
+            }
+        }
+        
+        public static (CliCommandModel, string[]) Parse(string[] args)
         {
             string firstArg = args.FirstOrDefault();
 
             string[] restArgs = args.Skip(1).ToArray();
+
+            var pairsByType = CommandMap.ToDictionary(x => x.CommandName);
             
-            if (firstArg != null && CliMap.ContainsKey(firstArg))
+            if (firstArg != null && pairsByType.ContainsKey(firstArg))
             {
-                return (CliMap[firstArg], restArgs);    
+                var model = pairsByType[firstArg];
+
+                return (model, restArgs);
             }
 
-            return (CliOption.WebServer, restArgs);
+            var defaultCommand = CommandMap.Single(x => x.IsDefault);
+
+            return (defaultCommand, restArgs);
+        }
+    }
+
+    public class CliCommandModel
+    {
+        public Type CommandType { get; set; }
+
+        public string CommandName { get; set; }
+
+        public bool IsDefault { get; set; }
+
+        public bool SkipSettingsLoading { get; set; }
+    }
+ 
+    [AttributeUsage(AttributeTargets.Class)]
+    public class CliCommandAttribute : Attribute
+    {
+        public string CommandName { get; }
+
+        public bool IsDefault { get; set; }
+        
+        public bool SkipSettingsLoading { get; set; }
+        
+        public CliCommandAttribute(string commandName)
+        {
+            this.CommandName = commandName;
         }
     }
     
-    public enum CliOption
+    public interface ICliCommand
     {
-        WebServer,
-        ApiCall,
-        GenerateClientRpcCode
+        Task<int> Run(string[] args);
     }
 }

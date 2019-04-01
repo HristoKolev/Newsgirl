@@ -12,7 +12,8 @@ namespace Newsgirl.WebServices.Infrastructure
     /// This module parses ApiRequests from the command line
     /// and executes them in a newly created context.  
     /// </summary>
-    public static class ApiCall
+    [CliCommand("api-call")]
+    public class ApiCallCommand: ICliCommand
     {
         /// <summary>
         /// Parses an `ApiRequest` from commandline arguments.
@@ -39,7 +40,7 @@ namespace Newsgirl.WebServices.Infrastructure
             };
         }
 
-        public static async Task<int> Run(string[] args)
+        public async Task<int> Run(string[] args)
         {
             try
             {

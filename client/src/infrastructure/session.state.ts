@@ -1,6 +1,6 @@
 import { Action, ActionCreatorsMapObject, Reducer } from 'redux';
 import { distributeAction } from './distribute-helpers';
-import { LoginResponse } from './auth-dto';
+import { LoginResponse } from '../dto';
 
 export const sessionActions = {
   LOGIN: 'session/LOGIN',

@@ -2,15 +2,26 @@ namespace Newsgirl.WebServices.Infrastructure
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
-    public class RpcCodeGenerator
+    using CommandLine;
+
+    [CliCommand("generate-client-rpc", SkipSettingsLoading = true)]
+    public class RpcCodeGeneratorCommand : ICliCommand
     {
-        public static async Task<int> Generate(string[] args)
+        public async Task<int> Run(string[] args)
         {
+            var options = RpcCodeGeneratorOptions.ReadFromArgs(args);
+
+            if (options == default)
+            {
+                return 1;
+            }
+            
             var handlers = Global.Handlers.GetAllHandlers().ToList();
 
             var types = handlers.Select(x => x.RequestType)
@@ -21,8 +32,8 @@ namespace Newsgirl.WebServices.Infrastructure
             var allTypes = GetAllTypes(types);
 
             string contents = string.Join("\n\n", allTypes.Select(ScriptType));
-            
-            MainLogger.Instance.LogDebug(contents);
+
+            await File.WriteAllTextAsync(options.Output, contents);
             
             return 0;
         }
@@ -106,9 +117,12 @@ namespace Newsgirl.WebServices.Infrastructure
             {
                 return text;
             }
-		
-            text = Regex.Replace(text, "([A-Z])([A-Z]+)($|[A-Z])", m => m.Groups[1].Value + m.Groups[2].Value.ToLower() + m.Groups[3].Value);
-		
+
+            if (text == "ID")
+            {
+                return "id";
+            }
+		 
             return char.ToLower(text[0]) + text.Substring(1);
         }
         
@@ -210,6 +224,22 @@ namespace Newsgirl.WebServices.Infrastructure
             }
 
             return allTypes.ToList();
+        }
+    }
+    
+    public class RpcCodeGeneratorOptions
+    {
+        [Option('o', "output", HelpText = "The output file location.", Required = true)]
+        public string Output { get; set; }
+ 
+        public static RpcCodeGeneratorOptions ReadFromArgs(string[] args)
+        {
+            RpcCodeGeneratorOptions cliArgs = default;
+
+            Parser.Default.ParseArguments<RpcCodeGeneratorOptions>(args)
+                  .WithParsed(x => cliArgs = x);
+
+            return cliArgs;
         }
     }
 }

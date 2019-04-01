@@ -4,7 +4,7 @@ import { ErrorMessagesContainer } from '../infrastructure/errors/components/Erro
 import { Form, Formik, Field } from 'formik';
 import BackButton from '../infrastructure/components/BackButton';
 import { fields } from '../infrastructure/fields/fields';
-import { FeedDto } from './feeds.dto';
+import { FeedDto } from '../dto';
 
 interface Props {
   model: FeedDto;

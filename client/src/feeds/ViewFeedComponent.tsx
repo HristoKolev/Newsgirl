@@ -5,7 +5,7 @@ import {Card, CardBody, CardHeader, Table, TableBody} from 'mdbreact';
 
 import {AppContext} from '../infrastructure/context';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
-import { FeedDto, GetFeedRequest, GetFeedResponse } from './feeds.dto';
+import { FeedDto, GetFeedRequest, GetFeedResponse } from '../dto';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import BackButton from '../infrastructure/components/BackButton';
 
