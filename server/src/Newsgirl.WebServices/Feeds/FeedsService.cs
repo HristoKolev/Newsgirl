@@ -22,13 +22,14 @@ namespace Newsgirl.WebServices.Feeds
 
         private IDbService Db { get; }
 
-        public Task<List<FeedCM>> GetFeeds(FeedFM filter)
+        public async Task<List<FeedBM>> GetFeeds(FeedFM filter)
         {
-            return this.Db.Poco.Feeds
+            var items = await this.Db.Poco.Feeds
                        .Filter(filter)
                        .OrderByPrimaryKeyDescending()
-                       .SelectCm()
                        .ToListAsync();
+
+            return items.Select(x => x.ToBm()).ToList();
         }
 
         public async Task<FeedBM> Get(int feedID)
@@ -54,7 +55,7 @@ namespace Newsgirl.WebServices.Feeds
             await this.Db.Delete<FeedPoco>(feedID);
         }
 
-        public async Task SaveBulk(List<FeedItemBM> items, int feedID)
+        public async Task SaveItems(List<FeedItemBM> items, int feedID)
         {
             var urls = items.Select(x => x.FeedItemUrl).ToList();
 

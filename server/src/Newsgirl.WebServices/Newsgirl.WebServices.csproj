@@ -16,14 +16,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.9.2" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.4.0" />
     <PackageReference Include="CodeHollow.FeedReader" Version="1.1.6" />
     <PackageReference Include="CommandLineParser" Version="2.4.3" />
     <PackageReference Include="JWT" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="PgNet" Version="1.0.2" />
+    <PackageReference Include="PgNet" Version="1.0.3" />
     <PackageReference Include="SharpRaven" Version="2.4.0" />
-    <PackageReference Include="StructureMap.Microsoft.DependencyInjection" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,7 +13,7 @@ namespace Newsgirl.WebServices.Feeds
     using Infrastructure.Data;
 
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class FeedItemsClient
+    public class FeedItemsClientService
     {
         public async Task<List<FeedItemBM>> GetFeedItems(string url)
         {

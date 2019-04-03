@@ -13,11 +13,11 @@ namespace Newsgirl.WebServices.Feeds
     {
         public FeedItemsHandler(
             FeedsService feedsService, 
-            FeedItemsClient feedsClient,
+            FeedItemsClientService feedsClientService,
             IDbService db)
         {    
             this.FeedsService = feedsService;
-            this.FeedsClient = feedsClient;
+            this.FeedsClientService = feedsClientService;
             this.Db = db;
             
             this.DbLock = new AsyncLock();
@@ -25,7 +25,7 @@ namespace Newsgirl.WebServices.Feeds
 
         private FeedsService FeedsService { get; }
 
-        private FeedItemsClient FeedsClient { get; }
+        private FeedItemsClientService FeedsClientService { get; }
 
         private IDbService Db { get; }
 
@@ -48,13 +48,13 @@ namespace Newsgirl.WebServices.Feeds
                         feed = await this.FeedsService.Get(feedID);
                     }
                     
-                    var items = await this.FeedsClient.GetFeedItems(feed.FeedUrl);
+                    var items = await this.FeedsClientService.GetFeedItems(feed.FeedUrl);
                     
                     using (await this.DbLock.Lock()) 
                     {
                         await this.Db.ExecuteInTransactionAndCommit(async () =>
                         {
-                            await this.FeedsService.SaveBulk(items, feedID);
+                            await this.FeedsService.SaveItems(items, feedID);
                         });
                     }
                 }

@@ -6,11 +6,12 @@
 
     using Api;
 
+    using Autofac;
+    using Autofac.Extensions.DependencyInjection;
+
     using Microsoft.Extensions.DependencyInjection;
 
     using Newtonsoft.Json;
-
-    using StructureMap;
 
     public static class Global
     {
@@ -78,17 +79,18 @@
         /// Creates a IoC instance.
         /// `IServiceCollection` can be passed if it's used in ASP.NET Core context.
         /// </summary>
-        public static IContainer CreateIoC(IServiceCollection serviceCollection = null)
+        public static ILifetimeScope CreateIoC(IServiceCollection serviceCollection = null)
         {
-            return new Container(x =>
+            var builder = new ContainerBuilder();
+            
+            if (serviceCollection != null)
             {
-                if (serviceCollection != null)
-                {
-                    x.Populate(serviceCollection);
-                }
-                
-                x.AddRegistry<MainRegistry>();
-            });
+                builder.Populate(serviceCollection);
+            }
+
+            builder.RegisterModule<MainModule>();
+
+            return builder.Build();
         }
     }
 

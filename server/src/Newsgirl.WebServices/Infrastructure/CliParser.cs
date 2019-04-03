@@ -8,25 +8,24 @@ namespace Newsgirl.WebServices.Infrastructure
 
     /// <summary>
     /// Top level cli argument parser.
-    /// Returns cli option and the reset of the arguments.
-    /// The default option is `WebServer`. 
+    /// Returns cli command and the reset of the arguments.
     /// </summary>
     public static class CliParser
     {
-        private static List<CliCommandModel> CommandMap; 
+        public static List<CliCommandModel> AllCommands { get; private set; } 
         
         private static readonly object SyncLock = new object();
         
         public static void Scan()
         {
-            if (CommandMap != null)
+            if (AllCommands != null)
             {
                 return;
             }
 
             lock (SyncLock)
             {
-                if (CommandMap != null)
+                if (AllCommands != null)
                 {
                     return;
                 }
@@ -62,26 +61,27 @@ namespace Newsgirl.WebServices.Infrastructure
                     });
                 }
 
-                CommandMap = commandMap;
+                AllCommands = commandMap;
             }
         }
         
         public static (CliCommandModel, string[]) Parse(string[] args)
         {
-            string firstArg = args.FirstOrDefault();
-
-            string[] restArgs = args.Skip(1).ToArray();
-
-            var pairsByType = CommandMap.ToDictionary(x => x.CommandName);
+            // The command name is the first argument.
+            string commandName = args.FirstOrDefault();
             
-            if (firstArg != null && pairsByType.ContainsKey(firstArg))
+            // Get the rest to pass to the executing command.
+            string[] restArgs = args.Skip(1).ToArray();
+            
+            var commandsByName = AllCommands.ToDictionary(x => x.CommandName);
+            
+            if (commandName != null && commandsByName.ContainsKey(commandName))
             {
-                var model = pairsByType[firstArg];
-
-                return (model, restArgs);
+                return (commandsByName[commandName], restArgs);
             }
 
-            var defaultCommand = CommandMap.Single(x => x.IsDefault);
+            // If the command name was not specified - use the only command marked as Default.
+            var defaultCommand = AllCommands.Single(x => x.IsDefault);
 
             return (defaultCommand, restArgs);
         }

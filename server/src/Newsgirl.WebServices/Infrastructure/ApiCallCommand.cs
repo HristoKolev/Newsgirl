@@ -6,6 +6,8 @@ namespace Newsgirl.WebServices.Infrastructure
 
     using Api;
 
+    using Autofac;
+
     using Newtonsoft.Json.Linq;
 
     /// <summary>
@@ -46,7 +48,7 @@ namespace Newsgirl.WebServices.Infrastructure
             {
                 using (var container = Global.CreateIoC())
                 {
-                    var apiClient = container.GetInstance<IApiClient>();
+                    var apiClient = container.Resolve<IApiClient>();
                 
                     var request = ParseRequest(args);
 
@@ -69,7 +71,7 @@ namespace Newsgirl.WebServices.Infrastructure
             }
             catch (Exception exception)
             {
-                await MainLogger.Instance.LogError(exception);
+                await Global.Log.LogError(exception);
 
                 return 1;
             }

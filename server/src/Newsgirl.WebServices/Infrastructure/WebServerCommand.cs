@@ -8,6 +8,8 @@ namespace Newsgirl.WebServices.Infrastructure
 
     using Auth;
 
+    using Autofac;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
@@ -81,7 +83,7 @@ namespace Newsgirl.WebServices.Infrastructure
 
             var container = Global.CreateIoC(services);
             
-            return container.GetInstance<IServiceProvider>();
+            return container.Resolve<IServiceProvider>();
         }
     }
 }

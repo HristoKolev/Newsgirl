@@ -3,6 +3,8 @@
     using System;
     using System.Threading.Tasks;
 
+    using Autofac;
+
     using Infrastructure;
 
     public static class Program
@@ -11,7 +13,7 @@
         {
             // Settings.
             await Global.ReadSettings();
-            
+
             // Logging.
             MainLogger.Initialize(new LoggerConfigModel
             {
@@ -23,27 +25,28 @@
             {
                 // Gather handler related metadata.
                 Global.LoadHandlers();
-          
+
                 // Scan for cli tasks.
                 CliParser.Scan();
-            
+
                 // Parse the commandline arguments and decide
                 // what kind of process this is going to be.
                 var (commandModel, restArgs) = CliParser.Parse(args);
 
-                if (!commandModel.SkipSettingsLoading)
+                using (var container = Global.CreateIoC())
                 {
-                    // Read settings from the database.
-                    using (var container = Global.CreateIoC())
+                    if (!commandModel.SkipSettingsLoading)
                     {
-                        var settingsService = container.GetInstance<SystemSettingsService>();
+                        // Read settings from the database.
+
+                        var settingsService = container.Resolve<SystemSettingsService>();
                         Global.Settings = await settingsService.ReadSettings<SystemSettings>();
-                    }    
+                    }
+
+                    var command = (ICliCommand) container.Resolve(commandModel.CommandType);
+
+                    return await command.Run(restArgs);
                 }
-                
-                var command = (ICliCommand) Activator.CreateInstance(commandModel.CommandType);
-            
-                return await command.Run(restArgs);
             }
             catch (Exception exception)
             {

@@ -2,28 +2,28 @@ namespace Newsgirl.WebServices.Infrastructure
 {
     using System;
 
-    using StructureMap;
+    using Autofac;
 
     /// <summary>
     /// Wraps around the IoC interface. Resolves instances on demand.
     /// </summary>
     public class TypeResolver
     {
-        private IContainer Container { get; }
+        private ILifetimeScope Scope { get; }
 
-        public TypeResolver(IContainer container)
+        public TypeResolver(ILifetimeScope scope)
         {
-            this.Container = container;
+            this.Scope = scope;
         }
 
         public T Resolve<T>()
         {
-            return this.Container.GetInstance<T>();
+            return this.Scope.Resolve<T>();
         }
 
         public object Resolve(Type type)
         {
-            return this.Container.GetInstance(type);
+            return this.Scope.Resolve(type);
         }
     }
 }
