@@ -27,7 +27,9 @@
         /// </summary>
         public static async Task ReadSettings()
         {
-            string json = await File.ReadAllTextAsync(Path.Join(DataDirectory, AppSettingsFileName));
+            string path = Path.Join(DataDirectory, AppSettingsFileName);
+          
+            string json = await File.ReadAllTextAsync(path);
 
             AppConfig = JsonConvert.DeserializeObject<AppConfig>(json);
         }

@@ -30,7 +30,7 @@
         /// <summary>
         /// Returns the JWT if found from the `Authorization` header or NULL if not found. 
         /// </summary>
-        public string GetToken(HttpContext context, MainLogger logger)
+        private static string GetToken(HttpContext context, MainLogger logger)
         {
             try
             {
@@ -80,7 +80,7 @@
 
             context.SetRequestSession(requestSession);
 
-            string token = this.GetToken(context, logger);
+            string token = GetToken(context, logger);
 
             if (token == null)
             {
