@@ -36,52 +36,54 @@ namespace Newsgirl.WebServices.Feeds
         public async Task<ApiResult> RefreshFeeds()
         {
             var allFeeds = await this.FeedsService.GetFeeds(new FeedFM());
-
-            async Task ProcessFeed(int feedID)
-            {
-                try
-                {
-                    FeedBM feed;
-
-                    using (await this.DbLock.Lock())
-                    {
-                        feed = await this.FeedsService.Get(feedID);
-                    }
-                    
-                    var items = await this.FeedsClientService.GetFeedItems(feed.FeedUrl);
-                    
-                    using (await this.DbLock.Lock()) 
-                    {
-                        await this.Db.ExecuteInTransactionAndCommit(async () =>
-                        {
-                            await this.FeedsService.SaveItems(items, feedID);
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await Global.Log.LogError(ex);
-
-                    using (await this.DbLock.Lock())
-                    {
-                        await this.Db.ExecuteInTransactionAndCommit(async () =>
-                        {
-                            var feed = await this.FeedsService.Get(feedID);
-                            
-                            feed.FeedLastFailedTime = DateTime.UtcNow;
-                            feed.FeedLastFailedReason = ex.Message;
-
-                            await this.FeedsService.Save(feed);
-                        });
-                    }
-                }
-            }
             
-            var tasks = allFeeds.Select(x => ProcessFeed(x.FeedID)).ToList();
+            var tasks = allFeeds.Select(x => x.FeedID)
+                                .Select(this.ProcessFeed)
+                                .ToList();
 
             await Task.WhenAll(tasks);
      
             return ApiResult.SuccessfulResult();
+        }
+        
+        private async Task ProcessFeed(int feedID)
+        {
+            try
+            {
+                FeedBM feed;
+
+                using (await this.DbLock.Lock())
+                {
+                    feed = await this.FeedsService.Get(feedID);
+                }
+                    
+                var items = await this.FeedsClientService.FetchFeedItems(feed.FeedUrl);
+                    
+                using (await this.DbLock.Lock()) 
+                {
+                    await this.Db.ExecuteInTransactionAndCommit(async () =>
+                    {
+                        await this.FeedsService.SaveItems(items, feedID);
+                    });
+                }
+            }
+            catch (Exception exception)
+            {
+                await Global.Log.LogError(exception);
+
+                using (await this.DbLock.Lock())
+                {
+                    await this.Db.ExecuteInTransactionAndCommit(async () =>
+                    {
+                        var feed = await this.FeedsService.Get(feedID);
+                            
+                        feed.FeedLastFailedTime = DateTime.UtcNow;
+                        feed.FeedLastFailedReason = exception.Message;
+
+                        await this.FeedsService.Save(feed);
+                    });
+                }
+            }
         }
     }
 }

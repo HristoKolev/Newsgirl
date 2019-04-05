@@ -15,7 +15,7 @@ namespace Newsgirl.WebServices.Feeds
     // ReSharper disable once ClassNeverInstantiated.Global
     public class FeedItemsClientService
     {
-        public async Task<List<FeedItemBM>> GetFeedItems(string url)
+        public async Task<List<FeedItemBM>> FetchFeedItems(string url)
         {
             string feedContent = await GetFeedContent(url);
 
