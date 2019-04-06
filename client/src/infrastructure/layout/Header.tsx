@@ -35,6 +35,11 @@ export class Header extends Component<any, State> {
                 <NavLink to={'/feeds'}>Feeds</NavLink>
               </SessionComponent>
             </NavItem>
+            <NavItem>
+              <SessionComponent>
+                <NavLink to={'/feed-items'}>Live Feeds</NavLink>
+              </SessionComponent>
+            </NavItem>
           </NavbarNav>
           <NavbarNav right>
             <NavItem>

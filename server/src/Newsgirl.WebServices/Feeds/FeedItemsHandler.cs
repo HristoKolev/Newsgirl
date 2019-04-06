@@ -1,89 +1,76 @@
 namespace Newsgirl.WebServices.Feeds
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Infrastructure;
     using Infrastructure.Api;
     using Infrastructure.Data;
 
-    // ReSharper disable once UnusedMember.Global
+    using LinqToDB;
+
     public class FeedItemsHandler
     {
-        public FeedItemsHandler(
-            FeedsService feedsService, 
-            FeedItemsClientService feedsClientService,
-            IDbService db)
-        {    
-            this.FeedsService = feedsService;
-            this.FeedsClientService = feedsClientService;
-            this.Db = db;
-            
-            this.DbLock = new AsyncLock();
-        }
-
-        private FeedsService FeedsService { get; }
-
-        private FeedItemsClientService FeedsClientService { get; }
-
         private IDbService Db { get; }
 
-        private AsyncLock DbLock { get; }
-
-        [BindRequest(typeof(RefreshFeedsRequest))]
-        // ReSharper disable once UnusedMember.Global
-        public async Task<ApiResult> RefreshFeeds()
+        public FeedItemsHandler(IDbService db)
         {
-            var allFeeds = await this.FeedsService.GetFeeds(new FeedFM());
-            
-            var tasks = allFeeds.Select(x => x.FeedID)
-                                .Select(this.ProcessFeed)
-                                .ToList();
-
-            await Task.WhenAll(tasks);
-     
-            return ApiResult.SuccessfulResult();
+            this.Db = db;
         }
         
-        private async Task ProcessFeed(int feedID)
+        [BindRequest(typeof(GetFeedItemsRequest), typeof(GetFeedItemsResponse))]
+        public async Task<GetFeedItemsResponse> GetFeeds(GetFeedItemsRequest req)
         {
-            try
+            var items = await (from feedItem in this.Db.Poco.FeedItems
+                                join feed in this.Db.Poco.Feeds on feedItem.FeedID equals feed.FeedID
+                                orderby feedItem.FeedItemAddedTime descending
+                                select new
+                                {
+                                    feedItem,
+                                    feed
+                                }
+                               ).ToListAsync();
+            
+            return new GetFeedItemsResponse
             {
-                FeedBM feed;
-
-                using (await this.DbLock.Lock())
+                Items = items.Select(x => new FeedItemDto
                 {
-                    feed = await this.FeedsService.Get(feedID);
-                }
-                    
-                var items = await this.FeedsClientService.FetchFeedItems(feed.FeedUrl);
-                    
-                using (await this.DbLock.Lock()) 
-                {
-                    await this.Db.ExecuteInTransactionAndCommit(async () =>
-                    {
-                        await this.FeedsService.SaveItems(items, feedID);
-                    });
-                }
-            }
-            catch (Exception exception)
-            {
-                await Global.Log.LogError(exception);
-
-                using (await this.DbLock.Lock())
-                {
-                    await this.Db.ExecuteInTransactionAndCommit(async () =>
-                    {
-                        var feed = await this.FeedsService.Get(feedID);
-                            
-                        feed.FeedLastFailedTime = DateTime.UtcNow;
-                        feed.FeedLastFailedReason = exception.Message;
-
-                        await this.FeedsService.Save(feed);
-                    });
-                }
-            }
+                    FeedID = x.feedItem.FeedID,
+                    FeedName = x.feed.FeedName,
+                    FeedItemUrl = x.feedItem.FeedItemUrl,
+                    FeedItemTitle = x.feedItem.FeedItemTitle,
+                    FeedItemDescription = x.feedItem.FeedItemDescription,
+                    FeedItemID = x.feedItem.FeedItemID,
+                    FeedItemAddedTime = x.feedItem.FeedItemAddedTime,
+                }).ToList()
+            };
         }
+    }
+
+    public class GetFeedItemsRequest
+    {
+    }
+
+    public class GetFeedItemsResponse
+    {
+        public List<FeedItemDto> Items { get; set; }
+    }
+
+    public class FeedItemDto
+    {
+        public string FeedName { get; set; }
+        
+        public int FeedID { get; set; }
+
+        public DateTime FeedItemAddedTime { get; set; }
+
+        public string FeedItemDescription { get; set; }
+
+        public int FeedItemID { get; set; }
+
+        public string FeedItemTitle { get; set; }
+
+        public string FeedItemUrl { get; set; }
     }
 }

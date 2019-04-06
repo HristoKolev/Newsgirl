@@ -115,10 +115,6 @@ namespace Newsgirl.WebServices.Feeds
         }
     }
 
-    public class RefreshFeedsRequest
-    {
-    }
-
     public class FeedDto
     {
         public int FeedID { get; set; }

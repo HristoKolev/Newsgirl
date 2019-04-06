@@ -1,4 +1,4 @@
-export interface RefreshFeedsRequest {
+export interface GetFeedItemsRequest {
 
 }
 
@@ -28,9 +28,27 @@ export interface SearchFeedsRequest {
   query: string;
 }
 
+export interface RefreshFeedsRequest {
+
+}
+
 export interface LoginRequest {
   password: string;
   username: string;
+}
+
+export interface GetFeedItemsResponse {
+  items: FeedItemDto[];
+}
+
+export interface FeedItemDto {
+  feedName: string;
+  feedID: number;
+  feedItemAddedTime: Date;
+  feedItemDescription: string;
+  feedItemID: number;
+  feedItemTitle: string;
+  feedItemUrl: string;
 }
 
 export interface DeleteFeedResponse {
