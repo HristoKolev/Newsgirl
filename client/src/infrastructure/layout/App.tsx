@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { ToastContainer } from 'react-toastify';
 
 import { FooterComponent } from './FooterComponent';
@@ -11,7 +11,7 @@ import {
   SagaErrorModal,
 } from '../errors/components/ErrorComponents';
 
-export const App: SFC<ChildrenProps> = ({children}) => (
+export const App: FunctionComponent<ChildrenProps> = ({children}) => (
   <React.Fragment>
     <section className="main">
 

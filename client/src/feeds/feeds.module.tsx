@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { ContextInjectorProps } from '../infrastructure/context';
 import SessionComponent from '../infrastructure/components/SessionComponent';
@@ -8,7 +8,7 @@ import { EditFeedComponent } from './EditFeedComponent';
 import { DeleteFeedComponent } from './DeleteFeedComponent';
 import { FeedListComponent } from './FeedListComponent';
 
-export const FeedsRoutes: SFC<ContextInjectorProps> = ({ctof}) => (
+export const FeedsRoutes: FunctionComponent<ContextInjectorProps> = ({ctof}) => (
   <SessionComponent>
     <Switch>
 

@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { ChildrenProps } from '../redux-types';
 
 import { Modal, ModalBody } from 'mdbreact';
@@ -9,7 +9,7 @@ interface Props extends ChildrenProps {
   className?: string;
 }
 
-export const CustomModal: SFC<Props> = ({title, children, onClose}) => (
+export const CustomModal: FunctionComponent<Props> = ({title, children, onClose}) => (
   <div className="modal">
     <Modal isOpen={true} size="lg">
       <div className="modal-header danger-color white-text">

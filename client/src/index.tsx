@@ -27,7 +27,7 @@ import { App } from './infrastructure/layout/App';
 
 import { AuthRoutes } from './auth/auth.module';
 import { freezeMiddleware } from './infrastructure/freeze-middleware';
-import createHistory from 'history/createBrowserHistory';
+import { createBrowserHistory } from 'history';
 import { distributeMiddleware, distributeDispatch } from './infrastructure/distribute-dispatch';
 import { FeedsRoutes } from './feeds/feeds.module';
 import { FeedItemsRoutes } from './feed-items/feed-items.module';
@@ -36,7 +36,7 @@ if (process.env.NODE_ENV === 'development') {
   registerObserver();
 }
 
-const history = createHistory();
+const history = createBrowserHistory();
 
 // Configure the store
 const store = configureStore({
@@ -80,7 +80,7 @@ const Home = () => <div/>;
 const Root = () => (
   <Provider store={store}>
     <ErrorGuardComponent>
-      <ConnectedRouter history={history}>
+      <ConnectedRouter history={history} store={store}>
         <App>
           <ErrorGuardComponent>
             <Route exact path="/" component={Home}/>

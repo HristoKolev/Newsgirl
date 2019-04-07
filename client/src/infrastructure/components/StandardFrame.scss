@@ -1,0 +1,35 @@
+@import "../variables";
+
+.standard-frame {
+  background-color: white;
+  max-width: 1200px;
+  width: 100%;
+  margin: 4rem auto;
+}
+
+@include respond(mobile) {
+  .standard-frame {
+    min-height: 300px;
+    width: calc(100% - 1.6rem);
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+@include respond(phone) {
+  .standard-frame {
+    margin-right: auto;
+    margin-left: auto;
+    width: calc(100% - .5rem);
+  }
+
+  .card-body {
+    padding: .5rem;
+  }
+}
+
+@include respond(wide) {
+  .standard-frame {
+    min-height: 600px;
+  }
+}

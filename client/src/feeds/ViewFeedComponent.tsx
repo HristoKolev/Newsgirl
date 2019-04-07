@@ -8,13 +8,10 @@ import { BaseComponent } from '../infrastructure/components/BaseComponent';
 import { FeedDto, GetFeedRequest, GetFeedResponse } from '../dto';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import BackButton from '../infrastructure/components/BackButton';
+import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
 interface RouterParams {
-  feedID: number;
-}
-
-interface RouterParams {
-  feedID: number;
+  feedID: string;
 }
 
 interface Props extends RouteComponentProps<RouterParams> {
@@ -35,7 +32,7 @@ export class ViewFeedComponent extends BaseComponent<Props, State> {
 
   componentDidMountAsync = async () => {
     const {feedID: feedID} = this.props.match.params;
-    await this.getItem(feedID);
+    await this.getItem(Number.parseInt(feedID, 10));
   };
 
   async getItem(id: number) {
@@ -75,52 +72,54 @@ export class ViewFeedComponent extends BaseComponent<Props, State> {
     }
 
     return (
-      <Card>
-        <CardHeader color="red">Feed: {model.feedName}</CardHeader>
-        <CardBody>
+      <StandardFrame>
+        <Card>
+          <CardHeader color="red">Feed: {model.feedName}</CardHeader>
+          <CardBody>
 
-          <Link
-            to={`/feeds/${model.feedID}/edit`}
-            className="btn btn-sm btn-default Ripple-parent">
-            Edit
-          </Link>
+            <Link
+              to={`/feeds/${model.feedID}/edit`}
+              className="btn btn-sm btn-default Ripple-parent">
+              Edit
+            </Link>
 
-          <Link
-            to={`/feeds/${model.feedID}/delete`}
-            className="btn btn-sm btn-danger Ripple-parent">
-            Delete
-          </Link>
+            <Link
+              to={`/feeds/${model.feedID}/delete`}
+              className="btn btn-sm btn-danger Ripple-parent">
+              Delete
+            </Link>
 
-          <BackButton
-            render={(props) =>
-              <a {...props} href=""
-                 className="btn btn-sm btn-warning Ripple-parent">
-                Back
-              </a>}/>
-          <hr/>
-          <Card border="danger" className="mb-3">
-            <CardBody>
-              <Table className="detail-table">
-                <TableBody>
-                  <tr>
-                    <td>ID:</td>
-                    <td>{model.feedID}</td>
-                  </tr>
-                  <tr>
-                    <td>Name:</td>
-                    <td>{model.feedName}</td>
-                  </tr>
-                  <tr>
-                    <td>URL:</td>
-                    <td><a href={model.feedUrl} target="_blank">{model.feedUrl}</a></td>
-                  </tr>
+            <BackButton
+              render={(props) =>
+                <a {...props} href=""
+                   className="btn btn-sm btn-warning Ripple-parent">
+                  Back
+                </a>}/>
+            <hr/>
+            <Card border="danger" className="mb-3">
+              <CardBody>
+                <Table className="detail-table">
+                  <TableBody>
+                    <tr>
+                      <td>ID:</td>
+                      <td>{model.feedID}</td>
+                    </tr>
+                    <tr>
+                      <td>Name:</td>
+                      <td>{model.feedName}</td>
+                    </tr>
+                    <tr>
+                      <td>URL:</td>
+                      <td><a href={model.feedUrl} target="_blank">{model.feedUrl}</a></td>
+                    </tr>
 
-                </TableBody>
-              </Table>
-            </CardBody>
-          </Card>
-        </CardBody>
-      </Card>
+                  </TableBody>
+                </Table>
+              </CardBody>
+            </Card>
+          </CardBody>
+        </Card>
+      </StandardFrame>
     );
   }
 }

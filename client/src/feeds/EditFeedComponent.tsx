@@ -10,6 +10,7 @@ import {
 
 } from '../dto';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
+import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
 interface RouterParams {
   feedID: string;
@@ -116,15 +117,17 @@ export class EditFeedComponent extends BaseComponent<Props, State> {
     }
 
     return (
-      <Card>
-        <CardHeader color="red">Feed - Edit</CardHeader>
-        <CardBody>
-          <PostFormComponent
-            model={model}
-            errorMessages={errorMessages}
-            onSubmit={this.unwrapPromise(this.saveItem)}/>
-        </CardBody>
-      </Card>
+      <StandardFrame>
+        <Card>
+          <CardHeader color="red">Feed - Edit</CardHeader>
+          <CardBody>
+            <PostFormComponent
+              model={model}
+              errorMessages={errorMessages}
+              onSubmit={this.unwrapPromise(this.saveItem)}/>
+          </CardBody>
+        </Card>
+      </StandardFrame>
     );
   }
 }

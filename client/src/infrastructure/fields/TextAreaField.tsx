@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import { FieldProps } from 'formik';
 
 import './TextArea.scss';
@@ -8,7 +8,7 @@ interface Props extends FieldProps {
   label: string;
 }
 
-export const TextAreaField: React.SFC<Props> = ({className, label, field}) => (
+export const TextAreaField: FunctionComponent<Props> = ({className, label, field}) => (
   <div className={'textarea-field ' + className}>
     <label>
       <div>{label}</div>

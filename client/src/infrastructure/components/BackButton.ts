@@ -1,4 +1,4 @@
-import { SFC } from 'react';
+import { FunctionComponent } from 'react';
 import { withRouter } from 'react-router-dom';
 import { RouteComponentProps } from 'react-router';
 import { RenderProps } from '../redux-types';
@@ -10,7 +10,7 @@ interface RenderComponentProps {
 interface Props extends RouteComponentProps<any>, RenderProps<RenderComponentProps> {
 }
 
-const BackButton: SFC<Props> = ({render, history}) => render({
+const BackButton: FunctionComponent<Props> = ({render, history}) => render({
   onClick: (e) => {
     e.preventDefault();
     history.goBack();

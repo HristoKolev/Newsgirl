@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { CustomModal } from '../../components/CustomModal';
 import { ReactRenderingError, ReducerErrorOptions, SagaError } from '../errors';
 
@@ -10,7 +10,7 @@ interface ErrorMessageContainerProps {
   className?: string;
 }
 
-export const ErrorMessagesContainer: SFC<ErrorMessageContainerProps> = ({errorMessages}) => {
+export const ErrorMessagesContainer: FunctionComponent<ErrorMessageContainerProps> = ({errorMessages}) => {
 
   if (!errorMessages || !errorMessages.length) {
     return null;
@@ -32,7 +32,7 @@ interface ErrorMessagesModalProps {
   error: string[];
 }
 
-export const ErrorMessagesModal: SFC<ErrorMessagesModalProps> = ({onClose, error}) => (
+export const ErrorMessagesModal: FunctionComponent<ErrorMessagesModalProps> = ({onClose, error}) => (
   <CustomModal title={'Error...'} onClose={onClose} className="error-messages-modal">
 
     <ErrorMessagesContainer errorMessages={error}/>
@@ -52,7 +52,7 @@ interface SagaErrorModalProps {
   sagaError: SagaError;
 }
 
-export const SagaErrorModal: SFC<SagaErrorModalProps> = ({onClose, sagaError}) => (
+export const SagaErrorModal: FunctionComponent<SagaErrorModalProps> = ({onClose, sagaError}) => (
   <CustomModal
     title={`An error occurred in saga \r\n \`${sagaError.sagaName}\``}
     onClose={onClose}
@@ -90,7 +90,7 @@ interface ReactErrorComponentProps {
   onClose: () => void;
 }
 
-export const ReactErrorComponent: SFC<ReactErrorComponentProps> = ({error, onClose}) => (
+export const ReactErrorComponent: FunctionComponent<ReactErrorComponentProps> = ({error, onClose}) => (
   <CustomModal
     title={'An error occurred while rendering a react component...'}
     onClose={onClose}
@@ -128,7 +128,7 @@ interface ReducerErrorModalProps {
   onClose: () => void;
 }
 
-export const ReducerErrorModal: SFC<ReducerErrorModalProps> = ({reducerError, onClose}) => (
+export const ReducerErrorModal: FunctionComponent<ReducerErrorModalProps> = ({reducerError, onClose}) => (
   <CustomModal
     title={`An error occurred in reducer \`${reducerError.reducerName}\``}
     onClose={onClose}

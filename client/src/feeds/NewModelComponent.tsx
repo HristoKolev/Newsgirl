@@ -7,6 +7,7 @@ import {AppContext} from '../infrastructure/context';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
 import { FeedDto, NewFeedRequest, NewFeedResponse, SaveFeedRequest, SaveFeedResponse } from '../dto';
 import { PostFormComponent } from './FeedFormComponent';
+import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
 interface Props extends RouteComponentProps<{}> {
   context: AppContext;
@@ -109,16 +110,18 @@ export class NewFeedComponent extends BaseComponent<Props, State> {
     }
 
     return (
-      <Card>
-        <CardHeader color="red">New Feed</CardHeader>
-        <CardBody>
-          <PostFormComponent
-            model={model}
-            errorMessages={errorMessages}
-            onSubmit={this.unwrapPromise(this.saveItem)}
-          />
-        </CardBody>
-      </Card>
+      <StandardFrame>
+        <Card>
+          <CardHeader color="red">New Feed</CardHeader>
+          <CardBody>
+            <PostFormComponent
+              model={model}
+              errorMessages={errorMessages}
+              onSubmit={this.unwrapPromise(this.saveItem)}
+            />
+          </CardBody>
+        </Card>
+      </StandardFrame>
     );
   }
 }

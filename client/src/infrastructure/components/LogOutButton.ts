@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { wrapActions } from '../store';
 import { SessionActionCreators, sessionActionCreators } from '../session.state';
-import { SFC } from 'react';
+import { FunctionComponent } from 'react';
 import { RenderProps } from '../redux-types';
 
 interface RenderComponentProps {
@@ -12,7 +12,7 @@ interface Props extends RenderProps<RenderComponentProps> {
   actions: SessionActionCreators;
 }
 
-const LogOutButton: SFC<Props> = ({actions, render}) => {
+const LogOutButton: FunctionComponent<Props> = ({actions, render}) => {
 
   return render({
     onClick: (e) => {

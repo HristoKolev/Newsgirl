@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import { Input } from 'mdbreact';
 import { FieldProps } from 'formik';
 
@@ -8,7 +8,7 @@ interface Props {
   icon: string;
 }
 
-export const TextField: React.SFC<FieldProps & Props> = ({className, label, icon, field}) => (
+export const TextField: FunctionComponent<FieldProps & Props> = ({className, label, icon, field}) => (
   <div className={className}>
     <Input
       label={label}

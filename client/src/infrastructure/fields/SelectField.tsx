@@ -1,4 +1,4 @@
-import React, {SFC} from 'react';
+import React, { FunctionComponent } from 'react';
 import {FieldProps} from 'formik';
 import Select from 'react-select';
 import {SelectItem} from './select-item';
@@ -9,7 +9,7 @@ interface Props extends FieldProps {
   items: SelectItem[];
 }
 
-export const SelectField: SFC<Props> = ({className, label, field, items, form}) => {
+export const SelectField: FunctionComponent<Props> = ({className, label, field, items, form}) => {
 
   let handleChange = (data: any) => {
     const newValue = data as SelectItem;

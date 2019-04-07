@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { connect } from 'react-redux';
 import { ErrorBoundaryComponent } from './ErrorBoundaryComponent';
 import { ReactErrorComponent } from './ErrorComponents';
@@ -11,7 +11,7 @@ const mapDispatchToProps = wrapActions(routerActionCreators, errorsActionCreator
 
 const ErrorComponent = connect(null, mapDispatchToProps)(ErrorBoundaryComponent);
 
-const Component: SFC = ({children}) => (
+const Component: FunctionComponent = ({children}) => (
   <ErrorComponent
     onError={(error) => logErrorEvent({
       message: error.message,

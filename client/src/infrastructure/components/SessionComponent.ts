@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { SFC } from 'react';
+import { FunctionComponent } from 'react';
 import { select } from '../store-helpers';
 import { SessionState } from '../session.state';
 import { ChildrenProps } from '../redux-types';
@@ -12,7 +12,7 @@ interface InjectedProps extends Props {
   state: SessionState;
 }
 
-const SessionComponent: SFC<Props> = (props) => {
+const SessionComponent: FunctionComponent<Props> = (props) => {
 
   const {children, isLoggedIn} = props;
   const {state} = props as InjectedProps;

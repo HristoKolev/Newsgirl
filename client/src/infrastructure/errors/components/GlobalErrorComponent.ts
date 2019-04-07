@@ -1,4 +1,4 @@
-import { SFC } from 'react';
+import { FunctionComponent } from 'react';
 import { connect } from 'react-redux';
 import { ReducerErrorOptions, SagaError } from '../errors';
 import { RenderProps } from '../../redux-types';
@@ -19,7 +19,7 @@ interface Props extends RenderProps<RenderComponentProps> {
   state: ErrorsState;
 }
 
-const GlobalErrorComponent: SFC<Props> = ({state: {error, sagaError, reducerError}, actions, render}) => {
+const GlobalErrorComponent: FunctionComponent<Props> = ({state: {error, sagaError, reducerError}, actions, render}) => {
 
   if (error === null && sagaError === null && reducerError === null) {
     return null;

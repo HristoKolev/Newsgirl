@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import AceEditor from 'react-ace';
 
 import 'brace/mode/yaml';
@@ -15,7 +15,7 @@ interface Props extends FieldProps {
   theme: string;
 }
 
-export const EditorField: React.SFC<Props> = ({label, field, form, mode, theme}) => {
+export const EditorField: FunctionComponent<Props> = ({label, field, form, mode, theme}) => {
 
   const handleChange = (value: any) => {
     form.setFieldValue(field.name, value);

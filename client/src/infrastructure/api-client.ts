@@ -21,7 +21,7 @@ export interface RequestMessage<TRequest> {
 }
 
 export const apiClient = (authToken: string): ApiClient => ({
-  send: async <TRequest, TResponse>(type: string, payload: TRequest, headers = {}): Promise<Result<TResponse>> => {
+  send: async <TRequest, TResponse>(type: string, payload: TRequest, headers: { [key: string]: string } = {}): Promise<Result<TResponse>> => {
 
     const message: RequestMessage<TRequest> = { type, payload };
 

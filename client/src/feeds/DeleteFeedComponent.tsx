@@ -7,6 +7,7 @@ import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import {AppContext} from '../infrastructure/context';
 import { GetFeedRequest, GetFeedResponse, FeedDto, DeleteFeedRequest, DeleteFeedResponse } from '../dto';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
+import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
 interface RouterParams {
   feedID: string;
@@ -99,31 +100,33 @@ export class DeleteFeedComponent extends BaseComponent<Props, State> {
     }
 
     return (
-      <Card border="warning" className="mb-3">
+      <StandardFrame>
+        <Card border="warning" className="mb-3">
 
-        <CardHeader color="red">Warning!!!</CardHeader>
+          <CardHeader color="red">Warning!!!</CardHeader>
 
-        <CardBody>
-          <h3>Do you really want to delete: {model.feedName}, ID: ({model.feedID}) ?</h3>
+          <CardBody>
+            <h3>Do you really want to delete: {model.feedName}, ID: ({model.feedID}) ?</h3>
 
-          <hr/>
+            <hr/>
 
-          <BackButton
-            render={(props) =>
-              <a {...props} href=""
-                 className="btn btn-md btn-warning Ripple-parent">
-                Back
-              </a>
-            }
-          />
+            <BackButton
+              render={(props) =>
+                <a {...props} href=""
+                   className="btn btn-md btn-warning Ripple-parent">
+                  Back
+                </a>
+              }
+            />
 
-          <button
-            className="btn btn-md btn-danger Ripple-parent"
-            onClick={this.unwrapPromise(this.deleteFeed)}>
-            Confirm
-          </button>
-        </CardBody>
-      </Card>
+            <button
+              className="btn btn-md btn-danger Ripple-parent"
+              onClick={this.unwrapPromise(this.deleteFeed)}>
+              Confirm
+            </button>
+          </CardBody>
+        </Card>
+      </StandardFrame>
     );
   }
 }

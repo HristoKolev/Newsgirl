@@ -1,4 +1,4 @@
-import {SFC} from 'react';
+import { FunctionComponent } from 'react';
 import React from 'react';
 import {ChildrenProps} from './redux-types';
 
@@ -6,7 +6,7 @@ interface MediaQueryProps extends ChildrenProps {
   query: string;
 }
 
-export const MediaQueryComponent: SFC<MediaQueryProps> = (props) => {
+export const MediaQueryComponent: FunctionComponent<MediaQueryProps> = (props) => {
   const {children, query} = props;
   if (window.matchMedia(query).matches) {
     return children;
@@ -29,7 +29,7 @@ const mediaQueryStrings = {
   'not-phone': '(min-width: 480px)',
 };
 
-export const ScreenSizeComponent: SFC<ScreenSizeProps> = (props) => {
+export const ScreenSizeComponent: FunctionComponent<ScreenSizeProps> = (props) => {
   if (props.children && props.size) {
     return (
       <MediaQueryComponent query={mediaQueryStrings[props.size]}>

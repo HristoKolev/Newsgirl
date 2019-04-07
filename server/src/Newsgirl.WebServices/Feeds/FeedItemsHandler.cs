@@ -30,7 +30,7 @@ namespace Newsgirl.WebServices.Feeds
                                     feedItem,
                                     feed
                                 }
-                               ).ToListAsync();
+                               ).Take(500).ToListAsync();
             
             return new GetFeedItemsResponse
             {

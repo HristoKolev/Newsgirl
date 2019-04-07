@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { FieldProps } from 'formik';
 
 import './CheckboxField.scss';
@@ -8,7 +8,7 @@ interface Props extends FieldProps {
   label: string;
 }
 
-export const CheckboxField: SFC<Props> = ({className, label, field, form}) => {
+export const CheckboxField: FunctionComponent<Props> = ({className, label, field, form}) => {
 
   const labelClick = () => {
     form.setFieldValue(field.name, !field.value);

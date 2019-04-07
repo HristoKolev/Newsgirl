@@ -1,4 +1,4 @@
-import React, {SFC} from 'react';
+import React, {FunctionComponent} from 'react';
 import {FieldProps} from 'formik';
 import Select from 'react-select';
 import {SelectItem} from './select-item';
@@ -10,7 +10,7 @@ interface Props extends FieldProps {
   loading: boolean;
 }
 
-export const MultiSelectField: SFC<Props> = ({className, label, field, items, form, loading}) => {
+export const MultiSelectField: FunctionComponent<Props> = ({className, label, field, items, form, loading}) => {
 
   const handleChange = (data: any) => {
     const dataArray = data as SelectItem[];
