@@ -12,11 +12,11 @@ export const configureStatePersistence = (store: ReduxStore, {persistentFields}:
 
     const state = store.getState();
 
-    const entries = Object.entries(state || {})
-      .filter((x) => persistentFields.includes(x[0]))
-      .map((x) => ({[x[0]]: x[1]}));
-
-    const subState = Object.assign({}, entries);
+    // @ts-ignore
+    const subState = Object.fromEntries(
+        Object.entries(state || {})
+        .filter((x) => persistentFields.includes(x[0])),
+    );
 
     try {
       localStorage.setItem(localStorageKey, JSON.stringify(subState));

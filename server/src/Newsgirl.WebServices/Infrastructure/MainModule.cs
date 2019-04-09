@@ -55,7 +55,9 @@ namespace Newsgirl.WebServices.Infrastructure
 
         private async Task<X509Certificate2> CreateCertificate()
         {
-            var certBytes = await File.ReadAllBytesAsync(Path.Combine(Global.DataDirectory, "certificate.pfx"));
+            string certificatePath = Path.Combine(Global.DataDirectory, "certificate.pfx");
+            
+            var certBytes = await File.ReadAllBytesAsync(certificatePath);
                 
             return new X509Certificate2(certBytes);
         }

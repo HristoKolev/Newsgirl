@@ -95,7 +95,7 @@ const configureSagas = (sagaMiddleware: SagaMiddleware<any>, sagas: SagaMap, _cr
  */
 const configureReducers = (reducerMap: ReducersMapObject): Reducer => {
 
-  const newReducerMap = Object.entries(reducerMap)
+  const entries = Object.entries(reducerMap)
     .map(([reducerName, reducerFunction]) => [
       reducerName, (state: any, action: AnyAction) => {
         try {
@@ -110,9 +110,10 @@ const configureReducers = (reducerMap: ReducersMapObject): Reducer => {
             componentStack: '',
           });
         }
-      }])
-    .map((pair) => ({[pair[0] as any]: pair[1]}))
-    .reduce((prev, next) => Object.assign(prev, next), {}) as ReducersMapObject;
+      }]);
+
+  // @ts-ignore
+  const newReducerMap = Object.fromEntries(entries) as ReducersMapObject;
 
   return combineReducers(newReducerMap);
 };
