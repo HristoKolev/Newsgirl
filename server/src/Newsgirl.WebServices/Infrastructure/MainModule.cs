@@ -19,12 +19,12 @@ namespace Newsgirl.WebServices.Infrastructure
             // Data Access
             builder.Register(x => DbHelper.CreateConnection()).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
-            builder.Register(x => Global.Settings).InstancePerLifetimeScope();
             
             // Infrastructure
             builder.Register(x => Global.Log);
+            builder.Register(x => Global.Settings);
             builder.RegisterType<TypeResolver>().InstancePerLifetimeScope();
-            builder.Register(x => new ObjectPool<X509Certificate2>(this.CreateCertificate));
+            builder.Register(x => new ObjectPool<X509Certificate2>(CreateCertificate));
             builder.RegisterType<DirectApiClient>().As<IApiClient>().InstancePerLifetimeScope();
             
             // Handlers
@@ -45,6 +45,7 @@ namespace Newsgirl.WebServices.Infrastructure
                 builder.RegisterType(serviceType).InstancePerLifetimeScope();
             }
 
+            // Commands
             foreach (var commandType in CliParser.AllCommands.Select(x => x.CommandType))
             {
                 builder.RegisterType(commandType).InstancePerLifetimeScope();
@@ -53,7 +54,7 @@ namespace Newsgirl.WebServices.Infrastructure
             base.Load(builder);
         }
 
-        private async Task<X509Certificate2> CreateCertificate()
+        private static async Task<X509Certificate2> CreateCertificate()
         {
             string certificatePath = Path.Combine(Global.DataDirectory, "certificate.pfx");
             

@@ -11,6 +11,8 @@ import { Card, CardHeader, CardBody, Table, TableHead, TableBody } from 'mdbreac
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import React from 'react';
 
+import './FeedItemsComponent.scss';
+
 interface Props {
   context: AppContext;
 }
@@ -63,32 +65,10 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
     const {listItems, loading} = this.state;
 
     return (
-        <Card>
-          <CardHeader color="red">Live feed</CardHeader>
-          <CardBody>
-            <Table responsive className="list-table">
-              <TableHead small="" color="red" textWhite>
-                <tr>
-                  <th>Feed</th>
-                  <th>Title</th>
-                </tr>
-              </TableHead>
-              {listItems.length > 0 && <TableBody>
-                {listItems.map((item, postIndex) =>
-                  <tr key={postIndex}>
-                    <td>#{item.feedName}</td>
-                    <td>
-                      <a target="_blank" href={item.feedItemUrl}>{item.feedItemTitle}</a>
-                    </td>
-                  </tr>,
-                )}
-              </TableBody>}
-            </Table>
-
-            {loading && <LoadingSpinner>Loading...</LoadingSpinner>}
-
-          </CardBody>
-        </Card>
+        <div>
+          <div className="v1-sidebar">a</div>
+          <div className="v1-container">b</div>
+        </div>
     );
   }
 }
