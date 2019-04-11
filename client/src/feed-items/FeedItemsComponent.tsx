@@ -12,6 +12,8 @@ import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import React from 'react';
 
 import './FeedItemsComponent.scss';
+import { StandardFrame } from '../infrastructure/components/StandardFrame';
+import { WideFrame } from '../infrastructure/components/WideFrame';
 
 interface Props {
   context: AppContext;
@@ -65,10 +67,12 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
     const {listItems, loading} = this.state;
 
     return (
-        <div>
-          <div className="v1-sidebar">a</div>
-          <div className="v1-container">b</div>
-        </div>
+        <WideFrame>
+          <div className="v1-container">
+            <div className="v1-sidebar">a</div>
+            <div className="v1-content">b</div>
+          </div>
+        </WideFrame>
     );
   }
 }

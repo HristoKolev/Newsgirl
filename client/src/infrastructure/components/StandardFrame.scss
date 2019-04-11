@@ -4,7 +4,9 @@
   background-color: white;
   max-width: 1200px;
   width: 100%;
-  margin: 4rem auto;
+  margin-top: calc(56px + 1rem);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @include respond(mobile) {
