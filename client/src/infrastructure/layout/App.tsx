@@ -12,32 +12,35 @@ import {
 } from '../errors/components/ErrorComponents';
 
 export const App: FunctionComponent<ChildrenProps> = ({children}) => (
-  <React.Fragment>
     <section className="main">
 
       <Header/>
 
-      <main className="main__body">{children}</main>
+      <main className="main__body">
+        {children}
+      </main>
 
       <GlobalErrorComponent render={({error, sagaError, reducerError, onClose}) => {
+
         if (error) {
           return <ErrorMessagesModal onClose={onClose} error={error}/>;
         }
+
         if (sagaError) {
 
           return <SagaErrorModal onClose={onClose} sagaError={sagaError}/>;
         }
+
         if (reducerError) {
           return <ReducerErrorModal onClose={onClose} reducerError={reducerError}/>;
         }
+
         return null;
       }}/>
 
       <ToastContainer />
 
+      <FooterComponent/>
+
     </section>
-
-    <FooterComponent/>
-
-  </React.Fragment>
 );

@@ -7,7 +7,7 @@ interface Props extends ChildrenProps {
 }
 
 export const StandardFrame = ({children}: Props) => (
-  <section className="standard-frame">
+  <div className="standard-frame">
     {children}
-  </section>
+  </div>
 );

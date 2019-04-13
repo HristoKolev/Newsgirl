@@ -7,7 +7,7 @@ interface Props extends ChildrenProps {
 }
 
 export const WideFrame = ({children}: Props) => (
-  <section className="wide-frame">
+  <div className="wide-frame">
     {children}
-  </section>
+  </div>
 );
