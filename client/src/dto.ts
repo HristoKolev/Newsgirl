@@ -38,7 +38,8 @@ export interface LoginRequest {
 }
 
 export interface GetFeedItemsResponse {
-  items: FeedItemDto[];
+  feedItems: FeedItemDto[];
+  feeds: FeedDto[];
 }
 
 export interface FeedItemDto {

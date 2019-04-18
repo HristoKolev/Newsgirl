@@ -3,16 +3,14 @@ import { AppContext } from '../infrastructure/context';
 import {
   GetFeedItemsRequest,
   GetFeedItemsResponse,
-  FeedItemDto,
+  FeedItemDto, FeedDto,
 } from '../dto';
 
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
-import { Card, CardHeader, CardBody, Table, TableHead, TableBody } from 'mdbreact';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import React from 'react';
 
 import './FeedItemsComponent.scss';
-import { StandardFrame } from '../infrastructure/components/StandardFrame';
 import { WideFrame } from '../infrastructure/components/WideFrame';
 
 interface Props {
@@ -20,7 +18,8 @@ interface Props {
 }
 
 interface State {
-  listItems: FeedItemDto[];
+  feedItems: FeedItemDto[];
+  feeds: FeedDto[];
   loading: boolean;
 }
 
@@ -28,7 +27,8 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
 
   state: State = {
     loading: false,
-    listItems: [],
+    feedItems: [],
+    feeds: [],
   };
 
   async searchItems() {
@@ -37,7 +37,7 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
 
     await this.setStateAsync({
       loading: true,
-      listItems: [],
+      feedItems: [],
     });
 
     const response = await api.send<GetFeedItemsRequest, GetFeedItemsResponse>(
@@ -48,7 +48,8 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
     if (response.success) {
       await this.setStateAsync({
         loading: false,
-        listItems: response.payload.items,
+        feedItems: response.payload.feedItems,
+        feeds: response.payload.feeds,
       });
     } else {
       allActions.errors.setErrors(response.errorMessages);
@@ -64,13 +65,26 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
 
   render() {
 
-    const {listItems, loading} = this.state;
+    const {feedItems, feeds, loading} = this.state;
 
     return (
         <WideFrame>
-          <div className="v1-container">
-            <div className="v1-sidebar">a</div>
-            <div className="v1-content">b</div>
+          <div className="feed-items">
+            <div className="feed-items__sidebar">
+              {feeds.map((item, postIndex) =>
+                <div className="feed-items__feed-row" key={postIndex}>
+                  {item.feedName}
+                </div>,
+              )}
+            </div>
+            <div className="feed-items__item-list">
+              {feedItems.map((item, postIndex) =>
+                <div className="feed-items__item-row" key={postIndex}>
+                  <a target="_blank" href={item.feedItemUrl}>{item.feedItemTitle}</a>
+                </div>,
+              )}
+              {loading && <LoadingSpinner>Loading...</LoadingSpinner>}
+            </div>
           </div>
         </WideFrame>
     );

@@ -22,7 +22,9 @@ namespace Newsgirl.WebServices.Feeds
         [BindRequest(typeof(GetFeedItemsRequest), typeof(GetFeedItemsResponse))]
         public async Task<GetFeedItemsResponse> GetFeeds(GetFeedItemsRequest req)
         {
-            var items = await (from feedItem in this.Db.Poco.FeedItems
+            var feeds = await this.Db.Poco.Feeds.ToListAsync();
+            
+            var feedItems = await (from feedItem in this.Db.Poco.FeedItems
                                 join feed in this.Db.Poco.Feeds on feedItem.FeedID equals feed.FeedID
                                 orderby feedItem.FeedItemAddedTime descending
                                 select new
@@ -34,7 +36,7 @@ namespace Newsgirl.WebServices.Feeds
             
             return new GetFeedItemsResponse
             {
-                Items = items.Select(x => new FeedItemDto
+                FeedItems = feedItems.Select(x => new FeedItemDto
                 {
                     FeedID = x.feedItem.FeedID,
                     FeedName = x.feed.FeedName,
@@ -43,6 +45,12 @@ namespace Newsgirl.WebServices.Feeds
                     FeedItemDescription = x.feedItem.FeedItemDescription,
                     FeedItemID = x.feedItem.FeedItemID,
                     FeedItemAddedTime = x.feedItem.FeedItemAddedTime,
+                }).ToList(),
+                Feeds = feeds.Select(x => new FeedDto
+                {
+                    FeedID = x.FeedID,
+                    FeedName = x.FeedName,
+                    FeedUrl = x.FeedUrl,
                 }).ToList()
             };
         }
@@ -54,7 +62,9 @@ namespace Newsgirl.WebServices.Feeds
 
     public class GetFeedItemsResponse
     {
-        public List<FeedItemDto> Items { get; set; }
+        public List<FeedItemDto> FeedItems { get; set; }
+
+        public List<FeedDto> Feeds { get; set; }
     }
 
     public class FeedItemDto
