@@ -5,12 +5,12 @@ namespace Newsgirl.WebServices.Infrastructure
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using CommandLine;
 
     [CliCommand("generate-client-rpc", SkipSettingsLoading = true)]
+    // ReSharper disable once UnusedMember.Global
     public class RpcCodeGeneratorCommand : ICliCommand
     {
         public async Task<int> Run(string[] args)
@@ -42,14 +42,22 @@ namespace Newsgirl.WebServices.Infrastructure
         {
             var props = targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-            var scriptedProperties = props.Select(x => $"  {CamelCase(x.Name)}: {ResolveType(x.PropertyType)};").ToList();
+            string ScriptProperty(PropertyInfo x)
+            {
+                bool isNullableType = x.PropertyType.IsGenericType &&
+                                      x.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>);
+                
+                return $"  {CamelCase(x.Name)}{(isNullableType ? "?" : "")}: {ResolveType(x.PropertyType)};";
+            }
+
+            var scriptedProperties = props.Select(ScriptProperty).ToList();
 
             return $"export interface {targetType.Name} {{\n" + string.Join("\n", scriptedProperties) + "\n}";
         }
 
         private static string ResolveType(Type type)
         {
-            var typeMap = new Dictionary<Type, string>()
+            var typeMap = new Dictionary<Type, string>
             {
                 { typeof(int), "number" },
                 { typeof(long), "number" },
@@ -96,6 +104,15 @@ namespace Newsgirl.WebServices.Infrastructure
                     var tValue = genericArguments[1];
 
                     return "{ [key: " + ResolveType(tKey) + "]: " + ResolveType(tValue) + " }";
+                }
+
+                if (genericDefinition == typeof(Nullable<>))
+                {
+                    var genericArguments = type.GetGenericArguments();
+                    
+                    var t = genericArguments[0];
+
+                    return ResolveType(t);
                 }
                 
                 throw new DetailedLogException("Generic type not supported.")
@@ -188,7 +205,14 @@ namespace Newsgirl.WebServices.Infrastructure
                 {
                     var genericTypeDefinition = targetType.GetGenericTypeDefinition();
 
-                    if (genericTypeDefinition != typeof(List<>) && genericTypeDefinition != typeof(Dictionary<,>))
+                    var allowedGenericTypes = new[]
+                    {
+                        typeof(List<>),
+                        typeof(Dictionary<,>),
+                        typeof(Nullable<>),
+                    };
+                    
+                    if (!allowedGenericTypes.Contains(genericTypeDefinition))
                     {
                         throw new DetailedLogException("Generic type not supported.")
                         {
@@ -227,6 +251,7 @@ namespace Newsgirl.WebServices.Infrastructure
         }
     }
     
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class RpcCodeGeneratorOptions
     {
         [Option('o', "output", HelpText = "The output file location.", Required = true)]
