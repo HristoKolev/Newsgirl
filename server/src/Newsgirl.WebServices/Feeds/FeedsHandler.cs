@@ -168,6 +168,8 @@ namespace Newsgirl.WebServices.Feeds
     public class DeleteFeedRequest
     {
         public int ID { get; set; }
+
+        public int? Cats { get; set; }
     }
 
     public class DeleteFeedResponse

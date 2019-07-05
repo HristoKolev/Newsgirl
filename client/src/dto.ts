@@ -4,6 +4,7 @@ export interface GetFeedItemsRequest {
 
 export interface DeleteFeedRequest {
   id: number;
+  cats?: number;
 }
 
 export interface NewFeedRequest {
