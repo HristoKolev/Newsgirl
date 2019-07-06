@@ -10,6 +10,7 @@ namespace Newsgirl.WebServices.Feeds
 
     using LinqToDB;
 
+    // ReSharper disable once UnusedMember.Global
     public class FeedItemsHandler
     {
         private IDbService Db { get; }

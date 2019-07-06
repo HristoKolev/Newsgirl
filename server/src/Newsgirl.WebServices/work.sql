@@ -52,7 +52,6 @@ INSERT INTO users (username, password, registration_date)
 VALUES ('kenny', 'test123', current_timestamp);
 
 INSERT into system_settings(setting_name, setting_value) VALUES
-  ('WebServerPort', '5000'),
   ('HttpClientUserAgent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36');
 
 commit;

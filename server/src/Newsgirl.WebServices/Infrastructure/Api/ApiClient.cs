@@ -17,6 +17,7 @@ namespace Newsgirl.WebServices.Infrastructure.Api
     /// <summary>
     /// ApiClient that uses HTTP to call a remote server that supports the API handler protocol.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class RemoteApiClient : IApiClient
     {
         private string ApiUrl { get; }
@@ -25,7 +26,7 @@ namespace Newsgirl.WebServices.Infrastructure.Api
         {
             this.ApiUrl = apiUrl;
         }
-        
+        d
         public async Task<ApiResult> Call(ApiRequest req)
         {
             var request = WebRequest.CreateHttp(new Uri(this.ApiUrl));

@@ -37,7 +37,7 @@
             }
             catch (Exception exception)
             {
-                await Global.Log.LogError(exception);
+                await MainLogger.Instance.LogError(exception);
 
                 this.logger.LogError(
                     exception, 

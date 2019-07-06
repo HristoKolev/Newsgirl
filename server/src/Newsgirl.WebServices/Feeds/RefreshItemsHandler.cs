@@ -69,7 +69,7 @@ namespace Newsgirl.WebServices.Feeds
             }
             catch (Exception exception)
             {
-                await Global.Log.LogError(exception);
+                await MainLogger.Instance.LogError(exception);
 
                 using (await this.DbLock.Lock())
                 {

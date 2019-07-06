@@ -16,6 +16,7 @@ namespace Newsgirl.WebServices.Infrastructure
     using Microsoft.Extensions.Logging;
 
     [CliCommand("web-server", IsDefault = true)]
+    // ReSharper disable once UnusedMember.Global
     public class WebServerCommand : ICliCommand
     {
         /// <summary>
@@ -29,7 +30,7 @@ namespace Newsgirl.WebServices.Infrastructure
                     .UseKestrel(opt =>
                     {
                         opt.AddServerHeader = false; 
-                        opt.Listen(IPAddress.Any, Global.Settings.WebServerPort);
+                        opt.Listen(IPAddress.Any, Global.AppConfig.Port);
                     })
                    .UseContentRoot(Global.RootDirectory)
                    .UseStartup<Startup>()
@@ -38,7 +39,7 @@ namespace Newsgirl.WebServices.Infrastructure
             }
             catch (Exception ex)
             {
-                await Global.Log.LogError(ex);
+                await MainLogger.Instance.LogError(ex);
                 return 1;
             }
 

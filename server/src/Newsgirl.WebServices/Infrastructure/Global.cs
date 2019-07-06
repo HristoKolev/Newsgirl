@@ -73,11 +73,6 @@
         public static SystemSettings Settings { get; set; }
 
         /// <summary>
-        /// The main logger instance.
-        /// </summary>
-        public static MainLogger Log => MainLogger.Instance;
-    
-        /// <summary>
         /// Creates a IoC instance.
         /// `IServiceCollection` can be passed if it's used in ASP.NET Core context.
         /// </summary>
@@ -99,6 +94,7 @@
     /// <summary>
     /// Contains settings vital to the application startup.
     /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class AppConfig
     {
         /// <summary>
@@ -110,6 +106,11 @@
         /// The DSN for the Sentry error logging system.
         /// </summary>
         public string SentryDsn { get; set; }
+
+        /// <summary>
+        /// The port that the web server uses to answer requests.
+        /// </summary>
+        public int Port { get; set; }
     }
 
     /// <summary>
@@ -117,11 +118,6 @@
     /// </summary>
     public class SystemSettings
     {
-        /// <summary>
-        /// The port that the web server is going to listen on.
-        /// </summary>
-        public int WebServerPort { get; set; }
-
         /// <summary>
         /// The UserAgent used for http calls to the RSS endpoints.
         /// </summary>

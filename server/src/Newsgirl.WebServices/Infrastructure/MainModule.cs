@@ -21,7 +21,7 @@ namespace Newsgirl.WebServices.Infrastructure
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
             
             // Infrastructure
-            builder.Register(x => Global.Log);
+            builder.Register(x => MainLogger.Instance);
             builder.Register(x => Global.Settings);
             builder.RegisterType<TypeResolver>().InstancePerLifetimeScope();
             builder.Register(x => new ObjectPool<X509Certificate2>(CreateCertificate));

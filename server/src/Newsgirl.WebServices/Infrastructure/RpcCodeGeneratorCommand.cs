@@ -84,48 +84,48 @@ namespace Newsgirl.WebServices.Infrastructure
                 return ResolveType(t) + "[]";
             }
 
-            if (type.IsGenericType)
+            // If it's not a simple type - return it's name.
+            if (!type.IsGenericType)
             {
-                var genericDefinition = type.GetGenericTypeDefinition();
-
-                if (genericDefinition == typeof(List<>))
-                {
-                    var genericArguments = type.GetGenericArguments();
-                    var t = genericArguments[0];
-
-                    return ResolveType(t) + "[]";
-                }
-
-                if (genericDefinition == typeof(Dictionary<,>))
-                {
-                    var genericArguments = type.GetGenericArguments();
-                    
-                    var tKey = genericArguments[0];
-                    var tValue = genericArguments[1];
-
-                    return "{ [key: " + ResolveType(tKey) + "]: " + ResolveType(tValue) + " }";
-                }
-
-                if (genericDefinition == typeof(Nullable<>))
-                {
-                    var genericArguments = type.GetGenericArguments();
-                    
-                    var t = genericArguments[0];
-
-                    return ResolveType(t);
-                }
-                
-                throw new DetailedLogException("Generic type not supported.")
-                {
-                    Context =
-                    {
-                        {"TypeName", genericDefinition.Name},
-                    }
-                };
+                return type.Name;
             }
 
-            // If it's not a simple type - return it's name.
-            return type.Name;
+            var genericDefinition = type.GetGenericTypeDefinition();
+
+            if (genericDefinition == typeof(List<>))
+            {
+                var genericArguments = type.GetGenericArguments();
+                var t = genericArguments[0];
+
+                return ResolveType(t) + "[]";
+            }
+
+            if (genericDefinition == typeof(Dictionary<,>))
+            {
+                var genericArguments = type.GetGenericArguments();
+                
+                var tKey = genericArguments[0];
+                var tValue = genericArguments[1];
+
+                return "{ [key: " + ResolveType(tKey) + "]: " + ResolveType(tValue) + " }";
+            }
+
+            if (genericDefinition == typeof(Nullable<>))
+            {
+                var genericArguments = type.GetGenericArguments();
+                
+                var t = genericArguments[0];
+
+                return ResolveType(t);
+            }
+            
+            throw new DetailedLogException("Generic type not supported.")
+            {
+                Context =
+                {
+                    {"TypeName", genericDefinition.Name},
+                }
+            };
         }
 
         private static string CamelCase(string text)
