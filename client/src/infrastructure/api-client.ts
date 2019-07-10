@@ -8,7 +8,7 @@ const defaultHeaders = {
 };
 
 export interface ApiClient {
-  send: <TRequest, TResponse>(
+  send: <TRequest, TResponse = undefined>(
     messageType: string,
     body?: TRequest,
     headers?: { [key: string]: string },

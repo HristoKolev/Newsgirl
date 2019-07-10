@@ -7,6 +7,8 @@ namespace Newsgirl.WebServices.Infrastructure
     using System.Reflection;
     using System.Threading.Tasks;
 
+    using Api;
+
     using CommandLine;
 
     [CliCommand("generate-client-rpc", SkipSettingsLoading = true)]
@@ -31,11 +33,57 @@ namespace Newsgirl.WebServices.Infrastructure
 
             var allTypes = GetAllTypes(types);
 
-            string contents = string.Join("\n\n", allTypes.Select(ScriptType));
+            string dtoContents = string.Join("\n\n", allTypes.Select(ScriptType));
+
+            string apiCallContents = this.BuildServerApiClient(handlers);
+            
+            string contents = "import { Result } from './infrastructure/api-result';\n" +
+                              "import { ApiClient } from './infrastructure/api-client';\n\n"
+                              + dtoContents + "\n" + apiCallContents;
 
             await File.WriteAllTextAsync(options.Output, contents);
             
             return 0;
+        }
+
+        private string BuildServerApiClient(List<HandlerCollection.ApiHandlerModel> handlers)
+        {
+            string GetMethodName(Type reqType)
+            {
+                string name = reqType.Name.Substring(0, reqType.Name.Length - "Request".Length);
+
+                return name[0].ToString().ToLower() + name.Substring(1);
+            }
+
+            string GetResponseType(Type responseType)
+            {
+                if (responseType == null)
+                {
+                    return "Result";
+                }
+
+                return $"Result<{responseType.Name}>";
+            }
+
+            string GetSendGenericArguments(HandlerCollection.ApiHandlerModel handler)
+            {
+                return handler.RequestType.Name +
+                       (handler.ResponseType == null ? "" : $", {handler.ResponseType.Name}");
+            }
+            
+            string definitionMethods = string.Join("\n", handlers.Select(x => 
+                $"  {GetMethodName(x.RequestType)}: (req: {x.RequestType.Name}) => Promise<{GetResponseType(x.ResponseType)}>;"
+            ));
+
+            string definition = $"\nexport interface ServerApiClient {{\n{definitionMethods}\n}}";
+            
+            string implementationMethods = string.Join("\n", handlers.Select(x => 
+                $"  {GetMethodName(x.RequestType)}: (req) => api.send<{GetSendGenericArguments(x)}>('{x.RequestType.Name}', req),"
+            ));
+            
+            string implementation = $"\n\nexport const serverApi = (api: ApiClient): ServerApiClient => ({{\n{implementationMethods}\n}});\n";
+            
+            return definition + implementation;
         }
 
         private static string ScriptType(Type targetType)

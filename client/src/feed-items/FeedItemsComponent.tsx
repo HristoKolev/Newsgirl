@@ -1,10 +1,6 @@
 import { AppContext } from '../infrastructure/context';
 
-import {
-  GetFeedItemsRequest,
-  GetFeedItemsResponse,
-  FeedItemDto, FeedDto,
-} from '../dto';
+import { FeedItemDto, FeedDto } from '../dto';
 
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
@@ -33,17 +29,14 @@ export class FeedItemsComponent extends BaseComponent<Props, State> {
 
   async searchItems() {
 
-    const {api, allActions} = this.props.context;
+    const {server, allActions} = this.props.context;
 
     await this.setStateAsync({
       loading: true,
       feedItems: [],
     });
 
-    const response = await api.send<GetFeedItemsRequest, GetFeedItemsResponse>(
-      'GetFeedItemsRequest',
-      {},
-    );
+    const response = await server.getFeedItems({});
 
     if (response.success) {
       await this.setStateAsync({

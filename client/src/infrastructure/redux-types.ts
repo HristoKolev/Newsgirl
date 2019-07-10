@@ -46,10 +46,3 @@ export type DefaultProps<Props> = Props | any;
 export interface ChildrenProps {
   children: ChildrenType;
 }
-
-export interface AppModule {
-  sagas: SagaMap;
-  reducers: ReducersMapObject;
-  persistentFields: string[];
-  actionCreators: { [key: string]: ReducersMapObject };
-}

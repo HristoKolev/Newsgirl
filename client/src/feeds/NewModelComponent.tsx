@@ -5,7 +5,7 @@ import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import {RouteComponentProps} from 'react-router';
 import {AppContext} from '../infrastructure/context';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
-import { FeedDto, NewFeedRequest, NewFeedResponse, SaveFeedRequest, SaveFeedResponse } from '../dto';
+import { FeedDto} from '../dto';
 import { PostFormComponent } from './FeedFormComponent';
 import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
@@ -35,16 +35,14 @@ export class NewFeedComponent extends BaseComponent<Props, State> {
 
   newItem = async () => {
 
-    const {api, allActions} = this.props.context;
+    const {server, allActions} = this.props.context;
 
     await this.setStateAsync({
       loading: true,
       model: undefined,
     });
 
-    const response = await api.send<NewFeedRequest, NewFeedResponse>(
-      'NewFeedRequest', {},
-    );
+    const response = await server.newFeed({});
 
     if (response.success) {
       await this.setStateAsync({
@@ -63,7 +61,7 @@ export class NewFeedComponent extends BaseComponent<Props, State> {
 
   saveItem = async (model: FeedDto | undefined) => {
 
-    const {api} = this.props.context;
+    const {server} = this.props.context;
 
     await this.setStateAsync({
       model,
@@ -74,10 +72,7 @@ export class NewFeedComponent extends BaseComponent<Props, State> {
       throw new Error('The model submitted from the form is undefined.');
     }
 
-    const response = await api.send<SaveFeedRequest, SaveFeedResponse>(
-      'SaveFeedRequest',
-      {item: this.state.model},
-    );
+    const response = await server.saveFeed({item: this.state.model});
 
     if (response.success) {
       await this.setStateAsync({

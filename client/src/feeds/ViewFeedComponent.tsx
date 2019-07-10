@@ -5,7 +5,7 @@ import {Card, CardBody, CardHeader, Table, TableBody} from 'mdbreact';
 
 import {AppContext} from '../infrastructure/context';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
-import { FeedDto, GetFeedRequest, GetFeedResponse } from '../dto';
+import { FeedDto} from '../dto';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import BackButton from '../infrastructure/components/BackButton';
 import { StandardFrame } from '../infrastructure/components/StandardFrame';
@@ -37,16 +37,14 @@ export class ViewFeedComponent extends BaseComponent<Props, State> {
 
   async getItem(id: number) {
 
-    const {api, allActions} = this.props.context;
+    const {server, allActions} = this.props.context;
 
     await this.setStateAsync({
       loading: true,
       model: undefined,
     });
 
-    const response = await api.send<GetFeedRequest, GetFeedResponse>(
-      'GetFeedRequest', {id},
-    );
+    const response = await server.getFeed({id});
 
     if (response.success) {
       await this.setStateAsync({

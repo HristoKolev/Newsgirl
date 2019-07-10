@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from 'mdbreact';
 import BackButton from '../infrastructure/components/BackButton';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import {AppContext} from '../infrastructure/context';
-import { GetFeedRequest, GetFeedResponse, FeedDto, DeleteFeedRequest, DeleteFeedResponse } from '../dto';
+import { FeedDto} from '../dto';
 import {BaseComponent} from '../infrastructure/components/BaseComponent';
 import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
@@ -37,16 +37,14 @@ export class DeleteFeedComponent extends BaseComponent<Props, State> {
 
   async getItem(id: number) {
 
-    const {api, allActions} = this.props.context;
+    const {allActions, server} = this.props.context;
 
     await this.setStateAsync({
       loading: true,
       model: undefined,
     });
 
-    const response = await api.send<GetFeedRequest, GetFeedResponse>(
-      'GetFeedRequest', {id},
-    );
+    const response = await server.getFeed({id});
 
     if (response.success) {
       await this.setStateAsync({
@@ -61,13 +59,11 @@ export class DeleteFeedComponent extends BaseComponent<Props, State> {
 
   async deleteItem(id: number) {
 
-    const {api, allActions} = this.props.context;
+    const {server, allActions} = this.props.context;
 
     await this.setStateAsync({submitLoading: true});
 
-    const response = await api.send<DeleteFeedRequest, DeleteFeedResponse>(
-      'DeleteFeedRequest', {id},
-    );
+    const response = await server.deleteFeed({id});
 
     if (response.success) {
       await this.setStateAsync({submitLoading: false});

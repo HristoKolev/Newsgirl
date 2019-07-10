@@ -31,6 +31,7 @@ import { createBrowserHistory } from 'history';
 import { distributeMiddleware, distributeDispatch } from './infrastructure/distribute-dispatch';
 import { FeedsRoutes } from './feeds/feeds.module';
 import { FeedItemsRoutes } from './feed-items/feed-items.module';
+import { serverApi } from './dto';
 
 if (process.env.NODE_ENV === 'development') {
   registerObserver();
@@ -53,15 +54,21 @@ const store = configureStore({
   persistentFields: [
     'session',
   ],
-  initContext: ({session}) => ({
-    api: apiClient(session.token),
-    allActions: {
-      session: sessionActionCreators,
-      router: routerActionCreators,
-      errors: errorsActionCreators,
-      toast: toastActionCreators,
-    },
-  }),
+  initContext: ({session}) => {
+
+    const client = apiClient(session.token);
+
+    return {
+      api: client,
+      server: serverApi(client),
+      allActions: {
+        session: sessionActionCreators,
+        router: routerActionCreators,
+        errors: errorsActionCreators,
+        toast: toastActionCreators,
+      },
+    };
+  },
   middleware: [
     freezeMiddleware,
     routerMiddleware(history),

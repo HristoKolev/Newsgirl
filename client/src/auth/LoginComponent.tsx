@@ -5,7 +5,7 @@ import './LoginComponent.scss';
 import {ErrorMessagesContainer} from '../infrastructure/errors/components/ErrorComponents';
 import {fields} from '../infrastructure/fields/fields';
 import {Button, Card, CardBody} from 'mdbreact';
-import {LoginRequest, LoginResponse} from '../dto';
+import {LoginRequest} from '../dto';
 import {AppContext} from '../infrastructure/context';
 import {Field, Form, Formik} from 'formik';
 import {RouteComponentProps} from 'react-router';
@@ -29,9 +29,11 @@ export class LoginComponent extends BaseComponent<Props, State> {
   };
 
   login = async (values: {username: string; password: string}) => {
-      const {api, allActions } = this.props.context;
-      const response = await api.send<LoginRequest, LoginResponse>(
-        'LoginRequest', { username: values.username, password: values.password });
+      const {server, allActions } = this.props.context;
+      const response = await server.login({
+        username: values.username,
+        password: values.password,
+      });
       if (response.success) {
         allActions.session.login(response.payload);
         this.props.history.push('/');

@@ -5,10 +5,7 @@ import { Card, CardBody, CardHeader } from 'mdbreact';
 import LoadingSpinner from '../infrastructure/components/LoadingSpinner';
 import { PostFormComponent } from './FeedFormComponent';
 import { AppContext } from '../infrastructure/context';
-import {
-  FeedDto, GetFeedRequest, GetFeedResponse, SaveFeedRequest, SaveFeedResponse,
-
-} from '../dto';
+import { FeedDto } from '../dto';
 import { BaseComponent } from '../infrastructure/components/BaseComponent';
 import { StandardFrame } from '../infrastructure/components/StandardFrame';
 
@@ -42,17 +39,14 @@ export class EditFeedComponent extends BaseComponent<Props, State> {
 
   getItem = async (id: number) => {
 
-    const {api, allActions} = this.props.context;
+    const {server, allActions} = this.props.context;
 
     await this.setStateAsync({
       loading: true,
       model: undefined,
     });
 
-    const response = await api.send<GetFeedRequest, GetFeedResponse>(
-      'GetFeedRequest',
-      {id},
-    );
+    const response = await server.getFeed({id});
 
     if (response.success) {
       await this.setStateAsync({
@@ -71,7 +65,7 @@ export class EditFeedComponent extends BaseComponent<Props, State> {
 
   saveItem = async (model: FeedDto | undefined) => {
 
-    const {api} = this.props.context;
+    const {server} = this.props.context;
 
     await this.setStateAsync({
       model,
@@ -82,10 +76,7 @@ export class EditFeedComponent extends BaseComponent<Props, State> {
       throw new Error('The model submitted from the form is undefined.');
     }
 
-    const response = await api.send<SaveFeedRequest, SaveFeedResponse>(
-      'SaveFeedRequest',
-      {item: this.state.model},
-    );
+    const response = await server.saveFeed({item: this.state.model});
 
     if (response.success) {
       await this.setStateAsync({

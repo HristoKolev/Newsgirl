@@ -26,7 +26,7 @@ namespace Newsgirl.WebServices.Infrastructure.Api
         {
             this.ApiUrl = apiUrl;
         }
-        d
+        
         public async Task<ApiResult> Call(ApiRequest req)
         {
             var request = WebRequest.CreateHttp(new Uri(this.ApiUrl));

@@ -1,10 +1,12 @@
 import { ActionCreatorsMapObject, bindActionCreators } from 'redux';
 import { AllActionCreators, ReduxState, ReduxStore } from './redux-types';
 import { ApiClient } from './api-client';
+import { ServerApiClient } from '../dto';
 
 export interface ComputedAppContext {
   allActions: any; // the `any` here is on purpose
   api: ApiClient;
+  server: ServerApiClient;
 }
 
 export interface AppContext extends ComputedAppContext {

@@ -57,16 +57,18 @@
             Handlers = ApiHandlerProtocol.ScanForHandlers(Assembly.GetExecutingAssembly());
         }
         
-        public static bool Debug => debug;
+        public static bool Debug
+        {
+            get
+            {
+                #if DEBUG
+                return true;
+                #else
+                return false;
+                #endif
+            }
+        }
         
-        #if DEBUG
-        // ReSharper disable once InconsistentNaming
-        private const bool debug = true;
-        #else
-        // ReSharper disable once InconsistentNaming
-        private const bool debug = false;
-        #endif
-
         /// <summary>
         /// Stores the settings loaded from the database table `system_settings`.
         /// </summary>
