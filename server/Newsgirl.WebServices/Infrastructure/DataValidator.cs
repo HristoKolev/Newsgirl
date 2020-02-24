@@ -1,4 +1,6 @@
-﻿namespace Newsgirl.WebServices.Infrastructure
+﻿using Newsgirl.Shared.Infrastructure;
+
+namespace Newsgirl.WebServices.Infrastructure
 {
     using System;
     using System.Collections.Generic;

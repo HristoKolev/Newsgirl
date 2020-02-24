@@ -1,4 +1,4 @@
-namespace Newsgirl.WebServices.Infrastructure
+namespace Newsgirl.Shared.Infrastructure
 {
     /// <summary>
     /// Simple result type, uses generic T for the value and string[] for the errors.

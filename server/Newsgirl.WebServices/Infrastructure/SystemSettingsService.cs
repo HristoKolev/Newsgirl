@@ -1,4 +1,6 @@
-﻿namespace Newsgirl.WebServices.Infrastructure
+﻿using Newsgirl.Shared.Data;
+
+namespace Newsgirl.WebServices.Infrastructure
 {
     using System;
     using System.Linq;
@@ -10,12 +12,12 @@
 
     public class SystemSettingsService
     {
-        public SystemSettingsService(IDbService db)
+        public SystemSettingsService(DbService db)
         {
             this.Db = db;
         }
 
-        private IDbService Db { get; }
+        private DbService Db { get; }
 
         /// <summary>
         /// Reads the settings from the database.

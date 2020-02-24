@@ -1,0 +1,5 @@
+{
+  "ConnectionString": "Server=dev-host.lan;Port=4202;Database=test;Uid=test;Pwd=test123;",
+  "SentryDsn": "http://8979f5ca401143c4b69409493fccfd5c@home-sentry.lan/5",
+  "Environment": "development"
+}

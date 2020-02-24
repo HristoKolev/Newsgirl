@@ -1,3 +1,5 @@
+using Newsgirl.Shared.Data;
+
 namespace Newsgirl.WebServices.Infrastructure
 {
     using System.IO;
@@ -17,8 +19,8 @@ namespace Newsgirl.WebServices.Infrastructure
         protected override void Load(ContainerBuilder builder)
         {
             // Data Access
-            builder.Register(x => DbHelper.CreateConnection()).InstancePerLifetimeScope();
-            builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
+            builder.Register(x => DbFactory.CreateConnection(Global.AppConfig.ConnectionString)).InstancePerLifetimeScope();
+            builder.RegisterType<DbService>().InstancePerLifetimeScope();
             
             // Infrastructure
             builder.Register(x => MainLogger.Instance);

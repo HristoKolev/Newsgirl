@@ -10,20 +10,15 @@
     <Content Remove="logs\**" />
     <EmbeddedResource Remove="logs\**" />
     <None Remove="logs\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Remove="db-classes-template.cshtml" />
-  </ItemGroup>
+  </ItemGroup>  
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.9.2" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.4.0" />
     <PackageReference Include="CodeHollow.FeedReader" Version="1.1.6" />
     <PackageReference Include="CommandLineParser" Version="2.4.3" />
     <PackageReference Include="JWT" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="PgNet" Version="1.0.3" />
     <PackageReference Include="SharpRaven" Version="2.4.0" />
   </ItemGroup>
 
@@ -31,6 +26,10 @@
     <None Update="certificate.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
  
 </Project>

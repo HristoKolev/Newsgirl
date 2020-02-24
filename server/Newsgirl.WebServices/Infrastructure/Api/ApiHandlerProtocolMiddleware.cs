@@ -1,4 +1,6 @@
-﻿namespace Newsgirl.WebServices.Infrastructure.Api
+﻿using Newsgirl.Shared.Infrastructure;
+
+namespace Newsgirl.WebServices.Infrastructure.Api
 {
     using System.IO;
     using System.Threading.Tasks;

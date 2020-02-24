@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Newsgirl.WebServices", "src\Newsgirl.WebServices\Newsgirl.WebServices.csproj", "{64BD3BFA-CEC0-4034-88E7-465BB690F1C0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Fetcher", "Newsgirl.Fetcher\Newsgirl.Fetcher.csproj", "{DE449953-0F80-4990-A393-59BB5640BEC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Shared", "Newsgirl.Shared\Newsgirl.Shared.csproj", "{785A26B1-158C-422C-80C5-6861286FF141}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{64BD3BFA-CEC0-4034-88E7-465BB690F1C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{64BD3BFA-CEC0-4034-88E7-465BB690F1C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{64BD3BFA-CEC0-4034-88E7-465BB690F1C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{64BD3BFA-CEC0-4034-88E7-465BB690F1C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE449953-0F80-4990-A393-59BB5640BEC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE449953-0F80-4990-A393-59BB5640BEC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE449953-0F80-4990-A393-59BB5640BEC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE449953-0F80-4990-A393-59BB5640BEC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{785A26B1-158C-422C-80C5-6861286FF141}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{785A26B1-158C-422C-80C5-6861286FF141}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{785A26B1-158C-422C-80C5-6861286FF141}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{785A26B1-158C-422C-80C5-6861286FF141}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

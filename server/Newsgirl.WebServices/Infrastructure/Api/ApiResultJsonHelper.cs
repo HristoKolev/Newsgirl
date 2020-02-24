@@ -1,3 +1,5 @@
+using Newsgirl.Shared.Infrastructure;
+
 namespace Newsgirl.WebServices.Infrastructure.Api
 {
     using System;
