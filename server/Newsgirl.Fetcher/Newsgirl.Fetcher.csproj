@@ -11,6 +11,10 @@
       <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>        
+        <PackageReference Include="CodeHollow.FeedReader" Version="1.1.6" />        
+    </ItemGroup>
+
     <ItemGroup>
         <Compile Remove="logs\**" />
         <EmbeddedResource Remove="logs\**" />

@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
+using Newsgirl.Shared;
 using Newsgirl.Shared.Infrastructure;
 using Newtonsoft.Json;
 
@@ -20,6 +21,8 @@ namespace Newsgirl.Fetcher
             Path.Combine(ConfigDirectory, $"{Assembly.GetEntryAssembly()?.GetName().Name}.json");
 
         public static AppConfig AppConfig { get; set; }
+        
+        public static SystemSettingsModel SystemSettings { get; set; }
     }
 
     public class AppConfig
@@ -45,25 +48,27 @@ namespace Newsgirl.Fetcher
                 Environment = Global.AppConfig.Environment
             };
 
-            using (MainLogger.Initialize(loggingConfig))
+            using var loggerHandle = MainLogger.Initialize(loggingConfig);
+            
+            try
             {
-                try
-                {
-                    using (var container = IoCFactory.Create())
-                    {
-                        var fetcherInstance = container.Resolve<FeedFetcher>();
+                await using var container = IoCFactory.Create();
+                
+                var systemSettingsService = container.Resolve<SystemSettingsService>();
+                        
+                Global.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+                        
+                var fetcherInstance = container.Resolve<FeedFetcher>();
 
-                        await fetcherInstance.FetchFeeds();
-                    }
+                await fetcherInstance.FetchFeeds();
 
-                    return 0;
-                }
-                catch (Exception exception)
-                {
-                    MainLogger.Error(exception);
+                return 0;
+            }
+            catch (Exception exception)
+            {
+                MainLogger.Error(exception);
 
-                    return 1;
-                }
+                return 1;
             }
         }
     }

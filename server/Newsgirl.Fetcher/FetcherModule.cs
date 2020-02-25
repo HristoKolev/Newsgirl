@@ -9,9 +9,11 @@ namespace Newsgirl.Fetcher
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register((c, p) => 
-                DbFactory.CreateConnection(Global.AppConfig.ConnectionString));
+                DbFactory.CreateConnection(Global.AppConfig.ConnectionString))
+                .InstancePerLifetimeScope();
 
-            builder.RegisterType<DbService>();
+            builder.RegisterType<DbService>()
+                .InstancePerLifetimeScope();
             
             builder.RegisterType<FeedFetcher>();
             
