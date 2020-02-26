@@ -110,6 +110,19 @@ namespace Newsgirl.Shared.Data
     public class FeedPoco : IPoco<FeedPoco>
     {
         /// <summary>
+        /// <para>Column name: 'feed_hash'.</para>
+        /// <para>Table name: 'feeds'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'bigint'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Bigint'.</para>
+        /// <para>CLR type: 'long'.</para>
+        /// <para>linq2db data type: 'DataType.Int64'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "feed_hash", DataType = DataType.Int64)]
+        public long FeedHash { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'feed_id'.</para>
         /// <para>Table name: 'feeds'.</para>
         /// <para>Primary key of table: 'feeds'.</para>
@@ -638,6 +651,42 @@ namespace Newsgirl.Shared.Data
                 IsNew = (instance) => instance.FeedID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_hash",
+                        DbDataType = "bigint",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "FeedHash",
+                        TableName = "feeds",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "long",
+                            ClrType = typeof(long),
+                            ClrNonNullableTypeName = "long",
+                            ClrNonNullableType = typeof(long),
+                            ClrNullableTypeName = "long?",
+                            ClrNullableType = typeof(long?),
+                            DbDataType = "bigint",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int64",
+                            Linq2DbDataType = DataType.Int64,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
+                            NpgsqlDbType = NpgsqlDbType.Bigint,
+                        }
+                    },
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",

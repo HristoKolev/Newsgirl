@@ -37,6 +37,8 @@ create table feeds (
   feed_name text not NULL,
   feed_url text NOT NULL,
   feed_updated timestamp(0) not null,
+
+  feed_hash bigint not null,
   
   primary key(feed_id)
 );

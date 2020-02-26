@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data.HashFunction.xxHash;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -16,10 +18,19 @@ namespace Newsgirl.Fetcher
     public class FeedFetcher
     {
         private readonly DbService db;
+        private readonly AsyncLock dbLock;
+        private readonly DateTime fetchTime;
+        private readonly IxxHash xxHash;
 
         public FeedFetcher(DbService db)
         {
             this.db = db;
+            this.dbLock = new AsyncLock();
+            this.fetchTime = DateTime.UtcNow;
+            this.xxHash = xxHashFactory.Instance.Create(new xxHashConfig
+            {
+                HashSizeInBits = 64
+            });
         }
 
         public async Task FetchFeeds()
@@ -77,7 +88,7 @@ namespace Newsgirl.Fetcher
             }
         }
 
-        private async Task<IEnumerable<FeedItemPoco>> ProcessFeed(FeedPoco feed)
+        private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
         {
             try
             {
@@ -101,19 +112,95 @@ namespace Newsgirl.Fetcher
                     };
                 }
 
-                return materialized.Items.Select(x => new FeedItemPoco
+                var materializedItems = materialized.Items as List<FeedItem>;
+
+                long calculatedHash = GetItemsHash(materializedItems);
+
+                if (feed.FeedHash == calculatedHash)
                 {
-                    FeedItemUrl = x.Link.SomethingOrNull(),
-                    FeedItemTitle = x.Title.SomethingOrNull(),
-                    FeedItemDescription = x.Description.SomethingOrNull(),
-                });
+                    return new FeedUpdateModel
+                    {
+                        Feed = feed,
+                        NewItems = null,
+                        NewItemsHash = null, 
+                    };
+                }
+
+                using (await this.dbLock.Lock())
+                {
+                    
+                }
+                
+                var items = new List<FeedItemPoco>(materializedItems.Count);
+
+                for (int i = 0; i < materializedItems.Count; i++)
+                {
+                    var materializedItem = materializedItems[i];
+                    
+                    items.Add(new FeedItemPoco
+                    {
+                        FeedID = feed.FeedID,
+                        FeedItemUrl = materializedItem.Link.SomethingOrNull(),
+                        FeedItemTitle = materialized.Title.SomethingOrNull(),
+                        FeedItemDescription = materialized.Description.SomethingOrNull(),
+                        FeedItemAddedTime = this.fetchTime,
+                    });
+                }
+                
+                
             }
             catch (Exception err)
             {
                 MainLogger.Error(err);
                 
-                return Enumerable.Empty<FeedItemPoco>();
+                return new FeedUpdateModel
+                {
+                    Feed = feed,
+                };
             }
         }
+
+        private long GetItemsHash(List<FeedItem> feedItems)
+        {
+            byte[] concatenatedUrlBytes;
+            
+            using (var memStream = new MemoryStream())
+            {
+                byte[] urlBytes;
+                
+                for (int i = 0; i < feedItems.Count; i++)
+                {
+                    urlBytes = Encoding.UTF8.GetBytes(feedItems[i].Link);
+                    
+                    memStream.Write(urlBytes, 0, urlBytes.Length);
+                }
+
+                concatenatedUrlBytes = memStream.ToArray();
+            }
+
+            byte[] hashedValue = this.xxHash.ComputeHash(concatenatedUrlBytes).Hash;
+            
+            long value = BitConverter.ToInt64(hashedValue);
+
+            return value;
+        }
+    }
+
+    // https://stackoverflow.com/questions/6533029/how-to-compare-two-arrays-and-pick-only-the-non-matching-elements-in-postgres
+    
+    public class FeedUpdateModel
+    {
+        public List<FeedItemPoco> NewItems { get; set; }
+
+        public long? NewItemsHash { get; set; }
+        
+        public FeedPoco Feed { get; set; }
+    }
+
+    public class FeedItemUrlLookup
+    {
+        public int FeedItemID { get; set; }
+
+        public string FeedItemUrl { get; set; }
     }
 }
