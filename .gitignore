@@ -208,10 +208,6 @@ src/TrackTV.WebClient/dist/
 
 .idea/
 
-**/app/**/*.js
-**/app/**/*.js.map
-#**/app/**/*.css
-
 .awcache/
 **/compiled/
 dist/
@@ -225,6 +221,4 @@ logs/
 
 *.DotSettings
 
-
-
-server/src/Newsgirl\.WebServices/feeds\.sql
+feeds\.sql
