@@ -23,6 +23,8 @@ namespace Newsgirl.Fetcher
         public static AppConfig AppConfig { get; set; }
         
         public static SystemSettingsModel SystemSettings { get; set; }
+
+        public static bool Debug => AppConfig.Debug.General;
     }
 
     public class AppConfig
@@ -32,8 +34,15 @@ namespace Newsgirl.Fetcher
         public string Environment { get; set; }
         
         public string ConnectionString { get; set; }
+        
+        public DebugConfig Debug { get; set; }
     }
-    
+
+    public class DebugConfig
+    {
+        public bool General { get; set; }
+    }
+
     public static class Program
     {
         private static async Task<int> Main()
@@ -45,7 +54,8 @@ namespace Newsgirl.Fetcher
             {
                 SentryDsn = Global.AppConfig.SentryDsn,
                 ConfigDirectory = Global.ConfigDirectory,
-                Environment = Global.AppConfig.Environment
+                Environment = Global.AppConfig.Environment,
+                DebugLogging = Global.Debug,
             };
 
             using var loggerHandle = MainLogger.Initialize(loggingConfig);

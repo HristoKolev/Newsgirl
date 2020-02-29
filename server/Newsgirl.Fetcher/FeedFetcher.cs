@@ -12,6 +12,7 @@ using LinqToDB;
 
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
+using Newtonsoft.Json;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -21,7 +22,8 @@ namespace Newsgirl.Fetcher
     {
         private readonly ILifetimeScope lifetimeScope;
         private readonly IxxHash xxHash;
-
+        private readonly HttpClient httpClient;
+        
         public FeedFetcher(ILifetimeScope lifetimeScope)
         {
             this.lifetimeScope = lifetimeScope;
@@ -29,10 +31,19 @@ namespace Newsgirl.Fetcher
             {
                 HashSizeInBits = 64
             });
+
+            this.httpClient = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(Global.SystemSettings.HttpClientRequestTimeout),
+            };
+
+            this.httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(Global.SystemSettings.HttpClientUserAgent);
         }
 
         public async Task FetchFeeds()
         {
+            MainLogger.Print("Beginning fetch cycle...");
+            
             List<FeedPoco> feeds;
 
             await using (var scope = this.lifetimeScope.BeginLifetimeScope())
@@ -40,6 +51,8 @@ namespace Newsgirl.Fetcher
                 var db = scope.Resolve<DbService>();
                 feeds = await db.Poco.Feeds.ToListAsync();
             }
+
+            MainLogger.Print($"Fetching {feeds.Count} feeds.");
 
             var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
 
@@ -51,6 +64,17 @@ namespace Newsgirl.Fetcher
 
             var updates = await Task.WhenAll(tasks);
 
+            if (Global.Debug)
+            {
+                int notChangedCount = updates.Count(x => x.NewItems == null || !x.NewItems.Any());
+                
+                MainLogger.Debug($"{notChangedCount} feeds unchanged.");
+                
+                int changedCount = updates.Count(x => x.NewItems != null && x.NewItems.Any());
+                
+                MainLogger.Debug($"{changedCount} feeds changed.");
+            }
+
             await using (var scope = this.lifetimeScope.BeginLifetimeScope())
             {
                 var db = scope.Resolve<DbService>();
@@ -60,6 +84,8 @@ namespace Newsgirl.Fetcher
                 
                 await using (var tx = await dbConnection.BeginTransactionAsync())
                 {
+                    MainLogger.Debug("Importing new items...");
+                    
                     const string header = "COPY public.feed_items (feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) FROM STDIN (FORMAT BINARY)";
 
                     await using (var importer = dbConnection.BeginBinaryImport(header))
@@ -115,14 +141,16 @@ namespace Newsgirl.Fetcher
                         await importer.CompleteAsync();
                     }
                     
+                    MainLogger.Debug("Updating the feeds hashes...");
+                    
                     for (int i = 0; i < updates.Length; i++)
                     {
                         var update = updates[i];
 
-                        if (update.NewItemsHash.HasValue && update.Feed != null)
+                        if (update.NewFeedHash.HasValue && update.Feed != null)
                         {
                             await db.ExecuteNonQuery("update public.feeds set feed_hash = :hash where feed_id = :feed_id;",
-                                db.CreateParameter("hash", update.NewItemsHash.Value),
+                                db.CreateParameter("hash", update.NewFeedHash.Value),
                                 db.CreateParameter("feed_id", update.Feed.FeedID)
                             );    
                         }
@@ -131,59 +159,15 @@ namespace Newsgirl.Fetcher
                     await tx.CommitAsync();
                 }
             }
+            
+            MainLogger.Print("Fetch cycle complete.");
         }
  
-        private static async Task<string> GetFeedContent(string url)
-        {
-            using var httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(Global.SystemSettings.HttpClientRequestTimeout),
-            };
-
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(Global.SystemSettings.HttpClientUserAgent);
-            
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-            using var response = await httpClient.SendAsync(request);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new DetailedLogException("The feed request failed.")
-                {
-                    Details =
-                    {
-                        {"request", request},
-                        {"response", response}
-                    }
-                };
-            }
-            
-            try
-            {
-                using var content = response.Content;
-                
-                var responseBody = await content.ReadAsByteArrayAsync();
-
-                return Encoding.UTF8.GetString(responseBody);
-            }
-            catch (Exception err)
-            {
-                throw new DetailedLogException("Failed to read the response to the feed request.", err)
-                {
-                    Details =
-                    {
-                        {"request", request},
-                        {"response", response}
-                    }
-                };
-            }
-        }
-
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
         {
             try
             {
-                string feedContent = await GetFeedContent(feed.FeedUrl);
+                string feedContent = await this.GetFeedContent(feed);
 
                 Feed materializedFeed;
 
@@ -195,6 +179,7 @@ namespace Newsgirl.Fetcher
                 {
                     throw new DetailedLogException("Failed to parse feed content.", err)
                     {
+                        Fingerprint = "FEED_CONTENT_PARSE_FAILED",
                         Details =
                         {
                             {"feed", feed},
@@ -203,61 +188,59 @@ namespace Newsgirl.Fetcher
                     };
                 }
 
-                var materializedItems = (List<FeedItem>)materializedFeed.Items;
+                var parsedFeed = this.ParseFeedItems(materializedFeed);
 
-                long combinedHash = this.GetItemsHash(materializedItems);
-
-                if (feed.FeedHash == combinedHash)
+                if (feed.FeedHash == parsedFeed.FeedHash)
                 {
+                    MainLogger.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
+                    
                     return new FeedUpdateModel
                     {
                         Feed = feed,
                     };
                 }
-           
-                var itemMap = new Dictionary<long, FeedItem>();
 
-                for (var i = 0; i < materializedItems.Count; i++)
-                {
-                    var materializedItem = materializedItems[i];
-                    
-                    long itemHash = this.GetItemHash(materializedItem);
-                    
-                    itemMap.Add(itemHash, materializedItem);
-                }
-
-                long[] itemHashes = itemMap.Keys.ToArray();
+                long[] itemHashes = parsedFeed.FeedItemHashes.ToArray();
                 
-                long[] newHashes;
+                HashSet<long> newHashes;
                 
                 await using (var scope = this.lifetimeScope.BeginLifetimeScope())
                 {
                     var db = scope.Resolve<DbService>();
 
-                    newHashes = await db.ExecuteScalar<long[]>("select get_missing_feed_items(:feed_id, :hashes);",
+                    var newHashArray = await db.ExecuteScalar<long[]>("select get_missing_feed_items(:feed_id, :hashes);",
                         db.CreateParameter("feed_id", feed.FeedID),
                         db.CreateParameter("hashes", itemHashes, NpgsqlDbType.Bigint | NpgsqlDbType.Array)
                     );
+                    
+                    newHashes = new HashSet<long>(newHashArray);
                 }
+                
+                MainLogger.Debug($"Feed #{feed.FeedID} has {newHashes.Count} new items.");
                 
                 DateTime fetchTime = DateTime.UtcNow;
                 
-                var newItems = new List<FeedItemPoco>(newHashes.Length);
+                var newItems = new List<FeedItemPoco>(newHashes.Count);
 
-                for (int i = 0; i < newHashes.Length; i++)
+                for (int i = 0; i < parsedFeed.Items.Count; i++)
                 {
-                    long itemHash = newHashes[i];
-                    
-                    var materializedItem = itemMap[itemHash];
-                    
+                    var parsedFeedItem = parsedFeed.Items[i];
+
+                    if (!newHashes.Contains(parsedFeedItem.FeedItemHash))
+                    {
+                        continue;
+                    }
+
+                    var item = parsedFeedItem.Item;
+
                     newItems.Add(new FeedItemPoco
                     {
                         FeedID = feed.FeedID,
-                        FeedItemUrl = materializedItem.Link.SomethingOrNull(),
-                        FeedItemTitle = materializedItem.Title.SomethingOrNull(),
-                        FeedItemDescription = materializedItem.Description.SomethingOrNull(),
+                        FeedItemUrl = GetItemUrl(item).SomethingOrNull()?.Trim(),
+                        FeedItemTitle = item.Title.SomethingOrNull()?.Trim(),
+                        FeedItemDescription = item.Description.SomethingOrNull()?.Trim(),
                         FeedItemAddedTime = fetchTime,
-                        FeedItemHash = itemHash,
+                        FeedItemHash = parsedFeedItem.FeedItemHash,
                     });
                 }
 
@@ -265,12 +248,14 @@ namespace Newsgirl.Fetcher
                 {
                     Feed = feed,
                     NewItems = newItems,
-                    NewItemsHash = combinedHash,
+                    NewFeedHash = parsedFeed.FeedHash,
                 };
 
             }
             catch (Exception err)
             {
+                MainLogger.Debug($"An error occurred while fetching feed #{feed.FeedID}.");
+                
                 MainLogger.Error(err);
                 
                 return new FeedUpdateModel
@@ -279,49 +264,170 @@ namespace Newsgirl.Fetcher
                 };
             }
         }
-        
-        private long GetItemHash(FeedItem feedItem)
+
+        private ParsedFeed ParseFeedItems(Feed feed)
         {
-            var urlBytes = Encoding.UTF8.GetBytes(feedItem.Link);
+            var allItems = (List<FeedItem>)feed.Items;
 
-            byte[] hashedValue = this.xxHash.ComputeHash(urlBytes).Hash;
-            
-            long value = BitConverter.ToInt64(hashedValue);
+            var parsedFeed = new ParsedFeed(allItems.Count);
 
-            return value;
-        }
-
-        private long GetItemsHash(List<FeedItem> feedItems)
-        {
-            byte[] concatenatedUrlBytes;
-            
-            using (var memStream = new MemoryStream())
+            using (var memStream = new MemoryStream(allItems.Count * 8))
             {
-                byte[] urlBytes;
-                
-                for (int i = 0; i < feedItems.Count; i++)
-                {
-                    urlBytes = Encoding.UTF8.GetBytes(feedItems[i].Link);
-                    
-                    memStream.Write(urlBytes, 0, urlBytes.Length);
-                }
+                byte[] stringIDBytes;
 
-                concatenatedUrlBytes = memStream.ToArray();
+                for (int i = allItems.Count - 1; i >= 0; i--)
+                {
+                    var item = allItems[i];
+                
+                    string stringID = GetItemStringID(item);
+
+                    if (stringID == null)
+                    {
+                        if (Global.Debug)
+                        {
+                            MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(item)}");
+                        }
+                        
+                        continue;
+                    }
+                
+                    stringIDBytes = Encoding.UTF8.GetBytes(stringID);
+                    
+                    long itemHash = BitConverter.ToInt64(this.xxHash.ComputeHash(stringIDBytes).Hash);
+
+                    if (!parsedFeed.FeedItemHashes.Add(itemHash))
+                    {
+                        if (Global.Debug)
+                        {
+                            MainLogger.Debug($"Feed item already added: {stringID}");
+                        }
+                        
+                        continue;
+                    }
+
+                    parsedFeed.Items.Add(new ParsedFeedItem
+                    {
+                        Item = item,
+                        FeedItemHash = itemHash,
+                    });
+                    
+                    memStream.Write(stringIDBytes, 0, stringIDBytes.Length);
+                }
+                
+                var combinedStringID = memStream.ToArray();
+                var feedHashBytes = this.xxHash.ComputeHash(combinedStringID).Hash;
+                
+                parsedFeed.FeedHash = BitConverter.ToInt64(feedHashBytes);
             }
 
-            byte[] hashedValue = this.xxHash.ComputeHash(concatenatedUrlBytes).Hash;
-            
-            long value = BitConverter.ToInt64(hashedValue);
-
-            return value;
+            return parsedFeed;
         }
+
+        private async Task<string> GetFeedContent(FeedPoco feed)
+        {
+            byte[] responseBody = null;
+            
+            try
+            {
+                using (var response = await this.httpClient.GetAsync(feed.FeedUrl))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    
+                    using (var content = response.Content)
+                    {
+                        responseBody = await content.ReadAsByteArrayAsync();
+
+                        return Encoding.UTF8.GetString(responseBody);
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+                throw new DetailedLogException("The http request for the feed failed.", err)
+                {
+                    Fingerprint = "FEED_HTTP_REQUEST_FAILED",
+                    Details =
+                    {
+                        {"feed", feed},
+                        {"responseBody", responseBody == null ? null : Convert.ToBase64String(responseBody)}
+                    }
+                };
+            }
+        }
+
+        private static string GetItemUrl(FeedItem item)
+        {
+            string linkValue = item.Link?.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(linkValue) && linkValue.StartsWith("http"))
+            {
+                return linkValue;
+            }
+
+            string idValue = item.Id?.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(idValue) && idValue.StartsWith("http"))
+            {
+                return idValue;
+            }
+
+            return null;
+        }
+
+        private static string GetItemStringID(FeedItem feedItem)
+        {
+            string idValue = feedItem.Id?.Trim();
+            string linkValue = feedItem.Link?.Trim();
+            string titleValue = feedItem.Title?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(idValue))
+            {
+                return $"ID({idValue})";
+            }
+
+            if (!string.IsNullOrWhiteSpace(linkValue))
+            {
+                return $"LINK({linkValue})";
+            }
+
+            if (!string.IsNullOrWhiteSpace(titleValue))
+            {
+                return $"TITLE({titleValue})";
+            }
+
+            return null;
+        }
+    }
+
+    public class ParsedFeed
+    {
+        public ParsedFeed(int capacity)
+        {
+            this.Items = new List<ParsedFeedItem>(capacity);
+            this.FeedItemHashes = new HashSet<long>(capacity);
+        }
+        
+        public List<ParsedFeedItem> Items { get; } 
+
+        public HashSet<long> FeedItemHashes { get; }
+        
+        public long FeedHash { get; set; }
+    }
+
+
+    public class ParsedFeedItem
+    {
+        public FeedItem Item { get; set; }
+
+        public long FeedItemHash { get; set; }
     }
 
     public class FeedUpdateModel
     {
         public List<FeedItemPoco> NewItems { get; set; }
 
-        public long? NewItemsHash { get; set; }
+        public long? NewFeedHash { get; set; }
         
         public FeedPoco Feed { get; set; }
     }
