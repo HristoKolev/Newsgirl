@@ -1,20 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Data.HashFunction.xxHash;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
 using Autofac;
 using CodeHollow.FeedReader;
 using LinqToDB;
-
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
 using Newtonsoft.Json;
 using Npgsql;
 using NpgsqlTypes;
+
+using Newsgirl.Shared.Data;
+using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Fetcher
 {
@@ -43,19 +45,20 @@ namespace Newsgirl.Fetcher
         public async Task FetchFeeds()
         {
             MainLogger.Print("Beginning fetch cycle...");
+            var sw = Stopwatch.StartNew();
             
+            // Get the feeds scheduled for checking.
             List<FeedPoco> feeds;
-
             await using (var scope = this.lifetimeScope.BeginLifetimeScope())
             {
                 var db = scope.Resolve<DbService>();
                 feeds = await db.Poco.Feeds.ToListAsync();
             }
-
+            
             MainLogger.Print($"Fetching {feeds.Count} feeds.");
 
+            // Run the fetch tasks.
             var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
-
             for (int i = 0; i < feeds.Count; i++)
             {
                 var feed = feeds[i];
@@ -75,6 +78,7 @@ namespace Newsgirl.Fetcher
                 MainLogger.Debug($"{changedCount} feeds changed.");
             }
 
+            // Save the data to db.
             await using (var scope = this.lifetimeScope.BeginLifetimeScope())
             {
                 var db = scope.Resolve<DbService>();
@@ -84,7 +88,7 @@ namespace Newsgirl.Fetcher
                 
                 await using (var tx = await dbConnection.BeginTransactionAsync())
                 {
-                    MainLogger.Debug("Importing new items...");
+                    MainLogger.Debug("Importing items...");
                     
                     const string header = "COPY public.feed_items (feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) FROM STDIN (FORMAT BINARY)";
 
@@ -94,50 +98,52 @@ namespace Newsgirl.Fetcher
                         {
                             var update = updates[i];
 
-                            if (update.NewItems != null && update.NewItems.Count > 0)
+                            if (update.NewItems == null || update.NewItems.Count == 0)
                             {
-                                for (int j = 0; j < update.NewItems.Count; j++)
+                                continue;
+                            }
+                            
+                            for (int j = 0; j < update.NewItems.Count; j++)
+                            {
+                                var newItem = update.NewItems[j];
+                                    
+                                await importer.StartRowAsync();
+
+                                await importer.WriteAsync(newItem.FeedID, NpgsqlDbType.Integer);
+                                    
+                                await importer.WriteAsync(newItem.FeedItemAddedTime, NpgsqlDbType.Timestamp);
+
+                                if (newItem.FeedItemDescription == null)
                                 {
-                                    var newItem = update.NewItems[j];
+                                    await importer.WriteNullAsync();
+                                }
+                                else
+                                {
+                                    await importer.WriteAsync(newItem.FeedItemDescription, NpgsqlDbType.Text);
+                                }
                                     
-                                    await importer.StartRowAsync();
-
-                                    await importer.WriteAsync(newItem.FeedID, NpgsqlDbType.Integer);
+                                await importer.WriteAsync(newItem.FeedItemHash, NpgsqlDbType.Bigint);
                                     
-                                    await importer.WriteAsync(newItem.FeedItemAddedTime, NpgsqlDbType.Timestamp);
-
-                                    if (newItem.FeedItemDescription == null)
-                                    {
-                                        await importer.WriteNullAsync();
-                                    }
-                                    else
-                                    {
-                                        await importer.WriteAsync(newItem.FeedItemDescription, NpgsqlDbType.Text);
-                                    }
+                                if (newItem.FeedItemTitle == null)
+                                {
+                                    await importer.WriteNullAsync();
+                                }
+                                else
+                                {
+                                    await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
+                                }
                                     
-                                    await importer.WriteAsync(newItem.FeedItemHash, NpgsqlDbType.Bigint);
-                                    
-                                    if (newItem.FeedItemTitle == null)
-                                    {
-                                        await importer.WriteNullAsync();
-                                    }
-                                    else
-                                    {
-                                        await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
-                                    }
-                                    
-                                    if (newItem.FeedItemUrl == null)
-                                    {
-                                        await importer.WriteNullAsync();
-                                    }
-                                    else
-                                    {
-                                        await importer.WriteAsync(newItem.FeedItemUrl, NpgsqlDbType.Text);
-                                    }
-                                }    
+                                if (newItem.FeedItemUrl == null)
+                                {
+                                    await importer.WriteNullAsync();
+                                }
+                                else
+                                {
+                                    await importer.WriteAsync(newItem.FeedItemUrl, NpgsqlDbType.Text);
+                                }
                             }
                         }
-                            
+
                         await importer.CompleteAsync();
                     }
                     
@@ -160,7 +166,9 @@ namespace Newsgirl.Fetcher
                 }
             }
             
-            MainLogger.Print("Fetch cycle complete.");
+            sw.Stop();
+            
+            MainLogger.Print($"Fetch cycle complete in {sw.Elapsed}.");
         }
  
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
@@ -169,26 +177,7 @@ namespace Newsgirl.Fetcher
             {
                 string feedContent = await this.GetFeedContent(feed);
 
-                Feed materializedFeed;
-
-                try
-                {
-                    materializedFeed = FeedReader.ReadFromString(feedContent);
-                }
-                catch (Exception err)
-                {
-                    throw new DetailedLogException("Failed to parse feed content.", err)
-                    {
-                        Fingerprint = "FEED_CONTENT_PARSE_FAILED",
-                        Details =
-                        {
-                            {"feed", feed},
-                            {"content", feedContent}
-                        }
-                    };
-                }
-
-                var parsedFeed = this.ParseFeedItems(materializedFeed);
+                var parsedFeed = this.ParseFeed(feed, feedContent);
 
                 if (feed.FeedHash == parsedFeed.FeedHash)
                 {
@@ -250,13 +239,15 @@ namespace Newsgirl.Fetcher
                     NewItems = newItems,
                     NewFeedHash = parsedFeed.FeedHash,
                 };
-
             }
             catch (Exception err)
             {
                 MainLogger.Debug($"An error occurred while fetching feed #{feed.FeedID}.");
                 
-                MainLogger.Error(err);
+                MainLogger.Error(err, new Dictionary<string, object>
+                {
+                    {"feed", feed}
+                });
                 
                 return new FeedUpdateModel
                 {
@@ -265,78 +256,92 @@ namespace Newsgirl.Fetcher
             }
         }
 
-        private ParsedFeed ParseFeedItems(Feed feed)
+        private ParsedFeed ParseFeed(FeedPoco feed, string feedContent)
         {
-            var allItems = (List<FeedItem>)feed.Items;
-
-            var parsedFeed = new ParsedFeed(allItems.Count);
-
-            using (var memStream = new MemoryStream(allItems.Count * 8))
+            try
             {
-                byte[] stringIDBytes;
+                var materializedFeed = FeedReader.ReadFromString(feedContent);
+                
+                var allItems = (List<FeedItem>)materializedFeed.Items;
 
-                for (int i = allItems.Count - 1; i >= 0; i--)
+                var parsedFeed = new ParsedFeed(allItems.Count);
+
+                using (var memStream = new MemoryStream(allItems.Count * 8))
                 {
-                    var item = allItems[i];
-                
-                    string stringID = GetItemStringID(item);
+                    byte[] stringIDBytes;
 
-                    if (stringID == null)
+                    for (int i = allItems.Count - 1; i >= 0; i--)
                     {
-                        if (Global.Debug)
+                        var item = allItems[i];
+                
+                        string stringID = GetItemStringID(item);
+
+                        if (stringID == null)
                         {
-                            MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(item)}");
-                        }
+                            if (Global.Debug)
+                            {
+                                MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(item)}");
+                            }
                         
-                        continue;
+                            continue;
+                        }
+                
+                        stringIDBytes = Encoding.UTF8.GetBytes(stringID);
+                    
+                        long itemHash = BitConverter.ToInt64(this.xxHash.ComputeHash(stringIDBytes).Hash);
+
+                        if (!parsedFeed.FeedItemHashes.Add(itemHash))
+                        {
+                            if (Global.Debug)
+                            {
+                                MainLogger.Debug($"Feed item already added: {stringID}");
+                            }
+                        
+                            continue;
+                        }
+
+                        parsedFeed.Items.Add(new ParsedFeedItem
+                        {
+                            Item = item,
+                            FeedItemHash = itemHash,
+                        });
+                    
+                        memStream.Write(stringIDBytes, 0, stringIDBytes.Length);
                     }
                 
-                    stringIDBytes = Encoding.UTF8.GetBytes(stringID);
-                    
-                    long itemHash = BitConverter.ToInt64(this.xxHash.ComputeHash(stringIDBytes).Hash);
-
-                    if (!parsedFeed.FeedItemHashes.Add(itemHash))
-                    {
-                        if (Global.Debug)
-                        {
-                            MainLogger.Debug($"Feed item already added: {stringID}");
-                        }
-                        
-                        continue;
-                    }
-
-                    parsedFeed.Items.Add(new ParsedFeedItem
-                    {
-                        Item = item,
-                        FeedItemHash = itemHash,
-                    });
-                    
-                    memStream.Write(stringIDBytes, 0, stringIDBytes.Length);
+                    var combinedStringID = memStream.ToArray();
+                    var feedHashBytes = this.xxHash.ComputeHash(combinedStringID).Hash;
+                
+                    parsedFeed.FeedHash = BitConverter.ToInt64(feedHashBytes);
                 }
-                
-                var combinedStringID = memStream.ToArray();
-                var feedHashBytes = this.xxHash.ComputeHash(combinedStringID).Hash;
-                
-                parsedFeed.FeedHash = BitConverter.ToInt64(feedHashBytes);
-            }
 
-            return parsedFeed;
+                return parsedFeed;
+            }
+            catch (Exception err)
+            {
+                throw new DetailedLogException("Failed to parse feed content.", err)
+                {
+                    Fingerprint = "FEED_CONTENT_PARSE_FAILED",
+                    Details =
+                    {
+                        {"feed", feed},
+                        {"content", feedContent}
+                    }
+                };
+            }
         }
 
         private async Task<string> GetFeedContent(FeedPoco feed)
         {
-            byte[] responseBody = null;
-            
             try
             {
                 using (var response = await this.httpClient.GetAsync(feed.FeedUrl))
                 {
                     response.EnsureSuccessStatusCode();
 
-                    
                     using (var content = response.Content)
                     {
-                        responseBody = await content.ReadAsByteArrayAsync();
+                        var responseBody = await content.ReadAsByteArrayAsync();
 
                         return Encoding.UTF8.GetString(responseBody);
                     }
@@ -350,22 +355,21 @@ namespace Newsgirl.Fetcher
                     Details =
                     {
                         {"feed", feed},
-                        {"responseBody", responseBody == null ? null : Convert.ToBase64String(responseBody)}
                     }
                 };
             }
         }
 
-        private static string GetItemUrl(FeedItem item)
+        private static string GetItemUrl(FeedItem feedItem)
         {
-            string linkValue = item.Link?.Trim();
+            string linkValue = feedItem.Link?.Trim();
             
             if (!string.IsNullOrWhiteSpace(linkValue) && linkValue.StartsWith("http"))
             {
                 return linkValue;
             }
 
-            string idValue = item.Id?.Trim();
+            string idValue = feedItem.Id?.Trim();
             
             if (!string.IsNullOrWhiteSpace(idValue) && idValue.StartsWith("http"))
             {

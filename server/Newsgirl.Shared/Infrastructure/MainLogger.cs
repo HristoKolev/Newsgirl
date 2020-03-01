@@ -150,7 +150,7 @@ namespace Newsgirl.Shared.Infrastructure
             DebugLogging = value;
         }
 
-        public static string Error(Exception exception)
+        public static string Error(Exception exception, Dictionary<string, object> additionalInfo = null)
         {
             Log4NetLogger.Error(exception.Message, exception);
 
@@ -160,6 +160,11 @@ namespace Newsgirl.Shared.Infrastructure
                                      .Cast<DetailedLogException>()
                                      .SelectMany(x => x.Details)
                                      .ToList();
+
+            if (additionalInfo != null)
+            {
+                contextEntries.AddRange(additionalInfo);
+            }
 
             var sentryEvent = new SentryEvent(exception)
             {

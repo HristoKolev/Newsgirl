@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Newsgirl.Shared;
+using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
 using Newtonsoft.Json;
 
@@ -42,6 +43,36 @@ namespace Newsgirl.Fetcher
     {
         public bool General { get; set; }
     }
+    
+    public class FetcherModule : Autofac.Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => 
+                    DbFactory.CreateConnection(Global.AppConfig.ConnectionString))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<DbService>()
+                .InstancePerLifetimeScope();
+            
+            builder.RegisterType<FeedFetcher>();
+            
+            base.Load(builder);
+        }
+    }
+    
+    public static class IoCFactory
+    {
+        public static IContainer Create()
+        {
+            var builder = new ContainerBuilder();
+
+            builder.RegisterModule<SharedModule>();
+            builder.RegisterModule<FetcherModule>();
+
+            return builder.Build();
+        }
+    }
 
     public static class Program
     {
@@ -57,28 +88,33 @@ namespace Newsgirl.Fetcher
                 Environment = Global.AppConfig.Environment,
                 DebugLogging = Global.Debug,
             };
-
-            using var loggerHandle = MainLogger.Initialize(loggingConfig);
-            
-            try
-            {
-                await using var container = IoCFactory.Create();
                 
-                var systemSettingsService = container.Resolve<SystemSettingsService>();
-                        
-                Global.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-                        
-                var fetcherInstance = container.Resolve<FeedFetcher>();
-
-                await fetcherInstance.FetchFeeds();
-
-                return 0;
-            }
-            catch (Exception exception)
+            using (MainLogger.Initialize(loggingConfig))
             {
-                MainLogger.Error(exception);
+                try
+                {
+                    while (true)
+                    {
+                        await using (var container = IoCFactory.Create())
+                        {
+                            var systemSettingsService = container.Resolve<SystemSettingsService>();
+                        
+                            Global.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+                        
+                            var fetcherInstance = container.Resolve<FeedFetcher>();
 
-                return 1;
+                            await fetcherInstance.FetchFeeds();    
+                        }
+
+                        await Task.Delay(TimeSpan.FromSeconds(Global.SystemSettings.FetcherCyclePause));                        
+                    }
+                }
+                catch (Exception exception)
+                {
+                    MainLogger.Error(exception);
+
+                    return 1;
+                }
             }
         }
     }

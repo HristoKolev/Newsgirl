@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac;
 using LinqToDB;
 using Newsgirl.Shared.Data;
 
@@ -59,5 +60,10 @@ namespace Newsgirl.Shared
         /// The timeout for the http calls.
         /// </summary>
         public int HttpClientRequestTimeout { get; set; }
+
+        /// <summary>
+        /// The pause between fetch cycles.
+        /// </summary>
+        public int FetcherCyclePause { get; set; }
     }
 }

@@ -12,7 +12,7 @@ namespace Newsgirl.Shared.Data
         {
             var builder = new NpgsqlConnectionStringBuilder(connectionString)
             {
-                Enlist = false // Turn this off in order to save some perf. It disables the support for `TransactionScope`.
+                Enlist = false, // Turn this off in order to save some perf. It disables the support for `TransactionScope`.
             };
 
             return new NpgsqlConnection(builder.ToString());
