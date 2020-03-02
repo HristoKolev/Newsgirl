@@ -2,11 +2,13 @@
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+
 using Autofac;
+using Newtonsoft.Json;
+
 using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
-using Newtonsoft.Json;
 
 namespace Newsgirl.Fetcher
 {
@@ -56,6 +58,13 @@ namespace Newsgirl.Fetcher
                 .InstancePerLifetimeScope();
             
             builder.RegisterType<FeedFetcher>();
+
+            builder.RegisterType<Hasher>().As<IHasher>();
+            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>();
+            builder.RegisterType<FeedParser>().As<IFeedParser>();
+
+            builder.Register((c, p) => Global.SystemSettings);
+            builder.Register((c, p) => Global.AppConfig);
             
             base.Load(builder);
         }

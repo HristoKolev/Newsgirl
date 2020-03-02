@@ -5,6 +5,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <AssemblyName>newsgirl-fetcher</AssemblyName>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

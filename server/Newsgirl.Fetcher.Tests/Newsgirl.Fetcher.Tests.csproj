@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="xunit" Version="2.4.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+        <PackageReference Include="ApprovalTests" Version="4.5.1" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Newsgirl.Fetcher\Newsgirl.Fetcher.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="snapshots" />
+    </ItemGroup>
+</Project>
