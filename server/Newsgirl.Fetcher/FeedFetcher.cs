@@ -1,15 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Autofac;
-using CodeHollow.FeedReader;
-using LinqToDB;
-using Npgsql;
-using NpgsqlTypes;
-
+using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
 
@@ -17,44 +11,61 @@ namespace Newsgirl.Fetcher
 {
     public class FeedFetcher
     {
-        private readonly ILifetimeScope lifetimeScope;
         private readonly IFeedContentProvider feedContentProvider;
         private readonly IFeedParser feedParser;
+        private readonly IFeedItemsImportService feedItemsImportService;
+        private readonly SystemSettingsModel systemSettings;
+        private readonly ITransactionService transactionService;
+        private readonly AsyncLock dbLock;
 
         public FeedFetcher(
-            ILifetimeScope lifetimeScope,
             IFeedContentProvider feedContentProvider,
-            IFeedParser feedParser)
+            IFeedParser feedParser,
+            IFeedItemsImportService feedItemsImportService,
+            SystemSettingsModel systemSettings,
+            ITransactionService transactionService)
         {
-            this.lifetimeScope = lifetimeScope;
             this.feedContentProvider = feedContentProvider;
             this.feedParser = feedParser;
+            this.feedItemsImportService = feedItemsImportService;
+            this.systemSettings = systemSettings;
+            this.transactionService = transactionService;
+            this.dbLock = new AsyncLock();
         }
 
         public async Task FetchFeeds()
         {
             MainLogger.Print("Beginning fetch cycle...");
-            var sw = Stopwatch.StartNew();
             
-            // Get the feeds scheduled for checking.
-            List<FeedPoco> feeds;
-            await using (var scope = this.lifetimeScope.BeginLifetimeScope())
-            {
-                var db = scope.Resolve<DbService>();
-                feeds = await db.Poco.Feeds.ToListAsync();
-            }
+            var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
             
             MainLogger.Print($"Fetching {feeds.Count} feeds.");
 
-            // Run the fetch tasks.
-            var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
-            for (int i = 0; i < feeds.Count; i++)
-            {
-                var feed = feeds[i];
-                tasks.Add(this.ProcessFeed(feed));
-            }
+            FeedUpdateModel[] updates;
 
-            var updates = await Task.WhenAll(tasks);
+            if (this.systemSettings.ParallelFeedFetching)
+            {
+                var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
+            
+                for (int i = 0; i < feeds.Count; i++)
+                {
+                    var feed = feeds[i];
+                    tasks.Add(this.ProcessFeed(feed));
+                }
+
+                updates = await Task.WhenAll(tasks);    
+            }
+            else
+            {
+                updates = new FeedUpdateModel[feeds.Count];
+                
+                for (int i = 0; i < feeds.Count; i++)
+                {
+                    var feed = feeds[i];
+
+                    updates[i] = await this.ProcessFeed(feed);
+                }
+            }
 
             if (Global.Debug)
             {
@@ -67,99 +78,14 @@ namespace Newsgirl.Fetcher
                 MainLogger.Debug($"{changedCount} feeds changed.");
             }
 
-            // Save the data to db.
-            await using (var scope = this.lifetimeScope.BeginLifetimeScope())
+            await this.transactionService.ExecuteInTransactionAndCommit(async () =>
             {
-                var db = scope.Resolve<DbService>();
-                var dbConnection = scope.Resolve<NpgsqlConnection>();
+                await this.feedItemsImportService.ImportItems(updates);
+            });
 
-                await dbConnection.OpenAsync();
-                
-                await using (var tx = await dbConnection.BeginTransactionAsync())
-                {
-                    MainLogger.Debug("Importing items...");
-                    
-                    const string header = "COPY public.feed_items (feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) FROM STDIN (FORMAT BINARY)";
-
-                    await using (var importer = dbConnection.BeginBinaryImport(header))
-                    {
-                        for (int i = 0; i < updates.Length; i++)
-                        {
-                            var update = updates[i];
-
-                            if (update.NewItems == null || update.NewItems.Count == 0)
-                            {
-                                continue;
-                            }
-                            
-                            for (int j = 0; j < update.NewItems.Count; j++)
-                            {
-                                var newItem = update.NewItems[j];
-                                    
-                                await importer.StartRowAsync();
-
-                                await importer.WriteAsync(newItem.FeedID, NpgsqlDbType.Integer);
-                                    
-                                await importer.WriteAsync(newItem.FeedItemAddedTime, NpgsqlDbType.Timestamp);
-
-                                if (newItem.FeedItemDescription == null)
-                                {
-                                    await importer.WriteNullAsync();
-                                }
-                                else
-                                {
-                                    await importer.WriteAsync(newItem.FeedItemDescription, NpgsqlDbType.Text);
-                                }
-                                    
-                                await importer.WriteAsync(newItem.FeedItemHash, NpgsqlDbType.Bigint);
-                                    
-                                if (newItem.FeedItemTitle == null)
-                                {
-                                    await importer.WriteNullAsync();
-                                }
-                                else
-                                {
-                                    await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
-                                }
-                                    
-                                if (newItem.FeedItemUrl == null)
-                                {
-                                    await importer.WriteNullAsync();
-                                }
-                                else
-                                {
-                                    await importer.WriteAsync(newItem.FeedItemUrl, NpgsqlDbType.Text);
-                                }
-                            }
-                        }
-
-                        await importer.CompleteAsync();
-                    }
-                    
-                    MainLogger.Debug("Updating the feeds hashes...");
-                    
-                    for (int i = 0; i < updates.Length; i++)
-                    {
-                        var update = updates[i];
-
-                        if (update.NewFeedHash.HasValue && update.Feed != null)
-                        {
-                            await db.ExecuteNonQuery("update public.feeds set feed_hash = :hash where feed_id = :feed_id;",
-                                db.CreateParameter("hash", update.NewFeedHash.Value),
-                                db.CreateParameter("feed_id", update.Feed.FeedID)
-                            );    
-                        }
-                    }
-
-                    await tx.CommitAsync();
-                }
-            }
-            
-            sw.Stop();
-            
-            MainLogger.Print($"Fetch cycle complete in {sw.Elapsed}.");
+            MainLogger.Print("Fetch cycle complete in.");
         }
- 
+
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
         {
             try
@@ -209,45 +135,30 @@ namespace Newsgirl.Fetcher
                 long[] itemHashes = parsedFeed.FeedItemHashes.ToArray();
                 
                 HashSet<long> newHashes;
-                
-                await using (var scope = this.lifetimeScope.BeginLifetimeScope())
-                {
-                    var db = scope.Resolve<DbService>();
 
-                    var newHashArray = await db.ExecuteScalar<long[]>("select get_missing_feed_items(:feed_id, :hashes);",
-                        db.CreateParameter("feed_id", feed.FeedID),
-                        db.CreateParameter("hashes", itemHashes, NpgsqlDbType.Bigint | NpgsqlDbType.Array)
-                    );
+                using (await this.dbLock.Lock())
+                {
+                    var newHashArray = await this.feedItemsImportService.GetMissingFeedItems(feed.FeedID, itemHashes);
                     
                     newHashes = new HashSet<long>(newHashArray);
                 }
-                
+
                 MainLogger.Debug($"Feed #{feed.FeedID} has {newHashes.Count} new items.");
-                
-                var fetchTime = DateTime.UtcNow;
                 
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
                 for (int i = 0; i < parsedFeed.Items.Count; i++)
                 {
-                    var parsedFeedItem = parsedFeed.Items[i];
+                    var feedItem = parsedFeed.Items[i];
 
-                    if (!newHashes.Contains(parsedFeedItem.FeedItemHash))
+                    if (!newHashes.Contains(feedItem.FeedItemHash))
                     {
                         continue;
                     }
 
-                    var item = parsedFeedItem.Item;
+                    feedItem.FeedID = feed.FeedID;
 
-                    newItems.Add(new FeedItemPoco
-                    {
-                        FeedID = feed.FeedID,
-                        FeedItemUrl = GetItemUrl(item).SomethingOrNull()?.Trim(),
-                        FeedItemTitle = item.Title.SomethingOrNull()?.Trim(),
-                        FeedItemDescription = item.Description.SomethingOrNull()?.Trim(),
-                        FeedItemAddedTime = fetchTime,
-                        FeedItemHash = parsedFeedItem.FeedItemHash,
-                    });
+                    newItems.Add(feedItem);
                 }
 
                 return new FeedUpdateModel
@@ -272,33 +183,5 @@ namespace Newsgirl.Fetcher
                 };
             }
         }
-
-        private static string GetItemUrl(FeedItem feedItem)
-        {
-            string linkValue = feedItem.Link?.Trim();
-            
-            if (!string.IsNullOrWhiteSpace(linkValue) && linkValue.StartsWith("http"))
-            {
-                return linkValue;
-            }
-
-            string idValue = feedItem.Id?.Trim();
-            
-            if (!string.IsNullOrWhiteSpace(idValue) && idValue.StartsWith("http"))
-            {
-                return idValue;
-            }
-
-            return null;
-        }
-    }
-
-    public class FeedUpdateModel
-    {
-        public List<FeedItemPoco> NewItems { get; set; }
-
-        public long? NewFeedHash { get; set; }
-        
-        public FeedPoco Feed { get; set; }
     }
 }

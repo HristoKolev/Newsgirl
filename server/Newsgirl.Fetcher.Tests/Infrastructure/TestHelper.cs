@@ -1,13 +1,20 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
+using ApprovalTests;
 using ApprovalTests.Core;
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
-using Newsgirl.Fetcher.Tests.Infrastructure;
+using ApprovalUtilities.Utilities;
+using Newtonsoft.Json;
 using Xunit;
 using Xunit.Sdk;
+
+using Newsgirl.Fetcher.Tests.Infrastructure;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
@@ -22,6 +29,8 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
 
             return content;
         }
+
+        public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     }
     
     public class CustomReporter : IApprovalFailureReporter
@@ -37,18 +46,161 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             }
             catch (EqualException ex)
             {
-                string message = "Assert.Equal() Failure\n\n";
-                message += new string('=', 30) + "\n\n";
-                message += $"mv '{received}' '{approved}'\n\n";
+                string message = ex.Message + "\n\n";
                 message += new string('=', 30) + "\n\n";
                 message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n";
-                message += new string('=', 30) + "\n";
+                message += new string('=', 30) + "\n\n";
+                message += $"mv '{received}' '{approved}'\n\n";
+                message += new string('=', 30);
+
+                var field = typeof(EqualException)
+                    .GetField("message", BindingFlags.Instance | BindingFlags.NonPublic);
                 
-                message += "\n\n";
-                message += ex.Message;
+                field.SetValue(ex, message);
                 
-                throw new ApplicationException(message);
+                throw;
             }
         }
+    }
+
+    public static class Snapshot
+    {
+        public static void Match<T>(T obj, string[] parameters = null)
+        {
+            string json = JsonConvert.SerializeObject(obj);
+            
+            string formatJson = JsonPrettyPrint.FormatJson(json);
+
+            if (parameters != null)
+            {
+                NamerFactory.AdditionalInformation = string.Join("_", parameters);
+            }
+            
+            Approvals.VerifyWithExtension(formatJson, ".json");
+        }
+    }
+    
+    public static class JsonPrettyPrint
+    {
+        private const string IndentString = "  ";
+        
+        public static string FormatJson(string str)
+        {
+            var indent = 0;
+            
+            var quoted = false;
+            
+            var sb = new StringBuilder();
+            
+            for (var i = 0; i < str.Length; i++)
+            {
+                var ch = str[i];
+                
+                switch (ch)
+                {
+                    case '{':
+                    {
+                        sb.Append(ch);
+                        if (!quoted)
+                        {
+                            if (str[i + 1] != '}')
+                            {
+                                sb.AppendLine();
+                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(IndentString));
+                            }
+                        }
+
+                        break;
+                    }
+                    case '[':
+                    {
+                        sb.Append(ch);
+                        if (!quoted)
+                        {
+                            if (str[i + 1] != ']')
+                            {
+                                sb.AppendLine();
+                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(IndentString));
+                            }
+                        }
+
+                        break;
+                    }
+                    case '}':
+                    {
+                        if (!quoted)
+                        {
+                            if (str[i - 1] != '{')
+                            {
+                                sb.AppendLine();
+                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(IndentString));
+                            }
+                        }
+
+                        sb.Append(ch);
+                        break;
+                    }
+                    case ']':
+                    {
+                        if (!quoted)
+                        {
+                            if (str[i - 1] != '[')
+                            {
+                                sb.AppendLine();
+                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(IndentString));
+                            }
+                        }
+
+                        sb.Append(ch);
+                        break;
+                    }
+                    case '"':
+                    {
+                        sb.Append(ch);
+                        var escaped = false;
+                        var index = i;
+                        while (index > 0 && str[--index] == '\\')
+                        {
+                            escaped = !escaped;
+                        }
+
+                        if (!escaped)
+                        {
+                            quoted = !quoted;
+                        }
+
+                        break;
+                    }
+                    case ',':
+                    {
+                        sb.Append(ch);
+                        if (!quoted)
+                        {
+                            sb.AppendLine();
+                            Enumerable.Range(0, indent).ForEach(item => sb.Append(IndentString));
+                        }
+
+                        break;
+                    }
+                    case ':':
+                    {
+                        sb.Append(ch);
+                        if (!quoted)
+                        {
+                            sb.Append(" ");
+                        }
+
+                        break;
+                    }
+                    default:
+                    {
+                        sb.Append(ch);
+                        break;
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }         
     }
 }

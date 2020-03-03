@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac;
+
 using LinqToDB;
+
 using Newsgirl.Shared.Data;
 
 namespace Newsgirl.Shared
@@ -65,5 +66,8 @@ namespace Newsgirl.Shared
         /// The pause between fetch cycles.
         /// </summary>
         public int FetcherCyclePause { get; set; }
+
+        
+        public bool ParallelFeedFetching { get; set; }
     }
 }

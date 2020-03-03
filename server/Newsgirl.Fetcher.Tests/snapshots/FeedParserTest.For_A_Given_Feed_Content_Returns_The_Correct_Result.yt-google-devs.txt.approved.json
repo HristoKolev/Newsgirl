@@ -1,0 +1,157 @@
+﻿{
+  "Items": [
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 1863156704885474179,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Actions on Google - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=eTX7dZJzs50"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 1610395969562469896,
+      "FeedItemID": 0,
+      "FeedItemTitle": "The Solution Challenge  - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=lKConjyQRAY"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -6559114759817669727,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Starting your career in the Cloud - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=djFLKbRi3vg"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 4626292727697941281,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Cloud Hero - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=rH1AjtoELGs"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 5156062725801501762,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Firebase - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=h4ZCbck9Lqc"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -1018415531369232277,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Panel discussion  - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=tnCt0Gb39ZY"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -6272697527226282470,
+      "FeedItemID": 0,
+      "FeedItemTitle": "The art of negotiation - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=myUEa4fCvpQ"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 5826226328210454928,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Courage to care, solve and share - Sunnyvale DSC Summit ‘19",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=zjdBln9JA9U"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -6130229303084328589,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Version 9 of Angular, Glass Enterprise Edition 2, path to DX deprecation, & more!",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=RxCb8YRYFbM"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -6365117461814907873,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Introducing a new series (AoG Pro Tips)",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=JsRQcpI_5ik"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -8957941723011524299,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Detecting memory bugs with HWASan, Bazel 2.1, Next ‘20 session guide, & more!",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=lOQq-I8b978"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -7801065260338330009,
+      "FeedItemID": 0,
+      "FeedItemTitle": "#MyDomain - The podcast.app",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=Xe62J2ca87c"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -1597141744996044622,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Enhancing Actions with APIs like Machine Learning and Canvas (Assistant on Air)",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=wyE17l2_Big"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": -6299268712549754668,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Customize fallback intents for Interactive Canvas Actions (AoG Pro Tips)",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=EHxdYIrm_Eo"
+    },
+    {
+      "FeedID": 0,
+      "FeedItemAddedTime": "2000-01-01T00:00:00Z",
+      "FeedItemDescription": null,
+      "FeedItemHash": 9066169628705669137,
+      "FeedItemID": 0,
+      "FeedItemTitle": "Voice strategy and design (Assistant on Air)",
+      "FeedItemUrl": "https://www.youtube.com/watch?v=F4xmU2RMZtc"
+    }
+  ],
+  "FeedItemHashes": [
+    1863156704885474179,
+    1610395969562469896,
+    -6559114759817669727,
+    4626292727697941281,
+    5156062725801501762,
+    -1018415531369232277,
+    -6272697527226282470,
+    5826226328210454928,
+    -6130229303084328589,
+    -6365117461814907873,
+    -8957941723011524299,
+    -7801065260338330009,
+    -1597141744996044622,
+    -6299268712549754668,
+    9066169628705669137
+  ],
+  "FeedHash": -1205034819632174695
+}

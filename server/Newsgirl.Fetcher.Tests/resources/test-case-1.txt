@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?user=GoogleDevelopers"/>
+ <id>yt:channel:UC_x5XG1OV2P6uZZ5FSM9Ttw</id>
+ <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+ <title>Google Developers</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw"/>
+ <author>
+  <name>Google Developers</name>
+  <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+ </author>
+ <published>2007-08-23T00:34:43+00:00</published>
+ <entry>
+  <id>    </id>
+  <yt:videoId>F4xmU2RMZtc</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Voice strategy and design (Assistant on Air)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=F4xmU2RMZtc"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-03-02T16:39:44+00:00</published>
+  <updated>2020-03-02T18:10:58+00:00</updated>
+  <media:group>
+   <media:title>Voice strategy and design (Assistant on Air)</media:title>
+   <media:content url="https://www.youtube.com/v/F4xmU2RMZtc?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/F4xmU2RMZtc/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Meet Adi Mazor Kario (@AdiMazorKario), a Google Developer Expert. Adi discusses her strategy with clients, the four stages of design methodology, and more during this episode with our host, Google Developer Advocate Daniel Myers. 
+
+Links:
+Actions on Google docs → https://goo.gle/2YIelnq
+Assistant on Air Podcasts → https://goo.gle/2VdYbDQ
+
+Other episodes of Assistant on Air → https://goo.gle/2X0nBqG
+Please subscribe for more updates →  https://goo.gle/googledevs</media:description>
+   <media:community>
+    <media:starRating count="65" average="4.82" min="1" max="5"/>
+    <media:statistics views="650"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>    </id>
+  <yt:videoId>EHxdYIrm_Eo</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Customize fallback intents for Interactive Canvas Actions (AoG Pro Tips)</title>
+  <link rel="alternate" href="   "/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-24T19:30:00+00:00</published>
+  <updated>2020-02-25T01:36:03+00:00</updated>
+  <media:group>
+   <media:title>Customize fallback intents for Interactive Canvas Actions (AoG Pro Tips)</media:title>
+   <media:content url="https://www.youtube.com/v/EHxdYIrm_Eo?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/EHxdYIrm_Eo/hqdefault.jpg" width="480" height="360"/>
+   <media:description>On this first episode of AoG Pro Tips, we’ll learn how to customize your fallback content with some visual clues to move the conversation forward as demonstrated with our Google Assistant Developer Advocate, Mandy Chan. 
+
+Links:
+Create your first Interactive Canvas Action by using this link → https://goo.gle/aogcanvas-projects
+Learn more on our documentation → https://goo.gle/37EhSHJ
+Share what you build with us using #AoGProTips on Twitter → https://goo.gle/2PYbOCS
+
+AoG Pro Tips playlist → https://goo.gle/aogprotips
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="120" average="4.67" min="1" max="5"/>
+    <media:statistics views="4358"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>       </id>
+  <yt:videoId>wyE17l2_Big</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>     </title>
+  <link rel="alternate" href="      "/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-24T16:00:15+00:00</published>
+  <updated>2020-03-02T05:57:40+00:00</updated>
+  <media:group>
+   <media:title>Enhancing Actions with APIs like Machine Learning and Canvas (Assistant on Air)</media:title>
+   <media:content url="https://www.youtube.com/v/wyE17l2_Big?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i4.ytimg.com/vi/wyE17l2_Big/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Meet Sachin Kumar, a Google Developer Expert (GDE) for Google Assistant. Sachin hosts workshops for beginners, and expands beyond beginner level to teaching how to build meaningful Actions with Machine Learning APIs. He also touches on building for Interactive Canvas. 
+
+Links:
+Actions on Google docs → https://goo.gle/2YIelnq
+Listen to the podcast version for the longer conversation → https://goo.gle/2VdYbDQ
+
+Catch more episodes of Assistant on Air → https://goo.gle/2X0nBqG
+Please subscribe for more updates →  https://goo.gle/googledevs</media:description>
+   <media:community>
+    <media:starRating count="138" average="4.28" min="1" max="5"/>
+    <media:statistics views="8567"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id> https://www.youtube.com/watch?v=Xe62J2ca87c </id>
+  <yt:videoId>Xe62J2ca87c</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>#MyDomain - The podcast.app</title>
+  <link rel="alternate" href="   "/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-21T17:27:56+00:00</published>
+  <updated>2020-02-28T10:06:12+00:00</updated>
+  <media:group>
+   <media:title>#MyDomain - The podcast.app</media:title>
+   <media:content url="https://www.youtube.com/v/Xe62J2ca87c?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/Xe62J2ca87c/hqdefault.jpg" width="480" height="360"/>
+   <media:description>A fan of podcasts? 🎙Then check out the latest in our #MyDomain series. Co-founder Martin Siniawski talks about how the domain name — podcast.app — helped The Podcast App team make podcasts accessible to the world and explains why using the .app domain ending was a no-brainer.
+
+Website → https://goo.gle/38QQCam
+
+#MyDomain is a series from Google Registry where website creators tell their stories behind their domain names and share tips on building websites. Stay tuned for more episodes.
+
+#MyDomain playlist → https://goo.gle/MyDomain
+Subscribe → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="189" average="4.56" min="1" max="5"/>
+    <media:statistics views="7805"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:lOQq-I8b978</id>
+  <yt:videoId>lOQq-I8b978</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Detecting memory bugs with HWASan, Bazel 2.1, Next ‘20 session guide, &amp; more!</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=lOQq-I8b978"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-20T22:11:45+00:00</published>
+  <updated>2020-02-28T10:42:08+00:00</updated>
+  <media:group>
+   <media:title>Detecting memory bugs with HWASan, Bazel 2.1, Next ‘20 session guide, &amp; more!</media:title>
+   <media:content url="https://www.youtube.com/v/lOQq-I8b978?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/lOQq-I8b978/hqdefault.jpg" width="480" height="360"/>
+   <media:description>TL;DR 193 | The Google Developer News Show
+ 
+Detecting memory bugs (Android) → https://goo.gle/39St2Ks
+Bazel 2.1 (Bazel) → https://goo.gle/2HDnO9g
+Next '20 Session Guide (Cloud) → https://goo.gle/3bSyAWZ
+Chromium Blog (Chromium) → https://goo.gle/2v4YuGl
+HarbourBridge: From PostgreSQL to Cloud Spanner (Open Source) → https://goo.gle/38P672g
+
+Here to bring you the latest developer news from across Google is Developer Advocate Meghan Mehta. Tune in every week for a new episode, and let us know what you think of the latest announcements in the comments below! 😃
+
+Follow Google Developers on Instagram → https://goo.gle/googledevs
+
+Watch more #DevShow → https://goo.gle/GDevShow
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="229" average="4.81" min="1" max="5"/>
+    <media:statistics views="7813"/>
+   </media:community>
+  </media:group>
+ </entry>
+  <entry>
+   <id>yt:video:lOQq-I8b978</id>
+   <yt:videoId>lOQq-I8b978</yt:videoId>
+   <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+   <title>Detecting memory bugs with HWASan, Bazel 2.1, Next ‘20 session guide, &amp; more!</title>
+   <link rel="alternate" href="https://www.youtube.com/watch?v=lOQq-I8b978"/>
+   <author>
+    <name>Google Developers</name>
+    <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+   </author>
+   <published>2020-02-20T22:11:45+00:00</published>
+   <updated>2020-02-28T10:42:08+00:00</updated>
+   <media:group>
+    <media:title>Detecting memory bugs with HWASan, Bazel 2.1, Next ‘20 session guide, &amp; more!</media:title>
+    <media:content url="https://www.youtube.com/v/lOQq-I8b978?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+    <media:thumbnail url="https://i1.ytimg.com/vi/lOQq-I8b978/hqdefault.jpg" width="480" height="360"/>
+    <media:description>TL;DR 193 | The Google Developer News Show
+  
+ Detecting memory bugs (Android) → https://goo.gle/39St2Ks
+ Bazel 2.1 (Bazel) → https://goo.gle/2HDnO9g
+ Next '20 Session Guide (Cloud) → https://goo.gle/3bSyAWZ
+ Chromium Blog (Chromium) → https://goo.gle/2v4YuGl
+ HarbourBridge: From PostgreSQL to Cloud Spanner (Open Source) → https://goo.gle/38P672g
+ 
+ Here to bring you the latest developer news from across Google is Developer Advocate Meghan Mehta. Tune in every week for a new episode, and let us know what you think of the latest announcements in the comments below! 😃
+ 
+ Follow Google Developers on Instagram → https://goo.gle/googledevs
+ 
+ Watch more #DevShow → https://goo.gle/GDevShow
+ Subscribe to Google Developers → https://goo.gle/developers</media:description>
+    <media:community>
+     <media:starRating count="229" average="4.81" min="1" max="5"/>
+     <media:statistics views="7813"/>
+    </media:community>
+   </media:group>
+  </entry>
+ <entry>
+  <id>yt:video:JsRQcpI_5ik</id>
+  <yt:videoId>JsRQcpI_5ik</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Introducing a new series (AoG Pro Tips)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=JsRQcpI_5ik"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-18T20:43:50+00:00</published>
+  <updated>2020-03-02T07:33:09+00:00</updated>
+  <media:group>
+   <media:title>Introducing a new series (AoG Pro Tips)</media:title>
+   <media:content url="https://www.youtube.com/v/JsRQcpI_5ik?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/JsRQcpI_5ik/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Introducing a new video series to help #AoGDevs solve common problems. Learn more about Interactive Canvas, App Actions, smart home development, and more every week! 
+
+Links:
+Learn more on our documentation → https://goo.gle/37EhSHJ
+Share what you build with us using #AoGProTips on Twitter → https://goo.gle/2PYbOCS
+
+Stay tuned to our playlist → https://goo.gle/aogprotips
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="250" average="4.86" min="1" max="5"/>
+    <media:statistics views="7303"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:RxCb8YRYFbM</id>
+  <yt:videoId>RxCb8YRYFbM</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Version 9 of Angular, Glass Enterprise Edition 2, path to DX deprecation, &amp; more!</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=RxCb8YRYFbM"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-13T22:11:48+00:00</published>
+  <updated>2020-03-02T07:00:42+00:00</updated>
+  <media:group>
+   <media:title>Version 9 of Angular, Glass Enterprise Edition 2, path to DX deprecation, &amp; more!</media:title>
+   <media:content url="https://www.youtube.com/v/RxCb8YRYFbM?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/RxCb8YRYFbM/hqdefault.jpg" width="480" height="360"/>
+   <media:description>TL;DR 192 | The Google Developer News Show
+ 
+Angular Version 9 (Medium) → https://goo.gle/31PFMhS
+ML-fairness-gym (AI) → https://goo.gle/31RCMS7
+New in Chrome 80 (Web Essentials) → https://goo.gle/31XR7wv
+Glass Enterprise Edition 2 (G Dev) → https://goo.gle/2tRhDei
+Improving Smart Home Action Reviews (G Dev) → https://goo.gle/39vHMP6
+The path to DX deprecation (Android) → https://goo.gle/322eyVH
+
+Here to bring you the latest developer news from across Google is Developer Advocate Timothy Jordan. Tune in every week for a new episode, and let us know what you think of the latest announcements in the comments below! 😃
+
+Follow Google Developers on Instagram → https://goo.gle/googledevs
+
+Watch more #DevShow → https://goo.gle/GDevShow
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="305" average="4.92" min="1" max="5"/>
+    <media:statistics views="8931"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:zjdBln9JA9U</id>
+  <yt:videoId>zjdBln9JA9U</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Courage to care, solve and share - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=zjdBln9JA9U"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:17+00:00</published>
+  <updated>2020-02-20T19:12:58+00:00</updated>
+  <media:group>
+   <media:title>Courage to care, solve and share - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/zjdBln9JA9U?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/zjdBln9JA9U/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Erica Hanson (@EricaKHanson), Developer Relations Program Manager at Google, talks to you about the courage to care, solve and share during this talk. 
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="18" average="4.56" min="1" max="5"/>
+    <media:statistics views="486"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:myUEa4fCvpQ</id>
+  <yt:videoId>myUEa4fCvpQ</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>The art of negotiation - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=myUEa4fCvpQ"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:15+00:00</published>
+  <updated>2020-02-20T19:13:24+00:00</updated>
+  <media:group>
+   <media:title>The art of negotiation - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/myUEa4fCvpQ?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/myUEa4fCvpQ/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Naveen Nigam, Head of Developer Ecosystems, talks about the challenges, responsibilities, and benefits of being a DSC lead. 
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="0" average="0.00" min="1" max="5"/>
+    <media:statistics views="143"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:tnCt0Gb39ZY</id>
+  <yt:videoId>tnCt0Gb39ZY</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Panel discussion  - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=tnCt0Gb39ZY"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:10+00:00</published>
+  <updated>2020-02-20T19:12:58+00:00</updated>
+  <media:group>
+   <media:title>Panel discussion  - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/tnCt0Gb39ZY?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/tnCt0Gb39ZY/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Join our DSC student panel consisting of Alex, Torrey, Jade, and Kevin as they answer questions on a variety of topics including what happens if you miss deadlines to apply for recognition at school and more, diversity, and more.
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="0" average="0.00" min="1" max="5"/>
+    <media:statistics views="135"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:h4ZCbck9Lqc</id>
+  <yt:videoId>h4ZCbck9Lqc</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Firebase - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=h4ZCbck9Lqc"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:10+00:00</published>
+  <updated>2020-02-20T19:12:57+00:00</updated>
+  <media:group>
+   <media:title>Firebase - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/h4ZCbck9Lqc?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/h4ZCbck9Lqc/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Kyle Paul (@_KylePaul), North America Regional Lead at Google, discusses serverless applications with Firebase during this talk. 
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="4" average="5.00" min="1" max="5"/>
+    <media:statistics views="136"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:rH1AjtoELGs</id>
+  <yt:videoId>rH1AjtoELGs</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Cloud Hero - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=rH1AjtoELGs"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:10+00:00</published>
+  <updated>2020-02-20T19:12:57+00:00</updated>
+  <media:group>
+   <media:title>Cloud Hero - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/rH1AjtoELGs?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/rH1AjtoELGs/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Leslie Redd, Global GTM Lead for Higher Ed, Career Readiness, Gamified Learning at Google, gives us an overview of Cloud Hero during this talk.
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="1" average="5.00" min="1" max="5"/>
+    <media:statistics views="48"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:djFLKbRi3vg</id>
+  <yt:videoId>djFLKbRi3vg</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Starting your career in the Cloud - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=djFLKbRi3vg"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:08+00:00</published>
+  <updated>2020-02-20T19:12:58+00:00</updated>
+  <media:group>
+   <media:title>Starting your career in the Cloud - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/djFLKbRi3vg?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/djFLKbRi3vg/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Sowmya Kannan, Global Lead for GCP Learning in Higher Ed at Google, talks about kick starting your career in Google Cloud. Hear Sowmya give us her expertise on the Cloud during this talk. 
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="2" average="5.00" min="1" max="5"/>
+    <media:statistics views="77"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:lKConjyQRAY</id>
+  <yt:videoId>lKConjyQRAY</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>The Solution Challenge  - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=lKConjyQRAY"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:08+00:00</published>
+  <updated>2020-02-20T19:13:11+00:00</updated>
+  <media:group>
+   <media:title>The Solution Challenge  - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/lKConjyQRAY?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/lKConjyQRAY/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Komal Sandhu, Developer Community Program Manager, talks about bridging the gap between theory and practical application for student developers. Stay tuned and learn how you can take a theory and apply it in a practical fashion to create solutions. 
+ 
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="6" average="5.00" min="1" max="5"/>
+    <media:statistics views="106"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:eTX7dZJzs50</id>
+  <yt:videoId>eTX7dZJzs50</yt:videoId>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Actions on Google - Sunnyvale DSC Summit ‘19</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=eTX7dZJzs50"/>
+  <author>
+   <name>Google Developers</name>
+   <uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri>
+  </author>
+  <published>2020-02-11T23:00:07+00:00</published>
+  <updated>2020-02-20T19:13:20+00:00</updated>
+  <media:group>
+   <media:title>Actions on Google - Sunnyvale DSC Summit ‘19</media:title>
+   <media:content url="https://www.youtube.com/v/eTX7dZJzs50?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/eTX7dZJzs50/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Mandy Chan (@MandyChanNYC), Developer Advocate at Google, gives us an overview of Actions on Google, Dialogflow, and a Codelab Level 1. Mandy will also give a presentation on Interactive Canvas during this talk. 
+
+Developer Student Clubs (DSC) are community groups for students from any academic background in their undergraduate or graduate term. By joining a DSC, students build their professional and personal network, get access to Google developer resources, and work together to build solutions for local problems in a peer-to-peer learning environment.
+
+DSC Summit ‘19 Sunnyvale → https://goo.gle/37cqi8N
+Subscribe to Google Developers → https://goo.gle/developers</media:description>
+   <media:community>
+    <media:starRating count="0" average="0.00" min="1" max="5"/>
+    <media:statistics views="82"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

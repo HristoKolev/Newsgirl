@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 
 using CodeHollow.FeedReader;
+using Newsgirl.Shared.Data;
 using Newtonsoft.Json;
 
 using Newsgirl.Shared.Infrastructure;
@@ -12,12 +13,12 @@ namespace Newsgirl.Fetcher
     public class FeedParser : IFeedParser
     {
         private readonly IHasher hasher;
-        private readonly AppConfig appConfig;
+        private readonly IDateProvider dateProvider;
 
-        public FeedParser(IHasher hasher, AppConfig appConfig)
+        public FeedParser(IHasher hasher, IDateProvider dateProvider)
         {
             this.hasher = hasher;
-            this.appConfig = appConfig;
+            this.dateProvider = dateProvider;
         }
         
         public ParsedFeed Parse(string feedContent)
@@ -28,44 +29,43 @@ namespace Newsgirl.Fetcher
 
             var parsedFeed = new ParsedFeed(allItems.Count);
 
+            var fetchTime = this.dateProvider.Now();
+            
             using (var memoryStream = new MemoryStream(allItems.Count * 8))
             {
                 byte[] stringIDBytes;
 
                 for (int i = allItems.Count - 1; i >= 0; i--)
                 {
-                    var item = allItems[i];
+                    var feedItem = allItems[i];
             
-                    string stringID = GetItemStringID(item);
+                    string stringID = GetItemStringID(feedItem);
 
                     if (stringID == null)
                     {
-                        if (this.appConfig.Debug.General)
-                        {
-                            MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(item)}");
-                        }
-                    
+                        MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(feedItem)}");
+
                         continue;
                     }
             
                     stringIDBytes = Encoding.UTF8.GetBytes(stringID);
                 
-                    long itemHash = this.hasher.ComputeHash(stringIDBytes);
+                    long feedItemHash = this.hasher.ComputeHash(stringIDBytes);
 
-                    if (!parsedFeed.FeedItemHashes.Add(itemHash))
+                    if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
-                        if (this.appConfig.Debug.General)
-                        {
-                            MainLogger.Debug($"Feed item already added: {stringID}");
-                        }
+                        MainLogger.Debug($"Feed item already added: {stringID}");
                     
                         continue;
                     }
 
-                    parsedFeed.Items.Add(new ParsedFeedItem
+                    parsedFeed.Items.Add(new FeedItemPoco
                     {
-                        Item = item,
-                        FeedItemHash = itemHash,
+                        FeedItemUrl = GetItemUrl(feedItem).SomethingOrNull()?.Trim(),
+                        FeedItemTitle = feedItem.Title.SomethingOrNull()?.Trim(),
+                        FeedItemDescription = feedItem.Description.SomethingOrNull()?.Trim(),
+                        FeedItemAddedTime = fetchTime,
+                        FeedItemHash = feedItemHash,
                     });
                 
                     memoryStream.Write(stringIDBytes, 0, stringIDBytes.Length);
@@ -100,6 +100,25 @@ namespace Newsgirl.Fetcher
 
             return null;
         }
+        
+        private static string GetItemUrl(FeedItem feedItem)
+        {
+            string linkValue = feedItem.Link?.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(linkValue) && linkValue.StartsWith("http"))
+            {
+                return linkValue;
+            }
+
+            string idValue = feedItem.Id?.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(idValue) && idValue.StartsWith("http"))
+            {
+                return idValue;
+            }
+
+            return null;
+        }
     }
     
     public interface IFeedParser
@@ -111,22 +130,14 @@ namespace Newsgirl.Fetcher
     {
         public ParsedFeed(int capacity)
         {
-            this.Items = new List<ParsedFeedItem>(capacity);
+            this.Items = new List<FeedItemPoco>(capacity);
             this.FeedItemHashes = new HashSet<long>(capacity);
         }
         
-        public List<ParsedFeedItem> Items { get; } 
+        public List<FeedItemPoco> Items { get; } 
 
         public HashSet<long> FeedItemHashes { get; }
         
         public long FeedHash { get; set; }
-    }
-
-
-    public class ParsedFeedItem
-    {
-        public FeedItem Item { get; set; }
-
-        public long FeedItemHash { get; set; }
     }
 }

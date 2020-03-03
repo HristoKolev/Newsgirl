@@ -56,12 +56,14 @@ namespace Newsgirl.Fetcher
 
             builder.RegisterType<DbService>()
                 .InstancePerLifetimeScope();
+
+            builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>();
             
             builder.RegisterType<FeedFetcher>();
 
-            builder.RegisterType<Hasher>().As<IHasher>();
-            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>();
-            builder.RegisterType<FeedParser>().As<IFeedParser>();
+            builder.RegisterType<Hasher>().As<IHasher>().SingleInstance();
+            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
+            builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 
             builder.Register((c, p) => Global.SystemSettings);
             builder.Register((c, p) => Global.AppConfig);
@@ -111,10 +113,10 @@ namespace Newsgirl.Fetcher
                             Global.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
                         
                             var fetcherInstance = container.Resolve<FeedFetcher>();
-
+                    
                             await fetcherInstance.FetchFeeds();    
                         }
-
+                    
                         await Task.Delay(TimeSpan.FromSeconds(Global.SystemSettings.FetcherCyclePause));                        
                     }
                 }

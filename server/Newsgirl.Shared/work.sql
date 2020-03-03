@@ -53,7 +53,9 @@ language SQL stable;
 INSERT into system_settings(setting_name, setting_value) VALUES
   ('HttpClientUserAgent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36'),
   ('FetcherCyclePause', '60'),
-  ('HttpClientRequestTimeout', '120');
+  ('HttpClientRequestTimeout', '120'),
+  ('ParallelFeedFetching', 'true')
+  ;
 
 -- create table users (
 --   user_id           serial,
