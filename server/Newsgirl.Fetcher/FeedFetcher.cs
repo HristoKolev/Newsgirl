@@ -53,7 +53,7 @@ namespace Newsgirl.Fetcher
                     tasks.Add(this.ProcessFeed(feed));
                 }
 
-                updates = await Task.WhenAll(tasks);    
+                updates = await Task.WhenAll(tasks);
             }
             else
             {

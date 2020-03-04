@@ -57,16 +57,26 @@ namespace Newsgirl.Fetcher
             builder.RegisterType<DbService>()
                 .InstancePerLifetimeScope();
 
-            builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>();
+            builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>()
+                .InstancePerLifetimeScope();
             
-            builder.RegisterType<FeedFetcher>();
+            builder.RegisterType<FeedFetcher>()
+                .InstancePerLifetimeScope();
 
-            builder.RegisterType<Hasher>().As<IHasher>().SingleInstance();
-            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
-            builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
+            builder.RegisterType<Hasher>().As<IHasher>()
+                .SingleInstance();
+            
+            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>()
+                .SingleInstance();
+            
+            builder.RegisterType<FeedParser>().As<IFeedParser>()
+                .SingleInstance();
 
-            builder.Register((c, p) => Global.SystemSettings);
-            builder.Register((c, p) => Global.AppConfig);
+            builder.Register((c, p) => Global.SystemSettings)
+                .SingleInstance();
+            
+            builder.Register((c, p) => Global.AppConfig)
+                .SingleInstance();
             
             base.Load(builder);
         }

@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?user=learncodeacademy"/>
+ <id>yt:channel:UCVTlvUkGslCV_h-nSAId8Sw</id>
+ <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+ <title>LearnCode.academy</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw"/>
+ <author>
+  <name>LearnCode.academy</name>
+  <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+ </author>
+ <published>2012-12-20T23:29:21+00:00</published>
+ <entry>
+  <id>yt:video:SBB1YtwODT0</id>
+  <yt:videoId>SBB1YtwODT0</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>Web Development in 2020 - A complete roadmap</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=SBB1YtwODT0"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2020-01-28T19:45:34+00:00</published>
+  <updated>2020-01-28T23:59:21+00:00</updated>
+  <media:group>
+   <media:title>Web Development in 2020 - A complete roadmap</media:title>
+   <media:content url="https://www.youtube.com/v/SBB1YtwODT0?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i4.ytimg.com/vi/SBB1YtwODT0/hqdefault.jpg" width="480" height="360"/>
+   <media:description>EVERYTHING you need to learn Web Dev or keep your skills current in 2020!  This curated list covers beginning web development all the way through advanced development.
+View this roadmap here: https://coggle.it/diagram/XfeRbWj7xy3dsEX8/t/web-development-in-2020
+
+1:06 basic frontend
+3:50 recommended deployment platforms
+5:15 no matter what route you take next
+7:27 advanced frontend
+18:40 backend
+25:27 devops
+
+If you take my recommendation, you'll take this track:
+- learn basic frontend
+- learn command line, SSH, and GitHub
+- learn Parcel, SASS, React, and Webpack
+- move to fullstack/backend and learn node.js, postgres, redis, go
+- move to devops and learn docker, terraform, circleCI, digitalocean, aws
+
+That right there, folks, gives you an AMAZING skillset!
+
+Hopefully you find this web development tutorial, web dev roadmap, whatever you want to call it extremely helpful in learning web development in 2020.  I know these little pieces of web dev information surrounding javascript, databases, etc all took years to stumble across for me personally.</media:description>
+   <media:community>
+    <media:starRating count="3428" average="4.93" min="1" max="5"/>
+    <media:statistics views="82485"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:v38H67xWfOI</id>
+  <yt:videoId>v38H67xWfOI</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>Ultimate Hacking Keyboard UHK60 - Mechanical Keyboard Review</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=v38H67xWfOI"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-12-13T18:00:09+00:00</published>
+  <updated>2019-12-23T12:39:07+00:00</updated>
+  <media:group>
+   <media:title>Ultimate Hacking Keyboard UHK60 - Mechanical Keyboard Review</media:title>
+   <media:content url="https://www.youtube.com/v/v38H67xWfOI?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/v38H67xWfOI/hqdefault.jpg" width="480" height="360"/>
+   <media:description>My honest, unpaid review of https://UltimateHackingKeyboard.com/ - a split-or-not mechanical keyboard that I recently got my hands on!
+
+The Ultimate Hacking Keyboard UHK60 from https://UltimateHackingKeyboard.com/ is a 60% mechanical keyboard with a bunch of extra options and cool features that set it apart.
+
+It has layers as you would expect from a 60% mechanical keyboard allowing you to do everything you need to do from the home row.  2 buttons below the space bar also allow for easy switching of layers without making dedicated keys for it.  Also included are tenting pegs for split keyboard tenting.  Lastly, wooden palm rests are included as an option on this mechanical keyboard.
+
+This mechanical keyboard review is unbiased, hasn't been paid for, and, most importantly is made on the basis of using this keyboard for over a month straight.  This mechanical keyboard has kailh brown keyswitches and blank keycaps.</media:description>
+   <media:community>
+    <media:starRating count="204" average="4.02" min="1" max="5"/>
+    <media:statistics views="9084"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:4C4zqhXwCKs</id>
+  <yt:videoId>4C4zqhXwCKs</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>ArangoDB Tutorial - Databases every developer should know about</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=4C4zqhXwCKs"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-08-07T16:00:01+00:00</published>
+  <updated>2019-08-14T14:14:26+00:00</updated>
+  <media:group>
+   <media:title>ArangoDB Tutorial - Databases every developer should know about</media:title>
+   <media:content url="https://www.youtube.com/v/4C4zqhXwCKs?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/4C4zqhXwCKs/hqdefault.jpg" width="480" height="360"/>
+   <media:description>ArangoDB (https://www.arangodb.com/) is a SUPER COOL database that every developer should at least be familiar with.  ArangoDB is muti-model, so you can use it as a document DB, a key/value store, or a graph DB all at the same time.
+
+ArangoDB has a TON of flexibility and features, ranging from GeoJSON, search views (arangosearch), the ability to add node.js microservices, and, best of all, a really nice query language.</media:description>
+   <media:community>
+    <media:starRating count="454" average="4.95" min="1" max="5"/>
+    <media:statistics views="14187"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:tcBRvjYw5xQ</id>
+  <yt:videoId>tcBRvjYw5xQ</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>CSS Units - Which ones to use and which to stop using! - HTML CSS Tutorial</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=tcBRvjYw5xQ"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-07-23T16:00:09+00:00</published>
+  <updated>2019-08-25T01:44:42+00:00</updated>
+  <media:group>
+   <media:title>CSS Units - Which ones to use and which to stop using! - HTML CSS Tutorial</media:title>
+   <media:content url="https://www.youtube.com/v/tcBRvjYw5xQ?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/tcBRvjYw5xQ/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Don't guess, know when to use px, %, rm vs em, fr, ch, vw, vh and more...CSS gives you a LOT of options and each is there for a purpose.
+
+SPECIAL THANKS to https://twitter.com/chaddonohue for peer reviewing this content!
+
+In this tutorial, we'll cover all the CSS units, and, most importantly, which ones to use (and which NOT to use) for which situations.
+
+In web development, css units are often confusing as there are just many options.  And, many css units - like px vs em vs rem, all seem to get the job done at times.  But some are simply better than others and there are very good reasons why.</media:description>
+   <media:community>
+    <media:starRating count="447" average="4.89" min="1" max="5"/>
+    <media:statistics views="12449"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:5iUB31h2Hzs</id>
+  <yt:videoId>5iUB31h2Hzs</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>How To Make A Website From HTML &amp; CSS - FAST, CHEAP, EASY</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=5iUB31h2Hzs"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-05-28T16:00:00+00:00</published>
+  <updated>2020-02-09T01:38:07+00:00</updated>
+  <media:group>
+   <media:title>How To Make A Website From HTML &amp; CSS - FAST, CHEAP, EASY</media:title>
+   <media:content url="https://www.youtube.com/v/5iUB31h2Hzs?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/5iUB31h2Hzs/hqdefault.jpg" width="480" height="360"/>
+   <media:description>In under 10mins, turn your HTML and CSS into a website!
+
+Domain Registration: iwantmyname.com https://bit.ly/2DFNal0
+The hosting plan I recommend: partners.hostgator.com/c/241312/494159/3094
+HostGator coupons!
+LETSMAKEADEAL
+DROP10BUCKS
+DROP25PERC
+
+The full course on building a website:
+https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGAB_8_iq1cL8MVeun7cB6eNc
+
+If you know how to code with HTML and CSS, then the last step of getting your website online is the easiest part.  All you need to do is register a domain, then point that domain to a webhost.
+
+Hostgator is the best, easiest webhost for new coders...they make everything completely simple and your site is up in mere minutes.  Hostgator shared web hosting is also really inexpensive and their 24/7 support is a huge help for new coders.</media:description>
+   <media:community>
+    <media:starRating count="688" average="4.82" min="1" max="5"/>
+    <media:statistics views="32735"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:fgOO9YUFlGI</id>
+  <yt:videoId>fgOO9YUFlGI</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>Responsive Design Tutorial - Tips for making web sites look great on any device</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=fgOO9YUFlGI"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-02-26T17:00:07+00:00</published>
+  <updated>2020-02-28T11:35:39+00:00</updated>
+  <media:group>
+   <media:title>Responsive Design Tutorial - Tips for making web sites look great on any device</media:title>
+   <media:content url="https://www.youtube.com/v/fgOO9YUFlGI?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/fgOO9YUFlGI/hqdefault.jpg" width="480" height="360"/>
+   <media:description>There are a few &quot;gotchas&quot; to responsive design, and once you know them, the rest all makes sense.
+Play with the code!!!
+https://codepen.io/anon/pen/oVNBEX?editors=1100
+
+View the full course!!!
+https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+
+Super helpful links on responsive images:
+
+https://medium.freecodecamp.org/a-guide-to-responsive-images-with-ready-to-use-templates-c400bd65c433
+https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
+
+
+Responsive Design makes a website look amazing on any device.  Using css media queries, good flexbox/grid layouts, srcset, and html5 picture tags, we can convert our website into a fully responsive site.</media:description>
+   <media:community>
+    <media:starRating count="1377" average="4.97" min="1" max="5"/>
+    <media:statistics views="78459"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:7cwRaTqR4k0</id>
+  <yt:videoId>7cwRaTqR4k0</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>HTML &amp; CSS Tutorial - Ways to code images...and how to do it well</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=7cwRaTqR4k0"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2019-01-21T20:00:01+00:00</published>
+  <updated>2020-01-04T08:48:13+00:00</updated>
+  <media:group>
+   <media:title>HTML &amp; CSS Tutorial - Ways to code images...and how to do it well</media:title>
+   <media:content url="https://www.youtube.com/v/7cwRaTqR4k0?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i4.ytimg.com/vi/7cwRaTqR4k0/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Here's how to properly code images into your webpages without making them fuzzy on hi-res devices like the latest iPhone.
+
+Play with the code!!!
+https://codepen.io/anon/pen/wOvgde?editors=1100
+
+View the full course!!!
+https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+ 
+There are 2 ways you'll add images to your website:
+- html background images (use this if the image is a part of the design
+- html content images (use this if the image is a part of the content)
+
+The method for adding html &amp; CSS images is different for each type of image.
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1502" average="4.94" min="1" max="5"/>
+    <media:statistics views="93487"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:rqrh5d__uoI</id>
+  <yt:videoId>rqrh5d__uoI</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>MOST AMAZING ERGODOX YET! - ERGODOX EZ GLOW REVIEW w/ Kailh Copper keyswitches</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=rqrh5d__uoI"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-12-06T17:00:06+00:00</published>
+  <updated>2019-05-20T11:01:26+00:00</updated>
+  <media:group>
+   <media:title>MOST AMAZING ERGODOX YET! - ERGODOX EZ GLOW REVIEW w/ Kailh Copper keyswitches</media:title>
+   <media:content url="https://www.youtube.com/v/rqrh5d__uoI?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/rqrh5d__uoI/hqdefault.jpg" width="480" height="360"/>
+   <media:description>My absolute favorite keyboard got an upgrade!  I'm unboxing the latest ergonomic mechanical keyboard from Ergodox EZ and it GLOWS!
+
+It's here: http://ergodox-ez.com
+
+The Ergodox EZ keyboard has been my daily driver keyboard for a while now and I'll never go back.   I've used it with gateron browns for a while now, and now they offer it with Kailh keyswitches.  The one I'm opening has Kailh copper keyswitches.  Compared to Cherry MX keyswitches, the Kailh copper keyswitches are very different, they almost feel like Matias Quiet Click keyswitches, which are my favorite keyswitches of all time.
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="291" average="4.33" min="1" max="5"/>
+    <media:statistics views="18002"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:dcCCOiQ1ZuM</id>
+  <yt:videoId>dcCCOiQ1ZuM</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>CSS SELECTORS MADE EASY - HTML CSS Tutorial for Beginners</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=dcCCOiQ1ZuM"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-12-06T15:37:28+00:00</published>
+  <updated>2020-02-09T01:17:00+00:00</updated>
+  <media:group>
+   <media:title>CSS SELECTORS MADE EASY - HTML CSS Tutorial for Beginners</media:title>
+   <media:content url="https://www.youtube.com/v/dcCCOiQ1ZuM?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/dcCCOiQ1ZuM/hqdefault.jpg" width="480" height="360"/>
+   <media:description>You won't get far in web dev without understanding CSS selectors, and they aren't hard at all!
+
+Play with the code! https://codepen.io/anon/pen/BGeKVM
+
+View the whole Web Development Tutorials for Beginners playlist! https://www.youtube.com/playlist?list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+
+Using CSS selectors are the bread and butter of HTML and CSS coding.  You have to think about what elements on your page you want to target and how to write rules that cleanly target and apply css styling to those elements.
+
+2 good rules you always want to follow: don't make rules more specific than they have to be (but also don't make them overly generic like &quot;target every div on a page&quot;), and also don't repeat yourself (DRY).
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1046" average="4.95" min="1" max="5"/>
+    <media:statistics views="83491"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:iXSSHlOe47s</id>
+  <yt:videoId>iXSSHlOe47s</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>HTML CSS TUTORIAL FOR BEGINNERS - multiple pages</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=iXSSHlOe47s"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-11-29T17:00:06+00:00</published>
+  <updated>2020-02-18T00:36:25+00:00</updated>
+  <media:group>
+   <media:title>HTML CSS TUTORIAL FOR BEGINNERS - multiple pages</media:title>
+   <media:content url="https://www.youtube.com/v/iXSSHlOe47s?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/iXSSHlOe47s/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Setting up multiple pages in HTML + CSS is easy, there are just a few gotchas to be careful of! VIEW THE CODE: https://next.plnkr.co/edit/PKoGCHFcccpCoIIx
+
+You'll start by creating multiple HTML pages.  They can be in the same folder, or in their own folder, it doesn't matter, you just need to know where to point to them.  Then, you simply make A tags to point to them.  In HTML, when referencing a file, beginners tend to make 2 mistakes - they don't spell the file name right (or use capital/lowercase letters on accident) OR, they don't point to the right location for the HTML/CSS file.  If the HTML or CSS file is in a folder, you need to reference the folder as well.
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1235" average="4.95" min="1" max="5"/>
+    <media:statistics views="107509"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:QYEHwW4bzG4</id>
+  <yt:videoId>QYEHwW4bzG4</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>Flexispot Standing Desk Review - And Why You Need a Sit Stand Desk!</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=QYEHwW4bzG4"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-11-26T17:00:03+00:00</published>
+  <updated>2019-05-17T12:35:05+00:00</updated>
+  <media:group>
+   <media:title>Flexispot Standing Desk Review - And Why You Need a Sit Stand Desk!</media:title>
+   <media:content url="https://www.youtube.com/v/QYEHwW4bzG4?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/QYEHwW4bzG4/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Standing Desks are AWESOME, and a must-use for developers or anyone working at a computer all day.  I've been using a stand up desk for 4 years and finally got my hands on a Flexispot E5 http://bit.ly/2OTJMa6 for review.
+
+The Flexispot E5 sit stand desk is a great middle of the road standing desk with awesome features, a great warranty and a good price for what you get.  This Flexispot review is unbiased and I give my honest opinion for what you get with the desk.
+
+Flexispot also offers a large assortment of ergonomic workspace products - the varidesk, the desk bike, and more
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="114" average="3.74" min="1" max="5"/>
+    <media:statistics views="6078"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:aRMIdKRYg6c</id>
+  <yt:videoId>aRMIdKRYg6c</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>Build an HTML + CSS Layout with Flexbox in just a few lines of code</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=aRMIdKRYg6c"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-11-12T17:00:00+00:00</published>
+  <updated>2020-01-04T08:56:45+00:00</updated>
+  <media:group>
+   <media:title>Build an HTML + CSS Layout with Flexbox in just a few lines of code</media:title>
+   <media:content url="https://www.youtube.com/v/aRMIdKRYg6c?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/aRMIdKRYg6c/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Build a Flexbox grid layout in just a couple lines of code!  Getting good with HTML + CSS Layouts gets you very far, very fast with web development.
+
+Watch this full course!: https://www.youtube.com/playlist?list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+
+Building an HTML + CSS Layout is the first core skill you learn in web development.  Lots of people think it's very hard, but it doesn't have to be.  This course of web development tutorials for beginners will show you how to build an HTML CSS Layout, then add content with HTML CSS content blocks, which is where you learn all the tips and tricks it takes to build a website.
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1667" average="4.96" min="1" max="5"/>
+    <media:statistics views="135675"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:dMK_3lH1YPo</id>
+  <yt:videoId>dMK_3lH1YPo</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>EASY! Hand-code an HTML + CSS layout</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=dMK_3lH1YPo"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-11-05T17:00:08+00:00</published>
+  <updated>2019-05-17T13:24:17+00:00</updated>
+  <media:group>
+   <media:title>EASY! Hand-code an HTML + CSS layout</media:title>
+   <media:content url="https://www.youtube.com/v/dMK_3lH1YPo?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/dMK_3lH1YPo/hqdefault.jpg" width="480" height="360"/>
+   <media:description>With a handful of tags and a little CSS, you can build a layout completely from scratch!  
+
+View the Whole Series: https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+
+Play with the Code: https://codepen.io/anon/pen/aQObeP?editors=1100
+
+In this web development tutorial for beginners series, we're learning html and css from the very beginning.  We'll learn by building a website from scratch rather than doing a separate html tutorial for beginners an css tutorial for beginners.
+
+We'll learn about div tags and semantic tags that we can use in the place of div tags to make our html more readable.
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1855" average="4.95" min="1" max="5"/>
+    <media:statistics views="139688"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:J35jug1uHzE</id>
+  <yt:videoId>J35jug1uHzE</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>HTML CSS Tutorial for Beginners - Web Development Tutorials For Beginners</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=J35jug1uHzE"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-08-09T16:00:00+00:00</published>
+  <updated>2020-02-18T00:36:16+00:00</updated>
+  <media:group>
+   <media:title>HTML CSS Tutorial for Beginners - Web Development Tutorials For Beginners</media:title>
+   <media:content url="https://www.youtube.com/v/J35jug1uHzE?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/J35jug1uHzE/hqdefault.jpg" width="480" height="360"/>
+   <media:description>This video makes how CSS works easy to understand...it's just styles added to your page.  You can do a lot with them, but at the end of the day, there's very little you have to know about CSS itself to start using it.
+
+View the whole playlist of 2018 Web Development Tutorials for Beginners: https://www.youtube.com/playlist?list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G
+
+Video 1: Professional setup with VSCode
+https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G&amp;t=23s&amp;index=2
+
+Video 2: HTML Tutorial for Beginners
+https://www.youtube.com/watch?v=RjHflb-QgVc&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G&amp;t=4s&amp;index=3
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="1616" average="4.92" min="1" max="5"/>
+    <media:statistics views="151744"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:RjHflb-QgVc</id>
+  <yt:videoId>RjHflb-QgVc</yt:videoId>
+  <yt:channelId>UCVTlvUkGslCV_h-nSAId8Sw</yt:channelId>
+  <title>HTML Tutorial for Beginners</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=RjHflb-QgVc"/>
+  <author>
+   <name>LearnCode.academy</name>
+   <uri>https://www.youtube.com/channel/UCVTlvUkGslCV_h-nSAId8Sw</uri>
+  </author>
+  <published>2018-08-01T16:15:00+00:00</published>
+  <updated>2020-01-04T08:44:57+00:00</updated>
+  <media:group>
+   <media:title>HTML Tutorial for Beginners</media:title>
+   <media:content url="https://www.youtube.com/v/RjHflb-QgVc?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/RjHflb-QgVc/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Learn HTML FAST from a professional developer.  This course will get you into the career of web development.  You'll learn HTML, CSS, &amp; Javascript using modern tools so you won't be embarrassed on your first job interview!
+
+IMPORTANT! If you ONLY want a website for yourself or your business, DO NOT learn all this stuff...it's a waste of your time.
+Instead, click here: to go to WIX ADI https://bit.ly/2LQYBf7.  Wix is by far the easiest and cheapest way to get a website up and running without learning the skills of a web developer.
+
+Note, that's an affiliate link, so feel free to snoop around on their site to find the Wix ADI on your own if you don't want to support this channel.
+
+In this video, we're going to learn how to build a website with HTML.
+In this tutorial html is the hero and we'll learn just how simple it is to get started...you really only need to learn a few words!
+
+The whole course:
+Web Dev 1: How to set up your computer for web development
+https://www.youtube.com/watch?v=gQojMIhELvM&amp;list=PLoYCgNOIyGABDU532eesybur5HPBVfC1G&amp;index=2&amp;t=0s
+
+-~-~~-~~~-~~-~-
+Also watch: &quot;Responsive Design Tutorial - Tips for making web sites look great on any device&quot; 
+https://www.youtube.com/watch?v=fgOO9YUFlGI
+-~-~~-~~~-~~-~-</media:description>
+   <media:community>
+    <media:starRating count="2058" average="4.94" min="1" max="5"/>
+    <media:statistics views="160897"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

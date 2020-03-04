@@ -15,6 +15,9 @@ using Xunit;
 using Xunit.Sdk;
 
 using Newsgirl.Fetcher.Tests.Infrastructure;
+using Newsgirl.Shared.Infrastructure;
+using Npgsql;
+using NSubstitute;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
@@ -31,6 +34,30 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
         }
 
         public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        public static IDateProvider DateProviderStub
+        {
+            get
+            {
+                var dateStub = Substitute.For<IDateProvider>();
+                dateStub.Now().Returns(Date2000);
+
+                return dateStub;
+            }
+        }
+        
+        public static ITransactionService TransactionServiceStub
+        {
+            get
+            {
+                var transactionService = Substitute.For<ITransactionService>();
+                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>()).Returns(Task.CompletedTask);
+                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
+                transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
+                
+                return transactionService;
+            }
+        }
     }
     
     public class CustomReporter : IApprovalFailureReporter
