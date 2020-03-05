@@ -17,7 +17,7 @@ namespace Newsgirl.Fetcher.Tests
                 FeedUrl = feedUrl
             };
             
-            var contentProvider = new FeedContentProvider(new SystemSettingsModel()
+            var contentProvider = new FeedContentProvider(new SystemSettingsModel
             {
                 HttpClientRequestTimeout = 60,
                 HttpClientUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36"

@@ -27,7 +27,7 @@ namespace Newsgirl.Fetcher
         
         public static SystemSettingsModel SystemSettings { get; set; }
 
-        public static bool Debug => AppConfig.Debug.General;
+        public static bool Debug => AppConfig?.Debug != null && AppConfig.Debug.General;
     }
 
     public class AppConfig

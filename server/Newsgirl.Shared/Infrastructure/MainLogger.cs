@@ -128,9 +128,9 @@ namespace Newsgirl.Shared.Infrastructure
 
         public static void Print(string message)
         {
-            Log4NetLogger.Debug(message);
+            Log4NetLogger?.Debug(message);
 
-            if (LoggerConfig.InMemoryLogs)
+            if (LoggerConfig?.InMemoryLogs != null)
             {
                 Logs.Add(message);
             }

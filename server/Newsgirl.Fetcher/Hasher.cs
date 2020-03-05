@@ -1,6 +1,5 @@
 using System;
 using System.Data.HashFunction.xxHash;
-using System.IO;
 
 namespace Newsgirl.Fetcher
 {
@@ -24,21 +23,10 @@ namespace Newsgirl.Fetcher
 
             return value;
         }
-
-        public long ComputeHash(Stream stream)
-        {
-            byte[] hashBytes = this.xxHash.ComputeHash(stream).Hash;
-
-            long value = BitConverter.ToInt64(hashBytes);
-
-            return value;
-        }
     }
 
     public interface IHasher
     {
         long ComputeHash(byte[] bytes);
-        
-        long ComputeHash(Stream stream);
     }
 }

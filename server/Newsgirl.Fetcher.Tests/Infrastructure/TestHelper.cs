@@ -51,7 +51,7 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             get
             {
                 var transactionService = Substitute.For<ITransactionService>();
-                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>()).Returns(Task.CompletedTask);
+                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>()).Returns(info => info.Arg<Func<Task>>()());
                 transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
                 transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
                 
@@ -59,6 +59,8 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             }
         }
     }
+    
+    
     
     public class CustomReporter : IApprovalFailureReporter
     {

@@ -71,7 +71,9 @@ namespace Newsgirl.Fetcher
                     memoryStream.Write(stringIDBytes, 0, stringIDBytes.Length);
                 }
 
-                parsedFeed.FeedHash = this.hasher.ComputeHash(memoryStream);
+                var allBytes = memoryStream.ToArray();
+
+                parsedFeed.FeedHash = this.hasher.ComputeHash(allBytes);
             }
 
             return parsedFeed;

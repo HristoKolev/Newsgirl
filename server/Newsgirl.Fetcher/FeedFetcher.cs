@@ -62,7 +62,6 @@ namespace Newsgirl.Fetcher
                 for (int i = 0; i < feeds.Count; i++)
                 {
                     var feed = feeds[i];
-
                     updates[i] = await this.ProcessFeed(feed);
                 }
             }
