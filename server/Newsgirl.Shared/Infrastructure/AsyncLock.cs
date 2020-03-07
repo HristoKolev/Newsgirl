@@ -24,14 +24,6 @@ namespace Newsgirl.Shared.Infrastructure
 
             return new AsyncLockInstance(this.semaphore);
         }
-
-        public async Task Lock(Func<Task> func)
-        {
-            using (await this.Lock())
-            {
-                await func();
-            }
-        }
     }
 
     /// <summary>

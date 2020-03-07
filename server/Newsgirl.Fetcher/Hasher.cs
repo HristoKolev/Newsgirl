@@ -3,7 +3,7 @@ using System.Data.HashFunction.xxHash;
 
 namespace Newsgirl.Fetcher
 {
-    public class Hasher : IHasher
+    public class Hasher
     {
         private readonly IxxHash xxHash;
 
@@ -23,10 +23,5 @@ namespace Newsgirl.Fetcher
 
             return value;
         }
-    }
-
-    public interface IHasher
-    {
-        long ComputeHash(byte[] bytes);
     }
 }

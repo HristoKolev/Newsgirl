@@ -14,11 +14,13 @@ namespace Newsgirl.Fetcher
     {
         private readonly DbService db;
         private readonly NpgsqlConnection dbConnection;
+        private readonly ILog log;
 
-        public FeedItemsImportService(DbService db, NpgsqlConnection dbConnection)
+        public FeedItemsImportService(DbService db, NpgsqlConnection dbConnection, ILog log)
         {
             this.db = db;
             this.dbConnection = dbConnection;
+            this.log = log;
         }
 
         public Task<List<FeedPoco>> GetFeedsForUpdate()
@@ -28,7 +30,7 @@ namespace Newsgirl.Fetcher
 
         public async Task ImportItems(FeedUpdateModel[] updates)
         {
-            MainLogger.Debug("Importing feed items...");
+            this.log.Debug("Importing feed items...");
                 
             const string header =
                 "COPY public.feed_items " +
@@ -90,7 +92,7 @@ namespace Newsgirl.Fetcher
                 await importer.CompleteAsync();
             }
 
-            MainLogger.Debug("Updating the feeds hashes...");
+            this.log.Debug("Updating the feeds hashes...");
 
             for (int i = 0; i < updates.Length; i++)
             {

@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
+using Xunit;
+
 using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
 using NSubstitute;
-using Xunit;
 
 namespace Newsgirl.Fetcher.Tests
 {
@@ -63,10 +65,11 @@ namespace Newsgirl.Fetcher.Tests
 
             var fetcher = new FeedFetcher(
                 contentProvider,
-                new FeedParser(new Hasher(), TestHelper.DateProviderStub),
+                new FeedParser(new Hasher(), TestHelper.DateProviderStub, TestHelper.LogStub),
                 importService,
                 systemSettings,
-                TestHelper.TransactionServiceStub
+                TestHelper.TransactionServiceStub,
+                TestHelper.LogStub
             );
 
             await fetcher.FetchFeeds();

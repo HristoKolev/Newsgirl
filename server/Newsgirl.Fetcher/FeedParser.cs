@@ -10,15 +10,17 @@ using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Fetcher
 {
-    public class FeedParser : IFeedParser
+    public class FeedParser
     {
-        private readonly IHasher hasher;
+        private readonly Hasher hasher;
         private readonly IDateProvider dateProvider;
+        private readonly ILog log;
 
-        public FeedParser(IHasher hasher, IDateProvider dateProvider)
+        public FeedParser(Hasher hasher, IDateProvider dateProvider, ILog log)
         {
             this.hasher = hasher;
             this.dateProvider = dateProvider;
+            this.log = log;
         }
         
         public ParsedFeed Parse(string feedContent)
@@ -43,7 +45,7 @@ namespace Newsgirl.Fetcher
 
                     if (stringID == null)
                     {
-                        MainLogger.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(feedItem)}");
+                        this.log.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(feedItem)}");
 
                         continue;
                     }
@@ -54,7 +56,7 @@ namespace Newsgirl.Fetcher
 
                     if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
-                        MainLogger.Debug($"Feed item already added: {stringID}");
+                        this.log.Debug($"Feed item already added: {stringID}");
                     
                         continue;
                     }
@@ -121,11 +123,6 @@ namespace Newsgirl.Fetcher
 
             return null;
         }
-    }
-    
-    public interface IFeedParser
-    {
-        ParsedFeed Parse(string feedContent);
     }
     
     public class ParsedFeed

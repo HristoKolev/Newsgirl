@@ -11,21 +11,23 @@ using Sentry.Protocol;
 
 namespace Newsgirl.Shared.Infrastructure
 {
-    public class CustomLogger
+    public class CustomLogger : ILog
     {
         private readonly CustomLoggerConfig config;
-        private readonly ISentryClient sentryClient;
-        private readonly AsyncLock sentryFlushLock = new AsyncLock();
+        private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
-
+        private readonly ISentryClient sentryClient;
+        
         public CustomLogger(CustomLoggerConfig config)
         {
             this.config = config;
+            this.sentryFlushLock = new AsyncLock();
             this.sentryFlushTimeout = TimeSpan.FromSeconds(60);
             this.sentryClient = new SentryClient(new SentryOptions
             {
                 AttachStacktrace = true,
                 Dsn = new Dsn(config.SentryDsn),
+                Release = config.Release,
             });
         }
         
@@ -38,7 +40,17 @@ namespace Newsgirl.Shared.Infrastructure
 
             this.Log(message);
         }
-        
+
+        public void Debug(Func<string> func)
+        {
+            if (!this.config.EnableDebug)
+            {
+                return;
+            }
+
+            this.Log(func());
+        }
+
         public void Log(string message)
         {
             if (!this.config.DisableConsoleLogging)
@@ -64,56 +76,76 @@ namespace Newsgirl.Shared.Infrastructure
 
         private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo)
         {
-            var exceptionList = GetExceptionChain(exception);
-
-            var contextEntries = exceptionList.Where(x => x is DetailedLogException)
-                                     .Cast<DetailedLogException>()
-                                     .SelectMany(x => x.Details)
-                                     .ToList();
-
-            if (additionalInfo != null)
-            {
-                contextEntries.AddRange(additionalInfo);
-            }
-
             var sentryEvent = new SentryEvent(exception)
             {
                 Level = SentryLevel.Error,
             };
-
-            foreach (var entry in contextEntries)
+            
+            if (!string.IsNullOrWhiteSpace(this.config.ServerName))
             {
-                sentryEvent.SetExtra(entry.Key, entry.Value);
+                sentryEvent.ServerName = this.config.ServerName;
             }
-
-            string customFingerprint = exceptionList.Where(x => x is DetailedLogException)
-                                                   .Cast<DetailedLogException>()
-                                                   .Select(x => x.Fingerprint)
-                                                   .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            if (customFingerprint != null)
-            {
-                sentryEvent.SetFingerprint(new[] { customFingerprint });
-            }
-            else
-            {
-                sentryEvent.SetFingerprint(exceptionList.Select(GetFingerprint));
-            }
-
-            sentryEvent.ServerName = this.config.ServerName;
 
             if (!string.IsNullOrWhiteSpace(this.config.Environment))
             {
                 sentryEvent.Environment = this.config.Environment;
             }
 
+            string[] customFingerprint = null;
+            
+            var exceptionChain = GetExceptionChain(exception);
+
+            for (int i = 0; i < exceptionChain.Count; i++)
+            {
+                var current = exceptionChain[i];
+
+                if (current is DetailedLogException detailedLogException)
+                {
+                    foreach (var kvp in detailedLogException.Details)
+                    {
+                        sentryEvent.SetExtra(kvp.Key, kvp.Value);                        
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(detailedLogException.Fingerprint))
+                    {
+                        customFingerprint = new []{detailedLogException.Fingerprint};
+                    }
+                }
+            }
+            
+            if (additionalInfo != null)
+            {
+                foreach (var kvp in additionalInfo)
+                {
+                    sentryEvent.SetExtra(kvp.Key, kvp.Value);
+                }
+            }
+
+            if (customFingerprint != null)
+            {
+                sentryEvent.SetFingerprint(customFingerprint);
+            }
+            else
+            {
+                string[] fingerprints = new string[exceptionChain.Count];
+
+                for (int i = 0; i < exceptionChain.Count; i++)
+                {
+                    var current = exceptionChain[i];
+
+                    string fingerprint = GetFingerprint(current);
+
+                    fingerprints[i] = fingerprint;
+                }
+                
+                sentryEvent.SetFingerprint(fingerprints);
+            }
+
             var eventId = this.sentryClient.CaptureEvent(sentryEvent);
 
-            if (!this.config.DisableSentryAutoFlush)
+            using (await this.sentryFlushLock.Lock())
             {
-                using (await this.sentryFlushLock.Lock())
-                {
-                    await this.sentryClient.FlushAsync(this.sentryFlushTimeout);
-                }
+                await this.sentryClient.FlushAsync(this.sentryFlushTimeout);
             }
             
             return eventId.ToString();
@@ -134,7 +166,7 @@ namespace Newsgirl.Shared.Infrastructure
 
             return list;
         }
-
+        
         private static string GetFingerprint(Exception exception)
         {
             var stackTrace = SentryStackTraceFactory.Create(exception);
@@ -144,13 +176,23 @@ namespace Newsgirl.Shared.Infrastructure
             return $"[{exception.GetType()}]\n{frames}";
         }
     }
+    
+    public interface ILog
+    {
+        void Debug(string message);
+        
+        void Debug(Func<string> func);
+        
+        void Log(string message);
+        
+        Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo = null);
+    }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class CustomLoggerConfig
     {
         public bool DisableSentryIntegration { get; set; }
 
-        public bool DisableSentryAutoFlush { get; set; }
-        
         public bool DisableConsoleLogging { get; set; }
 
         public bool EnableDebug { get; set; }
@@ -160,12 +202,14 @@ namespace Newsgirl.Shared.Infrastructure
         public string Environment { get; set; }
         
         public string SentryDsn { get; set; }
+        
+        public string Release { get; set; }
     }
 
     /// <summary>
     /// Stolen from Sentry's source code.
     /// </summary>
-    public static class SentryStackTraceFactory
+    internal static class SentryStackTraceFactory
     {
         private static readonly List<(string, string)> IgnoredFrames = new List<(string, string)>
         {

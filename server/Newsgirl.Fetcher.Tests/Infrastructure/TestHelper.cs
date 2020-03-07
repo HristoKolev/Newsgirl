@@ -46,6 +46,15 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             }
         }
         
+        public static ILog LogStub
+        {
+            get
+            {
+                var logStub = Substitute.For<ILog>();
+                return logStub;
+            }
+        }
+        
         public static ITransactionService TransactionServiceStub
         {
             get
@@ -59,8 +68,6 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             }
         }
     }
-    
-    
     
     public class CustomReporter : IApprovalFailureReporter
     {

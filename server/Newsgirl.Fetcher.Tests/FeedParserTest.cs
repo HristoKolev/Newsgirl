@@ -20,7 +20,7 @@ namespace Newsgirl.Fetcher.Tests
             var dateStub = Substitute.For<IDateProvider>();
             dateStub.Now().Returns(TestHelper.Date2000);
             
-            var parser = new FeedParser(hasher, dateStub);
+            var parser = new FeedParser(hasher, dateStub, TestHelper.LogStub);
 
             string feedContent = await TestHelper.GetResource(resourceName);
             

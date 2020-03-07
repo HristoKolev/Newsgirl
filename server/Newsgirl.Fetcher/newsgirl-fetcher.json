@@ -1,8 +1,11 @@
 {
-  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
-  "SentryDsn": "http://8979f5ca401143c4b69409493fccfd5c@home-sentry.lan/5",
-  "Environment": "development",
-  "Debug": {
-    "General": true
+  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",    
+  "Logging": {
+    "SentryDsn": "http://8979f5ca401143c4b69409493fccfd5c@home-sentry.lan/5",
+    "Environment": "development",
+    "ServerName": "hristo-ws",
+    "EnableDebug": false,
+    "DisableSentryIntegration": false,
+    "DisableConsoleLogging": false    
   }
 }

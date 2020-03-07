@@ -12,34 +12,37 @@ namespace Newsgirl.Fetcher
     public class FeedFetcher
     {
         private readonly IFeedContentProvider feedContentProvider;
-        private readonly IFeedParser feedParser;
+        private readonly FeedParser feedParser;
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
         private readonly ITransactionService transactionService;
+        private readonly ILog log;
         private readonly AsyncLock dbLock;
 
         public FeedFetcher(
             IFeedContentProvider feedContentProvider,
-            IFeedParser feedParser,
+            FeedParser feedParser,
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
-            ITransactionService transactionService)
+            ITransactionService transactionService,
+            ILog log)
         {
             this.feedContentProvider = feedContentProvider;
             this.feedParser = feedParser;
             this.feedItemsImportService = feedItemsImportService;
             this.systemSettings = systemSettings;
             this.transactionService = transactionService;
+            this.log = log;
             this.dbLock = new AsyncLock();
         }
 
         public async Task FetchFeeds()
         {
-            MainLogger.Print("Beginning fetch cycle...");
+            this.log.Log("Beginning fetch cycle...");
             
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
-            
-            MainLogger.Print($"Fetching {feeds.Count} feeds.");
+
+            this.log.Log($"Fetching {feeds.Count} feeds.");
 
             FeedUpdateModel[] updates;
 
@@ -65,24 +68,27 @@ namespace Newsgirl.Fetcher
                     updates[i] = await this.ProcessFeed(feed);
                 }
             }
-
-            if (Global.Debug)
+            
+            this.log.Debug(() =>
             {
                 int notChangedCount = updates.Count(x => x.NewItems == null || !x.NewItems.Any());
-                
-                MainLogger.Debug($"{notChangedCount} feeds unchanged.");
-                
+
+                return $"{notChangedCount} feeds unchanged.";
+            });
+
+            this.log.Debug(() =>
+            {
                 int changedCount = updates.Count(x => x.NewItems != null && x.NewItems.Any());
-                
-                MainLogger.Debug($"{changedCount} feeds changed.");
-            }
+
+                return $"{changedCount} feeds changed.";
+            });
 
             await this.transactionService.ExecuteInTransactionAndCommit(async () =>
             {
                 await this.feedItemsImportService.ImportItems(updates);
             });
 
-            MainLogger.Print("Fetch cycle complete in.");
+            this.log.Log("Fetch cycle complete.");
         }
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
@@ -123,7 +129,7 @@ namespace Newsgirl.Fetcher
 
                 if (feed.FeedHash == parsedFeed.FeedHash)
                 {
-                    MainLogger.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
+                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
                     
                     return new FeedUpdateModel
                     {
@@ -142,7 +148,7 @@ namespace Newsgirl.Fetcher
                     newHashes = new HashSet<long>(newHashArray);
                 }
 
-                MainLogger.Debug($"Feed #{feed.FeedID} has {newHashes.Count} new items.");
+                this.log.Debug($"Feed #{feed.FeedID} has {newHashes.Count} new items.");
                 
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
@@ -169,9 +175,9 @@ namespace Newsgirl.Fetcher
             }
             catch (Exception err)
             {
-                MainLogger.Debug($"An error occurred while fetching feed #{feed.FeedID}.");
+                this.log.Debug($"An error occurred while fetching feed #{feed.FeedID}.");
                 
-                MainLogger.Error(err, new Dictionary<string, object>
+                await this.log.Error(err, new Dictionary<string, object>
                 {
                     {"feed", feed}
                 });

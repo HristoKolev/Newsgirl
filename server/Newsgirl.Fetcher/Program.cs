@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 
 using Autofac;
@@ -15,69 +14,74 @@ namespace Newsgirl.Fetcher
     public static class Global
     {
         public static readonly string RootDirectory =
-            Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+            Path.GetDirectoryName(typeof(Global).Assembly.Location);
 
         public static readonly string ConfigDirectory =
             Path.Combine(RootDirectory, "../../../");
 
         public static readonly string AppConfigLocation =
-            Path.Combine(ConfigDirectory, $"{Assembly.GetEntryAssembly()?.GetName().Name}.json");
+            Path.Combine(ConfigDirectory, $"{typeof(Global).Assembly.GetName().Name}.json");
+        
+        public static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
 
         public static AppConfig AppConfig { get; set; }
         
         public static SystemSettingsModel SystemSettings { get; set; }
+        
+        public static ILog Log { get; set; }
+        
+        public static async Task ReloadStartupConfig()
+        {
+            try
+            {
+                Log.Log("Reloading config...");
 
-        public static bool Debug => AppConfig?.Debug != null && AppConfig.Debug.General;
+                await LoadStartupConfig();
+            }
+            catch (Exception exception)
+            {
+                await Log.Error(exception);
+            }
+        }
+
+        public static async Task LoadStartupConfig()
+        {
+            AppConfig = JsonConvert.DeserializeObject<AppConfig>(
+                await File.ReadAllTextAsync(AppConfigLocation));
+            AppConfig.Logging.Release = AppVersion;
+            Log = new CustomLogger(AppConfig.Logging);
+        }
     }
 
     public class AppConfig
     {
-        public string SentryDsn { get; set; }
-
-        public string Environment { get; set; }
-        
         public string ConnectionString { get; set; }
         
-        public DebugConfig Debug { get; set; }
-    }
-
-    public class DebugConfig
-    {
-        public bool General { get; set; }
+        public CustomLoggerConfig Logging { get; set; }
     }
     
     public class FetcherModule : Autofac.Module
     {
         protected override void Load(ContainerBuilder builder)
         {
+            // Globally managed
+            builder.Register((c, p) => Global.SystemSettings);
+            builder.Register((c, p) => Global.Log);
+            
+            // Single instance
+            builder.RegisterType<Hasher>().SingleInstance();
+            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
+            builder.RegisterType<FeedParser>().SingleInstance();
+
+            // Per scope
             builder.Register((c, p) => 
                     DbFactory.CreateConnection(Global.AppConfig.ConnectionString))
                 .InstancePerLifetimeScope();
 
-            builder.RegisterType<DbService>()
-                .InstancePerLifetimeScope();
+            builder.RegisterType<DbService>().InstancePerLifetimeScope();
+            builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
+            builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
 
-            builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>()
-                .InstancePerLifetimeScope();
-            
-            builder.RegisterType<FeedFetcher>()
-                .InstancePerLifetimeScope();
-
-            builder.RegisterType<Hasher>().As<IHasher>()
-                .SingleInstance();
-            
-            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>()
-                .SingleInstance();
-            
-            builder.RegisterType<FeedParser>().As<IFeedParser>()
-                .SingleInstance();
-
-            builder.Register((c, p) => Global.SystemSettings)
-                .SingleInstance();
-            
-            builder.Register((c, p) => Global.AppConfig)
-                .SingleInstance();
-            
             base.Load(builder);
         }
     }
@@ -99,20 +103,11 @@ namespace Newsgirl.Fetcher
     {
         private static async Task<int> Main()
         {
-            Global.AppConfig = JsonConvert.DeserializeObject<AppConfig>(
-                await File.ReadAllTextAsync(Global.AppConfigLocation));
+            await Global.LoadStartupConfig();
 
-            var loggingConfig = new LoggerConfigModel
+            try
             {
-                SentryDsn = Global.AppConfig.SentryDsn,
-                ConfigDirectory = Global.ConfigDirectory,
-                Environment = Global.AppConfig.Environment,
-                DebugLogging = Global.Debug,
-            };
-                
-            using (MainLogger.Initialize(loggingConfig))
-            {
-                try
+                using (new FileWatcher(Global.AppConfigLocation, Global.ReloadStartupConfig))
                 {
                     while (true)
                     {
@@ -130,12 +125,12 @@ namespace Newsgirl.Fetcher
                         await Task.Delay(TimeSpan.FromSeconds(Global.SystemSettings.FetcherCyclePause));                        
                     }
                 }
-                catch (Exception exception)
-                {
-                    MainLogger.Error(exception);
-
-                    return 1;
-                }
+            }
+            catch (Exception exception)
+            {
+                await Global.Log.Error(exception);
+                
+                return 1;
             }
         }
     }
