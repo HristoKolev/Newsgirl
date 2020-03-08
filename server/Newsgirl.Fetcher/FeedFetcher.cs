@@ -12,7 +12,7 @@ namespace Newsgirl.Fetcher
     public class FeedFetcher
     {
         private readonly IFeedContentProvider feedContentProvider;
-        private readonly FeedParser feedParser;
+        private readonly IFeedParser feedParser;
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
         private readonly ITransactionService transactionService;
@@ -21,7 +21,7 @@ namespace Newsgirl.Fetcher
 
         public FeedFetcher(
             IFeedContentProvider feedContentProvider,
-            FeedParser feedParser,
+            IFeedParser feedParser,
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
             ITransactionService transactionService,

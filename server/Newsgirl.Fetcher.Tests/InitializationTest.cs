@@ -2,9 +2,10 @@ using System.Linq;
 
 using Autofac;
 using Autofac.Core;
+using Xunit;
+
 using Newsgirl.Shared;
 using Newsgirl.Shared.Infrastructure;
-using Xunit;
 
 namespace Newsgirl.Fetcher.Tests
 {

@@ -71,7 +71,7 @@ namespace Newsgirl.Fetcher
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
-            builder.RegisterType<FeedParser>().SingleInstance();
+            builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 
             // Per scope
             builder.Register((c, p) => 

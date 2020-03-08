@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +16,9 @@ using Xunit;
 using Xunit.Sdk;
 
 using Newsgirl.Fetcher.Tests.Infrastructure;
+using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using NSubstitute;
 
@@ -41,7 +44,6 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             {
                 var dateStub = Substitute.For<IDateProvider>();
                 dateStub.Now().Returns(Date2000);
-
                 return dateStub;
             }
         }
@@ -65,6 +67,22 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
                 transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
                 
                 return transactionService;
+            }
+        }
+
+        public static IFeedContentProvider TestResourceContentProvider
+        {
+            get
+            {
+                var contentProvider = Substitute.For<IFeedContentProvider>();
+                contentProvider.GetFeedContent(null)
+                    .ReturnsForAnyArgs(info =>
+                    {
+                        var feedPoco = info.Arg<FeedPoco>();
+                        return GetResource(feedPoco.FeedUrl);
+                    });
+
+                return contentProvider;
             }
         }
     }
@@ -101,9 +119,49 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
 
     public static class Snapshot
     {
+        private static readonly string[] IgnoredExceptionFields = {
+            "InnerException",
+            "StackTrace",
+            "StackTraceString",
+        };
+        
         public static void Match<T>(T obj, string[] parameters = null)
         {
             string json = JsonConvert.SerializeObject(obj);
+            
+            string formatJson = JsonPrettyPrint.FormatJson(json);
+
+            if (parameters != null)
+            {
+                NamerFactory.AdditionalInformation = string.Join("_", parameters);
+            }
+            
+            Approvals.VerifyWithExtension(formatJson, ".json");
+        }
+        
+        public static void MatchError(Exception exception, string[] parameters = null)
+        {
+            var exceptions = new List<Exception>();
+
+            while (exception != null)
+            {
+                exceptions.Add(exception);
+                exception = exception.InnerException;
+            }
+
+            string json = JsonConvert.SerializeObject(exceptions);
+
+            var jsonExceptions = JArray.Parse(json);
+
+            foreach (var obj in jsonExceptions.Cast<JObject>())
+            {
+                foreach (string ignoredPropertyName in IgnoredExceptionFields)
+                {
+                    obj.Property(ignoredPropertyName)?.Remove();
+                }
+            }
+
+            json = JsonConvert.SerializeObject(jsonExceptions);
             
             string formatJson = JsonPrettyPrint.FormatJson(json);
 

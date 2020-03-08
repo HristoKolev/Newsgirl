@@ -10,7 +10,7 @@ using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Fetcher
 {
-    public class FeedParser
+    public class FeedParser : IFeedParser
     {
         private readonly Hasher hasher;
         private readonly IDateProvider dateProvider;
@@ -125,6 +125,11 @@ namespace Newsgirl.Fetcher
         }
     }
     
+    public interface IFeedParser
+    {
+        ParsedFeed Parse(string feedContent);
+    }
+
     public class ParsedFeed
     {
         public ParsedFeed(int capacity)

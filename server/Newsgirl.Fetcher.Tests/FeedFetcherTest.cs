@@ -1,13 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
 using Xunit;
 
 using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
+using Newsgirl.Shared.Infrastructure;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Newsgirl.Fetcher.Tests
 {
@@ -50,24 +52,14 @@ namespace Newsgirl.Fetcher.Tests
 
             await importService.ImportItems(Arg.Do<FeedUpdateModel[]>(x => updates = x));
 
-            var systemSettings = new SystemSettingsModel
-            {
-                ParallelFeedFetching = parallelFetching,
-            };
-
-            var contentProvider = Substitute.For<IFeedContentProvider>();
-            contentProvider.GetFeedContent(null).ReturnsForAnyArgs(info =>
-            {
-                var feedPoco = info.Arg<FeedPoco>();
-                
-                return TestHelper.GetResource(feedPoco.FeedUrl);
-            });
-
             var fetcher = new FeedFetcher(
-                contentProvider,
+                TestHelper.TestResourceContentProvider,
                 new FeedParser(new Hasher(), TestHelper.DateProviderStub, TestHelper.LogStub),
                 importService,
-                systemSettings,
+                new SystemSettingsModel
+                {
+                    ParallelFeedFetching = parallelFetching,
+                },
                 TestHelper.TransactionServiceStub,
                 TestHelper.LogStub
             );
@@ -75,6 +67,73 @@ namespace Newsgirl.Fetcher.Tests
             await fetcher.FetchFeeds();
 
             return updates;
+        }
+        
+        [Fact]
+        public async Task Reports_When_The_Content_Provider_Throws()
+        {
+            var feeds = new List<FeedPoco>
+            {
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedHash = 351563459839931092 },
+            };
+
+            var importService = Substitute.For<IFeedItemsImportService>();
+            importService.GetFeedsForUpdate().Returns(Task.FromResult(feeds));
+
+            var contentProvider = Substitute.For<IFeedContentProvider>();
+            contentProvider.GetFeedContent(null).ThrowsForAnyArgs(new ApplicationException());
+
+            Exception err = null;
+            
+            var log = Substitute.For<ILog>();
+            log.When(x => x.Debug(Arg.Any<Func<string>>())).Do(info => info.Arg<Func<string>>()());
+            await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+
+            var fetcher = new FeedFetcher(
+                contentProvider,
+                new FeedParser(new Hasher(), TestHelper.DateProviderStub, log),
+                importService,
+                new SystemSettingsModel(),
+                TestHelper.TransactionServiceStub,
+                log
+            );
+
+            await fetcher.FetchFeeds();
+
+            Snapshot.MatchError(err);
+        }
+        
+        
+        [Fact]
+        public async Task Reports_When_The_Parser_Throws()
+        {
+            var feeds = new List<FeedPoco>
+            {
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedHash = 351563459839931092 },
+            };
+
+            var importService = Substitute.For<IFeedItemsImportService>();
+            importService.GetFeedsForUpdate().Returns(Task.FromResult(feeds));
+
+            Exception err = null;
+            var log = Substitute.For<ILog>();
+            await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+
+            var feedParser = Substitute.For<IFeedParser>();
+            feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
+            
+            var fetcher = new FeedFetcher(
+                TestHelper.TestResourceContentProvider,
+                feedParser,
+                importService,
+                new SystemSettingsModel(),
+                TestHelper.TransactionServiceStub,
+                log
+            );
+
+            await fetcher.FetchFeeds();
+
+            Snapshot.MatchError(err);
         }
     }
 }
