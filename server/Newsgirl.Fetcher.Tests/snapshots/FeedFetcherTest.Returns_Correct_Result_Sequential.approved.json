@@ -1,5 +1,12 @@
 ﻿[
   {
+    "Feed": {
+      "FeedHash": null,
+      "FeedID": 1,
+      "FeedName": null,
+      "FeedUrl": "fetcher-1.xml"
+    },
+    "NewFeedHash": 3780115545271156722,
     "NewItems": [
       {
         "FeedID": 1,
@@ -334,26 +341,26 @@
         "FeedItemTitle": "Observables, board games, and 'Artechulate'",
         "FeedItemUrl": "https://developers.google.com/web/shows/http203/podcast/observables-board-games-and-artechulate"
       }
-    ],
-    "NewFeedHash": 3780115545271156722,
-    "Feed": {
-      "FeedHash": null,
-      "FeedID": 1,
-      "FeedName": null,
-      "FeedUrl": "fetcher-1.xml"
-    }
+    ]
   },
   {
-    "NewItems": null,
-    "NewFeedHash": null,
     "Feed": {
       "FeedHash": 351563459839931092,
       "FeedID": 2,
       "FeedName": null,
       "FeedUrl": "fetcher-2.xml"
-    }
+    },
+    "NewFeedHash": null,
+    "NewItems": null
   },
   {
+    "Feed": {
+      "FeedHash": null,
+      "FeedID": 3,
+      "FeedName": null,
+      "FeedUrl": "fetcher-3.xml"
+    },
+    "NewFeedHash": 6333359339447268841,
     "NewItems": [
       {
         "FeedID": 3,
@@ -481,13 +488,6 @@
         "FeedItemTitle": "Web Development in 2020 - A complete roadmap",
         "FeedItemUrl": "https://www.youtube.com/watch?v=SBB1YtwODT0"
       }
-    ],
-    "NewFeedHash": 6333359339447268841,
-    "Feed": {
-      "FeedHash": null,
-      "FeedID": 3,
-      "FeedName": null,
-      "FeedUrl": "fetcher-3.xml"
-    }
+    ]
   }
 ]

@@ -19,6 +19,7 @@ using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Npgsql;
 using NSubstitute;
 
@@ -29,9 +30,20 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
 {
     public static class TestHelper
     {
+        // ReSharper disable once InconsistentNaming
+        private static TestConfig _testConfig;
+        private static readonly object TestConfigSync = new object();
+
         public static async Task<string> GetResource(string name)
         {
             string content = await File.ReadAllTextAsync($"../../../resources/{name}");
+
+            return content;
+        }
+        
+        public static async Task<string> GetSql(string name)
+        {
+            string content = await File.ReadAllTextAsync($"../../../sql/{name}");
 
             return content;
         }
@@ -85,8 +97,34 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
                 return contentProvider;
             }
         }
+        
+        public static TestConfig TestConfig
+        {
+            get
+            {
+                if (_testConfig == null)
+                {
+                    lock (TestConfigSync)
+                    {
+                        if (_testConfig == null)
+                        {
+                            string json = File.ReadAllText("../../../test-config.json");
+                            _testConfig = JsonConvert.DeserializeObject<TestConfig>(json);
+                        }
+                    }
+                }
+
+                return _testConfig;
+            }
+        }
+
     }
-    
+
+    public class TestConfig
+    {
+        public string ConnectionString { get; set; }
+    }
+
     public class CustomReporter : IApprovalFailureReporter
     {
         public void Report(string approved, string received)
@@ -127,16 +165,14 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
         
         public static void Match<T>(T obj, string[] parameters = null)
         {
-            string json = JsonConvert.SerializeObject(obj);
-            
-            string formatJson = JsonPrettyPrint.FormatJson(json);
+            string json = Serialize(obj);
 
             if (parameters != null)
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
             }
             
-            Approvals.VerifyWithExtension(formatJson, ".json");
+            Approvals.VerifyWithExtension(json, ".json");
         }
         
         public static void MatchError(Exception exception, string[] parameters = null)
@@ -161,16 +197,29 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
                 }
             }
 
-            json = JsonConvert.SerializeObject(jsonExceptions);
-            
-            string formatJson = JsonPrettyPrint.FormatJson(json);
+            json = Serialize(jsonExceptions);
 
             if (parameters != null)
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
             }
             
-            Approvals.VerifyWithExtension(formatJson, ".json");
+            Approvals.VerifyWithExtension(json, ".json");
+        }
+
+        private static string Serialize(object obj)
+        {
+            
+            var settings = new JsonSerializerSettings
+            {
+                ContractResolver = SortedPropertiesContractResolver.Instance
+            };
+
+            string json = JsonConvert.SerializeObject(obj, settings);
+            
+            string formatJson = JsonPrettyPrint.FormatJson(json);
+
+            return formatJson;
         }
     }
     
@@ -296,5 +345,73 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
 
             return sb.ToString();
         }         
+    }
+    
+    public abstract class DatabaseTest : IAsyncLifetime
+    {
+        /// <summary>
+        /// Called immediately after the class has been created, before it is used.
+        /// </summary>
+        public async Task InitializeAsync()
+        {
+            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.ConnectionString)
+            {
+                Enlist = false,
+            };
+
+            this.DbConnection = new NpgsqlConnection(builder.ToString());
+            this.Db = new DbService(this.DbConnection);
+            this.Tx = await this.Db.BeginTransaction();
+
+            string content = await TestHelper.GetSql("before-tests.sql");
+
+            var parts = content.Split(new[] {"--================================"},
+                StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string sql in parts)
+            {
+                await this.Db.ExecuteNonQuery(sql);                
+            }
+        }
+
+        private NpgsqlTransaction Tx { get; set; }
+        
+        protected NpgsqlConnection DbConnection { get; private set; }
+        
+        protected DbService Db { get; private set; }
+
+        /// <summary>
+        /// Called when an object is no longer needed. Called just before <see cref="M:System.IDisposable.Dispose" />
+        /// if the class also implements that.
+        /// </summary>
+        public async Task DisposeAsync()
+        {
+            await this.Tx.RollbackAsync();
+
+            await this.DbConnection.DisposeAsync();
+            
+            this.Db.Dispose();
+        }
+    }
+    
+    public class SortedPropertiesContractResolver : DefaultContractResolver
+    {
+        // use a static instance for optimal performance
+
+        static SortedPropertiesContractResolver() { Instance = new SortedPropertiesContractResolver(); }
+
+        public static SortedPropertiesContractResolver Instance { get; }
+
+        protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
+        {
+            var properties = base.CreateProperties(type, memberSerialization);
+            
+            if (properties != null)
+            {
+                return properties.OrderBy(p => p.UnderlyingName).ToList();
+            }
+
+            return properties;
+        }
     }
 }

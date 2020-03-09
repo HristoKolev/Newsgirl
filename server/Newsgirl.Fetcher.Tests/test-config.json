@@ -1,0 +1,3 @@
+{
+  "ConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;"
+}

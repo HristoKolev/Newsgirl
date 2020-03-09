@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using LinqToDB;
@@ -25,7 +26,7 @@ namespace Newsgirl.Fetcher
 
         public Task<List<FeedPoco>> GetFeedsForUpdate()
         {
-            return this.db.Poco.Feeds.ToListAsync();
+            return this.db.Poco.Feeds.OrderByDescending(x => x.FeedID).ToListAsync();
         }
 
         public async Task ImportItems(FeedUpdateModel[] updates)
