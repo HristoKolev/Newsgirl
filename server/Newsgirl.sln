@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Fetcher", "Newsgirl.Fetcher\Newsgirl.Fetcher.csproj", "{DE449953-0F80-4990-A393-59BB5640BEC2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Fetcher", "src\Newsgirl.Fetcher\Newsgirl.Fetcher.csproj", "{DE449953-0F80-4990-A393-59BB5640BEC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Shared", "Newsgirl.Shared\Newsgirl.Shared.csproj", "{785A26B1-158C-422C-80C5-6861286FF141}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Shared", "src\Newsgirl.Shared\Newsgirl.Shared.csproj", "{785A26B1-158C-422C-80C5-6861286FF141}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Fetcher.Tests", "Newsgirl.Fetcher.Tests\Newsgirl.Fetcher.Tests.csproj", "{341C17CC-5924-4E0B-A612-7BA229F56DA0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Fetcher.Tests", "test\Newsgirl.Fetcher.Tests\Newsgirl.Fetcher.Tests.csproj", "{341C17CC-5924-4E0B-A612-7BA229F56DA0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44043264-CC44-4439-9FC7-9C742BFC20E3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,5 +37,10 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BBB5D641-6457-488E-B701-19804295955B}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DE449953-0F80-4990-A393-59BB5640BEC2} = {44043264-CC44-4439-9FC7-9C742BFC20E3}
+		{785A26B1-158C-422C-80C5-6861286FF141} = {44043264-CC44-4439-9FC7-9C742BFC20E3}
+		{341C17CC-5924-4E0B-A612-7BA229F56DA0} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
 	EndGlobalSection
 EndGlobal
