@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-
-using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
+using Newsgirl.Testing;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -53,7 +52,7 @@ namespace Newsgirl.Fetcher.Tests
             await importService.ImportItems(Arg.Do<FeedUpdateModel[]>(x => updates = x));
 
             var fetcher = new FeedFetcher(
-                TestHelper.TestResourceContentProvider,
+                TestResourceContentProvider,
                 new FeedParser(new Hasher(), TestHelper.DateProviderStub, TestHelper.LogStub),
                 importService,
                 new SystemSettingsModel
@@ -123,7 +122,7 @@ namespace Newsgirl.Fetcher.Tests
             feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
             
             var fetcher = new FeedFetcher(
-                TestHelper.TestResourceContentProvider,
+                TestResourceContentProvider,
                 feedParser,
                 importService,
                 new SystemSettingsModel(),
@@ -135,5 +134,23 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.MatchError(err);
         }
+        
+        
+        public static IFeedContentProvider TestResourceContentProvider
+        {
+            get
+            {
+                var contentProvider = Substitute.For<IFeedContentProvider>();
+                contentProvider.GetFeedContent(null)
+                    .ReturnsForAnyArgs(info =>
+                    {
+                        var feedPoco = info.Arg<FeedPoco>();
+                        return TestHelper.GetResource(feedPoco.FeedUrl);
+                    });
+
+                return contentProvider;
+            }
+        }
+
     }
 }

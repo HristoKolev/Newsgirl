@@ -5,28 +5,26 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
 using ApprovalTests;
 using ApprovalTests.Core;
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
 using ApprovalUtilities.Utilities;
-using Newtonsoft.Json;
-using Xunit;
-using Xunit.Sdk;
-
-using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
+using Newsgirl.Testing;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Npgsql;
 using NSubstitute;
+using Xunit;
+using Xunit.Sdk;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
 
-namespace Newsgirl.Fetcher.Tests.Infrastructure
+namespace Newsgirl.Testing
 {
     public static class TestHelper
     {
@@ -82,22 +80,6 @@ namespace Newsgirl.Fetcher.Tests.Infrastructure
             }
         }
 
-        public static IFeedContentProvider TestResourceContentProvider
-        {
-            get
-            {
-                var contentProvider = Substitute.For<IFeedContentProvider>();
-                contentProvider.GetFeedContent(null)
-                    .ReturnsForAnyArgs(info =>
-                    {
-                        var feedPoco = info.Arg<FeedPoco>();
-                        return GetResource(feedPoco.FeedUrl);
-                    });
-
-                return contentProvider;
-            }
-        }
-        
         public static TestConfig TestConfig
         {
             get

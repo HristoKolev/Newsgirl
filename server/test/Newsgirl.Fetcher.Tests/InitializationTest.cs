@@ -75,7 +75,7 @@ namespace Newsgirl.Fetcher.Tests
         }
         
         [Fact]
-        public async Task Global_Properties_Have_Sane_Default_Values()
+        public void Global_Properties_Have_Sane_Default_Values()
         {
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", "");
             Environment.SetEnvironmentVariable("CONFIG_DIRECTORY", "");

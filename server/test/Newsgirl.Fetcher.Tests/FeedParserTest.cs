@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
-
-using Newsgirl.Fetcher.Tests.Infrastructure;
 using Newsgirl.Shared.Infrastructure;
+using Newsgirl.Testing;
 using NSubstitute;
 
 namespace Newsgirl.Fetcher.Tests

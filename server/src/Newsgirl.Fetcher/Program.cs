@@ -15,7 +15,7 @@ namespace Newsgirl.Fetcher
     {
         public static readonly string RootDirectory = Path.GetDirectoryName(typeof(Global).Assembly.Location);
 
-        public static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
+        private static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
         
         public static string ConfigDirectory
         {
