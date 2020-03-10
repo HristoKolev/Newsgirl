@@ -1,4 +1,7 @@
+using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Autofac;
 using Autofac.Core;
@@ -17,7 +20,7 @@ namespace Newsgirl.Fetcher.Tests
             Global.AppConfig = new AppConfig
             {
                 ConnectionString = "Server=test;Port=1234;Database=test;Uid=test;Pwd=test;",
-                Logging = new CustomLoggerConfig()
+                Logging = new CustomLoggerConfig
                 {
                     DisableSentryIntegration = true,
                     SentryDsn = "http://123@home-sentry.lan/5"
@@ -51,6 +54,35 @@ namespace Newsgirl.Fetcher.Tests
                     container.Resolve(registeredType);
                 }
             }
+        }
+        
+        [Fact]
+        public async Task Fetcher_Runs_Without_Error()
+        {
+            string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
+            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
+            Assert.Equal(appConfigPath, Global.AppConfigPath);
+
+            string configDirectory = Path.GetFullPath("../../../");
+            Environment.SetEnvironmentVariable("CONFIG_DIRECTORY", configDirectory);
+            Assert.Equal(configDirectory, Global.ConfigDirectory);
+
+            await Global.InitializeAsync();
+
+            await Global.RunCycleAsync();
+
+            await Global.DisposeAsync();
+        }
+        
+        [Fact]
+        public async Task Global_Properties_Have_Sane_Default_Values()
+        {
+            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", "");
+            Environment.SetEnvironmentVariable("CONFIG_DIRECTORY", "");
+            
+            Assert.NotNull(Global.RootDirectory);
+            Assert.NotNull(Global.ConfigDirectory);
+            Assert.NotNull(Global.AppConfigPath);
         }
     }
 }

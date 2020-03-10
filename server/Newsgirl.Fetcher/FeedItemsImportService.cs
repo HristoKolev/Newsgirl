@@ -70,14 +70,7 @@ namespace Newsgirl.Fetcher
 
                         await importer.WriteAsync(newItem.FeedItemHash, NpgsqlDbType.Bigint);
 
-                        if (newItem.FeedItemTitle == null)
-                        {
-                            await importer.WriteNullAsync();
-                        }
-                        else
-                        {
-                            await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
-                        }
+                        await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
 
                         if (newItem.FeedItemUrl == null)
                         {

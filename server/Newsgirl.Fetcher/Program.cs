@@ -13,16 +13,39 @@ namespace Newsgirl.Fetcher
 {
     public static class Global
     {
-        public static readonly string RootDirectory =
-            Path.GetDirectoryName(typeof(Global).Assembly.Location);
+        public static readonly string RootDirectory = Path.GetDirectoryName(typeof(Global).Assembly.Location);
 
-        public static readonly string ConfigDirectory =
-            Path.Combine(RootDirectory, "../../../");
-
-        public static readonly string AppConfigLocation =
-            Path.Combine(ConfigDirectory, $"{typeof(Global).Assembly.GetName().Name}.json");
-        
         public static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
+        
+        public static string ConfigDirectory
+        {
+            get
+            {
+                string configDirectory = Environment.GetEnvironmentVariable("CONFIG_DIRECTORY");
+
+                if (!string.IsNullOrWhiteSpace(configDirectory))
+                {
+                    return configDirectory;
+                }
+                
+                return Path.GetFullPath(Path.Combine(RootDirectory, "../../../"));
+            }
+        }
+
+        public static string AppConfigPath
+        {
+            get
+            {
+                string appConfigPath = Environment.GetEnvironmentVariable("APP_CONFIG_PATH");
+
+                if (!string.IsNullOrWhiteSpace(appConfigPath))
+                {
+                    return appConfigPath;
+                }
+
+                return Path.Combine(ConfigDirectory, $"{typeof(Global).Assembly.GetName().Name}.json");
+            }
+        }
 
         public static AppConfig AppConfig { get; set; }
         
@@ -30,26 +53,71 @@ namespace Newsgirl.Fetcher
         
         public static ILog Log { get; set; }
         
-        public static async Task ReloadStartupConfig()
+        public static FileWatcher AppConfigWatcher { get; set; }
+        
+        public static IContainer IoC { get; set; }
+
+        private static async Task ReloadStartupConfig()
         {
             try
             {
                 Log.Log("Reloading config...");
 
-                await LoadStartupConfig();
+                await LoadConfig();
             }
             catch (Exception exception)
             {
                 await Log.Error(exception);
             }
         }
-
-        public static async Task LoadStartupConfig()
+        
+        private static async Task LoadConfig()
         {
-            AppConfig = JsonConvert.DeserializeObject<AppConfig>(
-                await File.ReadAllTextAsync(AppConfigLocation));
+            AppConfig = JsonConvert.DeserializeObject<AppConfig>(await File.ReadAllTextAsync(AppConfigPath));
+
             AppConfig.Logging.Release = AppVersion;
+
             Log = new CustomLogger(AppConfig.Logging);
+        }
+
+        public static async Task InitializeAsync()
+        {
+            await LoadConfig();
+
+            AppConfigWatcher = new FileWatcher(AppConfigPath, ReloadStartupConfig);
+            
+            IoC = IoCFactory.Create();
+            
+            var systemSettingsService = IoC.Resolve<SystemSettingsService>();
+                
+            SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+        }
+
+        public static async Task DisposeAsync()
+        {
+            AppConfigWatcher?.Dispose();
+            AppConfigWatcher = null;
+            
+            if (IoC != null)
+            {
+                await IoC.DisposeAsync();
+                IoC = null;
+            }
+
+            AppConfig = null;
+
+            SystemSettings = null;
+
+            Log = null;
+        }
+
+        public static async Task RunCycleAsync()
+        {
+            var fetcherInstance = IoC.Resolve<FeedFetcher>();
+            
+            await fetcherInstance.FetchFeeds();
+            
+            await Task.Delay(TimeSpan.FromSeconds(SystemSettings.FetcherCyclePause));
         }
     }
 
@@ -103,34 +171,27 @@ namespace Newsgirl.Fetcher
     {
         private static async Task<int> Main()
         {
-            await Global.LoadStartupConfig();
-
             try
             {
-                using (new FileWatcher(Global.AppConfigLocation, Global.ReloadStartupConfig))
+                await Global.InitializeAsync();
+                
+                while (true)
                 {
-                    while (true)
-                    {
-                        await using (var container = IoCFactory.Create())
-                        {
-                            var systemSettingsService = container.Resolve<SystemSettingsService>();
-                        
-                            Global.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-                        
-                            var fetcherInstance = container.Resolve<FeedFetcher>();
-                    
-                            await fetcherInstance.FetchFeeds();    
-                        }
-                    
-                        await Task.Delay(TimeSpan.FromSeconds(Global.SystemSettings.FetcherCyclePause));                        
-                    }
+                    await Global.RunCycleAsync();
                 }
             }
             catch (Exception exception)
             {
-                await Global.Log.Error(exception);
-                
+                if (Global.Log != null)
+                {
+                    await Global.Log.Error(exception);                    
+                }
+
                 return 1;
+            }
+            finally
+            {
+                await Global.DisposeAsync();
             }
         }
     }
