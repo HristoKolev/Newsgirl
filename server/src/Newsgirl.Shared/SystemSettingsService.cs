@@ -10,12 +10,12 @@ namespace Newsgirl.Shared
 {
     public class SystemSettingsService
     {
+        private readonly DbService db;
+
         public SystemSettingsService(DbService db)
         {
-            this.Db = db;
+            this.db = db;
         }
-
-        private DbService Db { get; }
 
         /// <summary>
         /// Reads the settings from the database.
@@ -24,7 +24,7 @@ namespace Newsgirl.Shared
         {
             var modelType = typeof(T);
 
-            var entries = await this.Db.Poco.SystemSettings.ToArrayAsync();
+            var entries = await this.db.Poco.SystemSettings.ToArrayAsync();
 
             var instance = new T();
 

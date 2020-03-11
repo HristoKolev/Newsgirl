@@ -10,8 +10,10 @@ namespace Newsgirl.Shared.Infrastructure
         private readonly FileSystemWatcher fileSystemWatcher;
         private readonly IDisposable subscription;
         
-        public FileWatcher(string filePath, Func<Task> onChange)
+        public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttle = null)
         {
+            throttle ??= TimeSpan.FromSeconds(1);
+            
             var watcher = new FileSystemWatcher
             {
                 Path = Path.GetDirectoryName(filePath),
@@ -52,7 +54,7 @@ namespace Newsgirl.Shared.Infrastructure
             var subscriptionHandle = changed.Merge(created)
                    .Merge(renamed)
                    .Merge(deleted)
-                   .Throttle(TimeSpan.FromSeconds(1))
+                   .Throttle(throttle.Value)
                    .Subscribe(async x => await onChange());
 
             watcher.EnableRaisingEvents = true;

@@ -41,12 +41,13 @@ namespace Newsgirl.Testing
         
         public static async Task<string> GetSql(string name)
         {
-            string content = await File.ReadAllTextAsync($"../../../sql/{name}");
+            string content = await ResourceHelper.GetString($"sql.{name}");
 
             return content;
         }
 
         public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        
 
         public static IDateProvider DateProviderStub
         {
@@ -90,7 +91,10 @@ namespace Newsgirl.Testing
                     {
                         if (_testConfig == null)
                         {
-                            string json = File.ReadAllText("../../../test-config.json");
+                            
+                            
+                            string json = ResourceHelper.GetString("test-config.json").Result;
+                            
                             _testConfig = JsonConvert.DeserializeObject<TestConfig>(json);
                         }
                     }
@@ -394,6 +398,21 @@ namespace Newsgirl.Testing
             }
 
             return properties;
+        }
+    }
+    
+    public static class ResourceHelper
+    {
+        public static async Task<string> GetString(string resourceName)
+        {
+            var assembly = typeof(ResourceHelper).Assembly;
+
+            var resourceStream = assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
+            
+            using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
+            {
+                return await reader.ReadToEndAsync();
+            }
         }
     }
 }

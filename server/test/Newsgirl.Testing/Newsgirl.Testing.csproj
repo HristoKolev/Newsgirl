@@ -4,11 +4,12 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <LangVersion>latest</LangVersion>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="NSubstitute" Version="4.2.1" />
-        <PackageReference Include="xunit" Version="2.4.0" />        
+        <PackageReference Include="xunit" Version="2.4.0" />
         <PackageReference Include="ApprovalTests" Version="4.5.1" />
     </ItemGroup>
 
@@ -16,5 +17,10 @@
       <ProjectReference Include="..\..\src\Newsgirl.Shared\Newsgirl.Shared.csproj" />
     </ItemGroup>
 
-
+    <ItemGroup>
+      <None Remove="test-config.json" />
+      <EmbeddedResource Include="test-config.json" />
+      <None Remove="sql\before-tests.sql" />
+      <EmbeddedResource Include="sql\before-tests.sql" />
+    </ItemGroup>
 </Project>
