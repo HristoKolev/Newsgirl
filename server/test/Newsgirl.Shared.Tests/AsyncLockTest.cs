@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -39,7 +40,10 @@ namespace Newsgirl.Shared.Tests
         private static async Task<(string, string)> RunConcurrentTest(Func<Action, Task> wrapperFunc)
         {
             const int bufferSize = 1000;
-            const int iterationCount = 100;
+            const int iterationCount = 50;
+            
+            ThreadPool.SetMinThreads(iterationCount, 10);
+            ThreadPool.SetMaxThreads(100, 10);
 
             int[] buffer = new int[bufferSize];
 
