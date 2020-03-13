@@ -1,12 +1,14 @@
 ﻿[
   {
     "Feed": {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 1,
+      "FeedItemsHash": null,
       "FeedName": null,
       "FeedUrl": "fetcher-1.xml"
     },
-    "NewFeedHash": 3780115545271156722,
+    "NewFeedContentHash": -8357694656887908712,
+    "NewFeedItemsHash": 3780115545271156722,
     "NewItems": [
       {
         "FeedID": 1,
@@ -345,22 +347,26 @@
   },
   {
     "Feed": {
-      "FeedHash": 351563459839931092,
+      "FeedContentHash": 123,
       "FeedID": 2,
+      "FeedItemsHash": 351563459839931092,
       "FeedName": null,
       "FeedUrl": "fetcher-2.xml"
     },
-    "NewFeedHash": null,
+    "NewFeedContentHash": null,
+    "NewFeedItemsHash": null,
     "NewItems": null
   },
   {
     "Feed": {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 3,
+      "FeedItemsHash": null,
       "FeedName": null,
       "FeedUrl": "fetcher-3.xml"
     },
-    "NewFeedHash": 6333359339447268841,
+    "NewFeedContentHash": -3358014450743895681,
+    "NewFeedItemsHash": 6333359339447268841,
     "NewItems": [
       {
         "FeedID": 3,

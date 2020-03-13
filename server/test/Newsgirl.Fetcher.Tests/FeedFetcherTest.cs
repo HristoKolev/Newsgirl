@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Newsgirl.Shared;
@@ -33,7 +34,7 @@ namespace Newsgirl.Fetcher.Tests
             var feeds = new List<FeedPoco>
             {
                 new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1},
-                new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedHash = 351563459839931092 },
+                new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 351563459839931092, FeedContentHash = 123},
                 new FeedPoco {FeedUrl = "fetcher-3.xml", FeedID = 3},
             };
 
@@ -60,6 +61,7 @@ namespace Newsgirl.Fetcher.Tests
                     ParallelFeedFetching = parallelFetching,
                 },
                 TestHelper.TransactionServiceStub,
+                new Hasher(), 
                 TestHelper.LogStub
             );
 
@@ -73,7 +75,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedHash = 351563459839931092 },
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -94,6 +96,7 @@ namespace Newsgirl.Fetcher.Tests
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
+                new Hasher(), 
                 log
             );
 
@@ -108,7 +111,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedHash = 351563459839931092 },
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -127,6 +130,7 @@ namespace Newsgirl.Fetcher.Tests
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
+                new Hasher(), 
                 log
             );
 
@@ -134,7 +138,6 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.MatchError(err);
         }
-        
         
         public static IFeedContentProvider TestResourceContentProvider
         {
@@ -145,7 +148,9 @@ namespace Newsgirl.Fetcher.Tests
                     .ReturnsForAnyArgs(info =>
                     {
                         var feedPoco = info.Arg<FeedPoco>();
-                        return TestHelper.GetResource(feedPoco.FeedUrl);
+                        var contentTask = TestHelper.GetResource(feedPoco.FeedUrl);
+
+                        return contentTask.ContinueWith(x => Encoding.UTF8.GetBytes(x.Result));
                     });
 
                 return contentProvider;

@@ -92,11 +92,12 @@ namespace Newsgirl.Fetcher
             {
                 var update = updates[i];
 
-                if (update.NewFeedHash.HasValue && update.Feed != null)
+                if (update.NewFeedContentHash.HasValue && update.NewFeedItemsHash.HasValue && update.Feed != null)
                 {
                     await this.db.ExecuteNonQuery(
-                        "update public.feeds set feed_hash = :hash where feed_id = :feed_id;",
-                        this.db.CreateParameter("hash", update.NewFeedHash.Value),
+                        "update public.feeds set feed_items_hash = :items_hash, feed_content_hash = :content_hash where feed_id = :feed_id;",
+                        this.db.CreateParameter("items_hash", update.NewFeedItemsHash.Value),
+                        this.db.CreateParameter("content_hash", update.NewFeedContentHash.Value),
                         this.db.CreateParameter("feed_id", update.Feed.FeedID)
                     );
                 }
@@ -126,7 +127,9 @@ namespace Newsgirl.Fetcher
     {
         public List<FeedItemPoco> NewItems { get; set; }
 
-        public long? NewFeedHash { get; set; }
+        public long? NewFeedItemsHash { get; set; }
+        
+        public long? NewFeedContentHash { get; set; }
         
         public FeedPoco Feed { get; set; }
     }

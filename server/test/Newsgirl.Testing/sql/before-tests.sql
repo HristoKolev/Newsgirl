@@ -17,7 +17,8 @@ create table feeds (
   feed_name text not NULL,
   feed_url text NOT NULL,
 
-  feed_hash bigint,
+  feed_content_hash bigint,
+  feed_items_hash bigint,
 
   primary key(feed_id)
 );

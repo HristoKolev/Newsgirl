@@ -1,61 +1,71 @@
 ﻿[
   {
-    "FeedHash": 10,
+    "FeedContentHash": 10,
     "FeedID": 10,
+    "FeedItemsHash": 10,
     "FeedName": "feed 10",
     "FeedUrl": "url 10"
   },
   {
-    "FeedHash": 9,
+    "FeedContentHash": 9,
     "FeedID": 9,
+    "FeedItemsHash": 9,
     "FeedName": "feed 9",
     "FeedUrl": "url 9"
   },
   {
-    "FeedHash": 8,
+    "FeedContentHash": 8,
     "FeedID": 8,
+    "FeedItemsHash": 8,
     "FeedName": "feed 8",
     "FeedUrl": "url 8"
   },
   {
-    "FeedHash": 7,
+    "FeedContentHash": 7,
     "FeedID": 7,
+    "FeedItemsHash": 7,
     "FeedName": "feed 7",
     "FeedUrl": "url 7"
   },
   {
-    "FeedHash": 6,
+    "FeedContentHash": 6,
     "FeedID": 6,
+    "FeedItemsHash": 6,
     "FeedName": "feed 6",
     "FeedUrl": "url 6"
   },
   {
-    "FeedHash": 5,
+    "FeedContentHash": 5,
     "FeedID": 5,
+    "FeedItemsHash": 5,
     "FeedName": "feed 5",
     "FeedUrl": "url 5"
   },
   {
-    "FeedHash": 4,
+    "FeedContentHash": 4,
     "FeedID": 4,
+    "FeedItemsHash": 4,
     "FeedName": "feed 4",
     "FeedUrl": "url 4"
   },
   {
-    "FeedHash": 3,
+    "FeedContentHash": 3,
     "FeedID": 3,
+    "FeedItemsHash": 3,
     "FeedName": "feed 3",
     "FeedUrl": "url 3"
   },
   {
-    "FeedHash": 2,
+    "FeedContentHash": 2,
     "FeedID": 2,
+    "FeedItemsHash": 2,
     "FeedName": "feed 2",
     "FeedUrl": "url 2"
   },
   {
-    "FeedHash": 1,
+    "FeedContentHash": 1,
     "FeedID": 1,
+    "FeedItemsHash": 1,
     "FeedName": "feed 1",
     "FeedUrl": "url 1"
   }

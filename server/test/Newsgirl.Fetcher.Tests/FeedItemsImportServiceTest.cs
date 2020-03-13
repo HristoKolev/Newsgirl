@@ -23,7 +23,8 @@ namespace Newsgirl.Fetcher.Tests
             var feeds = Enumerable.Range(1, 10)
                 .Select(i => new FeedPoco
                 {
-                    FeedHash = i,
+                    FeedItemsHash = i,
+                    FeedContentHash = i,
                     FeedName = $"feed {i}",
                     FeedUrl = $"url {i}",
                 }).ToList();
@@ -70,7 +71,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemAddedTime = TestHelper.Date2000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 1),
-                    NewFeedHash = 1,
+                    NewFeedItemsHash = 1,
                 },
                 new FeedUpdateModel
                 {
@@ -85,7 +86,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemAddedTime = TestHelper.Date2000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 2),
-                    NewFeedHash = 2,
+                    NewFeedItemsHash = 2,
                 },
                 new FeedUpdateModel
                 {
@@ -95,7 +96,7 @@ namespace Newsgirl.Fetcher.Tests
                 {
                     Feed = feeds.First(x => x.FeedID == 4),
                     NewItems = new List<FeedItemPoco>(),
-                    NewFeedHash = 4
+                    NewFeedItemsHash = 4
                 },
                 new FeedUpdateModel
                 {
@@ -110,7 +111,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemAddedTime = TestHelper.Date2000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 5),
-                    NewFeedHash = 5,
+                    NewFeedItemsHash = 5,
                 },
             };
             

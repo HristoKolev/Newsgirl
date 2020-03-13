@@ -75,7 +75,7 @@ namespace Newsgirl.Fetcher
 
                 var allBytes = memoryStream.ToArray();
 
-                parsedFeed.FeedHash = this.hasher.ComputeHash(allBytes);
+                parsedFeed.FeedItemsHash = this.hasher.ComputeHash(allBytes);
             }
 
             return parsedFeed;
@@ -142,6 +142,6 @@ namespace Newsgirl.Fetcher
 
         public HashSet<long> FeedItemHashes { get; }
         
-        public long FeedHash { get; set; }
+        public long FeedItemsHash { get; set; }
     }
 }

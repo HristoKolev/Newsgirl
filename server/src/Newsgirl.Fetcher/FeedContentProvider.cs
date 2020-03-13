@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared;
@@ -22,7 +21,7 @@ namespace Newsgirl.Fetcher
             this.httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(systemSettings.HttpClientUserAgent);
         }
 
-        public async Task<string> GetFeedContent(FeedPoco feed)
+        public async Task<byte[]> GetFeedContent(FeedPoco feed)
         {
             using (var response = await this.httpClient.GetAsync(feed.FeedUrl))
             {
@@ -32,7 +31,7 @@ namespace Newsgirl.Fetcher
                 {
                     var responseBody = await content.ReadAsByteArrayAsync();
 
-                    return Encoding.UTF8.GetString(responseBody);
+                    return responseBody;
                 }
             }
         }
@@ -40,6 +39,6 @@ namespace Newsgirl.Fetcher
     
     public interface IFeedContentProvider
     {
-        Task<string> GetFeedContent(FeedPoco feed);
+        Task<byte[]> GetFeedContent(FeedPoco feed);
     }
 }

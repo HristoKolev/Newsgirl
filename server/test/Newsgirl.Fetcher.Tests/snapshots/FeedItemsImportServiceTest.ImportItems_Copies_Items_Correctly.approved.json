@@ -273,62 +273,72 @@
   ],
   "resultFeeds": [
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 10,
+      "FeedItemsHash": null,
       "FeedName": "feed 10",
       "FeedUrl": "url 10"
     },
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 9,
+      "FeedItemsHash": null,
       "FeedName": "feed 9",
       "FeedUrl": "url 9"
     },
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 8,
+      "FeedItemsHash": null,
       "FeedName": "feed 8",
       "FeedUrl": "url 8"
     },
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 7,
+      "FeedItemsHash": null,
       "FeedName": "feed 7",
       "FeedUrl": "url 7"
     },
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 6,
+      "FeedItemsHash": null,
       "FeedName": "feed 6",
       "FeedUrl": "url 6"
     },
     {
-      "FeedHash": 5,
+      "FeedContentHash": null,
       "FeedID": 5,
+      "FeedItemsHash": null,
       "FeedName": "feed 5",
       "FeedUrl": "url 5"
     },
     {
-      "FeedHash": 4,
+      "FeedContentHash": null,
       "FeedID": 4,
+      "FeedItemsHash": null,
       "FeedName": "feed 4",
       "FeedUrl": "url 4"
     },
     {
-      "FeedHash": null,
+      "FeedContentHash": null,
       "FeedID": 3,
+      "FeedItemsHash": null,
       "FeedName": "feed 3",
       "FeedUrl": "url 3"
     },
     {
-      "FeedHash": 2,
+      "FeedContentHash": null,
       "FeedID": 2,
+      "FeedItemsHash": null,
       "FeedName": "feed 2",
       "FeedUrl": "url 2"
     },
     {
-      "FeedHash": 1,
+      "FeedContentHash": null,
       "FeedID": 1,
+      "FeedItemsHash": null,
       "FeedName": "feed 1",
       "FeedUrl": "url 1"
     }

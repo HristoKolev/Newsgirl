@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared;
@@ -16,6 +17,7 @@ namespace Newsgirl.Fetcher
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
         private readonly ITransactionService transactionService;
+        private readonly Hasher hasher;
         private readonly ILog log;
         private readonly AsyncLock dbLock;
 
@@ -25,6 +27,7 @@ namespace Newsgirl.Fetcher
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
             ITransactionService transactionService,
+            Hasher hasher,
             ILog log)
         {
             this.feedContentProvider = feedContentProvider;
@@ -32,6 +35,7 @@ namespace Newsgirl.Fetcher
             this.feedItemsImportService = feedItemsImportService;
             this.systemSettings = systemSettings;
             this.transactionService = transactionService;
+            this.hasher = hasher;
             this.log = log;
             this.dbLock = new AsyncLock();
         }
@@ -95,17 +99,47 @@ namespace Newsgirl.Fetcher
         {
             try
             {
-                string feedContent;
+                byte[] feedContentBytes;
                 
                 try
                 {
-                    feedContent = await this.feedContentProvider.GetFeedContent(feed);
+                    feedContentBytes = await this.feedContentProvider.GetFeedContent(feed);
                 }
                 catch (Exception err)
                 {
                     throw new DetailedLogException("The http request for the feed failed.", err)
                     {
                         Fingerprint = "FEED_HTTP_REQUEST_FAILED",
+                    };
+                }
+
+                long feedContentHash = this.hasher.ComputeHash(feedContentBytes);
+
+                if (feedContentHash == feed.FeedContentHash)
+                {
+                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
+                    
+                    return new FeedUpdateModel
+                    {
+                        Feed = feed,
+                    };
+                }
+
+                string feedContent;
+
+                try
+                {
+                    feedContent = Encoding.UTF8.GetString(feedContentBytes);
+                }
+                catch (Exception err)
+                {
+                    throw new DetailedLogException("Failed to parse UTF-8 feed content.", err)
+                    {
+                        Fingerprint = "FEED_CONTENT_UTF8_PARSE_FAILED",
+                        Details =
+                        {
+                            {"feedContentBytes", Convert.ToBase64String(feedContentBytes)}
+                        }
                     };
                 }
 
@@ -127,7 +161,7 @@ namespace Newsgirl.Fetcher
                     };
                 }
 
-                if (feed.FeedHash == parsedFeed.FeedHash)
+                if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
                 {
                     this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
                     
@@ -170,7 +204,8 @@ namespace Newsgirl.Fetcher
                 {
                     Feed = feed,
                     NewItems = newItems,
-                    NewFeedHash = parsedFeed.FeedHash,
+                    NewFeedItemsHash = parsedFeed.FeedItemsHash,
+                    NewFeedContentHash = feedContentHash,
                 };
             }
             catch (Exception err)
