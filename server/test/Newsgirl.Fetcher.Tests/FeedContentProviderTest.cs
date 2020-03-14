@@ -1,7 +1,7 @@
-using System.Text;
 using System.Threading.Tasks;
 using Newsgirl.Shared;
 using Newsgirl.Shared.Data;
+using Newsgirl.Shared.Infrastructure;
 using Xunit;
 
 namespace Newsgirl.Fetcher.Tests
@@ -26,7 +26,7 @@ namespace Newsgirl.Fetcher.Tests
 
             byte[] bytes = await contentProvider.GetFeedContent(feed);
 
-            string content = Encoding.UTF8.GetString(bytes);
+            string content = EncodingHelper.UTF8.GetString(bytes);
 
             Assert.Contains("<feed", content);
         }

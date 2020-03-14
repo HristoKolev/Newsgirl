@@ -21,7 +21,7 @@ namespace Newsgirl.Fetcher.Tests
             
             var parser = new FeedParser(hasher, dateStub, TestHelper.LogStub);
 
-            string feedContent = await TestHelper.GetResource(resourceName);
+            string feedContent = await TestHelper.GetResourceText(resourceName);
             
             var parsedFeed = parser.Parse(feedContent);
 

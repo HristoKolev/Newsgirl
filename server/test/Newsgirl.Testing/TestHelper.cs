@@ -32,12 +32,21 @@ namespace Newsgirl.Testing
         private static TestConfig _testConfig;
         private static readonly object TestConfigSync = new object();
 
-        public static async Task<string> GetResource(string name)
+        public static async Task<string> GetResourceText(string name)
         {
-            string content = await File.ReadAllTextAsync($"../../../resources/{name}");
+            var content = await File.ReadAllTextAsync($"../../../resources/{name}");
 
             return content;
         }
+        
+        
+        public static async Task<byte[]> GetResourceBytes(string name)
+        {
+            var content = await File.ReadAllBytesAsync($"../../../resources/{name}");
+
+            return content;
+        }
+
         
         public static async Task<string> GetSql(string name)
         {
@@ -409,7 +418,7 @@ namespace Newsgirl.Testing
 
             var resourceStream = assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
             
-            using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
+            using (var reader = new StreamReader(resourceStream, EncodingHelper.UTF8))
             {
                 return await reader.ReadToEndAsync();
             }

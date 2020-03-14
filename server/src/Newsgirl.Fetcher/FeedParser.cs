@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 using CodeHollow.FeedReader;
 using Newsgirl.Shared.Data;
@@ -50,7 +49,7 @@ namespace Newsgirl.Fetcher
                         continue;
                     }
             
-                    stringIDBytes = Encoding.UTF8.GetBytes(stringID);
+                    stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
                 
                     long feedItemHash = this.hasher.ComputeHash(stringIDBytes);
 

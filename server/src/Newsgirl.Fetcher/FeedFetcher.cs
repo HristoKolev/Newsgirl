@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared;
@@ -129,7 +128,7 @@ namespace Newsgirl.Fetcher
 
                 try
                 {
-                    feedContent = Encoding.UTF8.GetString(feedContentBytes);
+                    feedContent = EncodingHelper.UTF8.GetString(feedContentBytes);
                 }
                 catch (Exception err)
                 {
