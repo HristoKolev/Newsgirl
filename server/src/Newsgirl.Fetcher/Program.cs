@@ -13,49 +13,19 @@ namespace Newsgirl.Fetcher
 {
     public static class Global
     {
-        public static readonly string RootDirectory = Path.GetDirectoryName(typeof(Global).Assembly.Location);
-
         private static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
-        
-        public static string ConfigDirectory
-        {
-            get
-            {
-                string configDirectory = Environment.GetEnvironmentVariable("CONFIG_DIRECTORY");
 
-                if (!string.IsNullOrWhiteSpace(configDirectory))
-                {
-                    return configDirectory;
-                }
-                
-                return Path.GetFullPath(Path.Combine(RootDirectory, "../../../"));
-            }
-        }
-
-        public static string AppConfigPath
-        {
-            get
-            {
-                string appConfigPath = Environment.GetEnvironmentVariable("APP_CONFIG_PATH");
-
-                if (!string.IsNullOrWhiteSpace(appConfigPath))
-                {
-                    return appConfigPath;
-                }
-
-                return Path.Combine(ConfigDirectory, $"{typeof(Global).Assembly.GetName().Name}.json");
-            }
-        }
+        public static string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
         public static AppConfig AppConfig { get; set; }
         
         public static SystemSettingsModel SystemSettings { get; set; }
         
         public static ILog Log { get; set; }
-        
-        public static FileWatcher AppConfigWatcher { get; set; }
-        
-        public static IContainer IoC { get; set; }
+
+        private static FileWatcher AppConfigWatcher { get; set; }
+
+        private static IContainer IoC { get; set; }
 
         private static async Task ReloadStartupConfig()
         {

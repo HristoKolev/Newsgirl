@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-containerName=$1
-
-. ./env
-
-docker-compose -p $stack_name exec $containerName sh

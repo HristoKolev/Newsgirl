@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+export DOCKER_BUILDKIT=1
+
+# tarball csproj files, sln files, and NuGet.config
+find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.config" \) -print0 \
+    | tar -cvf ./projectfiles.tar --null -T -
+
+docker build -f ./server/src/Newsgirl.Fetcher/Dockerfile -t dev-host.lan:5000/newsgirl-fetcher .
+
+rm ./projectfiles.tar
+
+docker push dev-host.lan:5000/newsgirl-fetcher

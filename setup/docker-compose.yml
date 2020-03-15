@@ -1,0 +1,41 @@
+version: '3.7'
+
+networks:
+    br0:
+
+volumes:
+  db-data:  
+
+services:
+  db:
+    image: postgres
+    restart: unless-stopped
+    init: true
+    networks:
+      br0:
+        aliases:
+          - db
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=newsgirl
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newsgirl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  fetcher:
+    image: localhost:5000/newsgirl-fetcher
+    restart: unless-stopped
+    init: true
+    depends_on:
+      - db
+    environment:
+      - APP_CONFIG_PATH=/newsgirl-fetcher.json
+    volumes:
+      - "./newsgirl-fetcher.json:/newsgirl-fetcher.json"
+    networks:
+      - br0

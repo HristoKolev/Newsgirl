@@ -1,0 +1,12 @@
+{
+    "ConnectionString": "Server=db;Port=5201;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
+    "Logging": {
+      "SentryDsn": "http://8979f5ca401143c4b69409493fccfd5c@home-sentry.lan/5",
+      "Environment": "staging",
+      "ServerName": "docker-vm1",
+      "EnableDebug": false,
+      "DisableSentryIntegration": false,
+      "DisableConsoleLogging": false    
+    }
+  }
+  

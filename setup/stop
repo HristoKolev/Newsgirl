@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+TMP_SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$TMP_SOURCE" ]; do
+  SCRIPT_PATH="$( cd -P "$( dirname "$TMP_SOURCE" )" >/dev/null 2>&1 && pwd )"
+  TMP_SOURCE="$(readlink "$TMP_SOURCE")"
+  [[ $TMP_SOURCE != /* ]] && TMP_SOURCE="$SCRIPT_PATH/$TMP_SOURCE"
+done
+SCRIPT_PATH="$( cd -P "$( dirname "$TMP_SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+export $(cat $SCRIPT_PATH/env | xargs);
+
+HERE=$(pwd)
+
+set -exu
+
+cd $SCRIPT_PATH
+
+docker-compose -p $STACK_NAME down
+
+cd $HERE

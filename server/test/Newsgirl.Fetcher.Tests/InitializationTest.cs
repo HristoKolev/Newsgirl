@@ -63,26 +63,11 @@ namespace Newsgirl.Fetcher.Tests
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
             Assert.Equal(appConfigPath, Global.AppConfigPath);
 
-            string configDirectory = Path.GetFullPath("../../../");
-            Environment.SetEnvironmentVariable("CONFIG_DIRECTORY", configDirectory);
-            Assert.Equal(configDirectory, Global.ConfigDirectory);
-
             await Global.InitializeAsync();
 
             await Global.RunCycleAsync();
 
             await Global.DisposeAsync();
-        }
-        
-        [Fact]
-        public void Global_Properties_Have_Sane_Default_Values()
-        {
-            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", "");
-            Environment.SetEnvironmentVariable("CONFIG_DIRECTORY", "");
-            
-            Assert.NotNull(Global.RootDirectory);
-            Assert.NotNull(Global.ConfigDirectory);
-            Assert.NotNull(Global.AppConfigPath);
         }
     }
 }
