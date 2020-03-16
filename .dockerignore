@@ -1,6 +1,6 @@
-bin/
-obj/
-.idea/
-*.user
-logs/
-node_modules/
+**/bin/
+**/obj/
+**/.idea/
+**/*.user
+**/logs/
+**/node_modules/

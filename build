@@ -6,8 +6,8 @@ export DOCKER_BUILDKIT=1
 find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.config" \) -print0 \
     | tar -cvf ./projectfiles.tar --null -T -
 
-docker build -f ./server/src/Newsgirl.Fetcher/Dockerfile -t dev-host.lan:5000/newsgirl-fetcher .
+docker build -f ./FetcherDockerfile -t dev-host.lan:5000/newsgirl-fetcher .
 
-rm ./projectfiles.tar
+rm ./projectfiles.tar -f
 
 docker push dev-host.lan:5000/newsgirl-fetcher

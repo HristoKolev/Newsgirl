@@ -5,10 +5,11 @@
         <Version>1.0.0</Version>                
         <TargetFramework>netcoreapp3.1</TargetFramework>        
         <OutputType>Exe</OutputType>
-        
+        <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
+
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <LangVersion>latest</LangVersion>
-        <IsPackable>false</IsPackable>        
+        <IsPackable>false</IsPackable>  
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>        

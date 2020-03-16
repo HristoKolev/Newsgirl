@@ -8,10 +8,9 @@ WORKDIR /build-dir/server/
 RUN dotnet restore
 
 # build
-WORKDIR /build-dir
-COPY . .
+COPY . /build-dir/
 WORKDIR /build-dir/server/src/Newsgirl.Fetcher/
-RUN dotnet publish -c Release -o /build -r linux-musl-x64
+RUN dotnet publish -c Release -o /build -r linux-musl-x64 --no-restore
 
 FROM alpine
 
