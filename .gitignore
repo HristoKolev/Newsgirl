@@ -224,3 +224,5 @@ logs/
 feeds\.sql
 
 *\.received\.json
+
+projectfiles.tar

@@ -5,15 +5,12 @@
         <Version>1.0.0</Version>                
         <TargetFramework>netcoreapp3.1</TargetFramework>        
         <OutputType>Exe</OutputType>
-<!--        <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>-->
-
-<!--        <PublishReadyToRun>true</PublishReadyToRun>-->
-<!--        <PublishTrimmed>true</PublishTrimmed>-->
+        
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <LangVersion>latest</LangVersion>
         <IsPackable>false</IsPackable>        
-<!--        <DebugSymbols>true</DebugSymbols>-->
-<!--        <DebugType>full</DebugType>-->
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>        
     </PropertyGroup> 
 

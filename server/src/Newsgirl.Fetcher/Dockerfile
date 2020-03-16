@@ -11,9 +11,13 @@ RUN dotnet restore
 WORKDIR /build-dir
 COPY . .
 WORKDIR /build-dir/server/src/Newsgirl.Fetcher/
-RUN dotnet publish -c Release -o /build -r linux-x64
+RUN dotnet publish -c Release -o /build -r linux-musl-x64
 
 FROM alpine
+
+# dotnet dependencies
+RUN apk --no-cache add --update libstdc++ libintl icu-libs && \
+    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
 
 COPY --from=dotnet-build /build /app
 

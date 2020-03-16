@@ -86,6 +86,10 @@ namespace Newsgirl.Fetcher
             var fetcherInstance = IoC.Resolve<FeedFetcher>();
             
             await fetcherInstance.FetchFeeds();
+
+            var log = IoC.Resolve<ILog>();
+            
+            log.Log($"Waiting {SystemSettings.FetcherCyclePause} seconds...");
             
             await Task.Delay(TimeSpan.FromSeconds(SystemSettings.FetcherCyclePause));
         }

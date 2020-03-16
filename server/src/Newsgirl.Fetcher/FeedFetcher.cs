@@ -116,7 +116,7 @@ namespace Newsgirl.Fetcher
 
                 if (feedContentHash == feed.FeedContentHash)
                 {
-                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
+                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching content hash.");
                     
                     return new FeedUpdateModel
                     {
@@ -162,7 +162,7 @@ namespace Newsgirl.Fetcher
 
                 if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
                 {
-                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching combined hash.");
+                    this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching items hash.");
                     
                     return new FeedUpdateModel
                     {
