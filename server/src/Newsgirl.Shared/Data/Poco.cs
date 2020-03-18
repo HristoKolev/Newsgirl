@@ -261,6 +261,12 @@ namespace Newsgirl.Shared.Data
         public IQueryable<SystemSettingPoco> SystemSettings => this.LinqProvider.GetTable<SystemSettingPoco>();
 
 
+        /// <summary>
+        /// <para>Database function 'get_missing_feed_items'.</para>
+        /// </summary>
+        [Sql.Function(ServerSideOnly = true, Name = "get_missing_feed_items")]
+        public static long[] GetMissingFeedItems(int? p_feed_id, long[] p_new_item_hashes) => throw new NotImplementedException();        
+
         public ILinqProvider LinqProvider { private get; set; }
     }
 
@@ -889,6 +895,72 @@ namespace Newsgirl.Shared.Data
             SystemSettingPocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(SystemSettingPocoMetadata);
 
 
+            Functions.Add(new FunctionMetadataModel
+            {
+                SchemaName = "public" == string.Empty ? null : "public",
+                FunctionName = "get_missing_feed_items" == string.Empty ? null : "get_missing_feed_items",
+                MethodName = "GetMissingFeedItems" == string.Empty ? null : "GetMissingFeedItems",
+                FunctionReturnTypeName = "_int8" == string.Empty ? null : "_int8",
+                FunctionComment = "" == string.Empty ? null : "",
+                FunctionArgumentsAsString = "p_feed_id integer, p_new_item_hashes bigint[]" == string.Empty ? null : "p_feed_id integer, p_new_item_hashes bigint[]",
+                FunctionReturnType = new SimpleType
+                {
+                    ClrTypeName = "long[]",
+                    ClrType = typeof(long[]),
+                    ClrNonNullableTypeName = "long[]",
+                    ClrNonNullableType = typeof(long[]),
+                    ClrNullableTypeName = "long[]",
+                    ClrNullableType = typeof(long[]),
+                    DbDataType = "_int8",
+                    IsNullable = bool.Parse("True"),
+                    IsClrValueType = bool.Parse("True"),
+                    IsClrNullableType = bool.Parse("True"),
+                    IsClrReferenceType = bool.Parse("True"),
+                    Linq2DbDataTypeName = "DataType.Undefined",
+                    Linq2DbDataType = DataType.Undefined,
+                    NpgsqlDbTypeName = "NpgsqlDbType.Bigint | NpgsqlDbType.Array",
+                    NpgsqlDbType = NpgsqlDbType.Bigint | NpgsqlDbType.Array,
+                },
+                FunctionArguments = new Dictionary<string, SimpleType>
+                {
+                    { "p_feed_id", new SimpleType 
+                    {
+                        ClrTypeName = "int?",
+                        ClrType = typeof(int?),
+                        ClrNonNullableTypeName = "int",
+                        ClrNonNullableType = typeof(int),
+                        ClrNullableTypeName = "int?",
+                        ClrNullableType = typeof(int?),
+                        DbDataType = "integer",
+                        IsNullable = bool.Parse("True"),
+                        IsClrValueType = bool.Parse("True"),
+                        IsClrNullableType = bool.Parse("True"),
+                        IsClrReferenceType = bool.Parse("True"),
+                        Linq2DbDataTypeName = "DataType.Int32",
+                        Linq2DbDataType = DataType.Int32,
+                        NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                        NpgsqlDbType = NpgsqlDbType.Integer,
+                    }},
+                    { "p_new_item_hashes", new SimpleType 
+                    {
+                        ClrTypeName = "long[]",
+                        ClrType = typeof(long[]),
+                        ClrNonNullableTypeName = "long[]",
+                        ClrNonNullableType = typeof(long[]),
+                        ClrNullableTypeName = "long[]",
+                        ClrNullableType = typeof(long[]),
+                        DbDataType = "bigint[]",
+                        IsNullable = bool.Parse("True"),
+                        IsClrValueType = bool.Parse("True"),
+                        IsClrNullableType = bool.Parse("True"),
+                        IsClrReferenceType = bool.Parse("True"),
+                        Linq2DbDataTypeName = "DataType.Undefined",
+                        Linq2DbDataType = DataType.Undefined,
+                        NpgsqlDbTypeName = "NpgsqlDbType.Bigint | NpgsqlDbType.Array",
+                        NpgsqlDbType = NpgsqlDbType.Bigint | NpgsqlDbType.Array,
+                    }},
+                },
+            });
         }
 
         public static void Initialize()

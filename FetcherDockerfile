@@ -1,15 +1,16 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine as dotnet-build
 
 # restore
-WORKDIR /build-dir
+WORKDIR /work
 COPY projectfiles.tar .
 RUN tar -xvf projectfiles.tar
-WORKDIR /build-dir/server/
+WORKDIR /work/server/
 RUN dotnet restore
 
 # build
-COPY . /build-dir/
-WORKDIR /build-dir/server/src/Newsgirl.Fetcher/
+WORKDIR /work
+COPY . .
+WORKDIR /work/server/src/Newsgirl.Fetcher/
 RUN dotnet publish -c Release -o /build -r linux-musl-x64 --no-restore
 
 FROM alpine
