@@ -134,10 +134,10 @@ namespace Newsgirl.Testing
             catch (EqualException ex)
             {
                 string message = ex.Message + "\n\n";
-                message += new string('=', 30) + "\n\n";
-                message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n";
-                message += new string('=', 30) + "\n\n";
-                message += $"mv '{received}' '{approved}'\n\n";
+                message += new string('=', 30) + "\n\n\n";
+                message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n\n";
+                message += new string('=', 30) + "\n\n\n";
+                message += $"mv '{received}' '{approved}'\n\n\n";
                 message += new string('=', 30);
 
                 var field = typeof(EqualException)
