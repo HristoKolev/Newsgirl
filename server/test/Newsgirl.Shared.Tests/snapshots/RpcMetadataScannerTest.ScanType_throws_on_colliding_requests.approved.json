@@ -2,7 +2,7 @@
   {
     "Details": {},
     "Fingerprint": null,
-    "Message": "Handler binding conflict. 2 request types are bound to the same handler method. SimpleRequest2 => RpcHandlerWithCollidingRequests.RpcMethod AND SimpleRequest2 => RpcHandlerWithCollidingRequests.RpcMethod2",
+    "Message": "Handler binding conflict. 2 request types are bound to the same handler method. SimpleRequest1 => CollidingRequestsTestHandler.RpcMethod AND SimpleRequest1 => CollidingRequestsTestHandler.RpcMethod2",
     "Data": {},
     "HelpLink": null,
     "Source": "Newsgirl.Shared",

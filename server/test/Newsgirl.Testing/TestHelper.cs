@@ -5,14 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+
 using ApprovalTests;
 using ApprovalTests.Core;
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
 using ApprovalUtilities.Utilities;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
-using Newsgirl.Testing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -20,6 +18,10 @@ using Npgsql;
 using NSubstitute;
 using Xunit;
 using Xunit.Sdk;
+
+using Newsgirl.Shared.Data;
+using Newsgirl.Shared.Infrastructure;
+using Newsgirl.Testing;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
@@ -200,6 +202,22 @@ namespace Newsgirl.Testing
             }
             
             Approvals.VerifyWithExtension(json, ".json");
+        }
+        
+        public static void MatchError(Action func, string[] parameters = null)
+        {
+            Exception exception = null;
+            
+            try
+            {
+                func();
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+            
+            MatchError(exception, parameters);
         }
 
         private static string Serialize(object obj)

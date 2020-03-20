@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,9 +17,9 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(Test1RpcType1),
-                typeof(Test1RpcType2),
-                typeof(Test1RpcType3),
+                typeof(RpcMarkingTest1),
+                typeof(RpcMarkingTest2),
+                typeof(RpcMarkingTest3),
             };
             
             var handlerMetadataList = scanner.ScanTypes(testTypes);
@@ -29,11 +28,24 @@ namespace Newsgirl.Shared.Tests
             
             var metadata = handlerMetadataList.Single();
             
-            Assert.Equal(typeof(Test1RpcType3), metadata.HandlerClass);
+            Assert.Equal(typeof(RpcMarkingTest3), metadata.HandlerClass);
 
-            var methodInfos = typeof(Test1RpcType3).GetMethods().Where(x => x.DeclaringType == typeof(Test1RpcType3)).ToArray();
+            var methodInfos = typeof(RpcMarkingTest3).GetMethods().Where(x => x.DeclaringType == typeof(RpcMarkingTest3)).ToArray();
             
             Assert.Equal(methodInfos.Single(), metadata.HandlerMethod);
+        }
+
+        public class RpcMarkingTest1 {}
+
+        public class RpcMarkingTest2
+        {
+            public Task NonRpcMethod() => Task.CompletedTask;
+        }
+
+        public class RpcMarkingTest3
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
         }
 
         [Fact]
@@ -46,20 +58,18 @@ namespace Newsgirl.Shared.Tests
                 typeof(StaticRpcMethodHandler),
             };
 
-            Exception exception = null;
-
-            try
+            Snapshot.MatchError(() =>
             {
                 scanner.ScanTypes(testTypes);
-            }
-            catch (Exception err)
-            {
-                exception = err;
-            }
-            
-            Snapshot.MatchError(exception);
+            });
         }
         
+        public class StaticRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public static Task RpcMethod() => Task.CompletedTask;
+        }
+
         [Fact]
         public void ScanType_throws_when_private_method_is_marked()
         {
@@ -70,20 +80,18 @@ namespace Newsgirl.Shared.Tests
                 typeof(PrivateRpcMethodHandler),
             };
 
-            Exception exception = null;
-
-            try
+            Snapshot.MatchError(() =>
             {
                 scanner.ScanTypes(testTypes);
-            }
-            catch (Exception err)
-            {
-                exception = err;
-            }
-            
-            Snapshot.MatchError(exception);
+            });
         }
-        
+            
+        public class PrivateRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            private Task RpcMethod() => Task.CompletedTask;
+        }
+
         [Fact]
         public void ScanType_metadata_has_correct_request_type()
         {
@@ -91,7 +99,7 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(Test1RpcType3),
+                typeof(RequestTypeTestHandler),
             };
             
             var handlerMetadataList = scanner.ScanTypes(testTypes);
@@ -100,9 +108,15 @@ namespace Newsgirl.Shared.Tests
             
             var metadata = handlerMetadataList.Single();
             
-            Assert.Equal(typeof(Test1SimpleRpcRequest), metadata.RequestType);
+            Assert.Equal(typeof(SimpleRequest1), metadata.RequestType);
         }
         
+        public class RequestTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
+        }
+
         [Fact]
         public void ScanType_metadata_has_correct_response_type()
         {
@@ -110,7 +124,7 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(Test1RpcType3),
+                typeof(ResponseTypeTestHandler),
             };
             
             var handlerMetadataList = scanner.ScanTypes(testTypes);
@@ -119,9 +133,65 @@ namespace Newsgirl.Shared.Tests
             
             var metadata = handlerMetadataList.Single();
             
-            Assert.Equal(typeof(Test1SimpleRpcResponse), metadata.ResponseType);
+            Assert.Equal(typeof(SimpleResponse1), metadata.ResponseType);
         }
         
+        public class ResponseTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
+        }
+        
+        [Fact]
+        public void ScanType_metadata_has_works_with_void_return_type()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(VoidReturnTypeTestHandler),
+            };
+            
+            var handlerMetadataList = scanner.ScanTypes(testTypes);
+
+            Assert.Single(handlerMetadataList);
+            
+            var metadata = handlerMetadataList.Single();
+            
+            Assert.Equal(typeof(Task), metadata.ReturnType);
+        }
+        
+        public class VoidReturnTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod(SimpleRequest1 req) => null;
+        }
+        
+        [Fact]
+        public void ScanType_metadata_has_works_with_response_return_type()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(ResponseReturnTypeTestHandler),
+            };
+            
+            var handlerMetadataList = scanner.ScanTypes(testTypes);
+
+            Assert.Single(handlerMetadataList);
+            
+            var metadata = handlerMetadataList.Single();
+            
+            Assert.Equal(typeof(Task<SimpleResponse1>), metadata.ReturnType);
+        }
+        
+        public class ResponseReturnTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod(SimpleRequest1 req) => null;
+        }
+
         [Fact]
         public void ScanType_throws_on_invalid_parameter_type()
         {
@@ -129,23 +199,149 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(RpcHandlerWithInvalidParameter),
+                typeof(InvalidParameterTestHandler),
             };
 
-            Exception exception = null;
-
-            try
+            Snapshot.MatchError(() =>
             {
                 scanner.ScanTypes(testTypes);
-            }
-            catch (Exception err)
-            {
-                exception = err;
-            }
-            
-            Snapshot.MatchError(exception);
+            });
         }
         
+        public class InvalidParameterTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod(StringBuilder sb) => Task.CompletedTask;
+        }
+        
+        [Fact]
+        public void ScanType_works_when_parameter_type_is_explicitly_allowed()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(ExplicitlyAllowParameterTypeTestHandler),
+            };
+
+            var metadataList = scanner.ScanTypes(testTypes, new []
+            {
+                typeof(StringBuilder)
+            });
+
+            var metadata = metadataList.Single();
+            
+            Assert.Equal(typeof(StringBuilder), metadata.Parameters.Single());
+        }
+        
+        public class ExplicitlyAllowParameterTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod(StringBuilder sb) => Task.CompletedTask;
+        }
+        
+        [Fact]
+        public void ScanType_works_when_return_type_is_wrapped_in_result()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(ResultWrappedReturnTypeTestHandler),
+            };
+
+            var metadataList = scanner.ScanTypes(testTypes, new []
+            {
+                typeof(StringBuilder)
+            });
+
+            var metadata = metadataList.Single();
+            
+            Assert.Equal(typeof(Task<Result<SimpleResponse1>>), metadata.ReturnType);
+            Assert.Equal(typeof(SimpleResponse1), metadata.UnderlyingReturnType);
+            Assert.True(metadata.ReturnTypeIsResultType);
+            
+        }
+        
+        public class ResultWrappedReturnTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<Result<SimpleResponse1>> RpcMethod(StringBuilder sb) => Task.FromResult(Result.Ok(new SimpleResponse1()));
+        }
+        
+        [Fact]
+        public void ScanType_works_when_return_type_is_result_without_parameters()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(ResultWithoutParametersReturnTypeTestHandler),
+            };
+
+            var metadataList = scanner.ScanTypes(testTypes, new []
+            {
+                typeof(StringBuilder)
+            });
+
+            var metadata = metadataList.Single();
+            
+            Assert.Equal(typeof(Task<Result>), metadata.ReturnType);
+            Assert.Equal(typeof(void), metadata.UnderlyingReturnType);
+            Assert.True(metadata.ReturnTypeIsResultType);
+            
+        }
+        
+        public class ResultWithoutParametersReturnTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<Result> RpcMethod(StringBuilder sb) => Task.FromResult(Result.Ok());
+        }
+        
+        [Fact]
+        public void ScanType_throws_on_invalid_return_type()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(InvalidReturnTypeTestHandler),
+            };
+
+            Snapshot.MatchError(() =>
+            {
+                scanner.ScanTypes(testTypes);
+            });
+        }
+        
+        public class InvalidReturnTypeTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public StringBuilder RpcMethod(SimpleRequest1 req) => null;
+        }
+
+        [Fact]
+        public void ScanType_throws_on_invalid_return_type_as_task()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(InvalidReturnTypeAsTaskTestHandler),
+            };
+
+            Snapshot.MatchError(() =>
+            {
+                scanner.ScanTypes(testTypes);
+            });
+        }
+        
+        public class InvalidReturnTypeAsTaskTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<StringBuilder> RpcMethod(SimpleRequest1 req) => null;
+        }
+
         [Fact]
         public void ScanType_throws_on_colliding_requests()
         {
@@ -153,21 +349,22 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(RpcHandlerWithCollidingRequests),
+                typeof(CollidingRequestsTestHandler),
             };
 
-            Exception exception = null;
-
-            try
+            Snapshot.MatchError(() =>
             {
                 scanner.ScanTypes(testTypes);
-            }
-            catch (Exception err)
-            {
-                exception = err;
-            }
-            
-            Snapshot.MatchError(exception);
+            });
+        }
+        
+        public class CollidingRequestsTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
+
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod2() => Task.CompletedTask;
         }
 
         [Fact]
@@ -177,7 +374,7 @@ namespace Newsgirl.Shared.Tests
 
             var testTypes = new[]
             {
-                typeof(SupplementalAttributesHandler),
+                typeof(SupplementalAttributesTestHandler),
             };
             
             var handlerMetadataList = scanner.ScanTypes(testTypes);
@@ -191,6 +388,14 @@ namespace Newsgirl.Shared.Tests
             var attribute = metadata.SupplementalAttributes.Single().Value as TestSupplementalAttribute;
             
             Assert.Equal(456, attribute.Value);
+        }
+        
+        [TestSupplemental(123)]
+        public class SupplementalAttributesTestHandler
+        {
+            [TestSupplemental(456)]
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
         }
         
         [Fact]
@@ -216,6 +421,13 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(123, attribute.Value);
         }
         
+        [TestSupplemental(123)]
+        public class SupplementalAttributesClassOnlyHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
+        }
+        
         [Fact]
         public void ScanType_metadata_has_supplemental_attributes_method_only()
         {
@@ -238,120 +450,23 @@ namespace Newsgirl.Shared.Tests
             
             Assert.Equal(456, attribute.Value);
         }
-
-    }
-    
-    public class Test1RpcType1 {}
-
-    public class Test1RpcType2
-    {
-        public Task NonRpcMethod()
+        
+        public class SupplementalAttributesMethodOnlyHandler
         {
-            return Task.CompletedTask;
-        }
-    }
-
-    public class Test1RpcType3
-    {
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public Task RpcMethod()
-        {
-            return Task.CompletedTask;
-        }
-    }
-    
-    public class Test1SimpleRpcRequest {}
-    
-    public class Test1SimpleRpcResponse {}
-    
-    public class StaticRpcMethodHandler
-    {
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public static Task RpcMethod()
-        {
-            return Task.CompletedTask;
-        }   
-    }
-    
-    public class PrivateRpcMethodHandler
-    {
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        private Task RpcMethod()
-        {
-            return Task.CompletedTask;
-        }   
-    }
-    
-    public class RpcHandlerWithInvalidParameter
-    {
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public Task RpcMethod(StringBuilder sb)
-        {
-            return Task.CompletedTask;
-        }   
-    }
-    
-    public class RpcHandlerWithCollidingRequests
-    {
-        [RpcBind(typeof(SimpleRequest2), typeof(SimpleResponse2))]
-        public Task RpcMethod()
-        {
-            return Task.CompletedTask;
+            [TestSupplemental(456)]
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod() => Task.CompletedTask;
         }
         
-        [RpcBind(typeof(SimpleRequest2), typeof(SimpleResponse2))]
-        public Task RpcMethod2()
+        public class TestSupplementalAttribute : RpcSupplementalAttribute
         {
-            return Task.CompletedTask;
-        }   
-    }
+            public int Value { get; }
 
-    public class SimpleRequest2
-    {
-    }
-
-    public class SimpleResponse2
-    {
-    }
-
-    [TestSupplemental(123)]
-    public class SupplementalAttributesHandler
-    {
-        [TestSupplemental(456)]
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public Task RpcMethod()
-        {
-            return Task.CompletedTask;
+            public TestSupplementalAttribute(int value) => this.Value = value;
         }
     }
     
-    [TestSupplemental(123)]
-    public class SupplementalAttributesClassOnlyHandler
-    {
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public Task RpcMethod()
-        {
-            return Task.CompletedTask;
-        }
-    }
+    public class SimpleRequest1 {}
     
-    public class SupplementalAttributesMethodOnlyHandler
-    {
-        [TestSupplemental(456)]
-        [RpcBind(typeof(Test1SimpleRpcRequest), typeof(Test1SimpleRpcResponse))]
-        public Task RpcMethod()
-        {
-            return Task.CompletedTask;
-        }
-    }
-
-    public class TestSupplementalAttribute : RpcSupplementalAttribute
-    {
-        public int Value { get; }
-
-        public TestSupplementalAttribute(int value)
-        {
-            this.Value = value;
-        }
-    }
+    public class SimpleResponse1 {}
 }

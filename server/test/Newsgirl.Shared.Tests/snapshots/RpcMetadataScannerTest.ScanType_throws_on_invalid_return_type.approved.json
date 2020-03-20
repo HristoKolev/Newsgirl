@@ -2,7 +2,7 @@
   {
     "Details": {},
     "Fingerprint": null,
-    "Message": "Parameter of type StringBuilder is not supported for RPC methods. InvalidParameterTestHandler.RpcMethod",
+    "Message": "Only Tasks are allowed as RPC return types. Return type: StringBuilder.",
     "Data": {},
     "HelpLink": null,
     "Source": "Newsgirl.Shared",

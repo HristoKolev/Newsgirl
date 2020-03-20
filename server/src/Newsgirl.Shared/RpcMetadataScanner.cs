@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Shared
 {
     public class RpcMetadataScanner
     {
-        public List<RpcHandlerMetadata> ScanTypes(IEnumerable<Type> types)
+        public List<RpcHandlerMetadata> ScanTypes(IEnumerable<Type> types, IEnumerable<Type> injectableTypes = null)
         {
             var methodFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic;
             
@@ -38,7 +39,8 @@ namespace Newsgirl.Shared
                     RequestType = bindAttribute.RequestType,
                     ResponseType = bindAttribute.ResponseType,
                     Parameters = markedMethod.GetParameters().Select(x => x.ParameterType).ToList(),
-                    SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>()
+                    SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>(),
+                    ReturnType = markedMethod.ReturnType,
                 };
 
                 var allSupplementalAttributes = metadata.HandlerClass.GetCustomAttributes()
@@ -52,15 +54,59 @@ namespace Newsgirl.Shared
                     var type = supplementalAttribute.GetType();
                     metadata.SupplementalAttributes[type] = supplementalAttribute;
                 }
-                
+
+                var allowedParameterTypes = new List<Type> {metadata.RequestType};
+
+                if (injectableTypes != null)
+                {
+                    allowedParameterTypes.AddRange(injectableTypes);
+                }
+
                 foreach (var parameter in metadata.Parameters)
                 {
-                    if (parameter != metadata.RequestType)
+                    if (!allowedParameterTypes.Contains(parameter))
                     {
-                        throw new DetailedLogException($"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");  
+                        throw new DetailedLogException($"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
                     }
                 }
+
+                if (!typeof(Task).IsAssignableFrom(metadata.ReturnType))
+                {
+                    throw new DetailedLogException($"Only Tasks are allowed as RPC return types. Return type: {metadata.ReturnType.Name}.");   
+                }
+
+                Type underlyingReturnType;
                 
+                if (metadata.ReturnType == typeof(Task))
+                {
+                    underlyingReturnType = typeof(void);
+                }
+                else
+                {
+                    underlyingReturnType = metadata.ReturnType.GetGenericArguments().Single();
+                }
+
+                if (typeof(Result).IsAssignableFrom(underlyingReturnType))
+                {
+                    if (underlyingReturnType == typeof(Result))
+                    {
+                        underlyingReturnType = typeof(void);
+                    }
+                    else
+                    {
+                        underlyingReturnType = underlyingReturnType.GetGenericArguments().Single();
+                    }
+
+                    metadata.ReturnTypeIsResultType = true;
+                }
+
+                if (underlyingReturnType != typeof(void) && underlyingReturnType != metadata.ResponseType)
+                {
+                    throw new DetailedLogException($"Unsupported underlying return type: Task<{underlyingReturnType.Name}>.");
+                }
+
+                metadata.UnderlyingReturnType = underlyingReturnType;
+
                 var collidingMetadata = metadataList.FirstOrDefault(x => x.RequestType == metadata.RequestType);
 
                 if (collidingMetadata != null)
@@ -95,6 +141,12 @@ namespace Newsgirl.Shared
         public List<Type> Parameters { get; set; }
         
         public Dictionary<Type, RpcSupplementalAttribute> SupplementalAttributes { get; set; }
+        
+        public Type ReturnType { get; set; }
+        
+        public bool ReturnTypeIsResultType { get; set; }
+        
+        public Type UnderlyingReturnType { get; set; }
     }
     
     /// <summary>
