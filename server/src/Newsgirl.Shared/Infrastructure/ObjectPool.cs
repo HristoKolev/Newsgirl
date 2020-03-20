@@ -15,7 +15,7 @@ namespace Newsgirl.Shared.Infrastructure
         /// <summary>
         /// Used for storage for available instances.
         /// </summary>
-        private readonly ConcurrentQueue<T> queue = new ConcurrentQueue<T>();
+        private readonly ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue = new ConcurrentQueue<ObjectPoolInstanceWrapper<T>>();
 
         /// <summary>
         /// Takes an async factory method that gets called in order to create a new instance. 
@@ -31,14 +31,14 @@ namespace Newsgirl.Shared.Infrastructure
         /// </summary>
         public async Task<ObjectPoolInstanceWrapper<T>> Get()
         {
-            T instance;
-            
-            if (!this.queue.TryDequeue(out instance))
+            if (!this.queue.TryDequeue(out var wrapper))
             {
-                instance = await this.factory();   
+                var instance = await this.factory();
+                
+                wrapper = new ObjectPoolInstanceWrapper<T>(instance, this.queue);   
             }
             
-            return new ObjectPoolInstanceWrapper<T>(instance, this.queue);
+            return wrapper;
         }
     }
 
@@ -47,11 +47,11 @@ namespace Newsgirl.Shared.Infrastructure
     /// </summary>
     public class ObjectPoolInstanceWrapper<T> : IDisposable where T : class
     {
-        private ConcurrentQueue<T> queue;
+        private readonly ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue;
 
-        public T Instance { get; private set; }
+        public T Instance { get; }
 
-        public ObjectPoolInstanceWrapper(T instance, ConcurrentQueue<T> queue)
+        public ObjectPoolInstanceWrapper(T instance, ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue)
         {
             this.Instance = instance;
             this.queue = queue;
@@ -59,9 +59,7 @@ namespace Newsgirl.Shared.Infrastructure
 
         public void Dispose()
         {
-            this.queue.Enqueue(this.Instance);
-            this.queue = null;
-            this.Instance = null;
+            this.queue.Enqueue(this);
         }
     }
 }
