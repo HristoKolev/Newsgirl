@@ -219,6 +219,22 @@ namespace Newsgirl.Testing
             
             MatchError(exception, parameters);
         }
+        
+        public static async Task MatchError(Func<Task> func, string[] parameters = null)
+        {
+            Exception exception = null;
+            
+            try
+            {
+                await func();
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+            
+            MatchError(exception, parameters);
+        }
 
         private static string Serialize(object obj)
         {
