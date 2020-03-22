@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+
 using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Shared
 {
     public class RpcMetadataScanner
     {
-        public List<RpcHandlerMetadata> ScanTypes(IEnumerable<Type> types, IEnumerable<Type> injectableTypes = null)
+        public RpcMetadataCollection ScanTypes(IEnumerable<Type> types, IEnumerable<Type> injectableTypes = null)
         {
             var methodFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic;
             
             var markedMethods = types.SelectMany(type => type.GetMethods(methodFlag))
                 .Where(info => info.GetCustomAttribute<RpcBindAttribute>() != null).ToList();
 
-            var metadataList = new List<RpcHandlerMetadata>(markedMethods.Count);
+            var handlers = new List<RpcHandlerMetadata>(markedMethods.Count);
 
             foreach (var markedMethod in markedMethods)
             {
@@ -107,7 +108,7 @@ namespace Newsgirl.Shared
 
                 metadata.UnderlyingReturnType = underlyingReturnType;
 
-                var collidingMetadata = metadataList.FirstOrDefault(x => x.RequestType == metadata.RequestType);
+                var collidingMetadata = handlers.FirstOrDefault(x => x.RequestType == metadata.RequestType);
 
                 if (collidingMetadata != null)
                 {
@@ -117,14 +118,38 @@ namespace Newsgirl.Shared
                         $"{metadata.RequestType.Name} => {collidingMetadata.HandlerClass.Name}.{collidingMetadata.HandlerMethod.Name} AND " +
 
                         $"{metadata.RequestType.Name} => {metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}");
-
                 }
 
                 
-                metadataList.Add(metadata);
+                handlers.Add(metadata);
             }
 
-            return metadataList;
+            var metadataByRequestName = handlers.ToDictionary(x => x.RequestType.Name, x => x);
+            
+            var collection = new RpcMetadataCollection
+            {
+                Handlers = handlers.OrderBy(x => x.RequestType.Name).ToList(),
+                MetadataByRequestName = metadataByRequestName,
+            };
+
+            return collection;
+        }
+    }
+
+    public class RpcMetadataCollection
+    {
+        public List<RpcHandlerMetadata> Handlers { get; set; }
+
+        public Dictionary<string, RpcHandlerMetadata> MetadataByRequestName { get; set; }
+
+        public RpcHandlerMetadata GetMetadataByRequestName(string requestName)
+        {
+            if (this.MetadataByRequestName.TryGetValue(requestName, out var metadata))
+            {
+                return metadata;
+            }
+
+            return null;
         }
     }
 

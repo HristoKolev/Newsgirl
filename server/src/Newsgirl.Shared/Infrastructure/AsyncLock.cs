@@ -12,37 +12,27 @@ namespace Newsgirl.Shared.Infrastructure
     public class AsyncLock
     {
         private readonly SemaphoreSlim semaphore;
+        private readonly LockDisposer lockDisposer;
 
         public AsyncLock()
         {
             this.semaphore = new SemaphoreSlim(1, 1);
+            this.lockDisposer = new LockDisposer(this.semaphore);
         }
 
-        public async Task<AsyncLockInstance> Lock()
+        public async Task<IDisposable> Lock()
         {
             await this.semaphore.WaitAsync();
-
-            return new AsyncLockInstance(this.semaphore);
-        }
-    }
-
-    /// <summary>
-    /// The object that gets returned by the AsyncLock's Lock() method.
-    /// The only point of this class is to implement the `IDisposable` interface,
-    /// releasing the lock on Disposing.  
-    /// </summary>
-    public class AsyncLockInstance : IDisposable
-    {
-        private readonly SemaphoreSlim semaphore;
-
-        public AsyncLockInstance(SemaphoreSlim semaphore)
-        {
-            this.semaphore = semaphore;
+            return this.lockDisposer;
         }
 
-        public void Dispose()
+        private class LockDisposer : IDisposable
         {
-            this.semaphore.Release();
+            private readonly SemaphoreSlim semaphore;
+
+            public LockDisposer(SemaphoreSlim semaphore) => this.semaphore = semaphore;
+
+            public void Dispose() => this.semaphore.Release();
         }
     }
 }

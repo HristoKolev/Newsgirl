@@ -1,0 +1,11 @@
+﻿[
+  {
+    "Details": {},
+    "Fingerprint": null,
+    "Message": "No RPC handler for request `NonRegisteredRequest`.",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "Newsgirl.Shared",
+    "HResult": -2146233088
+  }
+]

@@ -22,11 +22,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(RpcMarkingTest3),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(RpcMarkingTest3), metadata.HandlerClass);
 
@@ -102,11 +100,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(RequestTypeTestHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(SimpleRequest1), metadata.RequestType);
         }
@@ -127,11 +123,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(ResponseTypeTestHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(SimpleResponse1), metadata.ResponseType);
         }
@@ -152,11 +146,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(VoidReturnTypeTestHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task), metadata.ReturnType);
         }
@@ -177,11 +169,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(ResponseReturnTypeTestHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task<SimpleResponse1>), metadata.ReturnType);
         }
@@ -224,12 +214,12 @@ namespace Newsgirl.Shared.Tests
                 typeof(ExplicitlyAllowParameterTypeTestHandler),
             };
 
-            var metadataList = scanner.ScanTypes(testTypes, new []
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
             {
                 typeof(StringBuilder)
             });
-
-            var metadata = metadataList.Single();
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(StringBuilder), metadata.Parameters.Single());
         }
@@ -250,12 +240,12 @@ namespace Newsgirl.Shared.Tests
                 typeof(ResultWrappedReturnTypeTestHandler),
             };
 
-            var metadataList = scanner.ScanTypes(testTypes, new []
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
             {
                 typeof(StringBuilder)
             });
-
-            var metadata = metadataList.Single();
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task<Result<SimpleResponse1>>), metadata.ReturnType);
             Assert.Equal(typeof(SimpleResponse1), metadata.UnderlyingReturnType);
@@ -279,12 +269,12 @@ namespace Newsgirl.Shared.Tests
                 typeof(ResultWithoutParametersReturnTypeTestHandler),
             };
 
-            var metadataList = scanner.ScanTypes(testTypes, new []
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
             {
                 typeof(StringBuilder)
             });
-
-            var metadata = metadataList.Single();
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task<Result>), metadata.ReturnType);
             Assert.Equal(typeof(void), metadata.UnderlyingReturnType);
@@ -377,11 +367,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(SupplementalAttributesTestHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
 
             Assert.Single(metadata.SupplementalAttributes);
             
@@ -408,12 +396,10 @@ namespace Newsgirl.Shared.Tests
                 typeof(SupplementalAttributesClassOnlyHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
             
-            var metadata = handlerMetadataList.Single();
-
             Assert.Single(metadata.SupplementalAttributes);
             
             var attribute = metadata.SupplementalAttributes.Single().Value as TestSupplementalAttribute;
@@ -438,11 +424,9 @@ namespace Newsgirl.Shared.Tests
                 typeof(SupplementalAttributesMethodOnlyHandler),
             };
             
-            var handlerMetadataList = scanner.ScanTypes(testTypes);
-
-            Assert.Single(handlerMetadataList);
-            
-            var metadata = handlerMetadataList.Single();
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+            Assert.Single(rpcMetadataCollection.Handlers);
+            var metadata = rpcMetadataCollection.Handlers.Single();
 
             Assert.Single(metadata.SupplementalAttributes);
             
@@ -469,4 +453,48 @@ namespace Newsgirl.Shared.Tests
     public class SimpleRequest1 {}
     
     public class SimpleResponse1 {}
+    
+    public class RpcMetadataCollectionTest
+    {
+        [Fact]
+        public void GetMetadataByRequestName_returns_the_correct_metadata()
+        {
+            var scanner = new RpcMetadataScanner();
+
+            var testTypes = new[]
+            {
+                typeof(MetadataByRequestNameTestHandler),
+            };
+
+            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
+
+            var selectedMetadata = rpcMetadataCollection.GetMetadataByRequestName(typeof(MetadataByRequestNameRequest2).Name);
+            
+            Assert.Equal(rpcMetadataCollection.Handlers[1], selectedMetadata);
+        }
+        
+        public class MetadataByRequestNameTestHandler
+        {
+            [RpcBind(typeof(MetadataByRequestNameRequest1), typeof(MetadataByRequestNameResponse1))]
+            public async Task<MetadataByRequestNameResponse1> RpcMethod1(MetadataByRequestNameRequest1 req) => new MetadataByRequestNameResponse1();
+            
+            [RpcBind(typeof(MetadataByRequestNameRequest2), typeof(MetadataByRequestNameResponse2))]
+            public async Task<MetadataByRequestNameResponse2> RpcMethod1(MetadataByRequestNameRequest2 req) => new MetadataByRequestNameResponse2();
+            
+            [RpcBind(typeof(MetadataByRequestNameRequest3), typeof(MetadataByRequestNameResponse3))]
+            public async Task<MetadataByRequestNameResponse3> RpcMethod1(MetadataByRequestNameRequest3 req) => new MetadataByRequestNameResponse3();
+        }
+    }
+    
+    public class MetadataByRequestNameRequest1{}
+    
+    public class MetadataByRequestNameResponse1{}
+    
+    public class MetadataByRequestNameRequest2{}
+    
+    public class MetadataByRequestNameResponse2{}
+    
+    public class MetadataByRequestNameRequest3{}
+    
+    public class MetadataByRequestNameResponse3{}
 }
