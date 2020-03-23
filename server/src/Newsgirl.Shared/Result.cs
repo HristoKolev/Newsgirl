@@ -14,7 +14,7 @@ namespace Newsgirl.Shared
         {
             return new Result<T>
             {
-                Value = payload,
+                Payload = payload,
                 IsOk = true
             };
         }
@@ -23,7 +23,7 @@ namespace Newsgirl.Shared
         {
             return new Result<T>
             {
-                Value = default,
+                Payload = default,
                 IsOk = true
             };
         }
@@ -75,6 +75,6 @@ namespace Newsgirl.Shared
     
     public class Result<T> : Result
     {
-        public T Value { get; set; }
+        public T Payload { get; set; }
     }
 }

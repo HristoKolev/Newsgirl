@@ -17,22 +17,30 @@ namespace Newsgirl.Shared.Infrastructure
         public AsyncLock()
         {
             this.semaphore = new SemaphoreSlim(1, 1);
+            
             this.lockDisposer = new LockDisposer(this.semaphore);
         }
 
         public async Task<IDisposable> Lock()
         {
             await this.semaphore.WaitAsync();
+            
             return this.lockDisposer;
         }
 
         private class LockDisposer : IDisposable
         {
             private readonly SemaphoreSlim semaphore;
+            
+            public LockDisposer(SemaphoreSlim semaphore)
+            {
+                this.semaphore = semaphore;
+            }
 
-            public LockDisposer(SemaphoreSlim semaphore) => this.semaphore = semaphore;
-
-            public void Dispose() => this.semaphore.Release();
+            public void Dispose()
+            {
+                this.semaphore.Release();
+            }
         }
     }
 }

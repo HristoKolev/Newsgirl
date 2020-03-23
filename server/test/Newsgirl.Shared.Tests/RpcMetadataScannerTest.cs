@@ -457,7 +457,7 @@ namespace Newsgirl.Shared.Tests
     public class RpcMetadataCollectionTest
     {
         [Fact]
-        public void GetMetadataByRequestName_returns_the_correct_metadata()
+        public void GetMetadataByRequestType_returns_the_correct_metadata()
         {
             var scanner = new RpcMetadataScanner();
 
@@ -468,7 +468,7 @@ namespace Newsgirl.Shared.Tests
 
             var rpcMetadataCollection = scanner.ScanTypes(testTypes);
 
-            var selectedMetadata = rpcMetadataCollection.GetMetadataByRequestName(typeof(MetadataByRequestNameRequest2).Name);
+            var selectedMetadata = rpcMetadataCollection.GetMetadataByRequestType(typeof(MetadataByRequestNameRequest2));
             
             Assert.Equal(rpcMetadataCollection.Handlers[1], selectedMetadata);
         }

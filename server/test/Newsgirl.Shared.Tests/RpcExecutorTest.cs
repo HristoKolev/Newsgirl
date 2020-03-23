@@ -10,46 +10,13 @@ namespace Newsgirl.Shared.Tests
     public class RpcExecutorTest
     {
         [Fact]
-        public async Task Execute_throws_on_null_message_name()
-        {
-            var executor = CreateExecutor();
-
-            await Snapshot.MatchError(async () =>
-            {
-                await executor.Execute(null, null);
-            });
-        }
-        
-        [Fact]
-        public async Task Execute_throws_on_empty_message_name()
-        {
-            var executor = CreateExecutor();
-
-            await Snapshot.MatchError(async () =>
-            {
-                await executor.Execute(string.Empty, null);
-            });
-        }
-        
-        [Fact]
-        public async Task Execute_throws_on_whitespace_message_name()
-        {
-            var executor = CreateExecutor();
-
-            await Snapshot.MatchError(async () =>
-            {
-                await executor.Execute("   \t \r\n   ", null);
-            });
-        }
-        
-        [Fact]
         public async Task Execute_throws_on_null_message_payload()
         {
             var executor = CreateExecutor();
 
             await Snapshot.MatchError(async () =>
             {
-                await executor.Execute("TestRequest", null);
+                await executor.Execute<ExecutorTestResponse>(null);
             });
         }
         
@@ -60,7 +27,7 @@ namespace Newsgirl.Shared.Tests
 
             await Snapshot.MatchError(async () =>
             {
-                await executor.Execute(nameof(NonRegisteredRequest), new NonRegisteredRequest());
+                await executor.Execute<NonRegisteredResponse>(new NonRegisteredRequest());
             });
         }
         
@@ -69,9 +36,40 @@ namespace Newsgirl.Shared.Tests
         {
             var executor = CreateExecutor();
 
-            await executor.Execute(nameof(ExecutorTestRequest), new ExecutorTestRequest());
+            ExecutorTestHandler.RunCount = 0;
+
+            await executor.Execute<ExecutorTestResponse>(new ExecutorTestRequest());
             
             Assert.Equal(1, ExecutorTestHandler.RunCount);
+        }
+        
+        [Fact]
+        public async Task Execute_passes_the_request_to_the_handler_method()
+        {
+            var executor = CreateExecutor();
+
+            var request = new ExecutorTestRequest();
+            
+            await executor.Execute<ExecutorTestResponse>(request);
+            
+            Assert.Equal(request, ExecutorTestHandler.Request);
+        }
+        
+        [Fact]
+        public async Task Execute_returns_the_response_returned_from_the_handler_method()
+        {
+            var executor = CreateExecutor();
+
+            var request = new ExecutorTestRequest
+            {
+                Number = 42
+            };
+            
+            var result = await executor.Execute<ExecutorTestResponse>(request);
+            
+            Assert.Equal(result.Payload, ExecutorTestHandler.Response);
+            
+            Assert.Equal(43, result.Payload.Number);
         }
 
         private static RpcExecutor CreateExecutor()
@@ -125,4 +123,6 @@ namespace Newsgirl.Shared.Tests
 
 
     public class NonRegisteredRequest { }
+    
+    public class NonRegisteredResponse { }
 }

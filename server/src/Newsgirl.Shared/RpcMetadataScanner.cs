@@ -124,7 +124,7 @@ namespace Newsgirl.Shared
                 handlers.Add(metadata);
             }
 
-            var metadataByRequestName = handlers.ToDictionary(x => x.RequestType.Name, x => x);
+            var metadataByRequestName = handlers.ToDictionary(x => x.RequestType, x => x);
             
             var collection = new RpcMetadataCollection
             {
@@ -140,11 +140,11 @@ namespace Newsgirl.Shared
     {
         public List<RpcHandlerMetadata> Handlers { get; set; }
 
-        public Dictionary<string, RpcHandlerMetadata> MetadataByRequestName { get; set; }
+        public Dictionary<Type, RpcHandlerMetadata> MetadataByRequestName { get; set; }
 
-        public RpcHandlerMetadata GetMetadataByRequestName(string requestName)
+        public RpcHandlerMetadata GetMetadataByRequestType(Type requestType)
         {
-            if (this.MetadataByRequestName.TryGetValue(requestName, out var metadata))
+            if (this.MetadataByRequestName.TryGetValue(requestType, out var metadata))
             {
                 return metadata;
             }

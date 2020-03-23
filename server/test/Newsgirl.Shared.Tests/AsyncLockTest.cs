@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -19,31 +18,28 @@ namespace Newsgirl.Shared.Tests
             
             (expectedString, actualString) = await RunConcurrentTest(async action =>
             {
-                action();
+                await action();
             });
 
             Assert.NotEqual(expectedString, actualString);
 
             var asyncLock = new AsyncLock();
-            
+
             (expectedString, actualString) = await RunConcurrentTest(async action =>
             {
                 using (await asyncLock.Lock())
                 {
-                    action();
+                    await action();
                 }
             });
             
             Assert.Equal(expectedString, actualString);
         }
 
-        private static async Task<(string, string)> RunConcurrentTest(Func<Action, Task> wrapperFunc)
+        private static async Task<(string, string)> RunConcurrentTest(Func<Func<Task>, Task> wrapperFunc)
         {
-            const int bufferSize = 1000;
-            const int iterationCount = 50;
-            
-            ThreadPool.SetMinThreads(iterationCount, 10);
-            ThreadPool.SetMaxThreads(100, 10);
+            const int bufferSize = 50;
+            const int iterationCount = 2;
 
             int[] buffer = new int[bufferSize];
 
@@ -54,7 +50,12 @@ namespace Newsgirl.Shared.Tests
                     {
                         var index = i;
                         
-                        await wrapperFunc(() => { buffer[index] = buffer[index] + 1; });
+                        await wrapperFunc(async () =>
+                        {
+                            await Task.Delay(1);
+                            
+                            buffer[index] = buffer[index] + 1;
+                        });
                     }
                 }));
 
