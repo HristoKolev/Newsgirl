@@ -18,7 +18,7 @@ namespace Newsgirl.Shared.Tests
             ThreadPool.SetMinThreads(threadCount, 10);
             ThreadPool.SetMaxThreads(threadCount, 10);
             
-            var pool = new ObjectPool<PoolTestObject>(async () => new PoolTestObject());
+            var pool = new ObjectPool<PoolTestObject>(() => Task.FromResult(new PoolTestObject()));
 
             var set = new ConcurrentDictionary<PoolTestObject, int>();
 

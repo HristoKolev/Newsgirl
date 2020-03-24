@@ -87,20 +87,6 @@ namespace Newsgirl.Shared
                     underlyingReturnType = metadata.ReturnType.GetGenericArguments().Single();
                 }
 
-                if (typeof(Result).IsAssignableFrom(underlyingReturnType))
-                {
-                    if (underlyingReturnType == typeof(Result))
-                    {
-                        underlyingReturnType = typeof(void);
-                    }
-                    else
-                    {
-                        underlyingReturnType = underlyingReturnType.GetGenericArguments().Single();
-                    }
-
-                    metadata.ReturnTypeIsResultType = true;
-                }
-
                 if (underlyingReturnType != typeof(void) && underlyingReturnType != metadata.ResponseType)
                 {
                     throw new DetailedLogException($"Unsupported underlying return type: Task<{underlyingReturnType.Name}>.");
@@ -168,9 +154,7 @@ namespace Newsgirl.Shared
         public Dictionary<Type, RpcSupplementalAttribute> SupplementalAttributes { get; set; }
         
         public Type ReturnType { get; set; }
-        
-        public bool ReturnTypeIsResultType { get; set; }
-        
+
         public Type UnderlyingReturnType { get; set; }
     }
     

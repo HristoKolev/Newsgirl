@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared.Infrastructure;
@@ -15,7 +17,7 @@ namespace Newsgirl.Shared
             this.resolver = resolver;
         }
 
-        public async Task<Result<TResponse>> Execute<TResponse>(object requestPayload)
+        public async Task<TResponse> Execute<TResponse>(object requestPayload)
         {
             if (requestPayload == null)
             {
@@ -38,22 +40,21 @@ namespace Newsgirl.Shared
                 requestPayload
             };
 
-            var returnValue = metadata.HandlerMethod.Invoke(handlerInstance, parameters);
-
-            Result<TResponse> responseResult;
-
-            if (metadata.ReturnTypeIsResultType)
+            object returnValue;
+            
+            try
             {
-                responseResult = await (Task<Result<TResponse>>)returnValue;
+                returnValue = metadata.HandlerMethod.Invoke(handlerInstance, parameters);
             }
-            else
+            catch (Exception exception)
             {
-                var response = await (Task<TResponse>)returnValue;
-
-                responseResult = Result.Ok(response);
+                ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+                throw new NotImplementedException();
             }
 
-            return responseResult;
+            var response = await (Task<TResponse>)returnValue;
+
+            return response;
         }
     }
 }

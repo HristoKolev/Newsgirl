@@ -1,8 +1,10 @@
 using System;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 using Newsgirl.Testing;
 using NSubstitute;
+using Sentry.PlatformAbstractions;
 using Xunit;
 
 namespace Newsgirl.Shared.Tests
@@ -65,11 +67,60 @@ namespace Newsgirl.Shared.Tests
                 Number = 42
             };
             
-            var result = await executor.Execute<ExecutorTestResponse>(request);
+            var response = await executor.Execute<ExecutorTestResponse>(request);
             
-            Assert.Equal(result.Payload, ExecutorTestHandler.Response);
+            Assert.Equal(response, ExecutorTestHandler.Response);
             
-            Assert.Equal(43, result.Payload.Number);
+            Assert.Equal(43, response.Number);
+        }
+        
+        [Fact]
+        public async Task Execute_throws_when_the_handler_method_throws()
+        {
+            var metadata = new RpcMetadataScanner().ScanTypes(new[]
+            {
+                typeof(ThrowingExecutorTestHandler)
+            });
+            
+            var resolver = Substitute.For<IoCResolver>();
+            resolver.Resolve(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
+            
+            var executor = new RpcExecutor(metadata, resolver);
+
+            bool handled = false;
+
+            try
+            {
+                await executor.Execute<ExecutorTestResponse>(new ExecutorTestRequest());
+
+            }
+            catch (Exception exception)
+            {
+                Assert.Equal(exception, ThrowingExecutorTestHandler.Exception);
+
+                handled = true;
+            }
+
+            if (!handled)
+            {
+                throw new ApplicationException("The executor did not throw when the handler method did.");
+            }
+        }
+        
+        
+        public class ThrowingExecutorTestHandler
+        {
+            public static Exception Exception;
+            
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<ExecutorTestResponse> RpcMethod1(ExecutorTestRequest req)
+            {
+                var ex = new ApplicationException("Testing the exception handling.");
+
+                Exception = ex;
+
+                throw ex;
+            }
         }
 
         private static RpcExecutor CreateExecutor()
@@ -94,7 +145,7 @@ namespace Newsgirl.Shared.Tests
             public static ExecutorTestResponse Response;
             
             [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
-            public async Task<ExecutorTestResponse> RpcMethod1(ExecutorTestRequest req)
+            public Task<ExecutorTestResponse> RpcMethod1(ExecutorTestRequest req)
             {
                 Request = req;
                 RunCount += 1;
@@ -106,7 +157,7 @@ namespace Newsgirl.Shared.Tests
 
                 Response = response;
 
-                return response;
+                return Task.FromResult(response);
             }
         }
     }
@@ -120,7 +171,6 @@ namespace Newsgirl.Shared.Tests
     {
         public int Number { get; set; }
     }
-
 
     public class NonRegisteredRequest { }
     

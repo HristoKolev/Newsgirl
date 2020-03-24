@@ -229,65 +229,7 @@ namespace Newsgirl.Shared.Tests
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public Task RpcMethod(StringBuilder sb) => Task.CompletedTask;
         }
-        
-        [Fact]
-        public void ScanType_works_when_return_type_is_wrapped_in_result()
-        {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(ResultWrappedReturnTypeTestHandler),
-            };
-
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
-            {
-                typeof(StringBuilder)
-            });
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
-            
-            Assert.Equal(typeof(Task<Result<SimpleResponse1>>), metadata.ReturnType);
-            Assert.Equal(typeof(SimpleResponse1), metadata.UnderlyingReturnType);
-            Assert.True(metadata.ReturnTypeIsResultType);
-            
-        }
-        
-        public class ResultWrappedReturnTypeTestHandler
-        {
-            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
-            public Task<Result<SimpleResponse1>> RpcMethod(StringBuilder sb) => Task.FromResult(Result.Ok(new SimpleResponse1()));
-        }
-        
-        [Fact]
-        public void ScanType_works_when_return_type_is_result_without_parameters()
-        {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(ResultWithoutParametersReturnTypeTestHandler),
-            };
-
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
-            {
-                typeof(StringBuilder)
-            });
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
-            
-            Assert.Equal(typeof(Task<Result>), metadata.ReturnType);
-            Assert.Equal(typeof(void), metadata.UnderlyingReturnType);
-            Assert.True(metadata.ReturnTypeIsResultType);
-            
-        }
-        
-        public class ResultWithoutParametersReturnTypeTestHandler
-        {
-            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
-            public Task<Result> RpcMethod(StringBuilder sb) => Task.FromResult(Result.Ok());
-        }
-        
+ 
         [Fact]
         public void ScanType_throws_on_invalid_return_type()
         {
@@ -476,13 +418,13 @@ namespace Newsgirl.Shared.Tests
         public class MetadataByRequestNameTestHandler
         {
             [RpcBind(typeof(MetadataByRequestNameRequest1), typeof(MetadataByRequestNameResponse1))]
-            public async Task<MetadataByRequestNameResponse1> RpcMethod1(MetadataByRequestNameRequest1 req) => new MetadataByRequestNameResponse1();
+            public Task<MetadataByRequestNameResponse1> RpcMethod1(MetadataByRequestNameRequest1 req) => Task.FromResult(new MetadataByRequestNameResponse1());
             
             [RpcBind(typeof(MetadataByRequestNameRequest2), typeof(MetadataByRequestNameResponse2))]
-            public async Task<MetadataByRequestNameResponse2> RpcMethod1(MetadataByRequestNameRequest2 req) => new MetadataByRequestNameResponse2();
+            public Task<MetadataByRequestNameResponse2> RpcMethod1(MetadataByRequestNameRequest2 req) => Task.FromResult(new MetadataByRequestNameResponse2());
             
             [RpcBind(typeof(MetadataByRequestNameRequest3), typeof(MetadataByRequestNameResponse3))]
-            public async Task<MetadataByRequestNameResponse3> RpcMethod1(MetadataByRequestNameRequest3 req) => new MetadataByRequestNameResponse3();
+            public Task<MetadataByRequestNameResponse3> RpcMethod1(MetadataByRequestNameRequest3 req) => Task.FromResult(new MetadataByRequestNameResponse3());
         }
     }
     
