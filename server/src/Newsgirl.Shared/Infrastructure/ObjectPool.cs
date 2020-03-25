@@ -15,7 +15,8 @@ namespace Newsgirl.Shared.Infrastructure
         /// <summary>
         /// Used for storage for available instances.
         /// </summary>
-        private readonly ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue = new ConcurrentQueue<ObjectPoolInstanceWrapper<T>>();
+        private readonly ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue 
+            = new ConcurrentQueue<ObjectPoolInstanceWrapper<T>>();
 
         /// <summary>
         /// Takes an async factory method that gets called in order to create a new instance. 

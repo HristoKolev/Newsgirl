@@ -8,7 +8,7 @@ namespace Newsgirl.Fetcher.Tests
 {
     public class FeedContentProviderTest
     {
-        [Theory(Skip = "no internet")]
+        [Theory]
         [InlineData("https://www.youtube.com/feeds/videos.xml?user=GoogleDevelopers")]
         [InlineData("https://v8project.blogspot.com/feeds/posts/default")]
         public async Task HTTP_Request_Returns_Correct_Result(string feedUrl)
