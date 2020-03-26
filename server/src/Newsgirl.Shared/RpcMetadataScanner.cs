@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -106,6 +107,7 @@ namespace Newsgirl.Shared
                         $"{metadata.RequestType.Name} => {metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}");
                 }
 
+                CompileHandlerMethod(metadata);
                 
                 handlers.Add(metadata);
             }
@@ -119,6 +121,51 @@ namespace Newsgirl.Shared
             };
 
             return collection;
+        }
+
+        private static void CompileHandlerMethod(RpcHandlerMetadata metadata)
+        {
+            var methodParameters = new List<Expression>();
+
+            var requestArg = Expression.Parameter(typeof(object), "request");
+
+            var instanceProviderArg= Expression.Parameter(typeof(InstanceProvider), "instanceProvider");
+            
+            foreach (var paramType in metadata.Parameters)
+            {
+                if (paramType == metadata.RequestType)
+                {
+                    methodParameters.Add(Expression.Convert(requestArg, metadata.RequestType));
+                }
+                else
+                {
+                    var getInstanceMethod = typeof(InstanceProvider).GetMethod("Get");
+
+                    var getInstanceCall = Expression.Call(
+                        instanceProviderArg,
+                        getInstanceMethod, 
+                        Expression.Constant(paramType, typeof(Type))
+                    );
+                    
+                    methodParameters.Add(Expression.Convert(getInstanceCall, paramType));
+                }
+            }
+            
+            var handlerInstanceArg = Expression.Parameter(typeof(object), "handlerInstance");
+            
+            var body = Expression.Call(
+                Expression.Convert(handlerInstanceArg, metadata.HandlerClass),
+                metadata.HandlerMethod, 
+                methodParameters);
+
+            var lambda = Expression.Lambda<Func<object, object, InstanceProvider, Task>>(
+                body,
+                handlerInstanceArg,
+                requestArg,
+                instanceProviderArg
+            );
+
+            metadata.CompiledHandler = lambda.Compile();
         }
     }
 
@@ -156,6 +203,8 @@ namespace Newsgirl.Shared
         public Type ReturnType { get; set; }
 
         public Type UnderlyingReturnType { get; set; }
+        
+        public Func<object, object, InstanceProvider, Task> CompiledHandler { get; set; }
     }
     
     /// <summary>

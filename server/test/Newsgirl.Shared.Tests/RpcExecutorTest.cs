@@ -82,8 +82,8 @@ namespace Newsgirl.Shared.Tests
                 typeof(ThrowingExecutorTestHandler)
             });
             
-            var resolver = Substitute.For<IoCResolver>();
-            resolver.Resolve(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
+            var resolver = Substitute.For<InstanceProvider>();
+            resolver.Get(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
             
             var executor = new RpcExecutor(metadata, resolver);
 
@@ -130,8 +130,8 @@ namespace Newsgirl.Shared.Tests
                 typeof(ExecutorTestHandler)
             });
             
-            var resolver = Substitute.For<IoCResolver>();
-            resolver.Resolve(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
+            var resolver = Substitute.For<InstanceProvider>();
+            resolver.Get(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
             
             return new RpcExecutor(metadata, resolver);
         }

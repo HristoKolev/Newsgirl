@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared.Infrastructure;
@@ -9,9 +8,9 @@ namespace Newsgirl.Shared
     public class RpcExecutor
     {
         private readonly RpcMetadataCollection handlerCollection;
-        private readonly IoCResolver resolver;
+        private readonly InstanceProvider resolver;
 
-        public RpcExecutor(RpcMetadataCollection handlerCollection, IoCResolver resolver)
+        public RpcExecutor(RpcMetadataCollection handlerCollection, InstanceProvider resolver)
         {
             this.handlerCollection = handlerCollection;
             this.resolver = resolver;
@@ -33,28 +32,21 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
             }
 
-            var handlerInstance = this.resolver.Resolve(metadata.HandlerClass);
+            var handlerInstance = this.resolver.Get(metadata.HandlerClass);
 
-            var parameters = new[]
-            {
-                requestPayload
-            };
-
-            object returnValue;
-            
-            try
-            {
-                returnValue = metadata.HandlerMethod.Invoke(handlerInstance, parameters);
-            }
-            catch (Exception exception)
-            {
-                ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
-                throw new NotImplementedException();
-            }
+            object returnValue = metadata.CompiledHandler(handlerInstance, requestPayload, new FakeInstanceProviders());
 
             var response = await (Task<TResponse>)returnValue;
 
             return response;
+        }
+    }
+    
+    public class FakeInstanceProviders: InstanceProvider {
+        
+        public object Get(Type type)
+        {
+            throw new ApplicationException($"GET_INSTANCE {type.Name}");
         }
     }
 }
