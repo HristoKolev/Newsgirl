@@ -10,10 +10,7 @@ namespace BuildingTypes
     {
         static void Main(string[] args)
         {
-            var assemblyName = new AssemblyName("RpcMiddlewareDynamicAssembly+" + Guid.NewGuid());
-            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
-            var typeBuilder = moduleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
+            var typeBuilder = ILGeneratorHelper.ModuleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
                 TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
 
             var d1 = typeBuilder.DefineMethod(
@@ -51,8 +48,6 @@ namespace BuildingTypes
             );
 
             var d3Generator = d3.GetILGenerator();
-
-            
             d3Generator.LoadDelegate<Add42>(d1);
             d3Generator.Emit(OpCodes.Call, d2);
             d3Generator.Emit(OpCodes.Ret);
@@ -75,7 +70,43 @@ namespace BuildingTypes
 
         public static void CallDelegate<T>(this ILGenerator ilGenerator) where T : Delegate
         {
-            ilGenerator.Emit(OpCodes.Callvirt, typeof(T).GetMethod("Invoke"));
+            ilGenerator.Emit(OpCodes.Call, typeof(T).GetMethod("Invoke"));
+        }
+    }
+
+    public static class ILGeneratorHelper
+    {
+        private static bool initialized;
+        private static readonly object SyncRoot = new object();
+        private static ModuleBuilder moduleBuilder;
+
+        private static void Initialize()
+        {
+            if (initialized)
+            {
+                return;
+            }
+
+            lock (SyncRoot)
+            {
+                if (!initialized)
+                {
+                    var assemblyName = new AssemblyName("DynamicAssembly+" + Guid.NewGuid());
+                    var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+                    moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
+
+                    initialized = true;
+                }
+            }
+        }
+
+        public static ModuleBuilder ModuleBuilder
+        {
+            get
+            {
+                Initialize();
+                return moduleBuilder;
+            }
         }
     }
 }
