@@ -92,7 +92,7 @@ namespace RpcPlay
 
         private static Task InlineFunc(RpcContext context)
         {
-            return new Mid4()
+            return ((Mid4)context.InstanceProvider.Get(typeof(Mid4)))
                 .Run(context, ctx4 => ((Mid3) ctx4.InstanceProvider.Get(typeof(Mid3)))
                     .Run(ctx4, ctx3 => ((Mid2) ctx3.InstanceProvider.Get(typeof(Mid2)))
                         .Run(ctx3, ctx2 => ((Mid1) ctx2.InstanceProvider.Get(typeof(Mid1)))
@@ -163,7 +163,6 @@ namespace RpcPlay
         public static Task RunCode(RpcContext context)
         {
             Example.Cats += 1;
-
             return Task.CompletedTask;
         }
     }
@@ -173,7 +172,6 @@ namespace RpcPlay
         public Task Run(RpcContext context, RpcRequestDelegate next)
         {
             Example.Cats += 1;
-
             return next(context);
         }
     }
@@ -183,7 +181,6 @@ namespace RpcPlay
         public Task Run(RpcContext context, RpcRequestDelegate next)
         {
             Example.Cats += 1;
-
             return next(context);
         }
     }
@@ -193,7 +190,6 @@ namespace RpcPlay
         public Task Run(RpcContext context, RpcRequestDelegate next)
         {
             Example.Cats += 1;
-
             return next(context);
         }
     }
@@ -203,7 +199,6 @@ namespace RpcPlay
         public Task Run(RpcContext context, RpcRequestDelegate next)
         {
             Example.Cats += 1;
-
             return next(context);
         }
     }
