@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 
 namespace RpcPlay
@@ -41,19 +43,155 @@ namespace RpcPlay
     public static class Example
     {
         public static int Cats = 1;
-        public const int IterationCount = 1_000_000;
-        
+        public const int IterationCount = 10_000_000;
+
         public static async Task Main()
         {
-            await CompiledExpressions();
             
-            await InlinedCode();
+     
+            // await CompiledExpressions();
+            //
+            // await IlGeneratedCode();
+            //
+            // await InlinedCode();
+            //
+            // Console.WriteLine("===================");
+            //
+            // await CompiledExpressions();
+            //
+            // await IlGeneratedCode();
+            //
+            // await InlinedCode();
+            
+            var context = new RpcContext
+            {
+                Request = new RequestModel(),
+                InstanceProvider = new InstanceProvider(),
+            };
 
-            Console.WriteLine("===================");
+            var midTypes = new[]
+            {
+                typeof(Mid1),
+                typeof(Mid2),
+                typeof(Mid3),
+                typeof(Mid4),
+            };
+
+            // force create
+            foreach (var type in midTypes)
+            {
+                context.InstanceProvider.Get(type);
+            }
+
+            var getInstanceProvider = typeof(RpcContext).GetProperty("InstanceProvider").GetMethod;
+            var getInstance = typeof(InstanceProvider).GetMethod("Get");
+
+            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
+                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
+
+            MethodInfo lastMethod = typeof(Example).GetMethod("RunCode");
+
+            for (int i = midTypes.Length - 1; i >= 0; i--)
+            {
+                var midType = midTypes[i];
+                
+                var currentMethod = typeBuilder.DefineMethod(
+                    "mid" + i,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    typeof(Task),
+                    new[] {typeof(RpcContext)}
+                );
+
+                var gen = currentMethod.GetILGenerator();
+
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.Emit(OpCodes.Call, getInstanceProvider);
+                gen.Emit(OpCodes.Ldtoken, midType);
+                gen.Emit(OpCodes.Call, getInstance);
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.LoadDelegate<RpcRequestDelegate>(lastMethod);
+                gen.Emit(OpCodes.Call, midType.GetMethod("Run"));
+                gen.Emit(OpCodes.Ret);
+
+                lastMethod = currentMethod;
+            }
             
-            await CompiledExpressions();
+            var dynamicType = typeBuilder.CreateType();
+            var func = (RpcRequestDelegate) dynamicType.GetMethod("mid0", BindingFlags.NonPublic | BindingFlags.Static)
+                .CreateDelegate(typeof(RpcRequestDelegate));
+
+            await func(context);
+        }
+
+        private static async Task IlGeneratedCode()
+        {
+            var context = new RpcContext
+            {
+                Request = new RequestModel(),
+                InstanceProvider = new InstanceProvider(),
+            };
+
+            var midTypes = new[]
+            {
+                typeof(Mid1),
+                typeof(Mid2),
+                typeof(Mid3),
+                typeof(Mid4),
+            };
+
+            // force create
+            foreach (var type in midTypes)
+            {
+                context.InstanceProvider.Get(type);
+            }
+
+            var getInstanceProvider = typeof(RpcContext).GetProperty("InstanceProvider").GetMethod;
+            var getInstance = typeof(InstanceProvider).GetMethod("Get");
+
+            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
+                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
+
+            MethodInfo lastMethod = typeof(Example).GetMethod("RunCode");
+
+            for (int i = midTypes.Length - 1; i >= 0; i--)
+            {
+                var midType = midTypes[i];
+                
+                var currentMethod = typeBuilder.DefineMethod(
+                    "mid" + i,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    typeof(Task),
+                    new[] {typeof(RpcContext)}
+                );
+
+                var gen = currentMethod.GetILGenerator();
+
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.Emit(OpCodes.Call, getInstanceProvider);
+                gen.Emit(OpCodes.Ldtoken, midType);
+                gen.Emit(OpCodes.Call, getInstance);
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.LoadDelegate<RpcRequestDelegate>(lastMethod);
+                gen.Emit(OpCodes.Call, midType.GetMethod("Run"));
+                gen.Emit(OpCodes.Ret);
+
+                lastMethod = currentMethod;
+            }
             
-            await InlinedCode();
+            var dynamicType = typeBuilder.CreateType();
+            var func = (RpcRequestDelegate) dynamicType.GetMethod("mid0", BindingFlags.NonPublic | BindingFlags.Static)
+                .CreateDelegate(typeof(RpcRequestDelegate));
+
+            var sw = Stopwatch.StartNew();
+
+            for (int i = 0; i < Example.IterationCount; i++)
+            {
+                await func(context);
+            }
+            
+            sw.Stop();
+            
+            Console.WriteLine($"ILGENERATED FUNC: {sw.ElapsedMilliseconds}");
         }
 
         private static async Task InlinedCode()
@@ -162,49 +300,109 @@ namespace RpcPlay
 
         public static Task RunCode(RpcContext context)
         {
-            Example.Cats += 1;
+            Console.WriteLine("RUN CODE...");
             return Task.CompletedTask;
         }
     }
 
     public class Mid1 : IMid
     {
-        public Task Run(RpcContext context, RpcRequestDelegate next)
+        public async Task Run(RpcContext context, RpcRequestDelegate next)
         {
-            Example.Cats += 1;
-            return next(context);
+            Console.WriteLine(1);
+
+            await next(context);
+            
+            Console.WriteLine(8);
         }
     }
     
     public class Mid2 : IMid
     {
-        public Task Run(RpcContext context, RpcRequestDelegate next)
+        public async Task Run(RpcContext context, RpcRequestDelegate next)
         {
-            Example.Cats += 1;
-            return next(context);
+            Console.WriteLine(2);
+
+            await next(context);
+            
+            Console.WriteLine(7);
         }
     }
     
     public class Mid3 : IMid
     {
-        public Task Run(RpcContext context, RpcRequestDelegate next)
+        public async Task Run(RpcContext context, RpcRequestDelegate next)
         {
-            Example.Cats += 1;
-            return next(context);
+            Console.WriteLine(3);
+
+            await next(context);
+            
+            Console.WriteLine(6);
         }
     }
     
     public class Mid4 : IMid
     {
-        public Task Run(RpcContext context, RpcRequestDelegate next)
+        public async Task Run(RpcContext context, RpcRequestDelegate next)
         {
-            Example.Cats += 1;
-            return next(context);
+            Console.WriteLine(4);
+
+            await next(context);
+            
+            Console.WriteLine(5);
         }
     }
 
     public interface IMid
     {
         Task Run(RpcContext context, RpcRequestDelegate next);
+    }
+    
+    public static class IlGeneratorHelper
+    {
+        private static bool initialized;
+        private static readonly object SyncRoot = new object();
+        private static ModuleBuilder moduleBuilder;
+
+        private static void Initialize()
+        {
+            if (initialized)
+            {
+                return;
+            }
+
+            lock (SyncRoot)
+            {
+                if (!initialized)
+                {
+                    var assemblyName = new AssemblyName("DynamicAssembly+" + Guid.NewGuid());
+                    var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+                    moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
+
+                    initialized = true;
+                }
+            }
+        }
+
+        public static ModuleBuilder ModuleBuilder
+        {
+            get
+            {
+                Initialize();
+                return moduleBuilder;
+            }
+        }
+        
+        public static void LoadDelegate<T>(this ILGenerator ilGenerator, MethodInfo methodInfo) where T: Delegate
+        {
+            ilGenerator.Emit(OpCodes.Ldnull);
+            ilGenerator.Emit(OpCodes.Ldftn, methodInfo);
+            ilGenerator.Emit(OpCodes.Newobj, typeof(T).GetConstructors()[0]);
+        }
+
+        public static void CallDelegate<T>(this ILGenerator ilGenerator) where T : Delegate
+        {
+            ilGenerator.Emit(OpCodes.Call, typeof(T).GetMethod("Invoke"));
+        }
     }
 }
