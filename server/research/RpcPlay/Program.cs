@@ -46,15 +46,15 @@ namespace RpcPlay
 
         public static async Task Main()
         {
-            await IlGeneratedCode();
-            
             await InlinedCode();
             
+            await IlGeneratedCode();
+
             Console.WriteLine("===================");
 
-            await IlGeneratedCode();
-            
             await InlinedCode();
+            
+            await IlGeneratedCode();
         }
 
         private static async Task IlGeneratedCode()
@@ -83,9 +83,12 @@ namespace RpcPlay
             var getInstance = typeof(InstanceProvider).GetMethod("Get");
 
             var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
-                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
+                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.AutoClass | TypeAttributes.AnsiClass);
+
+            var delegateFieldMap = new Dictionary<MethodInfo, FieldBuilder>();
 
             MethodInfo lastMethod = typeof(Example).GetMethod("RunCode");
+            delegateFieldMap.Add(lastMethod, typeBuilder.DefineField("field_run_code", typeof(RpcRequestDelegate), FieldAttributes.Private | FieldAttributes.Static));
 
             for (int i = midTypes.Length - 1; i >= 0; i--)
             {
@@ -101,26 +104,52 @@ namespace RpcPlay
                 var gen = currentMethod.GetILGenerator();
 
                 gen.Emit(OpCodes.Ldarg_0);
+                gen.Emit(OpCodes.Dup);
                 gen.Emit(OpCodes.Call, getInstanceProvider);
                 gen.Emit(OpCodes.Ldtoken, midType);
                 gen.Emit(OpCodes.Call, getInstance);
-                gen.Emit(OpCodes.Ldarg_0);
-                gen.LoadDelegate<RpcRequestDelegate>(lastMethod);
+                gen.Emit(OpCodes.Ldsfld, delegateFieldMap[lastMethod]);
                 gen.Emit(OpCodes.Call, midType.GetMethod("Run"));
                 gen.Emit(OpCodes.Ret);
 
                 lastMethod = currentMethod;
+                delegateFieldMap.Add(currentMethod, typeBuilder.DefineField("field_mid_" + i, typeof(RpcRequestDelegate), FieldAttributes.Private | FieldAttributes.Static));
             }
             
+            var initializeMethod = typeBuilder.DefineMethod(
+                "initialize",
+                MethodAttributes.Private | MethodAttributes.Static,
+                typeof(void),
+                Array.Empty<Type>()
+            );
+
+            var initializeGenerator = initializeMethod.GetILGenerator();
+
+            foreach (var kvp in delegateFieldMap)
+            {
+                initializeGenerator.Emit(OpCodes.Ldnull);
+                initializeGenerator.Emit(OpCodes.Ldftn, kvp.Key);
+                initializeGenerator.Emit(OpCodes.Newobj, typeof(RpcRequestDelegate).GetConstructors()[0]);
+                initializeGenerator.Emit(OpCodes.Stsfld, kvp.Value);
+            }
+            
+            initializeGenerator.Emit(OpCodes.Ret);
+            
             var dynamicType = typeBuilder.CreateType();
-            var func = (RpcRequestDelegate) dynamicType.GetMethod("mid0", BindingFlags.NonPublic | BindingFlags.Static)
+            
+            var run = (RpcRequestDelegate) dynamicType.GetMethod("mid0", BindingFlags.NonPublic | BindingFlags.Static)
                 .CreateDelegate(typeof(RpcRequestDelegate));
 
+            var initialize = (Action) dynamicType.GetMethod("initialize", BindingFlags.NonPublic | BindingFlags.Static)
+                .CreateDelegate(typeof(Action));
+
+            initialize();
+            
             var sw = Stopwatch.StartNew();
 
             for (int i = 0; i < Example.IterationCount; i++)
             {
-                await func(context);
+                await run(context);
             }
             
             sw.Stop();
