@@ -8,23 +8,24 @@ using Newsgirl.Testing;
 
 namespace Newsgirl.Shared.Tests
 {
-    public class RpcMetadataScannerTest
+    public class RpcMetadataCollectionTest
     {
         [Fact]
-        public void ScanType_returns_metadata_for_marked_types()
+        public void Build_returns_metadata_for_marked_types()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(RpcMarkingTest1),
-                typeof(RpcMarkingTest2),
-                typeof(RpcMarkingTest3),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(RpcMarkingTest1),
+                    typeof(RpcMarkingTest2),
+                    typeof(RpcMarkingTest3),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(RpcMarkingTest3), metadata.HandlerClass);
 
@@ -47,18 +48,17 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_throws_when_static_method_is_marked()
+        public void Build_throws_when_static_method_is_marked()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(StaticRpcMethodHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(StaticRpcMethodHandler),
+                    },
+                });
             });
         }
         
@@ -69,18 +69,17 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_throws_when_private_method_is_marked()
+        public void Build_throws_when_private_method_is_marked()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(PrivateRpcMethodHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(PrivateRpcMethodHandler),
+                    },
+                });
             });
         }
             
@@ -91,18 +90,18 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_metadata_has_correct_request_type()
+        public void Build_metadata_has_correct_request_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(RequestTypeTestHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(RequestTypeTestHandler),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(SimpleRequest1), metadata.RequestType);
         }
@@ -114,18 +113,18 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_metadata_has_correct_response_type()
+        public void Build_metadata_has_correct_response_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(ResponseTypeTestHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ResponseTypeTestHandler),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(SimpleResponse1), metadata.ResponseType);
         }
@@ -137,18 +136,18 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public void ScanType_metadata_has_works_with_void_return_type()
+        public void Build_metadata_has_works_with_void_return_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(VoidReturnTypeTestHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(VoidReturnTypeTestHandler),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task), metadata.ReturnType);
         }
@@ -160,18 +159,18 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public void ScanType_metadata_has_works_with_response_return_type()
+        public void Build_metadata_has_works_with_response_return_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(ResponseReturnTypeTestHandler),
-            };
-            
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ResponseReturnTypeTestHandler),
+                },
+            });
+
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(Task<SimpleResponse1>), metadata.ReturnType);
         }
@@ -183,18 +182,17 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_throws_on_invalid_parameter_type()
+        public void Build_throws_on_invalid_parameter_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(InvalidParameterTestHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(InvalidParameterTestHandler),
+                    },
+                });
             });
         }
         
@@ -205,21 +203,22 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public void ScanType_works_when_parameter_type_is_explicitly_allowed()
+        public void Build_works_when_parameter_type_is_explicitly_allowed()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(ExplicitlyAllowParameterTypeTestHandler),
-            };
-
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes, new []
-            {
-                typeof(StringBuilder)
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExplicitlyAllowParameterTypeTestHandler),
+                },
+                HandlerArgumentTypeWhiteList = new []
+                {
+                    typeof(StringBuilder)
+                }
             });
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Equal(typeof(StringBuilder), metadata.Parameters.Single());
         }
@@ -231,18 +230,17 @@ namespace Newsgirl.Shared.Tests
         }
  
         [Fact]
-        public void ScanType_throws_on_invalid_return_type()
+        public void Build_throws_on_invalid_return_type()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(InvalidReturnTypeTestHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(InvalidReturnTypeTestHandler),
+                    },
+                });
             });
         }
         
@@ -253,18 +251,17 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_throws_on_invalid_return_type_as_task()
+        public void Build_throws_on_invalid_return_type_as_task()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(InvalidReturnTypeAsTaskTestHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(InvalidReturnTypeAsTaskTestHandler),
+                    },
+                });
             });
         }
         
@@ -275,18 +272,17 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_throws_on_colliding_requests()
+        public void Build_throws_on_colliding_requests()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
-            {
-                typeof(CollidingRequestsTestHandler),
-            };
-
             Snapshot.MatchError(() =>
             {
-                scanner.ScanTypes(testTypes);
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(CollidingRequestsTestHandler),
+                    },
+                });
             });
         }
         
@@ -300,18 +296,18 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void ScanType_metadata_has_supplemental_attributes()
+        public void Build_metadata_has_supplemental_attributes()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(SupplementalAttributesTestHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(SupplementalAttributesTestHandler),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
 
             Assert.Single(metadata.SupplementalAttributes);
             
@@ -329,18 +325,18 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public void ScanType_metadata_has_supplemental_attributes_class_only()
+        public void Build_metadata_has_supplemental_attributes_class_only()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(SupplementalAttributesClassOnlyHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(SupplementalAttributesClassOnlyHandler),
+                },
+            });
             
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
             
             Assert.Single(metadata.SupplementalAttributes);
             
@@ -357,18 +353,18 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public void ScanType_metadata_has_supplemental_attributes_method_only()
+        public void Build_metadata_has_supplemental_attributes_method_only()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(SupplementalAttributesMethodOnlyHandler),
-            };
-            
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-            Assert.Single(rpcMetadataCollection.Handlers);
-            var metadata = rpcMetadataCollection.Handlers.Single();
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(SupplementalAttributesMethodOnlyHandler),
+                },
+            });
+
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
 
             Assert.Single(metadata.SupplementalAttributes);
             
@@ -390,29 +386,21 @@ namespace Newsgirl.Shared.Tests
 
             public TestSupplementalAttribute(int value) => this.Value = value;
         }
-    }
-    
-    public class SimpleRequest1 {}
-    
-    public class SimpleResponse1 {}
-    
-    public class RpcMetadataCollectionTest
-    {
+        
         [Fact]
         public void GetMetadataByRequestType_returns_the_correct_metadata()
         {
-            var scanner = new RpcMetadataScanner();
-
-            var testTypes = new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(MetadataByRequestNameTestHandler),
-            };
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(MetadataByRequestNameTestHandler),
+                },
+            });
 
-            var rpcMetadataCollection = scanner.ScanTypes(testTypes);
-
-            var selectedMetadata = rpcMetadataCollection.GetMetadataByRequestType(typeof(MetadataByRequestNameRequest2));
+            var selectedMetadata = metadataCollection.GetMetadataByRequestType(typeof(MetadataByRequestNameRequest2));
             
-            Assert.Equal(rpcMetadataCollection.Handlers[1], selectedMetadata);
+            Assert.Equal(metadataCollection.Handlers[1], selectedMetadata);
         }
         
         public class MetadataByRequestNameTestHandler
@@ -428,6 +416,10 @@ namespace Newsgirl.Shared.Tests
         }
     }
     
+    public class SimpleRequest1 {}
+    
+    public class SimpleResponse1 {}
+
     public class MetadataByRequestNameRequest1{}
     
     public class MetadataByRequestNameResponse1{}

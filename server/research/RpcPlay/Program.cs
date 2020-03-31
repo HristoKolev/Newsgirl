@@ -83,6 +83,7 @@ namespace RpcPlay
             var handlerType = typeof(TestHandler);
             var requestType = typeof(SimpleRequest1);
             var handlerMethod = typeof(TestHandler).GetMethod("RpcMethod");
+            // ReSharper disable once PossibleNullReferenceException
             var handlerMethodParameters = handlerMethod.GetParameters().Select(x => x.ParameterType).ToList();
 
             var dictionaryGetItem = typeof(Dictionary<Type, object>).GetMethod("get_Item");
@@ -123,12 +124,12 @@ namespace RpcPlay
                 if (parameter == requestType)
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Request").GetMethod);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Request")?.GetMethod);
                 }
                 else
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Items").GetMethod);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Items")?.GetMethod);
                     executeHandlerGen.Emit(OpCodes.Ldtoken, parameter);
                     executeHandlerGen.Emit(OpCodes.Call, dictionaryGetItem);
                 }
@@ -139,7 +140,7 @@ namespace RpcPlay
             
             executeHandlerGen.Emit(OpCodes.Ldarg_0);
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
-            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("ResponseTask").SetMethod);
+            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("ResponseTask")?.SetMethod);
                     
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
             executeHandlerGen.Emit(OpCodes.Ret);
@@ -206,9 +207,11 @@ namespace RpcPlay
             var dynamicType = typeBuilder.CreateType();
 
             var methodInfo = dynamicType.GetMethod(lastMethod.Name, BindingFlags.NonPublic | BindingFlags.Static);
+            // ReSharper disable once PossibleNullReferenceException
             var run = (RpcRequestDelegate) methodInfo
                 .CreateDelegate(typeof(RpcRequestDelegate));
 
+            // ReSharper disable once PossibleNullReferenceException
             var initializeDelegateFields = (Action) dynamicType.GetMethod("initializeDelegateFields", BindingFlags.NonPublic | BindingFlags.Static)
                 .CreateDelegate(typeof(Action));
 
@@ -301,12 +304,12 @@ namespace RpcPlay
 
     public class TestHandler
     {
-        public async Task<SimpleResponse1> RpcMethod(SimpleRequest1 req)
+        public Task<SimpleResponse1> RpcMethod(SimpleRequest1 req)
         {
-            return new SimpleResponse1
+            return Task.FromResult(new SimpleResponse1
             {
                 Num = req.Num + 1
-            };
+            });
         }
     }
 
@@ -353,18 +356,6 @@ namespace RpcPlay
                 Initialize();
                 return moduleBuilder;
             }
-        }
-        
-        public static void LoadDelegate<T>(this ILGenerator ilGenerator, MethodInfo methodInfo) where T: Delegate
-        {
-            ilGenerator.Emit(OpCodes.Ldnull);
-            ilGenerator.Emit(OpCodes.Ldftn, methodInfo);
-            ilGenerator.Emit(OpCodes.Newobj, typeof(T).GetConstructors()[0]);
-        }
-
-        public static void CallDelegate<T>(this ILGenerator ilGenerator) where T : Delegate
-        {
-            ilGenerator.Emit(OpCodes.Call, typeof(T).GetMethod("Invoke"));
         }
     }
 }

@@ -77,15 +77,18 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public async Task Execute_throws_when_the_handler_method_throws()
         {
-            var metadata = new RpcMetadataScanner().ScanTypes(new[]
+            var rpcMetadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(ThrowingExecutorTestHandler)
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ThrowingExecutorTestHandler)
+                },
             });
-            
+
             var resolver = Substitute.For<InstanceProvider>();
             resolver.Get(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
             
-            var executor = new RpcExecutor(metadata, resolver);
+            var executor = new RpcExecutor(rpcMetadataCollection, resolver);
 
             bool handled = false;
 
@@ -125,15 +128,19 @@ namespace Newsgirl.Shared.Tests
 
         private static RpcExecutor CreateExecutor()
         {
-            var metadata = new RpcMetadataScanner().ScanTypes(new[]
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
-                typeof(ExecutorTestHandler)
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler)
+                },
             });
             
             var resolver = Substitute.For<InstanceProvider>();
+            
             resolver.Get(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
             
-            return new RpcExecutor(metadata, resolver);
+            return new RpcExecutor(metadataCollection, resolver);
         }
 
         public class ExecutorTestHandler

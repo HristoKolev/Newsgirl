@@ -1,21 +1,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-
 using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Shared
 {
-    public class RpcMetadataScanner
+    public class RpcMetadataCollection
     {
-        public RpcMetadataCollection ScanTypes(IEnumerable<Type> types, IEnumerable<Type> injectableTypes = null)
+        public List<RpcHandlerMetadata> Handlers { get; set; }
+
+        public Dictionary<Type, RpcHandlerMetadata> MetadataByRequestName { get; set; }
+
+        public RpcHandlerMetadata GetMetadataByRequestType(Type requestType)
+        {
+            if (this.MetadataByRequestName.TryGetValue(requestType, out var metadata))
+            {
+                return metadata;
+            }
+
+            return null;
+        }
+        
+        public static RpcMetadataCollection Build(RpcMetadataBuildParams buildParams)
         {
             var methodFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic;
             
-            var markedMethods = types.SelectMany(type => type.GetMethods(methodFlag))
+            var markedMethods = buildParams.PotentialHandlerTypes.SelectMany(type => type.GetMethods(methodFlag))
                 .Where(info => info.GetCustomAttribute<RpcBindAttribute>() != null).ToList();
 
             var handlers = new List<RpcHandlerMetadata>(markedMethods.Count);
@@ -24,11 +36,13 @@ namespace Newsgirl.Shared
             {
                 if (markedMethod.IsStatic)
                 {
+                    // ReSharper disable once PossibleNullReferenceException
                     throw new DetailedLogException($"Static methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
                 }
                 
                 if (markedMethod.IsPrivate)
                 {
+                    // ReSharper disable once PossibleNullReferenceException
                     throw new DetailedLogException($"Private methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
                 }
 
@@ -45,6 +59,7 @@ namespace Newsgirl.Shared
                     ReturnType = markedMethod.ReturnType,
                 };
 
+                // ReSharper disable once AssignNullToNotNullAttribute
                 var allSupplementalAttributes = metadata.HandlerClass.GetCustomAttributes()
                     .Concat(metadata.HandlerMethod.GetCustomAttributes())
                     .Where(x => x is RpcSupplementalAttribute)
@@ -59,15 +74,16 @@ namespace Newsgirl.Shared
 
                 var allowedParameterTypes = new List<Type> {metadata.RequestType};
 
-                if (injectableTypes != null)
+                if (buildParams.HandlerArgumentTypeWhiteList != null)
                 {
-                    allowedParameterTypes.AddRange(injectableTypes);
+                    allowedParameterTypes.AddRange(buildParams.HandlerArgumentTypeWhiteList);
                 }
 
                 foreach (var parameter in metadata.Parameters)
                 {
                     if (!allowedParameterTypes.Contains(parameter))
                     {
+                        // ReSharper disable once PossibleNullReferenceException
                         throw new DetailedLogException($"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
                     }
                 }
@@ -107,8 +123,6 @@ namespace Newsgirl.Shared
                         $"{metadata.RequestType.Name} => {metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}");
                 }
 
-                CompileHandlerMethod(metadata);
-                
                 handlers.Add(metadata);
             }
 
@@ -122,68 +136,15 @@ namespace Newsgirl.Shared
 
             return collection;
         }
-
-        private static void CompileHandlerMethod(RpcHandlerMetadata metadata)
-        {
-            var methodParameters = new List<Expression>();
-
-            var requestArg = Expression.Parameter(typeof(object), "request");
-
-            var instanceProviderArg= Expression.Parameter(typeof(InstanceProvider), "instanceProvider");
-            
-            foreach (var paramType in metadata.Parameters)
-            {
-                if (paramType == metadata.RequestType)
-                {
-                    methodParameters.Add(Expression.Convert(requestArg, metadata.RequestType));
-                }
-                else
-                {
-                    var getInstanceMethod = typeof(InstanceProvider).GetMethod("Get");
-
-                    var getInstanceCall = Expression.Call(
-                        instanceProviderArg,
-                        getInstanceMethod, 
-                        Expression.Constant(paramType, typeof(Type))
-                    );
-                    
-                    methodParameters.Add(Expression.Convert(getInstanceCall, paramType));
-                }
-            }
-            
-            var handlerInstanceArg = Expression.Parameter(typeof(object), "handlerInstance");
-            
-            var body = Expression.Call(
-                Expression.Convert(handlerInstanceArg, metadata.HandlerClass),
-                metadata.HandlerMethod, 
-                methodParameters);
-
-            var lambda = Expression.Lambda<Func<object, object, InstanceProvider, Task>>(
-                body,
-                handlerInstanceArg,
-                requestArg,
-                instanceProviderArg
-            );
-
-            metadata.CompiledHandler = lambda.Compile();
-        }
     }
-
-    public class RpcMetadataCollection
+    
+    public class RpcMetadataBuildParams
     {
-        public List<RpcHandlerMetadata> Handlers { get; set; }
+        public Type[] PotentialHandlerTypes { get; set; }
 
-        public Dictionary<Type, RpcHandlerMetadata> MetadataByRequestName { get; set; }
-
-        public RpcHandlerMetadata GetMetadataByRequestType(Type requestType)
-        {
-            if (this.MetadataByRequestName.TryGetValue(requestType, out var metadata))
-            {
-                return metadata;
-            }
-
-            return null;
-        }
+        public Type[] MiddlewareTypes { get; set; }
+        
+        public Type[] HandlerArgumentTypeWhiteList { get; set; }
     }
 
     public class RpcHandlerMetadata
