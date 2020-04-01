@@ -12,6 +12,7 @@
       <PackageReference Include="PgNet" Version="1.0.6" />
       <PackageReference Include="Sentry" Version="2.1.0" />
       <PackageReference Include="System.Reactive" Version="4.3.1" />
+      <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     </ItemGroup>
 
 </Project>

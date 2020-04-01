@@ -1,10 +1,8 @@
 using System;
-using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 using Newsgirl.Testing;
 using NSubstitute;
-using Sentry.PlatformAbstractions;
 using Xunit;
 
 namespace Newsgirl.Shared.Tests
@@ -77,7 +75,7 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public async Task Execute_throws_when_the_handler_method_throws()
         {
-            var rpcMetadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
             {
                 PotentialHandlerTypes = new[]
                 {
@@ -88,14 +86,13 @@ namespace Newsgirl.Shared.Tests
             var resolver = Substitute.For<InstanceProvider>();
             resolver.Get(null).ReturnsForAnyArgs(x => Activator.CreateInstance(x.Arg<Type>()));
             
-            var executor = new RpcExecutor(rpcMetadataCollection, resolver);
+            var executor = new RpcExecutor(metadataCollection, resolver);
 
             bool handled = false;
 
             try
             {
                 await executor.Execute<ExecutorTestResponse>(new ExecutorTestRequest());
-
             }
             catch (Exception exception)
             {
@@ -109,7 +106,6 @@ namespace Newsgirl.Shared.Tests
                 throw new ApplicationException("The executor did not throw when the handler method did.");
             }
         }
-        
         
         public class ThrowingExecutorTestHandler
         {

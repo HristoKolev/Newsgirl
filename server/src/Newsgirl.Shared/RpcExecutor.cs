@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared.Infrastructure;
@@ -32,21 +33,18 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
             }
 
-            var handlerInstance = this.resolver.Get(metadata.HandlerClass);
+            var context = new RpcContext
+            {
+                Items = new Dictionary<Type, object>(),
+                Metadata = metadata,
+                Request = requestPayload,
+            };
 
-            object returnValue = metadata.CompiledHandler(handlerInstance, requestPayload, new FakeInstanceProviders());
+            await metadata.CompiledMethod(context, this.resolver);
 
-            var response = await (Task<TResponse>)returnValue;
+            var response = ((Task<TResponse>)context.ResponseTask).Result;
 
             return response;
-        }
-    }
-    
-    public class FakeInstanceProviders: InstanceProvider {
-        
-        public object Get(Type type)
-        {
-            throw new ApplicationException($"GET_INSTANCE {type.Name}");
         }
     }
 }

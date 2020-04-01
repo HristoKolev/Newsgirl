@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -413,6 +414,71 @@ namespace Newsgirl.Shared.Tests
             
             [RpcBind(typeof(MetadataByRequestNameRequest3), typeof(MetadataByRequestNameResponse3))]
             public Task<MetadataByRequestNameResponse3> RpcMethod1(MetadataByRequestNameRequest3 req) => Task.FromResult(new MetadataByRequestNameResponse3());
+        }
+        
+        [Fact]
+        public void Build_works_correctly_with_null_middleware_param()
+        {
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(MiddlewareTestHandler),
+                },
+                MiddlewareTypes = null,
+            });
+            
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
+
+            Assert.Empty(metadata.MiddlewareTypes);
+        }
+        
+        [Fact]
+        public void Build_works_correctly_with_empty_middleware_param()
+        {
+            var metadataCollection = RpcMetadataCollection.Build(new RpcMetadataBuildParams
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(MiddlewareTestHandler),
+                },
+                MiddlewareTypes = Array.Empty<Type>(),
+            });
+            
+            Assert.Single(metadataCollection.Handlers);
+            var metadata = metadataCollection.Handlers.Single();
+
+            Assert.Empty(metadata.MiddlewareTypes);
+        }
+        
+        public class MiddlewareTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task RpcMethod(SimpleRequest1 req) => Task.CompletedTask;
+        }
+        
+        [Fact]
+        public void Build_throws_when_middleware_does_not_implement_the_interface()
+        {
+            Snapshot.MatchError(() =>
+            {
+                RpcMetadataCollection.Build(new RpcMetadataBuildParams
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(MiddlewareTestHandler),
+                    },
+                    MiddlewareTypes = new []
+                    {
+                        typeof(NonConformingMiddleware)
+                    }
+                });
+            });
+        }
+        
+        public class NonConformingMiddleware
+        {
         }
     }
     
