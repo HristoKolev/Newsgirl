@@ -38,7 +38,7 @@ namespace Newsgirl.Shared.Tests
 
         private static async Task<(string, string)> RunConcurrentTest(Func<Func<Task>, Task> wrapperFunc)
         {
-            const int bufferSize = 50;
+            const int bufferSize = 100;
             const int iterationCount = 2;
 
             int[] buffer = new int[bufferSize];

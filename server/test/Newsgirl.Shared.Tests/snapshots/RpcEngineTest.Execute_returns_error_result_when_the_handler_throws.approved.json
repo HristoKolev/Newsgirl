@@ -1,0 +1,7 @@
+﻿{
+  "ErrorMessages": [
+    "ApplicationException: Testing the exception handling."
+  ],
+  "IsOk": false,
+  "Payload": null
+}

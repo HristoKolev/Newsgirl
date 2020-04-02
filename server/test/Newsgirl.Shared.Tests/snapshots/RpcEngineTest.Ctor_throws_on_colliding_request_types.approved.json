@@ -1,0 +1,11 @@
+﻿[
+  {
+    "Details": {},
+    "Fingerprint": null,
+    "Message": "Handler binding conflict. A request is bound to 2 or more handler methods.SimpleRequest1 => CollidingRequestsTestHandler.RpcMethod AND SimpleRequest1 => CollidingRequestsTestHandler.RpcMethod2",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "Newsgirl.Shared",
+    "HResult": -2146233088
+  }
+]
