@@ -11,10 +11,10 @@ namespace Newsgirl.Shared
 {
     public class RpcEngine
     {
-        private Dictionary<Type, RpcMetadata> metadataByRequestName;
+        private Dictionary<Type, RpcMetadata> metadataByRequestType;
         private readonly ILog log;
         
-        public List<RpcMetadata> Metadata { get; set; }
+        public List<RpcMetadata> Metadata { get; private set; }
 
         public RpcEngine(RpcEngineOptions options, ILog log)
         {
@@ -89,18 +89,16 @@ namespace Newsgirl.Shared
                 var taskWrappedResponseType = typeof(Task<>).MakeGenericType(metadata.ResponseType);
 
                 var resultAndTaskWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(Result<>).MakeGenericType(metadata.ResponseType));
-                
-                var supportedReturnTypes = new[]
-                {
-                    taskWrappedResponseType,
-                    resultAndTaskWrappedResponseType,
-                };
 
-                if (!supportedReturnTypes.Contains(metadata.HandlerMethod.ReturnType))
+                if (metadata.HandlerMethod.ReturnType == resultAndTaskWrappedResponseType)
+                {
+                    metadata.ReturnTypeIsResultWrapped = true;
+                }
+                else if (metadata.HandlerMethod.ReturnType != taskWrappedResponseType)
                 {
                     throw new DetailedLogException(
                         $"Only Task<{metadata.ResponseType}> and Task<Result<{metadata.ResponseType}>> are supported for" +
-                        $" handler method `{metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}`.");   
+                        $" handler method `{metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}`.");
                 }
 
                 var collidingMetadata = handlers.FirstOrDefault(x => x.RequestType == metadata.RequestType);
@@ -138,18 +136,18 @@ namespace Newsgirl.Shared
             }
 
             this.Metadata = handlers.OrderBy(x => x.RequestType.Name).ToList();
-
-            var metadataByRequestName = handlers.ToDictionary(x => x.RequestType, x => x);
-            
-            this.metadataByRequestName = metadataByRequestName;
+            this.metadataByRequestType = handlers.ToDictionary(x => x.RequestType, x => x);
         }
         
         private static RpcRequestDelegate CompileWithMiddleware(RpcMetadata metadata)
         {
             var getInstance = typeof(InstanceProvider).GetMethod("Get", new[] {typeof(Type)});
 
-            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType("RpcMiddlewareDynamicType+" + Guid.NewGuid(),
-                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.AutoClass | TypeAttributes.AnsiClass);
+            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
+                "RpcMiddlewareDynamicType+" + Guid.NewGuid(),
+                TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | 
+                TypeAttributes.Abstract | TypeAttributes.AutoClass | TypeAttributes.AnsiClass
+            );
 
             var delegateFieldMap = new Dictionary<MethodInfo, FieldBuilder>();
 
@@ -196,7 +194,11 @@ namespace Newsgirl.Shared
             executeHandlerGen.Emit(OpCodes.Ret);
 
             MethodInfo lastMethod = executeHandler;
-            delegateFieldMap.Add(executeHandler, typeBuilder.DefineField("executeHandlerDelegateField", typeof(RpcRequestDelegate), FieldAttributes.Private | FieldAttributes.Static));
+            delegateFieldMap.Add(executeHandler, typeBuilder.DefineField(
+                "executeHandlerDelegateField",
+                typeof(RpcRequestDelegate),
+    FieldAttributes.Private | FieldAttributes.Static
+            ));
 
             for (int i = metadata.MiddlewareTypes.Count - 1; i >= 0; i--)
             {
@@ -231,7 +233,12 @@ namespace Newsgirl.Shared
                 gen.Emit(OpCodes.Ret);
                 
                 lastMethod = currentMethod;
-                delegateFieldMap.Add(currentMethod, typeBuilder.DefineField("middlewareDelegateField" + i, typeof(RpcRequestDelegate), FieldAttributes.Private | FieldAttributes.Static));
+                
+                delegateFieldMap.Add(currentMethod, typeBuilder.DefineField(
+                    "middlewareDelegateField" + i, 
+                    typeof(RpcRequestDelegate), 
+                    FieldAttributes.Private | FieldAttributes.Static
+                ));
             }
             
             // initialize the delegate fields
@@ -260,7 +267,10 @@ namespace Newsgirl.Shared
             
             var run = methodInfo.CreateDelegate<RpcRequestDelegate>();
 
-            var initializeDelegateFields = dynamicType.GetMethod(initializeDelegateFieldsMethod.Name, BindingFlags.NonPublic | BindingFlags.Static)
+            var initializeDelegateFields = dynamicType.GetMethod(
+                initializeDelegateFieldsMethod.Name, 
+                BindingFlags.NonPublic | BindingFlags.Static
+            )
                 .CreateDelegate<Action>();
 
             initializeDelegateFields();
@@ -268,7 +278,7 @@ namespace Newsgirl.Shared
             return run;
         }
         
-        public async Task<Result<TResponse>> Execute<TResponse>(object request, InstanceProvider instanceProvider)
+        public async Task<Result<object>> Execute(object request, InstanceProvider instanceProvider)
         {
             if (request == null)
             {
@@ -280,7 +290,7 @@ namespace Newsgirl.Shared
             // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
 
-            if (!this.metadataByRequestName.TryGetValue(requestType, out metadata))
+            if (!this.metadataByRequestType.TryGetValue(requestType, out metadata))
             {
                 throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
             }
@@ -299,6 +309,70 @@ namespace Newsgirl.Shared
             catch (Exception err)
             {
                 await this.log.Error(err);
+                
+                return Result.Error<object>($"{err.GetType().Name}: {err.Message}");
+            }
+
+            switch (context.ResponseTask)
+            {
+                case Task<object> taskOfResponse:
+                {
+                    return Result.Ok(taskOfResponse.Result);
+                }
+                case Task<Result<object>> taskOfResultOfResponse:
+                {
+                    return taskOfResultOfResponse.Result;
+                }
+                case Task<Result> taskOfResult:
+                {
+                    return new Result<object>
+                    {
+                        ErrorMessages = taskOfResult.Result.ErrorMessages
+                    };
+                }
+                case null:
+                {
+                    return Result.Error<object>("Rpc response task is null.");
+                }
+                default:
+                {
+                    return Result.Error<object>("Rpc response task type is not supported.");
+                }
+            }
+        }
+
+        public async Task<Result<TResponse>> Execute<TResponse>(object request, InstanceProvider instanceProvider)
+        {
+            if (request == null)
+            {
+                throw new DetailedLogException("Request payload is null.");
+            }
+
+            var requestType = request.GetType();
+
+            // ReSharper disable once InlineOutVariableDeclaration
+            RpcMetadata metadata;
+
+            if (!this.metadataByRequestType.TryGetValue(requestType, out metadata))
+            {
+                throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
+            }
+
+            var context = new RpcContext
+            {
+                Items = new Dictionary<Type, object>(),
+                Metadata = metadata,
+                Request = request,
+            };
+
+            try
+            {
+                await metadata.CompiledMethod(context, instanceProvider);
+            }
+            catch (Exception err)
+            {
+                await this.log.Error(err);
+                
                 return Result.Error<TResponse>($"{err.GetType().Name}: {err.Message}");
             }
 
@@ -430,6 +504,8 @@ namespace Newsgirl.Shared
         public RpcRequestDelegate CompiledMethod { get; set; }
         
         public List<Type> MiddlewareTypes { get; set; }
+        
+        public bool ReturnTypeIsResultWrapped { get; set; }
     }
     
     /// <summary>
