@@ -342,6 +342,23 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
+        public async Task ExecuteObject_throws_on_null_message_payload()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler)
+                },
+            }, GetLog());
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute(null, GetDefaultInstanceProvider());
+            });
+        }
+        
+        [Fact]
         public async Task Execute_throws_when_it_cannot_match_a_handler()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
@@ -355,6 +372,23 @@ namespace Newsgirl.Shared.Tests
             await Snapshot.MatchError(async () =>
             {
                 await rpcEngine.Execute<NonRegisteredResponse>(new NonRegisteredRequest(), GetDefaultInstanceProvider());
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_throws_when_it_cannot_match_a_handler()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler)
+                },
+            }, GetLog());
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute(new NonRegisteredRequest(), GetDefaultInstanceProvider());
             });
         }
         
@@ -429,6 +463,22 @@ namespace Newsgirl.Shared.Tests
             }, GetLog());
             
             var result = await rpcEngine.Execute<ExecutorTestResponse>(new ExecutorTestRequest(), GetDefaultInstanceProvider());
+            
+            Snapshot.Match(result);
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_returns_error_result_when_the_handler_throws()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ThrowingExecutorTestHandler)
+                },
+            }, GetLog());
+            
+            var result = await rpcEngine.Execute(new ExecutorTestRequest(), GetDefaultInstanceProvider());
             
             Snapshot.Match(result);
         }
@@ -559,7 +609,9 @@ namespace Newsgirl.Shared.Tests
         public class MiddlewareOrderTestHandler
         {
             [RpcBind(typeof(MiddlewareTestRequest), typeof(MiddlewareTestResponse))]
+#pragma warning disable 1998
             public async Task<MiddlewareTestResponse> RpcMethod(MiddlewareTestRequest request)
+#pragma warning restore 1998
             {
                 request.Trace.Add(this.GetType().Name + "_HandlerMethod");
                 
@@ -654,7 +706,9 @@ namespace Newsgirl.Shared.Tests
             public static AdditionalArgumentModel AdditionalArg { get; set; }
             
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+#pragma warning disable 1998
             public async Task<SimpleResponse1> RpcMethod(SimpleRequest1 request, AdditionalArgumentModel additionalArgument)
+#pragma warning restore 1998
             {
                 AdditionalArg = additionalArgument;
 
@@ -700,7 +754,9 @@ namespace Newsgirl.Shared.Tests
             public static Result<SimpleResponse1> ResultValue { get; set; }
             
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+#pragma warning disable 1998
             public async Task<Result<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
+#pragma warning restore 1998
             {
                 ResultValue = Result.Ok(new SimpleResponse1());
                 return ResultValue;
@@ -731,7 +787,9 @@ namespace Newsgirl.Shared.Tests
         {
             public static string ErrorMessage { get; } = "test123";
             
+#pragma warning disable 1998
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+#pragma warning restore 1998
             {
                 context.SetResponse(Result.Error(ErrorMessage));
             }
@@ -759,7 +817,9 @@ namespace Newsgirl.Shared.Tests
         
         public class NullResponseTaskMiddleware : RpcMiddleware
         {
+#pragma warning disable 1998
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+#pragma warning restore 1998
             {
                 // do nothing, context.responseTask stays null 
             }
@@ -787,9 +847,164 @@ namespace Newsgirl.Shared.Tests
         
         public class UnsupportedResponseTypeMiddleware : RpcMiddleware
         {
+#pragma warning disable 1998
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+#pragma warning restore 1998
             {
                 context.SetResponse(new StringBuilder()); 
+            }
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_can_return_task_of_response()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ObjectTaskOfResponseTestHandler)
+                },
+            }, GetLog());
+
+            var request = new ExecutorTestRequest();
+            
+            var result = await rpcEngine.Execute(request, GetDefaultInstanceProvider());
+
+            var response = (ExecutorTestResponse)result.Payload;
+            
+            Assert.Equal(123, response.Number);
+        }
+
+        public class ObjectTaskOfResponseTestHandler
+        {
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<ExecutorTestResponse> RpcMethod1(ExecutorTestRequest req)
+            {
+                return Task.FromResult(new ExecutorTestResponse
+                {
+                    Number = 123
+                });
+            }
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_can_return_task_of_result_of_response()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ObjectTaskOfResultOfResponseTestHandler)
+                },
+            }, GetLog());
+
+            var request = new ExecutorTestRequest();
+            
+            var result = await rpcEngine.Execute(request, GetDefaultInstanceProvider());
+
+            var response = (ExecutorTestResponse)result.Payload;
+            
+            Assert.Equal(123, response.Number);
+        }
+
+        public class ObjectTaskOfResultOfResponseTestHandler
+        {
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            {
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse
+                {
+                    Number = 123
+                }));
+            }
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_can_return_task_of_result()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ObjectTaskOfResultTestHandler)
+                },
+                MiddlewareTypes = new []
+                {
+                    typeof(ObjectTaskOfResultMiddleware)
+                }
+            }, GetLog());
+
+            var request = new ExecutorTestRequest();
+            
+            var result = await rpcEngine.Execute(request, GetDefaultInstanceProvider());
+
+            Assert.Equal("test123", result.ErrorMessages[0]);
+        }
+
+        public class ObjectTaskOfResultTestHandler
+        {
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            {
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse
+                {
+                    Number = 123
+                }));
+            }
+        }
+        
+        public class ObjectTaskOfResultMiddleware : RpcMiddleware
+        {
+            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+            {
+                context.SetResponse(Result.Error("test123"));
+                context.ReturnVariant = ReturnVariant.TaskOfResult;
+
+                return Task.CompletedTask;
+            }
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_throws_when_return_variant_is_unknown()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(UnknownReturnVariantTestHandler)
+                },
+                MiddlewareTypes = new []
+                {
+                    typeof(UnknownReturnVariantMiddleware)
+                }
+            }, GetLog());
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute(new ExecutorTestRequest(), GetDefaultInstanceProvider());
+            });
+        }
+
+        public class UnknownReturnVariantTestHandler
+        {
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            {
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse
+                {
+                    Number = 123
+                }));
+            }
+        }
+        
+        public class UnknownReturnVariantMiddleware : RpcMiddleware
+        {
+            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+            {
+                context.SetResponse(Result.Error("test123"));
+                context.ReturnVariant = (ReturnVariant)100000;
+
+                return Task.CompletedTask;
             }
         }
         

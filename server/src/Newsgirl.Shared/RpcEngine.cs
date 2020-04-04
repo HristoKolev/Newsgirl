@@ -88,13 +88,17 @@ namespace Newsgirl.Shared
 
                 var taskWrappedResponseType = typeof(Task<>).MakeGenericType(metadata.ResponseType);
 
-                var resultAndTaskWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(Result<>).MakeGenericType(metadata.ResponseType));
+                var taskAndResultWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(Result<>).MakeGenericType(metadata.ResponseType));
 
-                if (metadata.HandlerMethod.ReturnType == resultAndTaskWrappedResponseType)
+                if (metadata.HandlerMethod.ReturnType == taskAndResultWrappedResponseType)
                 {
-                    metadata.ReturnTypeIsResultWrapped = true;
+                    metadata.DefaultReturnVariant = ReturnVariant.TaskOfResultOfResponse;
                 }
-                else if (metadata.HandlerMethod.ReturnType != taskWrappedResponseType)
+                else if (metadata.HandlerMethod.ReturnType == taskWrappedResponseType)
+                {
+                    metadata.DefaultReturnVariant = ReturnVariant.TaskOfResponse;
+                }
+                else
                 {
                     throw new DetailedLogException(
                         $"Only Task<{metadata.ResponseType}> and Task<Result<{metadata.ResponseType}>> are supported for" +
@@ -130,7 +134,11 @@ namespace Newsgirl.Shared
                     metadata.MiddlewareTypes = options.MiddlewareTypes.ToList();
                 }
 
-                metadata.CompiledMethod = CompileWithMiddleware(metadata);
+                metadata.CompiledMethod = CompileHandlerWithMiddleware(metadata);
+                
+                metadata.ConvertTaskOfResponse = GetConvertTaskOfResponse(metadata);
+                metadata.ConvertTaskOfResultOfResponse = GetConvertTaskOfResultOfResponse(metadata);
+                metadata.ConvertTaskOfResult = GetConvertTaskOfResult(metadata);
 
                 handlers.Add(metadata);
             }
@@ -138,8 +146,52 @@ namespace Newsgirl.Shared
             this.Metadata = handlers.OrderBy(x => x.RequestType.Name).ToList();
             this.metadataByRequestType = handlers.ToDictionary(x => x.RequestType, x => x);
         }
-        
-        private static RpcRequestDelegate CompileWithMiddleware(RpcMetadata metadata)
+
+        private static Func<Task, Result<object>> GetConvertTaskOfResult(RpcMetadata metadata)
+        {
+            var method = new DynamicMethod("convertTaskOfResult", typeof(Result<object>), new []{typeof(Task)});
+            
+            var il = method.GetILGenerator();
+            
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<Result>).GetProperty("Result")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Result).GetProperty("ErrorMessages")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Result).GetMethods().First(x => x.Name == "Error" && x.IsGenericMethod && x.GetParameters().First().ParameterType == typeof(string[])).MakeGenericMethod(typeof(object)));
+            il.Emit(OpCodes.Ret);
+            
+            return (Func<Task, Result<object>>)method.CreateDelegate(typeof(Func<Task, Result<object>>));
+        }
+
+        private static Func<Task, Result<object>> GetConvertTaskOfResultOfResponse(RpcMetadata metadata)
+        {
+            var method = new DynamicMethod("convertTaskOfResultOfResponse", typeof(Result<object>), new []{typeof(Task)});
+
+            var il = method.GetILGenerator();
+            
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(Result<>).MakeGenericType(metadata.ResponseType)).GetProperty("Result")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Result<>).MakeGenericType(metadata.ResponseType).GetProperty("Payload")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Result).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
+            il.Emit(OpCodes.Ret);
+
+            return (Func<Task, Result<object>>)method.CreateDelegate(typeof(Func<Task, Result<object>>));
+        }
+
+        private static Func<Task, Result<object>> GetConvertTaskOfResponse(RpcMetadata metadata)
+        {
+            var method = new DynamicMethod("convertTaskOfResponse", typeof(Result<object>), new []{typeof(Task)});
+
+            var il = method.GetILGenerator();
+            
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(metadata.ResponseType).GetProperty("Result")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Result).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
+            il.Emit(OpCodes.Ret);
+
+            return (Func<Task, Result<object>>)method.CreateDelegate(typeof(Func<Task, Result<object>>));
+        }
+
+        private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcMetadata metadata)
         {
             var getInstance = typeof(InstanceProvider).GetMethod("Get", new[] {typeof(Type)});
 
@@ -300,6 +352,7 @@ namespace Newsgirl.Shared
                 Items = new Dictionary<Type, object>(),
                 Metadata = metadata,
                 Request = request,
+                ReturnVariant = metadata.DefaultReturnVariant,
             };
 
             try
@@ -313,30 +366,23 @@ namespace Newsgirl.Shared
                 return Result.Error<object>($"{err.GetType().Name}: {err.Message}");
             }
 
-            switch (context.ResponseTask)
+            switch (context.ReturnVariant)
             {
-                case Task<object> taskOfResponse:
+                case ReturnVariant.TaskOfResponse:
                 {
-                    return Result.Ok(taskOfResponse.Result);
+                    return metadata.ConvertTaskOfResponse(context.ResponseTask);
                 }
-                case Task<Result<object>> taskOfResultOfResponse:
+                case ReturnVariant.TaskOfResultOfResponse:
                 {
-                    return taskOfResultOfResponse.Result;
+                    return metadata.ConvertTaskOfResultOfResponse(context.ResponseTask);
                 }
-                case Task<Result> taskOfResult:
+                case ReturnVariant.TaskOfResult:
                 {
-                    return new Result<object>
-                    {
-                        ErrorMessages = taskOfResult.Result.ErrorMessages
-                    };
-                }
-                case null:
-                {
-                    return Result.Error<object>("Rpc response task is null.");
+                    return metadata.ConvertTaskOfResult(context.ResponseTask);
                 }
                 default:
                 {
-                    return Result.Error<object>("Rpc response task type is not supported.");
+                    throw new DetailedLogException($"unknown ReturnVariant: {(int)context.ReturnVariant}.");
                 }
             }
         }
@@ -363,6 +409,7 @@ namespace Newsgirl.Shared
                 Items = new Dictionary<Type, object>(),
                 Metadata = metadata,
                 Request = request,
+                ReturnVariant = metadata.DefaultReturnVariant,
             };
 
             try
@@ -464,6 +511,7 @@ namespace Newsgirl.Shared
 
         public RpcMetadata Metadata { get; set; }
         
+        public ReturnVariant ReturnVariant { get; set; }
 
         public void SetResponse<T>(T result)
         {
@@ -487,6 +535,13 @@ namespace Newsgirl.Shared
         public Type[] HandlerArgumentTypeWhiteList { get; set; }
     }
 
+    public enum ReturnVariant
+    {
+        TaskOfResponse = 1,
+        TaskOfResultOfResponse = 2,
+        TaskOfResult = 3,
+    }
+
     public class RpcMetadata
     {
         public Type HandlerClass { get; set; }
@@ -505,7 +560,13 @@ namespace Newsgirl.Shared
         
         public List<Type> MiddlewareTypes { get; set; }
         
-        public bool ReturnTypeIsResultWrapped { get; set; }
+        public ReturnVariant DefaultReturnVariant { get; set; }
+        
+        public Func<Task, Result<object>> ConvertTaskOfResponse { get; set; }
+        
+        public Func<Task, Result<object>> ConvertTaskOfResultOfResponse { get; set; }
+        
+        public Func<Task, Result<object>> ConvertTaskOfResult { get; set; }
     }
     
     /// <summary>
