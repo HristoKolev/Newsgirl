@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <LangVersion>latest</LangVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>

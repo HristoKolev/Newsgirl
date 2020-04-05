@@ -7,13 +7,12 @@
         <OutputType>Exe</OutputType>
         <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
 
-        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <LangVersion>latest</LangVersion>
         <IsPackable>false</IsPackable>  
         <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
+        <DebugType>portable</DebugType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>        
-    </PropertyGroup> 
+    </PropertyGroup>    
 
     <ItemGroup>
       <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
