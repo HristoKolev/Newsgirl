@@ -1,18 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
 
-    <ItemGroup>
-      <PackageReference Include="Autofac" Version="5.1.2" />
-      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-      <PackageReference Include="PgNet" Version="1.0.6" />
-      <PackageReference Include="Sentry" Version="2.1.0" />
-      <PackageReference Include="System.Reactive" Version="4.3.1" />
-      <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-      <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    </ItemGroup>
+    <IsPackable>false</IsPackable>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="5.1.2"/>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3"/>
+    <PackageReference Include="PgNet" Version="1.0.6"/>
+    <PackageReference Include="Sentry" Version="2.1.0"/>
+    <PackageReference Include="System.Reactive" Version="4.3.1"/>
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0"/>
+  </ItemGroup>
 
 </Project>
