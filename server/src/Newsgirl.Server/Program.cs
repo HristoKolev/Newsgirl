@@ -1,76 +1,130 @@
 using System;
-using System.Net;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Newsgirl.Server
 {
-    public class Program
+    public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            
+            var config = new HttpServerConfig
+            {
+                BindAddresses = new []{"http://127.0.0.1:5000"},
+            };
+
+            await using (var server = await AspNetCoreHttpServer.Start(config))
+            {
+            }
         }
     }
 
-    public class HttpServer : IAsyncDisposable
+    public class AspNetCoreHttpServer : IAsyncDisposable
     {
-        private readonly IWebHost webHost;
-        
-        private HttpServer(IWebHost webHost)
+        private HttpServerConfig config;
+        private IWebHost webHost;
+
+        private AspNetCoreHttpServer()
         {
-            this.webHost = webHost;
         }
         
-        public static async Task<HttpServer> Listen()
+        public static async Task<AspNetCoreHttpServer> Start(HttpServerConfig config)
         {
             var host = new WebHostBuilder()
-                .UseKestrel(ConfigureKestrel)
+                .UseKestrel()
+                .ConfigureKestrel(ConfigureKestrel)
                 .Configure(Configure)
                 .ConfigureServices(ConfigureServices)
-                .UseSetting(WebHostDefaults.EnvironmentKey, "production")
-                .UseSetting(WebHostDefaults.CaptureStartupErrorsKey, "false" )
-                .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "true")
-                .UseUrls()
+                .UseEnvironment("production")
+                .CaptureStartupErrors(false)
+                .SuppressStatusMessages(true)
+                .UseUrls(config.BindAddresses)
                 .Build();
 
-            await host.StartAsync();
-            
-            return new HttpServer(host);
+            var server = new AspNetCoreHttpServer
+            {
+                config = config,
+                webHost = host
+            };
+
+            await server.webHost.StartAsync(new CancellationTokenSource(config.StartTimeout).Token);
+
+            return server;
         }
 
         private static void ConfigureKestrel(KestrelServerOptions options)
         {
             options.AddServerHeader = false;
-            options.Listen(IPAddress.Parse("127.0.0.1"), 5000);
         }
         
-        private static void ConfigureServices(WebHostBuilderContext webHostBuilderContext, IServiceCollection serviceCollection)
+        private static void ConfigureServices(IServiceCollection serviceCollection)
         {
             serviceCollection.AddLogging(x => x.ClearProviders());
         }
         
-        private static void Configure(WebHostBuilderContext webHostBuilderContext, IApplicationBuilder applicationBuilder)
+        private static void Configure(IApplicationBuilder app)
         {
-            // lifetime.ApplicationStarted.Register(() => Console.WriteLine("[SYSTEM] Web server is up on http://127.0.0.1:5000. Press Ctrl+C to shut down."));
-            // lifetime.ApplicationStopping.Register(() => Console.WriteLine("[SYSTEM] Web server is shutting down..."));
-            // lifetime.ApplicationStopped.Register(() => Console.WriteLine("[SYSTEM] Web server is down."));
+            var lifetime = app.ApplicationServices.GetService<IHostApplicationLifetime>();
+
+            var addresses = app.ServerFeatures.Get<IServerAddressesFeature>().Addresses.ToList();
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                Console.WriteLine($"HTTP server is UP on {string.Join("; ", addresses)}.");
+            });
+            
+            lifetime.ApplicationStopping.Register(() =>
+            {
+                Console.WriteLine($"HTTP server is shutting down...");
+            });
+            
+            lifetime.ApplicationStopped.Register(() =>
+            {
+                Console.WriteLine($"HTTP server is down...");
+            });
         }
 
         public async ValueTask DisposeAsync()
         {
-            await this.webHost.StopAsync();
+            await this.webHost.StopAsync(new CancellationTokenSource(this.config.StopTimeout).Token);
             
             if (this.webHost is IAsyncDisposable asyncDisposable)
             {
                 await asyncDisposable.DisposeAsync();
             }
-
-            throw new ApplicationException($"Host type {this.webHost.GetType().Name} is not IAsyncDisposable.");
+            else
+            {
+                throw new ApplicationException($"Host type {this.webHost.GetType().Name} is not IAsyncDisposable.");                
+            }
         }
+    }
+
+    public class HttpServerConfig
+    {
+        public HttpServerConfig()
+        {
+            this.StartTimeout = TimeSpan.FromSeconds(1);
+            this.StopTimeout = TimeSpan.FromSeconds(1);
+        }
+        
+        public string[] BindAddresses { get; set; }
+        
+        public TimeSpan StartTimeout { get; set; }
+        
+        public TimeSpan StopTimeout { get; set; }
+    }
+
+    public interface HttpServer : IAsyncDisposable
+    {
+        
     }
 }
