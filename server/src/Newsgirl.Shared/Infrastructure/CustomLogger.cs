@@ -16,21 +16,33 @@ namespace Newsgirl.Shared.Infrastructure
         private readonly CustomLoggerConfig config;
         private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
-        private readonly ISentryClient sentryClient;
+        private ISentryClient sentryClient;
         
         public CustomLogger(CustomLoggerConfig config)
         {
             this.config = config;
             this.sentryFlushLock = new AsyncLock();
             this.sentryFlushTimeout = TimeSpan.FromSeconds(60);
-            this.sentryClient = new SentryClient(new SentryOptions
+
+            if (!this.config.DisableSentryIntegration)
             {
-                AttachStacktrace = true,
-                Dsn = new Dsn(config.SentryDsn),
-                Release = config.Release,
-            });
+                this.CreateSentryClient();    
+            }
         }
-        
+
+        private void CreateSentryClient()
+        {
+            if (this.sentryClient == null)
+            {
+                this.sentryClient = new SentryClient(new SentryOptions
+                {
+                    AttachStacktrace = true,
+                    Dsn = new Dsn(this.config.SentryDsn),
+                    Release = this.config.Release,
+                });                
+            }
+        }
+
         public void Debug(string message)
         {
             if (!this.config.EnableDebug)
@@ -76,6 +88,8 @@ namespace Newsgirl.Shared.Infrastructure
 
         private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo)
         {
+            this.CreateSentryClient();
+            
             var sentryEvent = new SentryEvent(exception)
             {
                 Level = SentryLevel.Error,

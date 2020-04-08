@@ -17,4 +17,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
