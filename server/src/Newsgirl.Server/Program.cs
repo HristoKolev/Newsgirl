@@ -1,6 +1,11 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,11 +25,13 @@ namespace Newsgirl.Server
     {
         public static async Task Main(string[] args)
         {
+            string address = "http://127.0.0.1:5000";
+            
             var config = new HttpServerConfig
             {
                 BindAddresses = new []
                 {
-                    "http://127.0.0.1:5000"
+                    address
                 },
             };
             
@@ -36,13 +43,57 @@ namespace Newsgirl.Server
             
             var server = new AspNetCoreHttpServerImpl(log, config);
 
-            await server.Start((ctx) =>
-            {
-                log.Log(ctx.Request.Path);
-                return Task.CompletedTask;
-            });
+            await server.Start(ProcessRequest);
             
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri(address) 
+            };
+
+            var data = new string('a', 100 * 1024 * 1024);
+
+            var response = await client.PostAsync("/", new StringContent(data, EncodingHelper.UTF8));
+
             await server.Stop();
+        }
+
+        private static async Task ProcessRequest(HttpContext context)
+        {
+            int contentLength = (int)context.Request.ContentLength.Value;
+
+            var bufferPool = ArrayPool<byte>.Shared;
+            
+            byte[] buffer = bufferPool.Rent(contentLength);
+
+            var stream = context.Request.Body;
+
+            try
+            {
+                try
+                {
+                    while (true)
+                    {
+                        int read;
+
+                        int offset = 0;
+
+                        while ((read = await stream.ReadAsync(buffer, offset, contentLength - offset)) > 0)
+                        {
+                            offset += read;
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    bufferPool.Return(buffer);
+                    throw;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
     }
 
@@ -66,6 +117,7 @@ namespace Newsgirl.Server
                 .ConfigureKestrel(options =>
                 {
                     options.AddServerHeader = false;
+                    options.AllowSynchronousIO = false;
                 })
                 .Configure(this.Configure)
                 .ConfigureServices(serviceCollection =>
