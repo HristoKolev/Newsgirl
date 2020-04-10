@@ -1,14 +1,10 @@
 using System;
 using System.Buffers;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -23,6 +19,8 @@ namespace Newsgirl.Server
 {
     public static class Program
     {
+        public static string CorrectString = null;
+        
         public static async Task Main(string[] args)
         {
             string address = "http://127.0.0.1:5000";
@@ -50,8 +48,12 @@ namespace Newsgirl.Server
                 BaseAddress = new Uri(address) 
             };
 
-            var data = new string('a', 100 * 1024 * 1024);
+            var random = new Random(123);
+            
+            var data = string.Join("", Enumerable.Range(0, 100 * 1024).Select(i => random.Next(i).ToString()));
 
+            CorrectString = data;
+            
             var response = await client.PostAsync("/", new StringContent(data, EncodingHelper.UTF8));
 
             await server.Stop();
@@ -60,39 +62,77 @@ namespace Newsgirl.Server
         private static async Task ProcessRequest(HttpContext context)
         {
             int contentLength = (int)context.Request.ContentLength.Value;
-
             var bufferPool = ArrayPool<byte>.Shared;
-            
-            byte[] buffer = bufferPool.Rent(contentLength);
-
             var stream = context.Request.Body;
+            
+            byte[] requestBodyBytes = bufferPool.Rent(contentLength);
 
             try
             {
+                while (await stream.ReadAsync(requestBodyBytes) > 0) {}
+            }
+            catch (Exception err)
+            {
+                bufferPool.Return(requestBodyBytes);
+                throw new DetailedLogException("An error occurred while reading the HTTP request body.", err)
+                {
+                    Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
+                    Details =
+                    {
+                        {"contentLength", contentLength},
+                    }
+                };
+            }
+
+            string requestBodyString;
+
+            static string ParseUtf8(byte[] bytes, int length)
+            {
+                return EncodingHelper.UTF8.GetString(new ReadOnlySpan<byte>(bytes, 0, length)); 
+            }
+
+            try
+            {
+                requestBodyString = ParseUtf8(requestBodyBytes, contentLength);
+            }
+            catch (Exception err)
+            {
+                throw new DetailedLogException("Failed to parse UTF8 from HTTP request body.", err)
+                {
+                    Fingerprint = "HTTP_FAILED_TO_PARSE_UTF8_REQUEST_BODY",
+                    Details =
+                    {
+                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes, 0, contentLength)}
+                    }
+                };
+            }
+            finally
+            {
+                bufferPool.Return(requestBodyBytes);
+            }
+
+            Console.WriteLine($"requestBodyBytes.Length: {requestBodyBytes.Length}");
+            Console.WriteLine($"contentLength: {contentLength}");
+            Console.WriteLine($"requestBodyString.Length: {requestBodyString.Length}");
+            Console.WriteLine($"requestBodyString == CorrectString: {requestBodyString == CorrectString}");
+
+            if (!context.RequestAborted.IsCancellationRequested)
+            {
+                byte[] requestBodyBytes = bufferPool.Rent(contentLength);
+                
+                EncodingHelper.UTF8.
+                
+                
                 try
                 {
-                    while (true)
-                    {
-                        int read;
 
-                        int offset = 0;
-
-                        while ((read = await stream.ReadAsync(buffer, offset, contentLength - offset)) > 0)
-                        {
-                            offset += read;
-                        }
-                    }
                 }
-                catch (Exception)
+                finally
                 {
-                    bufferPool.Return(buffer);
-                    throw;
+                    
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
+                
+                context.Response.Body.WriteAsync()
             }
         }
     }
