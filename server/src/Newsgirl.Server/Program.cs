@@ -19,8 +19,6 @@ namespace Newsgirl.Server
 {
     public static class Program
     {
-        public static string CorrectString = null;
-        
         public static async Task Main(string[] args)
         {
             string address = "http://127.0.0.1:5000";
@@ -50,30 +48,35 @@ namespace Newsgirl.Server
 
             var random = new Random(123);
             
-            var data = string.Join("", Enumerable.Range(0, 100 * 1024).Select(i => random.Next(i).ToString()));
+            string data = string.Join("", Enumerable.Range(0, 100 * 1024).Select(i => random.Next(i).ToString()));
 
-            CorrectString = data;
-            
             var response = await client.PostAsync("/", new StringContent(data, EncodingHelper.UTF8));
+
+            byte[] responseBytes = await response.Content.ReadAsByteArrayAsync();
+            string responseString = EncodingHelper.UTF8.GetString(responseBytes);
+
+            Console.WriteLine(data == responseString);
 
             await server.Stop();
         }
 
         private static async Task ProcessRequest(HttpContext context)
         {
+            // Read request bytes.
             int contentLength = (int)context.Request.ContentLength.Value;
             var bufferPool = ArrayPool<byte>.Shared;
-            var stream = context.Request.Body;
+            var requestStream = context.Request.Body;
             
-            byte[] requestBodyBytes = bufferPool.Rent(contentLength);
+            byte[] requestBuffer = bufferPool.Rent(contentLength);
 
             try
             {
-                while (await stream.ReadAsync(requestBodyBytes) > 0) {}
+                while (await requestStream.ReadAsync(requestBuffer) > 0) {}
             }
             catch (Exception err)
             {
-                bufferPool.Return(requestBodyBytes);
+                bufferPool.Return(requestBuffer);
+                
                 throw new DetailedLogException("An error occurred while reading the HTTP request body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
@@ -84,55 +87,76 @@ namespace Newsgirl.Server
                 };
             }
 
-            string requestBodyString;
-
-            static string ParseUtf8(byte[] bytes, int length)
+            // Decode UTF8.
+            static string DecodeUtf8(byte[] bytes, int length)
             {
                 return EncodingHelper.UTF8.GetString(new ReadOnlySpan<byte>(bytes, 0, length)); 
             }
+            
+            string requestBodyString;
 
             try
             {
-                requestBodyString = ParseUtf8(requestBodyBytes, contentLength);
+                requestBodyString = DecodeUtf8(requestBuffer, contentLength);
             }
             catch (Exception err)
             {
-                throw new DetailedLogException("Failed to parse UTF8 from HTTP request body.", err)
+                throw new DetailedLogException("Failed to decode UTF8 from HTTP request body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_PARSE_UTF8_REQUEST_BODY",
+                    Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
                     Details =
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes, 0, contentLength)}
+                        {"requestBodyBytes", Convert.ToBase64String(requestBuffer, 0, contentLength)}
                     }
                 };
             }
             finally
             {
-                bufferPool.Return(requestBodyBytes);
+                bufferPool.Return(requestBuffer);
             }
 
-            Console.WriteLine($"requestBodyBytes.Length: {requestBodyBytes.Length}");
-            Console.WriteLine($"contentLength: {contentLength}");
-            Console.WriteLine($"requestBodyString.Length: {requestBodyString.Length}");
-            Console.WriteLine($"requestBodyString == CorrectString: {requestBodyString == CorrectString}");
+            // Process request data.
+            string responseBodyString = requestBodyString;
+            
+            byte[] responseBuffer = bufferPool.Rent(EncodingHelper.UTF8.GetMaxByteCount(responseBodyString.Length));
 
-            if (!context.RequestAborted.IsCancellationRequested)
+            // Encode UTF8.
+            int utf8EncodedByteLength;
+
+            try
             {
-                byte[] requestBodyBytes = bufferPool.Rent(contentLength);
+                var encoder = EncodingHelper.UTF8.GetEncoder();
+                utf8EncodedByteLength = encoder.GetBytes(responseBodyString, responseBuffer, true);
+            }
+            catch (Exception err)
+            {
+                bufferPool.Return(responseBuffer);
                 
-                EncodingHelper.UTF8.
-                
-                
-                try
+                throw new DetailedLogException("Failed to encode UTF8 response body.", err)
                 {
+                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
+                };
+            }
 
-                }
-                finally
-                {
-                    
-                }
+            // Write to response.
+            try
+            {
+                var responseStream = context.Response.Body;
                 
-                context.Response.Body.WriteAsync()
+                context.Response.StatusCode = 200;
+                await responseStream.WriteAsync(responseBuffer, 0, utf8EncodedByteLength);
+                await responseStream.FlushAsync();
+            }
+            catch (Exception err)
+            {
+                throw new DetailedLogException("Failed to write HTTP response body.", err)
+                {
+                    Fingerprint = "HTTP_FAILED_TO_WRITE_RESPONSE_BODY",
+                };
+            }
+            finally
+            {
+                bufferPool.Return(responseBuffer);
             }
         }
     }
