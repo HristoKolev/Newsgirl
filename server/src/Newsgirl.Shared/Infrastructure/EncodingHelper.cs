@@ -10,6 +10,6 @@ namespace Newsgirl.Shared.Infrastructure
         /// * Throws when reading invalid input.  
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public static readonly Encoding UTF8 = new UTF8Encoding(false, true);
+        public static readonly UTF8Encoding UTF8 = new UTF8Encoding(false, true);
     }
 }

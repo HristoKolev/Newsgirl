@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Newsgirl.Server\Newsgirl.Server.csproj" />
     <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj" />
   </ItemGroup>
 
