@@ -1,10 +1,9 @@
 using System;
 using System.Buffers;
-using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newsgirl.Shared.Infrastructure;
@@ -122,63 +121,87 @@ namespace Newsgirl.Server
 
     public static class HttpServerHelpers
     {
-        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
+        private static void WriteBatch(ReadOnlySpan<char> batchCharacters, PipeWriter bodyWriter, int batchBufferSize, Encoder encoder, bool flush)
         {
-            // The default
-            var bufferPool = ArrayPool<byte>.Shared;
-
-            // A big waste of memory. This ends up being 3x+ the length of the string, but we have to be safe.
-            int maxByteCount = EncodingHelper.UTF8.GetMaxByteCount(responseBodyString.Length);
-            
-            // Borrowing from the default pool will allocate if writing a string that is more than ~350 000 characters.
-            byte[] responseBuffer = bufferPool.Rent(maxByteCount);
-
-            // Encode UTF8.
-            int utf8EncodedByteLength;
-
             try
             {
-                // EncoderNLS is or at least should be stateful.
-                // I don't know how much it matters if I'm throwing on invalid input, but I cant risk to use it concurrently.
-                // +1 allocation.
-                var encoder = EncodingHelper.UTF8.GetEncoder();
+                var buffer = bodyWriter.GetSpan(batchBufferSize);
                 
-                // The flush here should not matter,  
-                utf8EncodedByteLength = encoder.GetBytes(responseBodyString, responseBuffer, true);
+                int bytesWritten = encoder.GetBytes(batchCharacters, buffer, flush);
+
+                bodyWriter.Advance(bytesWritten);    
             }
             catch (Exception err)
             {
-                bufferPool.Return(responseBuffer);
-
                 throw new DetailedLogException("Failed to encode UTF8 response body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
                 };
             }
+        }
 
-            // Write to response.
+        private static async ValueTask FlushPipe(PipeWriter bodyWriter)
+        {
             try
             {
-                var responseStream = response.Body;
-
-                await responseStream.WriteAsync(responseBuffer, 0, utf8EncodedByteLength);
-                await responseStream.FlushAsync();
+                await bodyWriter.FlushAsync();
             }
             catch (Exception err)
             {
-                throw new DetailedLogException("Failed to write HTTP response body.", err)
+                throw new DetailedLogException("Failed to write to HTTP response body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_WRITE_RESPONSE_BODY",
+                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY",
                 };
             }
-            finally
-            {
-                bufferPool.Return(responseBuffer);
-            }
         }
-    }
+        
+        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
+        {
+            var pipeWriter = response.BodyWriter;
+            
+            // EncoderNLS is or at least should be stateful.
+            // +1 allocation.
+            var encoder = EncodingHelper.UTF8.GetEncoder();
+            
+            // How many characters to write at a time.
+            const int CHAR_BATCH_SIZE = 8192;
 
-    public class Model
-    {
+            // A big waste of memory. This ends up being 3x+ the length of the string, but we have to be safe. 
+            int batchBufferSize = EncodingHelper.UTF8.GetMaxByteCount(CHAR_BATCH_SIZE);
+
+            int numberOfBatches = responseBodyString.Length / CHAR_BATCH_SIZE;
+            int remaining = responseBodyString.Length % CHAR_BATCH_SIZE;
+
+            // Used to calculate when to set flush.
+            bool noLeftoverCars = remaining == 0;
+
+            for (int i = 0; i < numberOfBatches; i++)
+            {
+                WriteBatch(
+                    responseBodyString.AsSpan().Slice(i * CHAR_BATCH_SIZE, CHAR_BATCH_SIZE), 
+                    pipeWriter,
+                    batchBufferSize,
+                    encoder,
+                    noLeftoverCars && i == numberOfBatches -1
+                );
+                
+                await FlushPipe(pipeWriter);
+            }
+
+            if (remaining > 0)
+            {
+                WriteBatch(
+                    responseBodyString.AsSpan().Slice(numberOfBatches * CHAR_BATCH_SIZE, remaining), 
+                    pipeWriter,
+                    batchBufferSize,
+                    encoder,
+                    true
+                );
+                 
+                await FlushPipe(pipeWriter);
+            }
+
+            pipeWriter.Complete();
+        }
     }
 }
