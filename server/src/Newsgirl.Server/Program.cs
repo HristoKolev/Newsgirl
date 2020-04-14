@@ -1,9 +1,7 @@
 using System;
 using System.Buffers;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newsgirl.Shared.Infrastructure;
@@ -116,92 +114,6 @@ namespace Newsgirl.Server
             context.Response.StatusCode = 200;
 
             await context.Response.WriteUtf8(responseBodyString);
-        }
-    }
-
-    public static class HttpServerHelpers
-    {
-        private static void WriteBatch(ReadOnlySpan<char> batchCharacters, PipeWriter bodyWriter, int batchBufferSize, Encoder encoder, bool flush)
-        {
-            try
-            {
-                var buffer = bodyWriter.GetSpan(batchBufferSize);
-                
-                int bytesWritten = encoder.GetBytes(batchCharacters, buffer, flush);
-
-                bodyWriter.Advance(bytesWritten);    
-            }
-            catch (Exception err)
-            {
-                throw new DetailedLogException("Failed to encode UTF8 response body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
-                };
-            }
-        }
-
-        private static async ValueTask FlushPipe(PipeWriter bodyWriter)
-        {
-            try
-            {
-                await bodyWriter.FlushAsync();
-            }
-            catch (Exception err)
-            {
-                throw new DetailedLogException("Failed to write to HTTP response body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY",
-                };
-            }
-        }
-        
-        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
-        {
-            var pipeWriter = response.BodyWriter;
-            
-            // EncoderNLS is or at least should be stateful.
-            // +1 allocation.
-            var encoder = EncodingHelper.UTF8.GetEncoder();
-            
-            // How many characters to write at a time.
-            const int CHAR_BATCH_SIZE = 8192;
-
-            // A big waste of memory. This ends up being 3x+ the length of the string, but we have to be safe. 
-            int batchBufferSize = EncodingHelper.UTF8.GetMaxByteCount(CHAR_BATCH_SIZE);
-
-            int numberOfBatches = responseBodyString.Length / CHAR_BATCH_SIZE;
-            int remaining = responseBodyString.Length % CHAR_BATCH_SIZE;
-
-            // Used to calculate when to set flush.
-            bool noLeftoverCars = remaining == 0;
-
-            for (int i = 0; i < numberOfBatches; i++)
-            {
-                WriteBatch(
-                    responseBodyString.AsSpan().Slice(i * CHAR_BATCH_SIZE, CHAR_BATCH_SIZE), 
-                    pipeWriter,
-                    batchBufferSize,
-                    encoder,
-                    noLeftoverCars && i == numberOfBatches -1
-                );
-                
-                await FlushPipe(pipeWriter);
-            }
-
-            if (remaining > 0)
-            {
-                WriteBatch(
-                    responseBodyString.AsSpan().Slice(numberOfBatches * CHAR_BATCH_SIZE, remaining), 
-                    pipeWriter,
-                    batchBufferSize,
-                    encoder,
-                    true
-                );
-                 
-                await FlushPipe(pipeWriter);
-            }
-
-            pipeWriter.Complete();
         }
     }
 }

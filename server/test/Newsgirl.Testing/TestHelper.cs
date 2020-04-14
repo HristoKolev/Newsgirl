@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
 using ApprovalTests;
 using ApprovalTests.Core;
 using ApprovalTests.Namers;
@@ -18,7 +17,6 @@ using Npgsql;
 using NSubstitute;
 using Xunit;
 using Xunit.Sdk;
-
 using Newsgirl.Shared.Data;
 using Newsgirl.Shared.Infrastructure;
 using Newsgirl.Testing;
@@ -36,12 +34,11 @@ namespace Newsgirl.Testing
 
         public static async Task<string> GetResourceText(string name)
         {
-            var content = await File.ReadAllTextAsync($"../../../resources/{name}");
+            var bytes = await GetResourceBytes(name);
 
-            return content;
+            return EncodingHelper.UTF8.GetString(bytes);
         }
-        
-        
+
         public static async Task<byte[]> GetResourceBytes(string name)
         {
             var content = await File.ReadAllBytesAsync($"../../../resources/{name}");
@@ -49,7 +46,6 @@ namespace Newsgirl.Testing
             return content;
         }
 
-        
         public static async Task<string> GetSql(string name)
         {
             string content = await ResourceHelper.GetString($"sql.{name}");
@@ -58,7 +54,6 @@ namespace Newsgirl.Testing
         }
 
         public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        
 
         public static IDateProvider DateProviderStub
         {
@@ -69,7 +64,7 @@ namespace Newsgirl.Testing
                 return dateStub;
             }
         }
-        
+
         public static ILog LogStub
         {
             get
@@ -78,16 +73,19 @@ namespace Newsgirl.Testing
                 return logStub;
             }
         }
-        
+
         public static ITransactionService TransactionServiceStub
         {
             get
             {
                 var transactionService = Substitute.For<ITransactionService>();
-                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>()).Returns(info => info.Arg<Func<Task>>()());
-                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
-                transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction,Task>>()).Returns(Task.CompletedTask);
-                
+                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>())
+                    .Returns(info => info.Arg<Func<Task>>()());
+                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction, Task>>())
+                    .Returns(Task.CompletedTask);
+                transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction, Task>>())
+                    .Returns(Task.CompletedTask);
+
                 return transactionService;
             }
         }
@@ -102,10 +100,8 @@ namespace Newsgirl.Testing
                     {
                         if (_testConfig == null)
                         {
-                            
-                            
                             string json = ResourceHelper.GetString("test-config.json").Result;
-                            
+
                             _testConfig = JsonConvert.DeserializeObject<TestConfig>(json);
                         }
                     }
@@ -114,7 +110,6 @@ namespace Newsgirl.Testing
                 return _testConfig;
             }
         }
-
     }
 
     public class TestConfig
@@ -128,10 +123,10 @@ namespace Newsgirl.Testing
         {
             string approvedContent = File.Exists(approved) ? File.ReadAllText(approved) : "";
             string receivedContent = File.ReadAllText(received);
-            
+
             try
             {
-                Assert.Equal(approvedContent, receivedContent);   
+                Assert.Equal(approvedContent, receivedContent);
             }
             catch (EqualException ex)
             {
@@ -144,9 +139,9 @@ namespace Newsgirl.Testing
 
                 var field = typeof(EqualException)
                     .GetField("message", BindingFlags.Instance | BindingFlags.NonPublic);
-                
+
                 field.SetValue(ex, message);
-                
+
                 throw;
             }
         }
@@ -154,12 +149,13 @@ namespace Newsgirl.Testing
 
     public static class Snapshot
     {
-        private static readonly string[] IgnoredExceptionFields = {
+        private static readonly string[] IgnoredExceptionFields =
+        {
             "InnerException",
             "StackTrace",
             "StackTraceString",
         };
-        
+
         public static void Match<T>(T obj, string[] parameters = null)
         {
             string json = Serialize(obj);
@@ -168,10 +164,10 @@ namespace Newsgirl.Testing
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
             }
-            
+
             Approvals.VerifyWithExtension(json, ".json");
         }
-        
+
         public static void MatchError(Exception exception, string[] parameters = null)
         {
             var exceptions = new List<Exception>();
@@ -200,14 +196,14 @@ namespace Newsgirl.Testing
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
             }
-            
+
             Approvals.VerifyWithExtension(json, ".json");
         }
-        
+
         public static void MatchError(Action func, string[] parameters = null)
         {
             Exception exception = null;
-            
+
             try
             {
                 func();
@@ -216,14 +212,14 @@ namespace Newsgirl.Testing
             {
                 exception = err;
             }
-            
+
             MatchError(exception, parameters);
         }
-        
+
         public static async Task MatchError(Func<Task> func, string[] parameters = null)
         {
             Exception exception = null;
-            
+
             try
             {
                 await func();
@@ -232,42 +228,54 @@ namespace Newsgirl.Testing
             {
                 exception = err;
             }
-            
+
             MatchError(exception, parameters);
         }
 
         private static string Serialize(object obj)
         {
-            
             var settings = new JsonSerializerSettings
             {
                 ContractResolver = SortedPropertiesContractResolver.Instance
             };
 
             string json = JsonConvert.SerializeObject(obj, settings);
-            
+
             string formatJson = JsonPrettyPrint.FormatJson(json);
 
             return formatJson;
         }
     }
-    
+
+    public static class AssertExt
+    {
+        public static void EqualByteArray(byte[] expected, byte[] actual)
+        {
+            Assert.Equal(expected.Length, actual.Length);
+
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Assert.Equal(expected[i], actual[i]);
+            }
+        }
+    }
+
     public static class JsonPrettyPrint
     {
         private const string IndentString = "  ";
-        
+
         public static string FormatJson(string str)
         {
             var indent = 0;
-            
+
             var quoted = false;
-            
+
             var sb = new StringBuilder();
-            
+
             for (var i = 0; i < str.Length; i++)
             {
                 var ch = str[i];
-                
+
                 switch (ch)
                 {
                     case '{':
@@ -373,9 +381,9 @@ namespace Newsgirl.Testing
             }
 
             return sb.ToString();
-        }         
+        }
     }
-    
+
     public abstract class DatabaseTest : IAsyncLifetime
     {
         /// <summary>
@@ -399,14 +407,14 @@ namespace Newsgirl.Testing
 
             foreach (string sql in parts)
             {
-                await this.Db.ExecuteNonQuery(sql);                
+                await this.Db.ExecuteNonQuery(sql);
             }
         }
 
         private NpgsqlTransaction Tx { get; set; }
-        
+
         protected NpgsqlConnection DbConnection { get; private set; }
-        
+
         protected DbService Db { get; private set; }
 
         /// <summary>
@@ -418,23 +426,26 @@ namespace Newsgirl.Testing
             await this.Tx.RollbackAsync();
 
             await this.DbConnection.DisposeAsync();
-            
+
             this.Db.Dispose();
         }
     }
-    
+
     public class SortedPropertiesContractResolver : DefaultContractResolver
     {
         // use a static instance for optimal performance
 
-        static SortedPropertiesContractResolver() { Instance = new SortedPropertiesContractResolver(); }
+        static SortedPropertiesContractResolver()
+        {
+            Instance = new SortedPropertiesContractResolver();
+        }
 
         public static SortedPropertiesContractResolver Instance { get; }
 
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {
             var properties = base.CreateProperties(type, memberSerialization);
-            
+
             if (properties != null)
             {
                 return properties.OrderBy(p => p.UnderlyingName).ToList();
@@ -443,15 +454,16 @@ namespace Newsgirl.Testing
             return properties;
         }
     }
-    
+
     public static class ResourceHelper
     {
         public static async Task<string> GetString(string resourceName)
         {
             var assembly = typeof(ResourceHelper).Assembly;
 
-            var resourceStream = assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
-            
+            var resourceStream =
+                assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
+
             using (var reader = new StreamReader(resourceStream, EncodingHelper.UTF8))
             {
                 return await reader.ReadToEndAsync();
