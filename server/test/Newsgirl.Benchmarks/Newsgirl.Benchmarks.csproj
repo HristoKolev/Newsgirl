@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Exe</OutputType>
+
+    <IsPackable>false</IsPackable>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+ 
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Newsgirl.Server\Newsgirl.Server.csproj" />
+    <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Properties\launchSettings.json" />
+  </ItemGroup>
+</Project>

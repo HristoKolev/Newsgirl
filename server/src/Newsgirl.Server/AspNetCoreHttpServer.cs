@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +21,7 @@ namespace Newsgirl.Server
     {
         private readonly ILog log;
         private readonly HttpServerConfig config;
-        private IWebHost webHost;
+        private IHost host;
         private RequestDelegate requestDelegate;
 
         public AspNetCoreHttpServerImpl(ILog log, HttpServerConfig config)
@@ -30,33 +32,36 @@ namespace Newsgirl.Server
         
         public Task Start(RequestDelegate onRequest)
         {
-            var host = new WebHostBuilder()
-                .UseKestrel()
-                .ConfigureKestrel(options =>
+            var host = new HostBuilder()
+                .ConfigureWebHost(builder =>
                 {
-                    options.AddServerHeader = false;
-                    options.AllowSynchronousIO = false;
+                    builder.UseKestrel()
+                        .ConfigureKestrel(options =>
+                        {
+                            options.AddServerHeader = false;
+                            options.AllowSynchronousIO = false;
+                        })
+                        .Configure(this.Configure)
+                        .CaptureStartupErrors(false)
+                        .SuppressStatusMessages(true)
+                        .UseUrls(this.config.BindAddresses);
                 })
-                .Configure(this.Configure)
                 .ConfigureServices(serviceCollection =>
                 {
                     serviceCollection.AddLogging(x => x.ClearProviders());
                 })
                 .UseEnvironment("production")
-                .CaptureStartupErrors(false)
-                .SuppressStatusMessages(true)
-                .UseUrls(this.config.BindAddresses)
                 .Build();
 
-            this.webHost = host;
+            this.host = host;
             this.requestDelegate = onRequest;
-            
-            return this.webHost.StartAsync(new CancellationTokenSource(this.config.StartTimeout).Token);
+
+            return this.host.StartAsync(new CancellationTokenSource(TimeSpan.FromSeconds(1)).Token);
         }
 
         public Task Stop()
         {
-            return this.webHost.StopAsync(new CancellationTokenSource(this.config.StopTimeout).Token);
+            return this.host.StopAsync(new CancellationTokenSource(TimeSpan.FromSeconds(1)).Token);
         }
 
         private void Configure(IApplicationBuilder app)
@@ -83,28 +88,25 @@ namespace Newsgirl.Server
             app.Use(_ => this.requestDelegate);
         }
 
+        public ICollection<string> GetAddresses()
+        {
+            var server = this.host.Services.GetService<IServer>();
+            var addressesFeature = server.Features.Get<IServerAddressesFeature>();
+            return addressesFeature.Addresses;
+        }
+
         public async ValueTask DisposeAsync()
         {
             await this.Stop();
 
-            var asyncDisposable = (IAsyncDisposable)this.webHost;
+            var asyncDisposable = (IAsyncDisposable)this.host;
             await asyncDisposable.DisposeAsync();
         }
     }
     
     public class HttpServerConfig
     {
-        public HttpServerConfig()
-        {
-            this.StartTimeout = TimeSpan.FromSeconds(1);
-            this.StopTimeout = TimeSpan.FromSeconds(1);
-        }
-        
         public string[] BindAddresses { get; set; }
-        
-        public TimeSpan StartTimeout { get; set; }
-        
-        public TimeSpan StopTimeout { get; set; }
     }
 
     public interface AspNetCoreHttpServer

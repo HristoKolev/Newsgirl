@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using NSubstitute;
 using Xunit;
 using Newsgirl.Shared.Infrastructure;
 using Newsgirl.Testing;
@@ -12,47 +11,34 @@ namespace Newsgirl.Server.Tests
 {
     public class AspNetCoreHttpServerTest
     {
-        private const string BindToAddress = "http://127.0.0.1:6297";
-
         [Fact]
         public async Task HttpServer_Responds_To_Requests()
         {
-            var config = new HttpServerConfig
+            static async Task Handler(HttpContext context)
             {
-                BindAddresses = new[] {BindToAddress},
-            };
+                string requestBody;
+                using (var streamReader = new StreamReader(context.Request.Body, EncodingHelper.UTF8))
+                {
+                    requestBody = await streamReader.ReadToEndAsync();
+                }
 
-            var log = Substitute.For<ILog>();
+                int num = int.Parse(requestBody);
 
-            await using (var server = new AspNetCoreHttpServerImpl(log, config))
+                num += 1;
+
+                string responseBodyString = num.ToString();
+                byte[] responseBody = EncodingHelper.UTF8.GetBytes(responseBodyString);
+
+                context.Response.StatusCode = 200;
+                await context.Response.Body.WriteAsync(responseBody, 0, requestBody.Length);
+            }
+
+            await using (var tester = await HttpServerTester.Create(Handler))
             {
-                await server.Start(async context =>
-                {
-                    string requestBody;
-                    using (var streamReader = new StreamReader(context.Request.Body, EncodingHelper.UTF8))
-                    {
-                        requestBody = await streamReader.ReadToEndAsync();
-                    }
-
-                    int num = int.Parse(requestBody);
-
-                    num += 1;
-
-                    string responseBodyString = num.ToString();
-                    byte[] responseBody = EncodingHelper.UTF8.GetBytes(responseBodyString);
-
-                    context.Response.StatusCode = 200;
-                    await context.Response.Body.WriteAsync(responseBody, 0, requestBody.Length);
-                });
-
-                var client = new HttpClient
-                {
-                    BaseAddress = new Uri(BindToAddress)
-                };
-
                 int num = 42;
 
-                var response = await client.PostAsync("/", new StringContent(num.ToString(), EncodingHelper.UTF8));
+                var response =
+                    await tester.Client.PostAsync("/", new StringContent(num.ToString(), EncodingHelper.UTF8));
                 byte[] responseBytes = await response.Content.ReadAsByteArrayAsync();
                 string responseString = EncodingHelper.UTF8.GetString(responseBytes);
 
@@ -83,9 +69,11 @@ namespace Newsgirl.Server.Tests
                 await context.Response.WriteUtf8(resourceText, batchSize);
             }
 
-            await using (var tester = await AspNetCoreHttpServerTester.Create(Handler))
+            await using (var tester = await HttpServerTester.Create(Handler))
             {
                 var response = await tester.Client.GetAsync("/");
+                response.EnsureSuccessStatusCode();
+                
                 var responseBodyBytes = await response.Content.ReadAsByteArrayAsync();
 
                 //  Check the sting for equality.
@@ -97,62 +85,60 @@ namespace Newsgirl.Server.Tests
                 AssertExt.EqualByteArray(expectedBytes, responseBodyBytes);
             }
         }
-    }
-
-    public class AspNetCoreHttpServerTester : IAsyncDisposable
-    {
-        private const string BindToAddress = "http://127.0.0.1:6297";
-
-        public AspNetCoreHttpServerImpl Server { get; set; }
-
-        public Exception Exception;
-
-        public HttpClient Client { get; set; }
-
-        protected AspNetCoreHttpServerTester()
+        
+        [Theory]
+        [InlineData("4000b_lipsum.txt")]
+        [InlineData("unicode_test_page.html")]
+        public async Task ReadUtf8_works_for_valid_utf8(string resourceName)
         {
-        }
+            byte[] resourceBytes = await TestHelper.GetResourceBytes(resourceName);
+            string resourceString = EncodingHelper.UTF8.GetString(resourceBytes);
 
-        public static async Task<AspNetCoreHttpServerTester> Create(RequestDelegate requestDelegate)
-        {
-            var tester = new AspNetCoreHttpServerTester();
-
-            var serverConfig = new HttpServerConfig
+            string str = null;
+            
+            async Task Handler(HttpContext context)
             {
-                BindAddresses = new[] {BindToAddress},
-            };
+                str = await context.Request.ReadUtf8();
+                context.Response.StatusCode = 200;
+            }
 
-            var log = Substitute.For<ILog>();
+            await using (var tester = await HttpServerTester.Create(Handler))
+            {
+                var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
+                response.EnsureSuccessStatusCode();
 
-            var server = new AspNetCoreHttpServerImpl(log, serverConfig);
+                Assert.Equal(resourceString, str);
+            }
+        }
+        
+        [Fact]
+        public async Task ReadUtf8_throws_on_invalid_utf8()
+        {
+            byte[] invalidUtf8 = await TestHelper.GetResourceBytes("app-vnd.flatpak-icon.png");
 
-            await server.Start(async context =>
+            Exception exception = null;
+            
+            async Task Handler(HttpContext context)
             {
                 try
                 {
-                    await requestDelegate(context);
+                    await context.Request.ReadUtf8();
                 }
                 catch (Exception err)
                 {
-                    tester.Exception = err;
-                    throw;
-                }
-            });
+                    exception = err;
+                } 
+                
+                context.Response.StatusCode = 200;
+            }
 
-            var client = new HttpClient
+            await using (var tester = await HttpServerTester.Create(Handler))
             {
-                BaseAddress = new Uri(BindToAddress)
-            };
+                var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(invalidUtf8));
+                response.EnsureSuccessStatusCode();
 
-            tester.Server = server;
-            tester.Client = client;
-
-            return tester;
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            return this.Server.DisposeAsync();
+                Snapshot.MatchError(exception);
+            }
         }
     }
 }

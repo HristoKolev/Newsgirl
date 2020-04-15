@@ -53,63 +53,7 @@ namespace Newsgirl.Server
 
         private static async Task ProcessRequest(HttpContext context)
         {
-            // Read request bytes.
-            int contentLength = (int) context.Request.ContentLength.Value;
-            var bufferPool = ArrayPool<byte>.Shared;
-            var requestStream = context.Request.Body;
-
-            byte[] requestBuffer = bufferPool.Rent(contentLength);
-
-            try
-            {
-                while (await requestStream.ReadAsync(requestBuffer) > 0)
-                {
-                }
-            }
-            catch (Exception err)
-            {
-                bufferPool.Return(requestBuffer);
-
-                throw new DetailedLogException("An error occurred while reading the HTTP request body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
-                    Details =
-                    {
-                        {"contentLength", contentLength},
-                    }
-                };
-            }
-
-            // Decode UTF8.
-            static string DecodeUtf8(byte[] bytes, int length)
-            {
-                return EncodingHelper.UTF8.GetString(new ReadOnlySpan<byte>(bytes, 0, length));
-            }
-
-            string requestBodyString;
-
-            try
-            {
-                requestBodyString = DecodeUtf8(requestBuffer, contentLength);
-            }
-            catch (Exception err)
-            {
-                throw new DetailedLogException("Failed to decode UTF8 from HTTP request body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
-                    Details =
-                    {
-                        {"requestBodyBytes", Convert.ToBase64String(requestBuffer, 0, contentLength)}
-                    }
-                };
-            }
-            finally
-            {
-                bufferPool.Return(requestBuffer);
-            }
-
-            // Process request data.
-            string responseBodyString = requestBodyString;
+            string responseBodyString = await context.Request.ReadUtf8();
 
             context.Response.StatusCode = 200;
 
