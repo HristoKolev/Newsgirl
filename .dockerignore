@@ -4,3 +4,4 @@
 **/*.user
 **/logs/
 **/node_modules/
+**/BenchmarkDotNet.Artifacts/

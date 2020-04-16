@@ -226,3 +226,5 @@ feeds\.sql
 *\.received\.json
 
 projectfiles.tar
+
+**/BenchmarkDotNet.Artifacts/

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8</LangVersion>
     <OutputType>Exe</OutputType>
 
     <IsPackable>false</IsPackable>
@@ -14,10 +14,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Newsgirl.Server\Newsgirl.Server.csproj" />
+    <ProjectReference Include="..\Newsgirl.Server.Tests\Newsgirl.Server.Tests.csproj" />
     <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Properties\launchSettings.json" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="BenchmarkDotNet.Artifacts\**" />
+    <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
+    <None Remove="BenchmarkDotNet.Artifacts\**" />
+    <Content Remove="BenchmarkDotNet.Artifacts\**" />
+  </ItemGroup>
+  
 </Project>
