@@ -11,7 +11,7 @@ namespace Newsgirl.Server
     public static class HttpServerHelpers
     {
         // How many characters to write at a time.
-        private const int WriteUtf8DefaultCharBatchSize = 8192;
+        private const int WriteUtf8DefaultCharBatchSize = 512;
 
         public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString, int? batchSize = null)
         {

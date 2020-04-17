@@ -228,3 +228,4 @@ feeds\.sql
 projectfiles.tar
 
 **/BenchmarkDotNet.Artifacts/
+server/test/Newsgirl.Benchmarks/Properties/launchSettings.json

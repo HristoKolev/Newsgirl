@@ -18,8 +18,7 @@ namespace Newsgirl.Benchmarks
         
         public static async Task Run()
         {
-            int n = 1000;
-            bool readResponse = false;
+            int n = 10_000;
 
             await using (var tester = await HttpServerTester.Create(Handler))
             {
@@ -51,17 +50,10 @@ namespace Newsgirl.Benchmarks
                 
                 for (int i = 0; i < n; i++)
                 {
-                    if (readResponse)
-                    {
-                        responses[i] = await tester.Client.PostAsync("/", content);
-                    }
-                    else
-                    {
-                        var response = await tester.Client.PostAsync("/", content);
-                        responses[i] = response;
+                    var response = await tester.Client.PostAsync("/", content);
+                    responses[i] = response;
 
-                        await response.Content.ReadAsByteArrayAsync();
-                    }
+                    await response.Content.ReadAsByteArrayAsync();
                 }
                 
                 int gen0After = GC.CollectionCount(0);
@@ -83,13 +75,13 @@ namespace Newsgirl.Benchmarks
             // }
 
             context.Response.StatusCode = 200;
-            
-//             return Task.CompletedTask;
-            //
-            // await using (var streamWriter = new StreamWriter(context.Response.Body, EncodingHelper.UTF8))
-            // {
-            //     await streamWriter.WriteAsync(payloadString);
-            // }
+
+            // return Task.CompletedTask;
+
+            //await using (var streamWriter = new StreamWriter(context.Response.Body, EncodingHelper.UTF8))
+            //{
+            //    await streamWriter.WriteAsync(payloadString);
+            //}
 
             await context.Response.WriteUtf8(payloadString);
         }
