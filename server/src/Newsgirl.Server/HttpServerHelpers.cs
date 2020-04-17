@@ -4,6 +4,7 @@ using System.IO.Pipelines;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Server
@@ -26,7 +27,7 @@ namespace Newsgirl.Server
                 
                 await FlushPipe(pipeWriter);
             }
-            
+
             pipeWriter.Complete();
         }
 
