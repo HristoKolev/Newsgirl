@@ -53,20 +53,16 @@ namespace Newsgirl.Server.Tests
     public class HttpServerHelperTest
     {
         [Theory]
-        [InlineData("4000b_lipsum.txt", 8192)]
-        [InlineData("4000b_lipsum.txt", 100)]
-        [InlineData("4000b_lipsum.txt", 1)]
-        [InlineData("unicode_test_page.html", 8192)]
-        [InlineData("unicode_test_page.html", 100)]
-        [InlineData("unicode_test_page.html", 1)]
-        public async Task WriteUtf8_works(string resourceName, int batchSize)
+        [InlineData("4000b_lipsum.txt")]
+        [InlineData("unicode_test_page.html")]
+        public async Task WriteUtf8_works(string resourceName)
         {
             string resourceText = await TestHelper.GetResourceText(resourceName);
 
             async Task Handler(HttpContext context)
             {
                 context.Response.StatusCode = 200;
-                await context.Response.WriteUtf8(resourceText, batchSize);
+                await context.Response.WriteUtf8(resourceText);
             }
 
             await using (var tester = await HttpServerTester.Create(Handler))

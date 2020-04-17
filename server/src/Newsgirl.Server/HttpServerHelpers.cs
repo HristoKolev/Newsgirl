@@ -10,10 +10,7 @@ namespace Newsgirl.Server
 {
     public static class HttpServerHelpers
     {
-        // How many characters to write at a time.
-        private const int WriteUtf8DefaultCharBatchSize = 512;
-
-        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString, int? batchSize = null)
+        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
         {
             var pipeWriter = response.BodyWriter;
 
@@ -21,58 +18,31 @@ namespace Newsgirl.Server
             // +1 allocation.
             var encoder = EncodingHelper.UTF8.GetEncoder();
 
-            // How many characters to write at a time.
-            int charBatchSize = batchSize ?? WriteUtf8DefaultCharBatchSize;
+            int offset = 0;
 
-            // A big waste of memory. This ends up being 3x+ the length of the string, but we have to be safe. 
-            int batchBufferSize = EncodingHelper.UTF8.GetMaxByteCount(charBatchSize);
-
-            int numberOfBatches = responseBodyString.Length / charBatchSize;
-            int leftoverCharCount = responseBodyString.Length % charBatchSize;
-
-            for (int i = 0; i < numberOfBatches; i++)
+            while (offset < responseBodyString.Length - 1)
             {
-                WriteBatch(
-                    responseBodyString.AsSpan().Slice(i * charBatchSize, charBatchSize),
-                    pipeWriter,
-                    batchBufferSize,
-                    encoder,
-                    leftoverCharCount == 0 && i == numberOfBatches - 1
-                );
-
+                offset += WriteChars(responseBodyString, offset, pipeWriter, encoder);
+                
                 await FlushPipe(pipeWriter);
             }
-
-            if (leftoverCharCount != 0)
-            {
-                WriteBatch(
-                    responseBodyString.AsSpan().Slice(numberOfBatches * charBatchSize, leftoverCharCount),
-                    pipeWriter,
-                    batchBufferSize,
-                    encoder,
-                    true
-                );
-
-                await FlushPipe(pipeWriter);
-            }
-
+            
             pipeWriter.Complete();
         }
 
-        private static void WriteBatch(
-            ReadOnlySpan<char> batchCharacters,
-            PipeWriter bodyWriter,
-            int batchBufferSize,
-            Encoder encoder,
-            bool flush)
+        private static int WriteChars(string str, int offset, PipeWriter bodyWriter, Encoder encoder)
         {
             try
             {
-                var buffer = bodyWriter.GetSpan(batchBufferSize);
+                var buffer = bodyWriter.GetSpan();
 
-                int bytesWritten = encoder.GetBytes(batchCharacters, buffer, flush);
+                int characterCount = Math.Min((buffer.Length / 3) - 1, str.Length - offset);
+
+                int bytesWritten = encoder.GetBytes(str.AsSpan(offset, characterCount), buffer, false);
 
                 bodyWriter.Advance(bytesWritten);
+
+                return characterCount;
             }
             catch (Exception err)
             {

@@ -16,28 +16,51 @@ namespace Newsgirl.Benchmarks
         static byte[] payloadBytes;
         static string payloadString;
         
+        private const int N = 10_000;
+
         public static async Task Run()
         {
-            int n = 10_000;
+            await TestSetup();
+            
+            //await StreamWriterTest();
+            await WriteUtf8Test();
 
+            Console.WriteLine("==========");
+            
+            //await StreamWriterTest();
+            await WriteUtf8Test();
+
+        }
+
+        private static async Task TestSetup()
+        {
+            byte[] utf8 = await TestHelper.GetResourceBytes("unicode_test_page.html");
+
+            int byteRepeats = 4;
+
+            payloadBytes = new byte[utf8.Length * byteRepeats];
+
+            for (int i = 0; i < byteRepeats; i++)
+            {
+                Buffer.BlockCopy(utf8, 0, payloadBytes, utf8.Length * i, utf8.Length);
+            }
+
+            payloadString = EncodingHelper.UTF8.GetString(payloadBytes);
+        }
+
+        private static async Task WriteUtf8Test()
+        {
+            static async Task Handler(HttpContext context)
+            {
+                context.Response.StatusCode = 200;
+                await context.Response.WriteUtf8(payloadString);
+            }
+            
             await using (var tester = await HttpServerTester.Create(Handler))
             {
-                byte[] utf8 = await TestHelper.GetResourceBytes("unicode_test_page.html");
-
-                int byteRepeats = 4;
-                
-                payloadBytes = new byte[utf8.Length * byteRepeats];
-
-                for (int i = 0; i < byteRepeats; i++)
-                {
-                    Buffer.BlockCopy(utf8, 0, payloadBytes, utf8.Length * i, utf8.Length);
-                }
-
-                payloadString = EncodingHelper.UTF8.GetString(payloadBytes);
-
                 var content = new ReadOnlyMemoryContent(payloadBytes);
             
-                var responses = new HttpResponseMessage[n];
+                var responses = new HttpResponseMessage[N];
                 
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
                 GC.WaitForPendingFinalizers();
@@ -48,7 +71,7 @@ namespace Newsgirl.Benchmarks
 
                 var sw = Stopwatch.StartNew();
                 
-                for (int i = 0; i < n; i++)
+                for (int i = 0; i < N; i++)
                 {
                     var response = await tester.Client.PostAsync("/", content);
                     responses[i] = response;
@@ -60,30 +83,53 @@ namespace Newsgirl.Benchmarks
                 int gen1After = GC.CollectionCount(1);
                 int gen2After = GC.CollectionCount(2);
 
-                Console.WriteLine($"TIME: {sw.ElapsedMilliseconds}");
-                Console.WriteLine($"GEN0: {gen0After - gen0Before}; GEN1: {gen1After - gen1Before}; GEN2: {gen2After - gen2Before};");
+                Console.WriteLine($"WriteUtf8Test: TIME: {sw.ElapsedMilliseconds}");
+                Console.WriteLine($"WriteUtf8Test: GEN0: {gen0After - gen0Before}; GEN1: {gen1After - gen1Before}; GEN2: {gen2After - gen2Before};");
             }
         }
-
-        private static async Task Handler(HttpContext context)
+        
+        private static async Task StreamWriterTest()
         {
-            // string tmp = await context.Request.ReadUtf8();
+            static async Task Handler(HttpContext context)
+            {
+                context.Response.StatusCode = 200;
 
-            // using (var streamReader = new StreamReader(context.Request.Body, EncodingHelper.UTF8))
-            // {
-            //     string tmp = await streamReader.ReadToEndAsync();
-            // }
+                await using (var streamWriter = new StreamWriter(context.Response.Body, EncodingHelper.UTF8))
+                {
+                    await streamWriter.WriteAsync(payloadString);
+                }
+            }
+            
+            await using (var tester = await HttpServerTester.Create(Handler))
+            {
+                var content = new ReadOnlyMemoryContent(payloadBytes);
+            
+                var responses = new HttpResponseMessage[N];
+                
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+                GC.WaitForPendingFinalizers();
+                
+                int gen0Before = GC.CollectionCount(0);
+                int gen1Before = GC.CollectionCount(1);
+                int gen2Before = GC.CollectionCount(2);
 
-            context.Response.StatusCode = 200;
+                var sw = Stopwatch.StartNew();
+                
+                for (int i = 0; i < N; i++)
+                {
+                    var response = await tester.Client.PostAsync("/", content);
+                    responses[i] = response;
 
-            // return Task.CompletedTask;
+                    await response.Content.ReadAsByteArrayAsync();
+                }
+                
+                int gen0After = GC.CollectionCount(0);
+                int gen1After = GC.CollectionCount(1);
+                int gen2After = GC.CollectionCount(2);
 
-            //await using (var streamWriter = new StreamWriter(context.Response.Body, EncodingHelper.UTF8))
-            //{
-            //    await streamWriter.WriteAsync(payloadString);
-            //}
-
-            await context.Response.WriteUtf8(payloadString);
+                Console.WriteLine($"StreamWriterTest: TIME: {sw.ElapsedMilliseconds}");
+                Console.WriteLine($"StreamWriterTest: GEN0: {gen0After - gen0Before}; GEN1: {gen1After - gen1Before}; GEN2: {gen2After - gen2Before};");
+            }
         }
     }
 }
