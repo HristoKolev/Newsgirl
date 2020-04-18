@@ -1,7 +1,7 @@
-using System;
-
 namespace Newsgirl.Shared.Infrastructure
 {
+    using System;
+
     public class DateProvider : IDateProvider
     {
         public DateTime Now()
@@ -9,7 +9,7 @@ namespace Newsgirl.Shared.Infrastructure
             return DateTime.UtcNow;
         }
     }
-    
+
     public interface IDateProvider
     {
         DateTime Now();

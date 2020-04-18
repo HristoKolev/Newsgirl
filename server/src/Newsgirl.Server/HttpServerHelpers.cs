@@ -1,84 +1,56 @@
-using System;
-using System.Buffers;
-using System.IO.Pipelines;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.WebUtilities;
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Server
 {
+    using System;
+    using System.Buffers;
+    using System.IO;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+    using Shared.Infrastructure;
+
     public static class HttpServerHelpers
     {
+        /// <summary>
+        ///     Writes a string in UTF-8 encoding and closes the stream.
+        /// </summary>
         public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
-        {
-            var pipeWriter = response.BodyWriter;
-
-            // EncoderNLS is or at least should be stateful.
-            // +1 allocation.
-            var encoder = EncodingHelper.UTF8.GetEncoder();
-
-            int offset = 0;
-
-            while (offset < responseBodyString.Length - 1)
-            {
-                offset += WriteChars(responseBodyString, offset, pipeWriter, encoder);
-                
-                await FlushPipe(pipeWriter);
-            }
-
-            pipeWriter.Complete();
-        }
-
-        private static int WriteChars(string str, int offset, PipeWriter bodyWriter, Encoder encoder)
         {
             try
             {
-                var buffer = bodyWriter.GetSpan();
-
-                int characterCount = Math.Min((buffer.Length / 3) - 1, str.Length - offset);
-
-                int bytesWritten = encoder.GetBytes(str.AsSpan(offset, characterCount), buffer, false);
-
-                bodyWriter.Advance(bytesWritten);
-
-                return characterCount;
+                await using (var writer = new StreamWriter(response.Body, EncodingHelper.UTF8))
+                {
+                    await writer.WriteAsync(responseBodyString);
+                }
             }
-            catch (Exception err)
+            catch (EncoderFallbackException err)
             {
                 throw new DetailedLogException("Failed to encode UTF8 response body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
+                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY"
                 };
-            }
-        }
-
-        private static async ValueTask FlushPipe(PipeWriter bodyWriter)
-        {
-            try
-            {
-                await bodyWriter.FlushAsync();
             }
             catch (Exception err)
             {
                 throw new DetailedLogException("Failed to write to HTTP response body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY",
+                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY"
                 };
             }
         }
 
+        /// <summary>
+        ///     Reads the request stream to the end and decodes it into a string.
+        /// </summary>
         public static async ValueTask<string> ReadUtf8(this HttpRequest request)
         {
             // ReSharper disable once PossibleInvalidOperationException
             int contentLength = (int) request.ContentLength.Value;
-            
+
             // default pool
             var bufferPool = ArrayPool<byte>.Shared;
             var requestStream = request.Body;
 
-            byte[] requestBuffer = bufferPool.Rent(contentLength);
+            var requestBuffer = bufferPool.Rent(contentLength);
 
             try
             {
@@ -99,7 +71,7 @@ namespace Newsgirl.Server
                     Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                     Details =
                     {
-                        {"contentLength", contentLength},
+                        {"contentLength", contentLength}
                     }
                 };
             }

@@ -1,123 +1,134 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-
-using Autofac;
-using Newtonsoft.Json;
-
-using Newsgirl.Shared;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
-
-namespace Newsgirl.Fetcher
+﻿namespace Newsgirl.Fetcher
 {
-    public static class Global
+    using System;
+    using System.IO;
+    using System.Threading.Tasks;
+    using Autofac;
+    using Newtonsoft.Json;
+    using Shared;
+    using Shared.Data;
+    using Shared.Infrastructure;
+
+    public class FetcherApp : IAsyncDisposable
     {
-        private static readonly string AppVersion = typeof(Global).Assembly.GetName().Version.ToString();
+        // ReSharper disable once InconsistentNaming
+        private readonly string AppVersion = typeof(FetcherApp).Assembly.GetName().Version?.ToString();
 
-        public static string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
+        public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
-        public static AppConfig AppConfig { get; set; }
-        
-        public static SystemSettingsModel SystemSettings { get; set; }
-        
-        public static ILog Log { get; set; }
+        public FetcherAppConfig AppConfig { get; set; }
 
-        private static FileWatcher AppConfigWatcher { get; set; }
+        public SystemSettingsModel SystemSettings { get; set; }
 
-        private static IContainer IoC { get; set; }
+        public ILog Log { get; set; }
 
-        private static async Task ReloadStartupConfig()
+        private FileWatcher AppConfigWatcher { get; set; }
+
+        public IContainer IoC { get; private set; }
+
+        public async ValueTask DisposeAsync()
+        {
+            this.AppConfigWatcher?.Dispose();
+            this.AppConfigWatcher = null;
+
+            if (this.IoC != null)
+            {
+                await this.IoC.DisposeAsync();
+                this.IoC = null;
+            }
+
+            this.AppConfig = null;
+
+            this.SystemSettings = null;
+
+            this.Log = null;
+        }
+
+        private async Task ReloadStartupConfig()
         {
             try
             {
-                Log.Log("Reloading config...");
+                this.Log.Log("Reloading config...");
 
-                await LoadConfig();
+                await this.LoadConfig();
             }
             catch (Exception exception)
             {
-                await Log.Error(exception);
+                await this.Log.Error(exception);
             }
         }
-        
-        private static async Task LoadConfig()
+
+        private async Task LoadConfig()
         {
-            AppConfig = JsonConvert.DeserializeObject<AppConfig>(await File.ReadAllTextAsync(AppConfigPath));
+            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
 
-            AppConfig.Logging.Release = AppVersion;
+            this.AppConfig.Logging.Release = this.AppVersion;
 
-            Log = new CustomLogger(AppConfig.Logging);
+            this.Log = new CustomLogger(this.AppConfig.Logging);
         }
 
-        public static async Task InitializeAsync()
+        public async Task InitializeAsync()
         {
-            await LoadConfig();
+            await this.LoadConfig();
 
-            AppConfigWatcher = new FileWatcher(AppConfigPath, ReloadStartupConfig);
-            
-            IoC = IoCFactory.Create();
-            
-            var systemSettingsService = IoC.Resolve<SystemSettingsService>();
-                
-            SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
+
+            var builder = new ContainerBuilder();
+
+            builder.RegisterModule<SharedModule>();
+            builder.RegisterModule(new FetcherIoCModule(this));
+
+            this.IoC = builder.Build();
+
+            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
+
+            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
 
-        public static async Task DisposeAsync()
+        public async Task RunCycleAsync()
         {
-            AppConfigWatcher?.Dispose();
-            AppConfigWatcher = null;
-            
-            if (IoC != null)
-            {
-                await IoC.DisposeAsync();
-                IoC = null;
-            }
+            var fetcherInstance = this.IoC.Resolve<FeedFetcher>();
 
-            AppConfig = null;
-
-            SystemSettings = null;
-
-            Log = null;
-        }
-
-        public static async Task RunCycleAsync()
-        {
-            var fetcherInstance = IoC.Resolve<FeedFetcher>();
-            
             await fetcherInstance.FetchFeeds();
 
-            var log = IoC.Resolve<ILog>();
-            
-            log.Log($"Waiting {SystemSettings.FetcherCyclePause} seconds...");
-            
-            await Task.Delay(TimeSpan.FromSeconds(SystemSettings.FetcherCyclePause));
+            var log = this.IoC.Resolve<ILog>();
+
+            log.Log($"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
+
+            await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
         }
     }
 
-    public class AppConfig
+    public class FetcherAppConfig
     {
         public string ConnectionString { get; set; }
-        
+
         public CustomLoggerConfig Logging { get; set; }
     }
-    
-    public class FetcherModule : Autofac.Module
+
+    public class FetcherIoCModule : Module
     {
+        private readonly FetcherApp app;
+
+        public FetcherIoCModule(FetcherApp app)
+        {
+            this.app = app;
+        }
+
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((c, p) => Global.SystemSettings);
-            builder.Register((c, p) => Global.Log);
-            
+            builder.Register((c, p) => this.app.SystemSettings);
+            builder.Register((c, p) => this.app.Log);
+
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
             builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 
             // Per scope
-            builder.Register((c, p) => 
-                    DbFactory.CreateConnection(Global.AppConfig.ConnectionString))
+            builder.Register((c, p) =>
+                    DbFactory.CreateConnection(this.app.AppConfig.ConnectionString))
                 .InstancePerLifetimeScope();
 
             builder.RegisterType<DbService>().InstancePerLifetimeScope();
@@ -127,45 +138,31 @@ namespace Newsgirl.Fetcher
             base.Load(builder);
         }
     }
-    
-    public static class IoCFactory
-    {
-        public static IContainer Create()
-        {
-            var builder = new ContainerBuilder();
-
-            builder.RegisterModule<SharedModule>();
-            builder.RegisterModule<FetcherModule>();
-
-            return builder.Build();
-        }
-    }
 
     public static class Program
     {
         private static async Task<int> Main()
         {
-            try
+            await using (var app = new FetcherApp())
             {
-                await Global.InitializeAsync();
-                
-                while (true)
+                try
                 {
-                    await Global.RunCycleAsync();
-                }
-            }
-            catch (Exception exception)
-            {
-                if (Global.Log != null)
-                {
-                    await Global.Log.Error(exception);                    
-                }
+                    await app.InitializeAsync();
 
-                return 1;
-            }
-            finally
-            {
-                await Global.DisposeAsync();
+                    while (true)
+                    {
+                        await app.RunCycleAsync();
+                    }
+                }
+                catch (Exception exception)
+                {
+                    if (app.Log != null)
+                    {
+                        await app.Log.Error(exception);
+                    }
+
+                    return 1;
+                }
             }
         }
     }

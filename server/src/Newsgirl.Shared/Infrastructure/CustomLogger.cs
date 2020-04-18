@@ -1,23 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-
-using Sentry;
-using Sentry.Protocol;
-
 namespace Newsgirl.Shared.Infrastructure
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Reflection;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
+    using Sentry;
+    using Sentry.Protocol;
+
     public class CustomLogger : ILog
     {
         private readonly CustomLoggerConfig config;
         private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
         private ISentryClient sentryClient;
-        
+
         public CustomLogger(CustomLoggerConfig config)
         {
             this.config = config;
@@ -26,20 +25,7 @@ namespace Newsgirl.Shared.Infrastructure
 
             if (!this.config.DisableSentryIntegration)
             {
-                this.CreateSentryClient();    
-            }
-        }
-
-        private void CreateSentryClient()
-        {
-            if (this.sentryClient == null)
-            {
-                this.sentryClient = new SentryClient(new SentryOptions
-                {
-                    AttachStacktrace = true,
-                    Dsn = new Dsn(this.config.SentryDsn),
-                    Release = this.config.Release,
-                });                
+                this.CreateSentryClient();
             }
         }
 
@@ -86,15 +72,28 @@ namespace Newsgirl.Shared.Infrastructure
             return null;
         }
 
+        private void CreateSentryClient()
+        {
+            if (this.sentryClient == null)
+            {
+                this.sentryClient = new SentryClient(new SentryOptions
+                {
+                    AttachStacktrace = true,
+                    Dsn = new Dsn(this.config.SentryDsn),
+                    Release = this.config.Release
+                });
+            }
+        }
+
         private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo)
         {
             this.CreateSentryClient();
-            
+
             var sentryEvent = new SentryEvent(exception)
             {
-                Level = SentryLevel.Error,
+                Level = SentryLevel.Error
             };
-            
+
             if (!string.IsNullOrWhiteSpace(this.config.ServerName))
             {
                 sentryEvent.ServerName = this.config.ServerName;
@@ -106,7 +105,7 @@ namespace Newsgirl.Shared.Infrastructure
             }
 
             string[] customFingerprint = null;
-            
+
             var exceptionChain = GetExceptionChain(exception);
 
             for (int i = 0; i < exceptionChain.Count; i++)
@@ -117,16 +116,16 @@ namespace Newsgirl.Shared.Infrastructure
                 {
                     foreach (var kvp in detailedLogException.Details)
                     {
-                        sentryEvent.SetExtra(kvp.Key, kvp.Value);                        
+                        sentryEvent.SetExtra(kvp.Key, kvp.Value);
                     }
-                    
+
                     if (!string.IsNullOrWhiteSpace(detailedLogException.Fingerprint))
                     {
-                        customFingerprint = new []{detailedLogException.Fingerprint};
+                        customFingerprint = new[] {detailedLogException.Fingerprint};
                     }
                 }
             }
-            
+
             if (additionalInfo != null)
             {
                 foreach (var kvp in additionalInfo)
@@ -141,7 +140,7 @@ namespace Newsgirl.Shared.Infrastructure
             }
             else
             {
-                string[] fingerprints = new string[exceptionChain.Count];
+                var fingerprints = new string[exceptionChain.Count];
 
                 for (int i = 0; i < exceptionChain.Count; i++)
                 {
@@ -151,7 +150,7 @@ namespace Newsgirl.Shared.Infrastructure
 
                     fingerprints[i] = fingerprint;
                 }
-                
+
                 sentryEvent.SetFingerprint(fingerprints);
             }
 
@@ -161,12 +160,12 @@ namespace Newsgirl.Shared.Infrastructure
             {
                 await this.sentryClient.FlushAsync(this.sentryFlushTimeout);
             }
-            
+
             return eventId.ToString();
         }
-        
+
         /// <summary>
-        /// Returns a flat list of all the exceptions down the .InnerException chain.
+        ///     Returns a flat list of all the exceptions down the .InnerException chain.
         /// </summary>
         private static List<Exception> GetExceptionChain(Exception exception)
         {
@@ -180,7 +179,7 @@ namespace Newsgirl.Shared.Infrastructure
 
             return list;
         }
-        
+
         private static string GetFingerprint(Exception exception)
         {
             var stackTrace = SentryStackTraceFactory.Create(exception);
@@ -190,15 +189,15 @@ namespace Newsgirl.Shared.Infrastructure
             return $"[{exception.GetType()}]\n{frames}";
         }
     }
-    
+
     public interface ILog
     {
         void Debug(string message);
-        
+
         void Debug(Func<string> func);
-        
+
         void Log(string message);
-        
+
         Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo = null);
     }
 
@@ -210,18 +209,18 @@ namespace Newsgirl.Shared.Infrastructure
         public bool DisableConsoleLogging { get; set; }
 
         public bool EnableDebug { get; set; }
-        
+
         public string ServerName { get; set; }
-        
+
         public string Environment { get; set; }
-        
+
         public string SentryDsn { get; set; }
-        
+
         public string Release { get; set; }
     }
 
     /// <summary>
-    /// Stolen from Sentry's source code.
+    ///     Stolen from Sentry's source code.
     /// </summary>
     internal static class SentryStackTraceFactory
     {
@@ -239,7 +238,7 @@ namespace Newsgirl.Shared.Infrastructure
             ("System.Runtime.ExceptionServices.ExceptionDispatchInfo", "Throw"),
 
             ("System.Runtime.CompilerServices.ValueTaskAwaiter`1", "GetResult"),
-            ("System.Threading.Tasks.ValueTask`1", "get_Result"),
+            ("System.Threading.Tasks.ValueTask`1", "get_Result")
         };
 
         public static SentryStackTrace Create(Exception exception)
@@ -273,7 +272,7 @@ namespace Newsgirl.Shared.Infrastructure
                 yield break;
             }
 
-            var firstFrames = true;
+            bool firstFrames = true;
             foreach (var stackFrame in frames)
             {
                 // Remove the frames until the call for capture with the SDK
@@ -314,20 +313,20 @@ namespace Newsgirl.Shared.Infrastructure
             frame.FileName = stackFrame.GetFileName();
 
             // stackFrame.HasILOffset() throws NotImplemented on Mono 5.12
-            var ilOffset = stackFrame.GetILOffset();
+            int ilOffset = stackFrame.GetILOffset();
 
             if (ilOffset != 0)
             {
                 frame.InstructionOffset = stackFrame.GetILOffset();
             }
 
-            var lineNo = stackFrame.GetFileLineNumber();
+            int lineNo = stackFrame.GetFileLineNumber();
             if (lineNo != 0)
             {
                 frame.LineNumber = lineNo;
             }
 
-            var colNo = stackFrame.GetFileColumnNumber();
+            int colNo = stackFrame.GetFileColumnNumber();
 
             if (lineNo != 0)
             {
@@ -383,7 +382,7 @@ namespace Newsgirl.Shared.Infrastructure
             }
         }
     }
-    
+
     public class DetailedLogException : Exception
     {
         public DetailedLogException()
@@ -405,7 +404,7 @@ namespace Newsgirl.Shared.Infrastructure
 
         // ReSharper disable once CollectionNeverUpdated.Global
         public Dictionary<string, object> Details { get; }
-        
+
         public string Fingerprint { get; set; }
     }
 }

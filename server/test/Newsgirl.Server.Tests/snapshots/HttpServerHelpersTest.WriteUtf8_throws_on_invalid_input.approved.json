@@ -1,0 +1,24 @@
+﻿[
+  {
+    "Details": {},
+    "Fingerprint": "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
+    "Message": "Failed to encode UTF8 response body.",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "newsgirl-server",
+    "HResult": -2146233088
+  },
+  {
+    "ClassName": "System.Text.EncoderFallbackException",
+    "Message": "Unable to translate Unicode character \\\\uD800 at index 1 to specified code page.",
+    "Data": null,
+    "HelpURL": null,
+    "RemoteStackTraceString": null,
+    "RemoteStackIndex": 0,
+    "ExceptionMethod": null,
+    "HResult": -2147024809,
+    "Source": "System.Private.CoreLib",
+    "WatsonBuckets": null,
+    "ParamName": null
+  }
+]

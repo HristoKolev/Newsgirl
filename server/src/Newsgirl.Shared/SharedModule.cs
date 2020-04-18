@@ -1,8 +1,8 @@
-using Autofac;
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Shared
 {
+    using Autofac;
+    using Infrastructure;
+
     public class SharedModule : Module
     {
         protected override void Load(ContainerBuilder builder)
@@ -15,7 +15,7 @@ namespace Newsgirl.Shared
 
             builder.RegisterType<DateProvider>().As<IDateProvider>()
                 .SingleInstance();
-            
+
             base.Load(builder);
         }
     }

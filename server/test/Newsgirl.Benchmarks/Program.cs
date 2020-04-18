@@ -1,17 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Running;
-
 namespace Newsgirl.Benchmarks
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using BenchmarkDotNet.Running;
+
     public class Program
     {
         private static readonly Dictionary<string, Func<Task>> BenchmarkTable = new Dictionary<string, Func<Task>>
         {
             {"benchmark.net", RunBenchmarkNet},
-            {"aspnet-server", AspNetServer.Run},
+            {"aspnet-server", AspNetServer.Run}
         };
 
         private static async Task Main(string[] args)
@@ -23,7 +23,7 @@ namespace Newsgirl.Benchmarks
                 Console.WriteLine("Please, pass benchmark name as a first parameter.");
                 return;
             }
-            
+
             Func<Task> benchmarkFunction;
 
             if (!BenchmarkTable.TryGetValue(benchmarkName.ToLowerInvariant(), out benchmarkFunction))
@@ -33,7 +33,7 @@ namespace Newsgirl.Benchmarks
             }
 
             Console.WriteLine($"Running benchmark: {benchmarkName}");
-            
+
             await benchmarkFunction();
         }
 

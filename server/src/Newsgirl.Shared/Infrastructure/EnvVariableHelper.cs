@@ -1,7 +1,7 @@
-using System;
-
 namespace Newsgirl.Shared.Infrastructure
 {
+    using System;
+
     public static class EnvVariableHelper
     {
         public static string Get(string name)

@@ -1,13 +1,11 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-using LinqToDB;
-
-using Newsgirl.Shared.Data;
-
 namespace Newsgirl.Shared
 {
+    using System;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Data;
+    using LinqToDB;
+
     public class SystemSettingsService
     {
         private readonly DbService db;
@@ -18,7 +16,7 @@ namespace Newsgirl.Shared
         }
 
         /// <summary>
-        /// Reads the settings from the database.
+        ///     Reads the settings from the database.
         /// </summary>
         public async Task<T> ReadSettings<T>() where T : new()
         {
@@ -46,28 +44,27 @@ namespace Newsgirl.Shared
             return instance;
         }
     }
-    
+
     /// <summary>
-    /// Settings read from the database.
+    ///     Settings read from the database.
     /// </summary>
     public class SystemSettingsModel
     {
         /// <summary>
-        /// The UserAgent used for http calls to the RSS endpoints.
+        ///     The UserAgent used for http calls to the RSS endpoints.
         /// </summary>
         public string HttpClientUserAgent { get; set; }
 
         /// <summary>
-        /// The timeout for the http calls.
+        ///     The timeout for the http calls.
         /// </summary>
         public int HttpClientRequestTimeout { get; set; }
 
         /// <summary>
-        /// The pause between fetch cycles.
+        ///     The pause between fetch cycles.
         /// </summary>
         public int FetcherCyclePause { get; set; }
 
-        
         public bool ParallelFeedFetching { get; set; }
     }
 }
