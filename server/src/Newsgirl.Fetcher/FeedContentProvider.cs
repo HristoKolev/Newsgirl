@@ -1,12 +1,11 @@
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-using Newsgirl.Shared;
-using Newsgirl.Shared.Data;
-
 namespace Newsgirl.Fetcher
 {
+    using System;
+    using System.Net.Http;
+    using System.Threading.Tasks;
+    using Shared;
+    using Shared.Data;
+
     public class FeedContentProvider : IFeedContentProvider
     {
         private readonly HttpClient httpClient;
@@ -37,7 +36,7 @@ namespace Newsgirl.Fetcher
             }
         }
     }
-    
+
     public interface IFeedContentProvider
     {
         Task<byte[]> GetFeedContent(FeedPoco feed);

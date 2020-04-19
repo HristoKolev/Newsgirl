@@ -35,14 +35,17 @@ namespace Newsgirl.Testing
         public static async Task<string> GetResourceText(string name)
         {
             var bytes = await GetResourceBytes(name);
-
             return EncodingHelper.UTF8.GetString(bytes);
+        }
+
+        public static string GetResourceFilePath(string name)
+        {
+            return $"../../../resources/{name}";
         }
 
         public static async Task<byte[]> GetResourceBytes(string name)
         {
-            var content = await File.ReadAllBytesAsync($"../../../resources/{name}");
-
+            var content = await File.ReadAllBytesAsync(GetResourceFilePath(name));
             return content;
         }
 

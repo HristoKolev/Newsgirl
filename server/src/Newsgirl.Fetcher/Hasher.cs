@@ -1,8 +1,8 @@
-using System;
-using System.Data.HashFunction.xxHash;
-
 namespace Newsgirl.Fetcher
 {
+    using System;
+    using System.Data.HashFunction.xxHash;
+
     public class Hasher
     {
         private readonly IxxHash xxHash;
@@ -17,7 +17,7 @@ namespace Newsgirl.Fetcher
 
         public long ComputeHash(byte[] bytes)
         {
-            byte[] hashBytes = this.xxHash.ComputeHash(bytes).Hash;
+            var hashBytes = this.xxHash.ComputeHash(bytes).Hash;
 
             long value = BitConverter.ToInt64(hashBytes);
 

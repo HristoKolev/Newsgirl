@@ -16,11 +16,11 @@
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
-        public FetcherAppConfig AppConfig { get; set; }
+        public FetcherAppConfig AppConfig { get; private set; }
 
-        public SystemSettingsModel SystemSettings { get; set; }
+        public SystemSettingsModel SystemSettings { get; private set; }
 
-        public ILog Log { get; set; }
+        public ILog Log { get; private set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
@@ -60,7 +60,8 @@
 
         private async Task LoadConfig()
         {
-            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig =
+                JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
 
             this.AppConfig.Logging.Release = this.AppVersion;
 

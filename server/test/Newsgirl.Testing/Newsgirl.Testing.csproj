@@ -10,20 +10,24 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="NSubstitute" Version="4.2.1"/>
-    <PackageReference Include="xunit" Version="2.4.0"/>
-    <PackageReference Include="ApprovalTests" Version="4.5.1"/>
+    <PackageReference Include="NSubstitute" Version="4.2.1" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="ApprovalTests" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Newsgirl.Shared\Newsgirl.Shared.csproj"/>
+    <ProjectReference Include="..\..\src\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="test-config.json"/>
-    <EmbeddedResource Include="test-config.json"/>
-    <None Remove="sql\before-tests.sql"/>
-    <EmbeddedResource Include="sql\before-tests.sql"/>
+    <None Remove="test-config.json" />
+    <EmbeddedResource Include="test-config.json" />
+    <None Remove="sql\before-tests.sql" />
+    <EmbeddedResource Include="sql\before-tests.sql" />
   </ItemGroup>
 </Project>

@@ -1,18 +1,16 @@
-using System.Collections.Generic;
-using System.IO;
-
-using CodeHollow.FeedReader;
-using Newsgirl.Shared.Data;
-using Newtonsoft.Json;
-
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Fetcher
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using CodeHollow.FeedReader;
+    using Newtonsoft.Json;
+    using Shared.Data;
+    using Shared.Infrastructure;
+
     public class FeedParser : IFeedParser
     {
-        private readonly Hasher hasher;
         private readonly IDateProvider dateProvider;
+        private readonly Hasher hasher;
         private readonly ILog log;
 
         public FeedParser(Hasher hasher, IDateProvider dateProvider, ILog log)
@@ -21,17 +19,17 @@ namespace Newsgirl.Fetcher
             this.dateProvider = dateProvider;
             this.log = log;
         }
-        
+
         public ParsedFeed Parse(string feedContent)
         {
             var materializedFeed = FeedReader.ReadFromString(feedContent);
-            
-            var allItems = (List<FeedItem>)materializedFeed.Items;
+
+            var allItems = (List<FeedItem>) materializedFeed.Items;
 
             var parsedFeed = new ParsedFeed(allItems.Count);
 
             var fetchTime = this.dateProvider.Now();
-            
+
             using (var memoryStream = new MemoryStream(allItems.Count * 8))
             {
                 byte[] stringIDBytes;
@@ -39,7 +37,7 @@ namespace Newsgirl.Fetcher
                 for (int i = allItems.Count - 1; i >= 0; i--)
                 {
                     var feedItem = allItems[i];
-            
+
                     string stringID = GetItemStringID(feedItem);
 
                     if (stringID == null)
@@ -48,15 +46,15 @@ namespace Newsgirl.Fetcher
 
                         continue;
                     }
-            
+
                     stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
-                
+
                     long feedItemHash = this.hasher.ComputeHash(stringIDBytes);
 
                     if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
                         this.log.Debug($"Feed item already added: {stringID}");
-                    
+
                         continue;
                     }
 
@@ -66,9 +64,9 @@ namespace Newsgirl.Fetcher
                         FeedItemTitle = feedItem.Title.SomethingOrNull()?.Trim(),
                         FeedItemDescription = feedItem.Description.SomethingOrNull()?.Trim(),
                         FeedItemAddedTime = fetchTime,
-                        FeedItemHash = feedItemHash,
+                        FeedItemHash = feedItemHash
                     });
-                
+
                     memoryStream.Write(stringIDBytes, 0, stringIDBytes.Length);
                 }
 
@@ -79,7 +77,7 @@ namespace Newsgirl.Fetcher
 
             return parsedFeed;
         }
-        
+
         private static string GetItemStringID(FeedItem feedItem)
         {
             string idValue = feedItem.Id?.Trim();
@@ -103,18 +101,18 @@ namespace Newsgirl.Fetcher
 
             return null;
         }
-        
+
         private static string GetItemUrl(FeedItem feedItem)
         {
             string linkValue = feedItem.Link?.Trim();
-            
+
             if (!string.IsNullOrWhiteSpace(linkValue) && linkValue.StartsWith("http"))
             {
                 return linkValue;
             }
 
             string idValue = feedItem.Id?.Trim();
-            
+
             if (!string.IsNullOrWhiteSpace(idValue) && idValue.StartsWith("http"))
             {
                 return idValue;
@@ -123,7 +121,7 @@ namespace Newsgirl.Fetcher
             return null;
         }
     }
-    
+
     public interface IFeedParser
     {
         ParsedFeed Parse(string feedContent);
@@ -136,11 +134,11 @@ namespace Newsgirl.Fetcher
             this.Items = new List<FeedItemPoco>(capacity);
             this.FeedItemHashes = new HashSet<long>(capacity);
         }
-        
-        public List<FeedItemPoco> Items { get; } 
+
+        public List<FeedItemPoco> Items { get; }
 
         public HashSet<long> FeedItemHashes { get; }
-        
+
         public long FeedItemsHash { get; set; }
     }
 }

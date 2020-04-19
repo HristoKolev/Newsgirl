@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="newsgirl-server.json" />
+  </ItemGroup>
+
 </Project>
