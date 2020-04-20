@@ -2,6 +2,7 @@
   "ErrorMessages": [
     "ApplicationException: Testing the exception handling."
   ],
+  "Headers": {},
   "IsOk": false,
   "Payload": null
 }

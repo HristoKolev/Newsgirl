@@ -2,6 +2,7 @@
   "ErrorMessages": [
     "Rpc response task is null."
   ],
+  "Headers": {},
   "IsOk": false,
   "Payload": null
 }

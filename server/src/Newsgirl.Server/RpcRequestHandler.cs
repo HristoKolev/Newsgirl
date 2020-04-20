@@ -65,7 +65,7 @@ namespace Newsgirl.Server
             }
             finally
             {
-                ArrayPool<byte>.Shared.Return(buffer);    
+                bufferPool.Return(buffer);    
             }
         }
     }
