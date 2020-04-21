@@ -1,6 +1,7 @@
 namespace Newsgirl.Benchmarks
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reflection.Emit;
     using System.Text.Json;
@@ -12,58 +13,40 @@ namespace Newsgirl.Benchmarks
     {
         private byte[] data;
 
-        [Params(1_000_000)]
+        [Params(100)]
         public int N;
 
-        private Func<object, object> getPayload;
-        private object model;
-        private Func<object, MyModelHeader[]> getHeaders;
-        private Func<object, (object, MyModelHeader[])> getCombined;
+        private Type wrapperType;
+        private Dictionary<string, Type> requestTable;
+        private Func<object, ConcreteWrapperObject> copyData;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
             this.data = TestHelper.GetResourceBytes("../../../../../resources/large.json").GetAwaiter().GetResult();
+            this.wrapperType = typeof(WrapperObject<>).MakeGenericType(typeof(ItemModel[]));
             
-            var getPayloadMethod = new DynamicMethod("getPayloadMethod", typeof(object), new []{typeof(object)});
+            var copyData = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new []{typeof(object)});
 
-            var getPayloadGen = getPayloadMethod.GetILGenerator();
-            getPayloadGen.Emit(OpCodes.Ldarg_0);
-            getPayloadGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
-            getPayloadGen.Emit(OpCodes.Ret);
-            
-            this.getPayload = (Func<object, object>)getPayloadMethod.CreateDelegate(typeof(Func<object, object>));
-            
-            var getHeadersMethod = new DynamicMethod("getPayloadMethod", typeof(MyModelHeader[]), new []{typeof(object)});
+            var il = copyData.GetILGenerator();
+            il.Emit(OpCodes.Newobj, typeof(ConcreteWrapperObject).GetConstructors().First());
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Dup);
 
-            var getHeadersGen = getHeadersMethod.GetILGenerator();
-            getHeadersGen.Emit(OpCodes.Ldarg_0);
-            getHeadersGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
-            getHeadersGen.Emit(OpCodes.Ret);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("payload").SetMethod);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("headers").SetMethod);
+            il.Emit(OpCodes.Ret);
             
-            this.getHeaders = (Func<object, MyModelHeader[]>)getHeadersMethod.CreateDelegate(typeof(Func<object, MyModelHeader[]>));
+            this.copyData = (Func<object, ConcreteWrapperObject>)copyData.CreateDelegate(typeof(Func<object, ConcreteWrapperObject>));
             
-            
-            
-            
-            
-            
-            
-            var getCombinedMethod = new DynamicMethod("getPayloadMethod", typeof((object, MyModelHeader[])), new []{typeof(object)});
-
-            var getCombinedGen = getCombinedMethod.GetILGenerator();
-            getCombinedGen.Emit(OpCodes.Ldarg_0);
-            getCombinedGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
-            getCombinedGen.Emit(OpCodes.Ldarg_0);
-            getCombinedGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
-            getCombinedGen.Emit(OpCodes.Newobj, typeof(ValueTuple<object, MyModelHeader[]>).GetConstructors().First());
-            getCombinedGen.Emit(OpCodes.Ret);
-            
-            this.getCombined = (Func<object, (object, MyModelHeader[])>)getCombinedMethod.CreateDelegate(typeof(Func<object, (object, MyModelHeader[])>));
-
-            var wrapperType = typeof(MyWrapper<>).MakeGenericType(typeof(MyModelItem[]));
-
-            this.model = JsonSerializer.Deserialize(this.data, wrapperType);
+            this.requestTable = new Dictionary<string, Type>
+            {
+                {"Req1", this.wrapperType}
+            };
         }
 
         [GlobalCleanup]
@@ -72,14 +55,20 @@ namespace Newsgirl.Benchmarks
         }
 
         [Benchmark]
-        public void CreateDelegate()
+        public void DirectDeserialize()
         {
             for (int i = 0; i < this.N; i++)
             {
-                var payload = this.getPayload(this.model);
-                var headers = this.getHeaders(this.model);
-                GC.KeepAlive(payload);
-                GC.KeepAlive(headers);
+                // string typeName;
+                //
+                // using (var dom = JsonDocument.Parse(this.data))
+                // {
+                //     typeName = dom.RootElement.GetProperty("type").GetString();
+                // }
+
+                
+                var model = JsonSerializer.Deserialize(this.data, this.wrapperType);
+                GC.KeepAlive(model);
             }
         }
         
@@ -88,45 +77,45 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                var (payload, headers) = this.getCombined(this.model);
-                GC.KeepAlive(payload);
-                GC.KeepAlive(headers);
+                string typeName;
+                
+                using (var dom = JsonDocument.Parse(this.data))
+                {
+                    typeName = dom.RootElement.GetProperty("type").GetString();
+                }
+
+                if (!this.requestTable.TryGetValue(typeName, out var messageType))
+                {
+                    throw new NotImplementedException();
+                }
+                
+                var wrapped = JsonSerializer.Deserialize(this.data, this.wrapperType);
+
+                var real = this.copyData(wrapped);
+                
+                GC.KeepAlive(real);
             }
         }
         
-        [Benchmark]
-        public void InvariantCast()
+        public class ConcreteWrapperObject
         {
-            for (int i = 0; i < this.N; i++)
-            {
-                var m = (IMyWrapper<object>)this.model;
-                var payload = m.payload;
-                var headers = m.headers;
-
-                GC.KeepAlive(payload);
-                GC.KeepAlive(headers);
-            }
-        }
-
-        public interface IMyWrapper<out T>
-        {
-            MyModelHeader[] headers { get; set; }
+            public Header[] headers { get; set; }
             
-            string type { get; set; }
+            public string type { get; set; }
             
-            T payload { get; }
+            public object payload { get; set; }
         }
-
-        public class MyWrapper<T> : IMyWrapper<T>
+        
+        public class WrapperObject<T>
         {
-            public MyModelHeader[] headers { get; set; }
+            public Header[] headers { get; set; }
             
             public string type { get; set; }
             
             public T payload { get; set; }
         }
 
-        public class MyModelItem
+        public class ItemModel
         {
             public string prop1 { get; set; }
             public string prop2 { get; set; }
@@ -135,7 +124,7 @@ namespace Newsgirl.Benchmarks
             public string prop5 { get; set; }
         }
 
-        public class MyModelHeader
+        public class Header
         {
             public string h1 { get; set; }
         }

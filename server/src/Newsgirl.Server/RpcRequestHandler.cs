@@ -2,6 +2,10 @@ namespace Newsgirl.Server
 {
     using System;
     using System.Buffers;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection.Emit;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
@@ -10,10 +14,27 @@ namespace Newsgirl.Server
 
     public static class RpcRequestHandler
     {
+        private static readonly object SyncRoot = new object();
+        private static bool initialized;
+        private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
+        private static Func<object, RpcRequestMessage> copyData;
+
         public static async Task HandleRequest(InstanceProvider instanceProvider, HttpContext context)
         {
+            if (!initialized)
+            {
+                lock (SyncRoot)
+                {
+                    if (!initialized)
+                    {
+                        InitializeStaticCache();
+                        initialized = true;
+                    }
+                }
+            }
+
             var request = context.Request;
-            
+
             // ReSharper disable once PossibleInvalidOperationException
             int contentLength = (int) request.ContentLength.Value;
 
@@ -50,23 +71,73 @@ namespace Newsgirl.Server
             try
             {
                 string rpcRequestType;
-            
+
                 using (var jsonDocument = JsonDocument.Parse(buffer.AsMemory(0, contentLength)))
                 {
-                    rpcRequestType = jsonDocument.RootElement.GetProperty("type").GetString();   
+                    rpcRequestType = jsonDocument.RootElement.GetProperty("type").GetString();
                 }
 
-                var rpcEngine = instanceProvider.Get<RpcEngine>();
-                //
-                // Type requestType = rpcEngine.Metadata;
-                //
-                // var payload = JsonSerializer.Deserialize<MyModel>(buffer.AsSpan(0, offset));
+                // TODO: Return error if rpcRequestType is null or empty.
 
+                var rpcEngine = instanceProvider.Get<RpcEngine>();
+
+                var metadata = rpcEngine.GetMetadataByRequestName(rpcRequestType);
+
+                if (metadata == null)
+                {
+                    // TODO: Return error if metadata is null.
+                }
+
+                var requestType = metadata.RequestType;
+
+                var deserializeType = genericRpcModelTable.GetOrAdd(requestType,
+                    x => typeof(RpcRequestMessageModel<>).MakeGenericType(x));
+
+                var dto = JsonSerializer.Deserialize(buffer.AsSpan(0, contentLength), deserializeType);
+
+                var rpcRequestMessage = copyData(dto);
             }
             finally
             {
-                bufferPool.Return(buffer);    
+                bufferPool.Return(buffer);
             }
         }
+
+        private static void InitializeStaticCache()
+        {
+            genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
+            
+            var copyDataMethod = new DynamicMethod("copyData", typeof(RpcRequestMessage), new []{typeof(object)});
+
+            var il = copyDataMethod.GetILGenerator();
+            il.Emit(OpCodes.Newobj, typeof(RpcRequestMessage).GetConstructors().First());
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Dup);
+
+            il.Emit(OpCodes.Ldarg_0);
+            // ReSharper disable once PossibleNullReferenceException
+            // ReSharper disable once AssignNullToNotNullAttribute
+            il.Emit(OpCodes.Call, typeof(RpcRequestMessageModel<>).MakeGenericType(typeof(object)).GetProperty("Payload").GetMethod);
+            // ReSharper disable once PossibleNullReferenceException
+            // ReSharper disable once AssignNullToNotNullAttribute
+            il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload").SetMethod);
+            il.Emit(OpCodes.Ldarg_0);
+            // ReSharper disable once PossibleNullReferenceException
+            // ReSharper disable once AssignNullToNotNullAttribute
+            il.Emit(OpCodes.Call, typeof(RpcRequestMessageModel<>).MakeGenericType(typeof(object)).GetProperty("Headers").GetMethod);
+            // ReSharper disable once PossibleNullReferenceException
+            // ReSharper disable once AssignNullToNotNullAttribute
+            il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Headers").SetMethod);
+            il.Emit(OpCodes.Ret);
+            
+            copyData = (Func<object, RpcRequestMessage>)copyDataMethod.CreateDelegate(typeof(Func<object, RpcRequestMessage>));
+        }
+    }
+
+    public class RpcRequestMessageModel<T>
+    {
+        public T Payload { get; set; }
+
+        public Dictionary<string, string> Headers { get; set; }
     }
 }

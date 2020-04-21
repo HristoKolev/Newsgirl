@@ -12,6 +12,7 @@ namespace Newsgirl.Shared
     public class RpcEngine
     {
         private Dictionary<Type, RpcMetadata> metadataByRequestType;
+        private Dictionary<string, RpcMetadata> metadataByRequestName;
         private readonly ILog log;
         
         public List<RpcMetadata> Metadata { get; private set; }
@@ -145,6 +146,7 @@ namespace Newsgirl.Shared
 
             this.Metadata = handlers.OrderBy(x => x.RequestType.Name).ToList();
             this.metadataByRequestType = handlers.ToDictionary(x => x.RequestType, x => x);
+            this.metadataByRequestName = handlers.ToDictionary(x => x.RequestType.Name, x => x);
         }
 
         // ReSharper disable once UnusedParameter.Local
@@ -171,7 +173,7 @@ namespace Newsgirl.Shared
             
             il.Emit(OpCodes.Ret);
             
-            return (Func<Task, RpcResult<object>>)method.CreateDelegate(typeof(Func<Task, RpcResult<object>>));
+            return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
         private static Func<Task, RpcResult<object>> GetConvertTaskOfResultOfResponse(RpcMetadata metadata)
@@ -188,7 +190,7 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Ret);
 
-            return (Func<Task, RpcResult<object>>)method.CreateDelegate(typeof(Func<Task, RpcResult<object>>));
+            return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
         private static Func<Task, RpcResult<object>> GetConvertTaskOfResponse(RpcMetadata metadata)
@@ -203,7 +205,7 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Ret);
 
-            return (Func<Task, RpcResult<object>>)method.CreateDelegate(typeof(Func<Task, RpcResult<object>>));
+            return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
         private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcMetadata metadata)
@@ -484,6 +486,16 @@ namespace Newsgirl.Shared
                     return RpcResult.Error<TResponse>("Rpc response task type is not supported.");
                 }
             }
+        }
+
+        public RpcMetadata GetMetadataByRequestName(string requestName)
+        {
+            if (this.metadataByRequestName.TryGetValue(requestName, out var metadata))
+            {
+                return metadata;
+            }
+
+            return null;
         }
     }
     

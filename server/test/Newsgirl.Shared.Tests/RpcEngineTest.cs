@@ -1132,6 +1132,51 @@ namespace Newsgirl.Shared.Tests
             }
         }
         
+        [Fact]
+        public Task GetMetadataByRequestName_returns_correct_metadata()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(GetMetadataByRequestNameTestHandler)
+                }
+            }, GetLog());
+
+            var metadata = rpcEngine.GetMetadataByRequestName(nameof(ExecutorTestRequest));
+            
+            Assert.Equal(rpcEngine.Metadata.First(), metadata);
+            
+            return Task.CompletedTask;
+        }
+        
+        [Fact]
+        public Task GetMetadataByRequestName_returns_null_on_unknown_request_name()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(GetMetadataByRequestNameTestHandler)
+                }
+            }, GetLog());
+
+            var metadata = rpcEngine.GetMetadataByRequestName(nameof(NonRegisteredRequest));
+            
+            Assert.Null(metadata);
+            
+            return Task.CompletedTask;
+        }
+
+        public class GetMetadataByRequestNameTestHandler
+        {
+            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
+            public Task<RpcResult<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            {
+                return Task.FromResult(RpcResult.Ok(new ExecutorTestResponse()));
+            }
+        }
+
         private static InstanceProvider GetDefaultInstanceProvider()
         {
             var resolver = Substitute.For<InstanceProvider>();

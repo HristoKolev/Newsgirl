@@ -14,78 +14,67 @@ namespace JsonTest
         {
             var data = File.ReadAllBytes(
                 "/work/projects/Newsgirl/server/test/Newsgirl.Benchmarks/resources/large.json");
-            var stream = new MemoryStream(data);
-           
-            var buffer = ArrayPool<byte>.Shared.Rent((int) stream.Length);
+            var copyData = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new []{typeof(object)});
 
-            int read;
-            int offset = 0;
+            var il = copyData.GetILGenerator();
+            il.Emit(OpCodes.Newobj, typeof(ConcreteWrapperObject).GetConstructors().First());
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Dup);
 
-            while ((read = stream.Read(buffer, offset, (int) stream.Length - offset)) > 0)
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("payload").SetMethod);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("headers").SetMethod);
+            il.Emit(OpCodes.Ret);
+            
+            var fn = (Func<object, ConcreteWrapperObject>)copyData.CreateDelegate(typeof(Func<object, ConcreteWrapperObject>));
+            
+            var obj = new WrapperObject<ItemModel[]>()
             {
-                offset += read;
-            }
+                headers = new Header[10],
+                payload = new ItemModel[10],
+            };
 
-            using var doc = JsonDocument.Parse(buffer.AsMemory(0, offset));
+            var res = fn(obj);
 
-            string requestType = doc.RootElement.GetProperty("type").GetString();
-
-            var wrapperType = typeof(MyWrapper<>).MakeGenericType(typeof(MyModelItem[]));
-
-            var model =   JsonSerializer.Deserialize(buffer.AsSpan(0, offset), wrapperType);
-
-            var getCombinedMethod = new DynamicMethod("getPayloadMethod", typeof((object, MyModelHeader[])), new []{typeof(object)});
-
-            var getCombinedGen = getCombinedMethod.GetILGenerator();
-            getCombinedGen.Emit(OpCodes.Ldarg_0);
-            getCombinedGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
-            getCombinedGen.Emit(OpCodes.Ldarg_0);
-            getCombinedGen.Emit(OpCodes.Call, typeof(MyWrapper<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
-            getCombinedGen.Emit(OpCodes.Newobj, typeof(ValueTuple<object, MyModelHeader[]>).GetConstructors().First());
-            getCombinedGen.Emit(OpCodes.Ret);
-            
-            var getCombined = (Func<object, (object, MyModelHeader[])>)getCombinedMethod.CreateDelegate(typeof(Func<object, (object, MyModelHeader[])>));
-
-
-            var (payload, headers) = getCombined(model);
-            
-            GC.KeepAlive(payload);
-            GC.KeepAlive(headers);
-
-            ArrayPool<byte>.Shared.Return(buffer);
+            Console.WriteLine(res);
         }
         
-  
-        public interface IMyWrapper<out T>
-        {
-            MyModelHeader[] headers { get; set; }
+   
+    }
+    
+      
+    public class ConcreteWrapperObject
+    {
+        public Header[] headers { get; set; }
             
-            string type { get; set; }
+        public string type { get; set; }
             
-            T payload { get; }
-        }
+        public object payload { get; set; }
+    }
+        
+    public class WrapperObject<T>
+    {
+        public Header[] headers { get; set; }
+            
+        public string type { get; set; }
+            
+        public T payload { get; set; }
+    }
 
-        public class MyWrapper<T> : IMyWrapper<T>
-        {
-            public MyModelHeader[] headers { get; set; }
-            
-            public string type { get; set; }
-            
-            public T payload { get; set; }
-        }
+    public class ItemModel
+    {
+        public string prop1 { get; set; }
+        public string prop2 { get; set; }
+        public string prop3 { get; set; }
+        public string prop4 { get; set; }
+        public string prop5 { get; set; }
+    }
 
-        public class MyModelItem
-        {
-            public string prop1 { get; set; }
-            public string prop2 { get; set; }
-            public string prop3 { get; set; }
-            public string prop4 { get; set; }
-            public string prop5 { get; set; }
-        }
-
-        public class MyModelHeader
-        {
-            public string h1 { get; set; }
-        }
+    public class Header
+    {
+        public string h1 { get; set; }
     }
 }
