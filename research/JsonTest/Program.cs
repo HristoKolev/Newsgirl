@@ -2,11 +2,9 @@
 
 namespace JsonTest
 {
-    using System.Buffers;
     using System.IO;
     using System.Linq;
     using System.Reflection.Emit;
-    using System.Text.Json;
 
     class Program
     {

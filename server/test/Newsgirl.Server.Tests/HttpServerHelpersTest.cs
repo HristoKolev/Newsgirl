@@ -65,6 +65,31 @@ namespace Newsgirl.Server.Tests
             }
         }
 
+        [Theory]
+        [InlineData("4000b_lipsum.txt")]
+        [InlineData("unicode_test_page.html")]
+        public async Task ReadToEnd_works(string resourceName)
+        {
+            var resourceBytes = await TestHelper.GetResourceBytes(resourceName);
+
+            async Task Handler(HttpContext context)
+            {
+                using var dataHandle = await context.Request.ReadToEnd();
+                context.Response.StatusCode = 200;
+                await context.Response.Body.WriteAsync(dataHandle.AsMemory());
+            }
+
+            await using (var tester = await HttpServerTester.Create(Handler))
+            {
+                var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
+                response.EnsureSuccessStatusCode();
+
+                var responseBody = await response.Content.ReadAsByteArrayAsync();
+
+                AssertExt.EqualByteArray(resourceBytes, responseBody);
+            }
+        }
+
         [Fact]
         public async Task ReadUtf8_throws_on_invalid_utf8()
         {

@@ -11,22 +11,24 @@ namespace Newsgirl.Benchmarks
     [MemoryDiagnoser]
     public class JsonExtractBenchmark
     {
+        private Func<object, ConcreteWrapperObject> copyData;
         private byte[] data;
 
         [Params(100)]
         public int N;
 
-        private Type wrapperType;
         private Dictionary<string, Type> requestTable;
-        private Func<object, ConcreteWrapperObject> copyData;
+        private JsonSerializerOptions serializationOptions;
+
+        private Type wrapperType;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
             this.data = TestHelper.GetResourceBytes("../../../../../resources/large.json").GetAwaiter().GetResult();
             this.wrapperType = typeof(WrapperObject<>).MakeGenericType(typeof(ItemModel[]));
-            
-            var copyData = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new []{typeof(object)});
+
+            var copyData = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new[] {typeof(object)});
 
             var il = copyData.GetILGenerator();
             il.Emit(OpCodes.Newobj, typeof(ConcreteWrapperObject).GetConstructors().First());
@@ -34,19 +36,25 @@ namespace Newsgirl.Benchmarks
             il.Emit(OpCodes.Dup);
 
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
+            il.Emit(OpCodes.Call,
+                typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
             il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("payload").SetMethod);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
+            il.Emit(OpCodes.Call,
+                typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
             il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("headers").SetMethod);
             il.Emit(OpCodes.Ret);
-            
-            this.copyData = (Func<object, ConcreteWrapperObject>)copyData.CreateDelegate(typeof(Func<object, ConcreteWrapperObject>));
-            
+
+            this.copyData =
+                (Func<object, ConcreteWrapperObject>) copyData.CreateDelegate(
+                    typeof(Func<object, ConcreteWrapperObject>));
+
             this.requestTable = new Dictionary<string, Type>
             {
                 {"Req1", this.wrapperType}
             };
+
+            this.serializationOptions = new JsonSerializerOptions {PropertyNameCaseInsensitive = true};
         }
 
         [GlobalCleanup]
@@ -59,26 +67,18 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                // string typeName;
-                //
-                // using (var dom = JsonDocument.Parse(this.data))
-                // {
-                //     typeName = dom.RootElement.GetProperty("type").GetString();
-                // }
-
-                
-                var model = JsonSerializer.Deserialize(this.data, this.wrapperType);
+                var model = JsonSerializer.Deserialize(this.data, this.wrapperType, this.serializationOptions);
                 GC.KeepAlive(model);
             }
         }
-        
-        [Benchmark]
-        public void CreateDelegateTuple()
+
+        [Benchmark(Baseline = true)]
+        public void DomPlusDeserialize()
         {
             for (int i = 0; i < this.N; i++)
             {
                 string typeName;
-                
+
                 using (var dom = JsonDocument.Parse(this.data))
                 {
                     typeName = dom.RootElement.GetProperty("type").GetString();
@@ -88,30 +88,55 @@ namespace Newsgirl.Benchmarks
                 {
                     throw new NotImplementedException();
                 }
-                
-                var wrapped = JsonSerializer.Deserialize(this.data, this.wrapperType);
+
+                var wrapped = JsonSerializer.Deserialize(this.data, messageType, this.serializationOptions);
 
                 var real = this.copyData(wrapped);
-                
+
                 GC.KeepAlive(real);
             }
         }
-        
+
+        [Benchmark]
+        public void DeserializeTwice()
+        {
+            for (int i = 0; i < this.N; i++)
+            {
+                var d1 = JsonSerializer.Deserialize<TypeOnlyModel>(this.data, this.serializationOptions);
+
+                if (!this.requestTable.TryGetValue(d1.type, out var messageType))
+                {
+                    throw new NotImplementedException();
+                }
+
+                var wrapped = JsonSerializer.Deserialize(this.data, messageType, this.serializationOptions);
+
+                var real = this.copyData(wrapped);
+
+                GC.KeepAlive(real);
+            }
+        }
+
         public class ConcreteWrapperObject
         {
-            public Header[] headers { get; set; }
-            
+            public Dictionary<string, string> headers { get; set; }
+
             public string type { get; set; }
-            
+
             public object payload { get; set; }
         }
-        
+
+        public struct TypeOnlyModel
+        {
+            public string type { get; set; }
+        }
+
         public class WrapperObject<T>
         {
-            public Header[] headers { get; set; }
-            
+            public Dictionary<string, string> headers { get; set; }
+
             public string type { get; set; }
-            
+
             public T payload { get; set; }
         }
 
@@ -122,11 +147,6 @@ namespace Newsgirl.Benchmarks
             public string prop3 { get; set; }
             public string prop4 { get; set; }
             public string prop5 { get; set; }
-        }
-
-        public class Header
-        {
-            public string h1 { get; set; }
         }
     }
 }

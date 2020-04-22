@@ -102,7 +102,7 @@ namespace Newsgirl.Server
             {
                 var instanceProvider = this.IoC.Resolve<InstanceProvider>();
 
-                return RpcRequestHandler.HandleRequest(instanceProvider, ctx);
+                return RpcRequestHandler.HandleRequest(instanceProvider, ctx).AsTask();
             }
 
             this.Server = new HttpServerImpl(this.Log, serverConfig, RequestDelegate);

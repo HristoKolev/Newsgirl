@@ -1,7 +1,6 @@
 namespace Newsgirl.Server
 {
     using System;
-    using System.Buffers;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
@@ -10,7 +9,6 @@ namespace Newsgirl.Server
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Shared;
-    using Shared.Infrastructure;
 
     public static class RpcRequestHandler
     {
@@ -18,8 +16,43 @@ namespace Newsgirl.Server
         private static bool initialized;
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
         private static Func<object, RpcRequestMessage> copyData;
+        private static JsonSerializerOptions serializationOptions;
 
-        public static async Task HandleRequest(InstanceProvider instanceProvider, HttpContext context)
+        private static async ValueTask<RpcResult<RpcRequestMessage>> ReadRequestMessage(HttpRequest request, InstanceProvider instanceProvider)
+        {
+            using var bufferHandle = await request.ReadToEnd();
+
+            // TODO: Error handling for bad json
+            var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
+
+            string rpcRequestType = typeModel.Type;
+
+            if (string.IsNullOrWhiteSpace(rpcRequestType))
+            {
+                return RpcResult.Error<RpcRequestMessage>("Request type is null or an empty string.");
+            }
+
+            var rpcEngine = instanceProvider.Get<RpcEngine>();
+
+            var metadata = rpcEngine.GetMetadataByRequestName(rpcRequestType);
+
+            if (metadata == null)
+            {
+                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request `{rpcRequestType}`.");
+            }
+
+            var deserializeType = genericRpcModelTable.GetOrAdd(
+                metadata.RequestType,x => typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(x));
+
+            // TODO: Error handling for bad json
+            var payloadAndHeaders = JsonSerializer.Deserialize(bufferHandle.AsSpan(), deserializeType, serializationOptions);
+
+            var rpcRequestMessage = copyData(payloadAndHeaders);
+
+            return RpcResult.Ok(rpcRequestMessage);
+        }
+        
+        public static async ValueTask HandleRequest(InstanceProvider instanceProvider, HttpContext context)
         {
             if (!initialized)
             {
@@ -33,81 +66,37 @@ namespace Newsgirl.Server
                 }
             }
 
-            var request = context.Request;
+            var requestMessageResult = await ReadRequestMessage(context.Request, instanceProvider);
 
-            // ReSharper disable once PossibleInvalidOperationException
-            int contentLength = (int) request.ContentLength.Value;
-
-            // default pool
-            var bufferPool = ArrayPool<byte>.Shared;
-            var requestStream = request.Body;
-
-            var buffer = bufferPool.Rent(contentLength);
-
-            try
+            if (!requestMessageResult.IsOk)
             {
-                int read;
-                int offset = 0;
-
-                while ((read = await requestStream.ReadAsync(buffer, offset, contentLength - offset)) > 0)
-                {
-                    offset += read;
-                }
+                throw new NotImplementedException();
             }
-            catch (Exception err)
-            {
-                bufferPool.Return(buffer);
+            
+            var rpcEngine = instanceProvider.Get<RpcEngine>();
 
-                throw new DetailedLogException("An error occurred while reading the HTTP request body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
-                    Details =
-                    {
-                        {"contentLength", contentLength}
-                    }
-                };
-            }
-
-            try
-            {
-                string rpcRequestType;
-
-                using (var jsonDocument = JsonDocument.Parse(buffer.AsMemory(0, contentLength)))
-                {
-                    rpcRequestType = jsonDocument.RootElement.GetProperty("type").GetString();
-                }
-
-                // TODO: Return error if rpcRequestType is null or empty.
-
-                var rpcEngine = instanceProvider.Get<RpcEngine>();
-
-                var metadata = rpcEngine.GetMetadataByRequestName(rpcRequestType);
-
-                if (metadata == null)
-                {
-                    // TODO: Return error if metadata is null.
-                }
-
-                var requestType = metadata.RequestType;
-
-                var deserializeType = genericRpcModelTable.GetOrAdd(requestType,
-                    x => typeof(RpcRequestMessageModel<>).MakeGenericType(x));
-
-                var dto = JsonSerializer.Deserialize(buffer.AsSpan(0, contentLength), deserializeType);
-
-                var rpcRequestMessage = copyData(dto);
-            }
-            finally
-            {
-                bufferPool.Return(buffer);
-            }
+            var rpcResult = await rpcEngine.Execute(requestMessageResult.Payload, instanceProvider);
+            //
+            // await using var w = new Utf8JsonWriter(context.Response.BodyWriter);
+            //
+            // await JsonSerializer.SerializeAsync<>(w, rpcResult, serializationOptions);
         }
 
         private static void InitializeStaticCache()
         {
             genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
             
-            var copyDataMethod = new DynamicMethod("copyData", typeof(RpcRequestMessage), new []{typeof(object)});
+            copyData = CreateCopyDataMethod();
+
+            serializationOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+        }
+
+        private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
+        {
+            var copyDataMethod = new DynamicMethod("copyData", typeof(RpcRequestMessage), new[] {typeof(object)});
 
             var il = copyDataMethod.GetILGenerator();
             il.Emit(OpCodes.Newobj, typeof(RpcRequestMessage).GetConstructors().First());
@@ -117,27 +106,34 @@ namespace Newsgirl.Server
             il.Emit(OpCodes.Ldarg_0);
             // ReSharper disable once PossibleNullReferenceException
             // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcRequestMessageModel<>).MakeGenericType(typeof(object)).GetProperty("Payload").GetMethod);
+            il.Emit(OpCodes.Call,
+                typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty("Payload").GetMethod);
             // ReSharper disable once PossibleNullReferenceException
             // ReSharper disable once AssignNullToNotNullAttribute
             il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload").SetMethod);
             il.Emit(OpCodes.Ldarg_0);
             // ReSharper disable once PossibleNullReferenceException
             // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcRequestMessageModel<>).MakeGenericType(typeof(object)).GetProperty("Headers").GetMethod);
+            il.Emit(OpCodes.Call,
+                typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty("Headers").GetMethod);
             // ReSharper disable once PossibleNullReferenceException
             // ReSharper disable once AssignNullToNotNullAttribute
             il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Headers").SetMethod);
             il.Emit(OpCodes.Ret);
-            
-            copyData = (Func<object, RpcRequestMessage>)copyDataMethod.CreateDelegate(typeof(Func<object, RpcRequestMessage>));
+
+            return copyDataMethod.CreateDelegate<Func<object, RpcRequestMessage>>();
         }
-    }
 
-    public class RpcRequestMessageModel<T>
-    {
-        public T Payload { get; set; }
+        private class RpcPayloadAndHeadersDto<T>
+        {
+            public T Payload { get; set; }
 
-        public Dictionary<string, string> Headers { get; set; }
+            public Dictionary<string, string> Headers { get; set; }
+        }
+
+        private struct RpcTypeDto
+        {
+            public string Type { get; set; }
+        }
     }
 }
