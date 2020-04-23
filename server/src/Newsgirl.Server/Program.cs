@@ -101,8 +101,7 @@ namespace Newsgirl.Server
             Task RequestDelegate(HttpContext ctx)
             {
                 var instanceProvider = this.IoC.Resolve<InstanceProvider>();
-
-                return RpcRequestHandler.HandleRequest(instanceProvider, ctx).AsTask();
+                return RpcRequestHandler.HandleRequest(ctx, instanceProvider);
             }
 
             this.Server = new HttpServerImpl(this.Log, serverConfig, RequestDelegate);
