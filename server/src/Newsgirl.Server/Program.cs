@@ -98,13 +98,18 @@ namespace Newsgirl.Server
                 Addresses = new[] {"http://127.0.0.1:5000"}
             };
 
-            Task RequestDelegate(HttpContext ctx)
+            Task RequestDelegate(HttpContext context)
             {
-                var instanceProvider = this.IoC.Resolve<InstanceProvider>();
-                return RpcRequestHandler.HandleRequest(ctx, instanceProvider);
+                using (var requestScope = this.IoC.BeginLifetimeScope())
+                {
+                    var instanceProvider = requestScope.Resolve<InstanceProvider>();
+
+                    return RpcRequestHandler.HandleRequest(context, instanceProvider);
+                }
             }
 
             this.Server = new HttpServerImpl(this.Log, serverConfig, RequestDelegate);
+            
             await this.Server.Start();
 
             this.shutdownCompletionSource = new TaskCompletionSource<bool>();

@@ -13,13 +13,13 @@ namespace Newsgirl.Server
         /// <summary>
         ///     Writes a string in UTF-8 encoding and closes the stream.
         /// </summary>
-        public static async ValueTask WriteUtf8(this HttpResponse response, string responseBodyString)
+        public static async ValueTask WriteUtf8(this HttpResponse response, string str)
         {
             try
             {
                 await using (var writer = new StreamWriter(response.Body, EncodingHelper.UTF8))
                 {
-                    await writer.WriteAsync(responseBodyString);
+                    await writer.WriteAsync(str);
                 }
             }
             catch (EncoderFallbackException err)
@@ -73,7 +73,11 @@ namespace Newsgirl.Server
         /// </summary>
         public static async ValueTask<RentedByteArrayHandle> ReadToEnd(this HttpRequest request)
         {
-            // ReSharper disable once PossibleInvalidOperationException
+            if (!request.ContentLength.HasValue)
+            {
+                throw new DetailedLogException("The `ContentLength` header is not present.");
+            }
+
             var bufferHandle = new RentedByteArrayHandle((int) request.ContentLength.Value);
 
             try
@@ -91,7 +95,6 @@ namespace Newsgirl.Server
             catch (Exception err)
             {
                 int length = bufferHandle.Length;
-
                 bufferHandle.Dispose();
 
                 throw new DetailedLogException("Failed to read the HTTP request body.", err)

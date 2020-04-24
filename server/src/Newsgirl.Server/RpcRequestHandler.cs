@@ -24,6 +24,9 @@ namespace Newsgirl.Server
 
         public static async Task HandleRequest(HttpContext context, InstanceProvider instanceProvider)
         {
+            // Initialize.
+            RpcEngine rpcEngine;
+            
             try
             {
                 if (!initialized)
@@ -38,38 +41,85 @@ namespace Newsgirl.Server
                     }
                 }
 
-                var rpcEngine = instanceProvider.Get<RpcEngine>();
-
-                var requestMessageResult = await ReadRequestMessage(context.Request, rpcEngine);
-
-                if (!requestMessageResult.IsOk)
-                {
-                    await WriteResult(context.Response, requestMessageResult);
-                    return;
-                }
-
-                var rpcResult = await rpcEngine.Execute(requestMessageResult.Payload, instanceProvider);
-
-                await WriteResult(context.Response, rpcResult);
+                rpcEngine = instanceProvider.Get<RpcEngine>();
             }
-            catch (Exception err) when (!(err is DetailedLogException))
+            catch (Exception err)
             {
-                var log = instanceProvider.Get<ILog>();
-                await log.Error(err);
-
-                await WriteResult(context.Response, RpcResult.Error<object>("An error occured while handling the RPC request."));
+                string errorID = await instanceProvider.Get<ILog>().Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
+                await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                return;
             }
+
+            // Read request body.
+            RentedByteArrayHandle requestBodyBytes;
+
+            try
+            {
+                requestBodyBytes = await context.Request.ReadToEnd();
+            }
+            catch (Exception err)
+            {
+                string errorID = await instanceProvider.Get<ILog>().Error(err);
+                await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                return;
+            }
+
+            // Parse the RPC message.
+            RpcResult<RpcRequestMessage> requestMessageResult;
+
+            using (requestBodyBytes)
+            {
+                try
+                {
+                    requestMessageResult = ParseRequestMessage(requestBodyBytes, rpcEngine);
+                }
+                catch (Exception err)
+                {
+                    string errorID = await instanceProvider.Get<ILog>().Error(err, new Dictionary<string, object>()
+                    {
+                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes.AsSpan())}
+                    });
+                    await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                    return;
+                }                
+            }
+
+            if (!requestMessageResult.IsOk)
+            {
+                await WriteResult(context.Response, instanceProvider, requestMessageResult);
+                return;
+            }
+
+            RpcRequestMessage rpcRequestMessage = requestMessageResult.Payload;
+            
+            // Execute.
+            RpcResult<object> rpcResult;
+
+            try
+            {
+                rpcResult = await rpcEngine.Execute(rpcRequestMessage, instanceProvider);
+            }
+            catch (Exception err)
+            {
+                string errorID = await instanceProvider.Get<ILog>().Error(err, new Dictionary<string, object>
+                {
+                    {"rpcRequestMessage", rpcRequestMessage}
+                });
+                
+                await WriteError(context.Response, instanceProvider, $"RPC error ({rpcRequestMessage.Type}): {errorID}");
+                return;
+            }
+            
+            await WriteResult(context.Response, instanceProvider, rpcResult);
         }
 
         /// <summary>
-        ///     Reads an <see cref="RpcRequestMessage" /> from the HTTP request.
+        ///     Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArrayHandle"/>.
         /// </summary>
-        private static async ValueTask<RpcResult<RpcRequestMessage>> ReadRequestMessage(
-            HttpRequest request,
+        private static RpcResult<RpcRequestMessage> ParseRequestMessage(
+            RentedByteArrayHandle bufferHandle, 
             RpcEngine rpcEngine)
         {
-            using var bufferHandle = await request.ReadToEnd();
-
             // TODO: Error handling for bad json
             var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
 
@@ -102,12 +152,27 @@ namespace Newsgirl.Server
         /// <summary>
         ///     Writes a <see cref="RpcResult{T}" /> to the HTTP result.
         /// </summary>
-        private static Task WriteResult<T>(HttpResponse response, RpcResult<T> result)
+        private static async ValueTask WriteResult<T>(this HttpResponse response, InstanceProvider instanceProvider, RpcResult<T> result)
         {
-            response.StatusCode = 200;
-            return JsonSerializer.SerializeAsync(response.Body, result, serializationOptions);
+            try
+            {
+                response.StatusCode = 200;
+                await JsonSerializer.SerializeAsync(response.Body, result, serializationOptions);
+            }
+            catch (Exception err)
+            {
+                await instanceProvider.Get<ILog>().Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
+                {
+                    {"result", result}
+                });
+            }
         }
 
+        private static ValueTask WriteError(this HttpResponse response, InstanceProvider instanceProvider, string errorMessage)
+        {
+            return WriteResult(response, instanceProvider, RpcResult.Error<object>(errorMessage));
+        }
+        
         private static void InitializeStaticCache()
         {
             genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
@@ -120,7 +185,7 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Creates a function that copies properties 'Payload' and 'Headers' from an <see cref="RpcPayloadAndHeadersDto{T}" />
+        ///     Creates a function that copies properties from an <see cref="RpcPayloadAndHeadersDto{T}" />
         ///     instance to an <see cref="RpcRequestMessage" /> instance.
         /// </summary>
         private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
@@ -129,25 +194,15 @@ namespace Newsgirl.Server
 
             var il = copyDataMethod.GetILGenerator();
             il.Emit(OpCodes.Newobj, typeof(RpcRequestMessage).GetConstructors().First());
-            il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Dup);
 
-            il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once PossibleNullReferenceException
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call,
-                typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty("Payload").GetMethod);
-            // ReSharper disable once PossibleNullReferenceException
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload").SetMethod);
-            il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once PossibleNullReferenceException
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call,
-                typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty("Headers").GetMethod);
-            // ReSharper disable once PossibleNullReferenceException
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Headers").SetMethod);
+            foreach (var property in typeof(RpcRequestMessage).GetProperties())
+            {
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty(property.Name)?.GetMethod!);
+                il.Emit(OpCodes.Call, property.SetMethod!);    
+            }
+
             il.Emit(OpCodes.Ret);
 
             return copyDataMethod.CreateDelegate<Func<object, RpcRequestMessage>>();

@@ -57,35 +57,58 @@ namespace Newsgirl.Shared.Infrastructure
             }
         }
 
-        public async Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo = null)
+        public async Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
-            if (!this.config.DisableConsoleLogging)
+            try
             {
-                Console.Error.WriteLine(exception.ToString());
-            }
+                if (!this.config.DisableConsoleLogging)
+                {
+                    await Console.Error.WriteLineAsync(exception.ToString());
+                }
 
-            if (!this.config.DisableSentryIntegration)
+                if (!this.config.DisableSentryIntegration)
+                {
+                    return await this.SendToSentry(exception, additionalInfo, fingerprint);
+                }
+
+                return null;
+            }
+            catch (Exception err)
             {
-                return await this.SendToSentry(exception, additionalInfo);
+                Console.WriteLine(err);
+                return null;
             }
+        }
 
-            return null;
+        public Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo)
+        {
+            return this.Error(exception, null, additionalInfo);
+        }
+
+        public Task<string> Error(Exception exception, string fingerprint)
+        {
+            return this.Error(exception, fingerprint, null);
+        }
+
+        public Task<string> Error(Exception exception)
+        {
+            return this.Error(exception, null, null);
         }
 
         private void CreateSentryClient()
         {
-            if (this.sentryClient == null)
+            this.sentryClient ??= new SentryClient(new SentryOptions
             {
-                this.sentryClient = new SentryClient(new SentryOptions
-                {
-                    AttachStacktrace = true,
-                    Dsn = new Dsn(this.config.SentryDsn),
-                    Release = this.config.Release
-                });
-            }
+                AttachStacktrace = true,
+                Dsn = new Dsn(this.config.SentryDsn),
+                Release = this.config.Release
+            });
         }
 
-        private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo)
+        private async Task<string> SendToSentry(
+            Exception exception,
+            Dictionary<string, object> additionalInfo,
+            string explicitlyDefinedFingerprint)
         {
             this.CreateSentryClient();
 
@@ -104,7 +127,7 @@ namespace Newsgirl.Shared.Infrastructure
                 sentryEvent.Environment = this.config.Environment;
             }
 
-            string[] customFingerprint = null;
+            string[] fingerprintFromExceptionProperty = null;
 
             var exceptionChain = GetExceptionChain(exception);
 
@@ -121,7 +144,7 @@ namespace Newsgirl.Shared.Infrastructure
 
                     if (!string.IsNullOrWhiteSpace(detailedLogException.Fingerprint))
                     {
-                        customFingerprint = new[] {detailedLogException.Fingerprint};
+                        fingerprintFromExceptionProperty = new[] {detailedLogException.Fingerprint};
                     }
                 }
             }
@@ -134,9 +157,13 @@ namespace Newsgirl.Shared.Infrastructure
                 }
             }
 
-            if (customFingerprint != null)
+            if (!string.IsNullOrWhiteSpace(explicitlyDefinedFingerprint))
             {
-                sentryEvent.SetFingerprint(customFingerprint);
+                sentryEvent.SetFingerprint(new []{explicitlyDefinedFingerprint});
+            } 
+            else if (fingerprintFromExceptionProperty != null)
+            {
+                sentryEvent.SetFingerprint(fingerprintFromExceptionProperty);
             }
             else
             {
@@ -146,9 +173,7 @@ namespace Newsgirl.Shared.Infrastructure
                 {
                     var current = exceptionChain[i];
 
-                    string fingerprint = GetFingerprint(current);
-
-                    fingerprints[i] = fingerprint;
+                    fingerprints[i] = GetFingerprint(current);
                 }
 
                 sentryEvent.SetFingerprint(fingerprints);
@@ -198,7 +223,13 @@ namespace Newsgirl.Shared.Infrastructure
 
         void Log(string message);
 
-        Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo = null);
+        Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo);
+        
+        Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo);
+        
+        Task<string> Error(Exception exception, string fingerprint);
+        
+        Task<string> Error(Exception exception);
     }
 
     // ReSharper disable once ClassNeverInstantiated.Global
@@ -296,7 +327,7 @@ namespace Newsgirl.Shared.Infrastructure
 
         private static SentryStackFrame InternalCreateFrame(StackFrame stackFrame)
         {
-            const string unknownRequiredField = "(unknown)";
+            const string UNKNOWN_REQUIRED_FIELD = "(unknown)";
 
             var frame = new SentryStackFrame();
 
@@ -304,7 +335,7 @@ namespace Newsgirl.Shared.Infrastructure
             if (stackFrame.GetMethod() is MethodBase method)
             {
                 // TODO: SentryStackFrame.TryParse and skip frame instead of these unknown values:
-                frame.Module = method.DeclaringType?.FullName ?? unknownRequiredField;
+                frame.Module = method.DeclaringType?.FullName ?? UNKNOWN_REQUIRED_FIELD;
                 frame.Package = method.DeclaringType?.Assembly.FullName;
                 frame.Function = method.Name;
             }

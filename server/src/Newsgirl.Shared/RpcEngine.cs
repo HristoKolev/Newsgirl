@@ -11,7 +11,6 @@ namespace Newsgirl.Shared
 {
     public class RpcEngine
     {
-        private Dictionary<Type, RpcMetadata> metadataByRequestType;
         private Dictionary<string, RpcMetadata> metadataByRequestName;
         private readonly ILog log;
         
@@ -145,7 +144,6 @@ namespace Newsgirl.Shared
             }
 
             this.Metadata = handlers.OrderBy(x => x.RequestType.Name).ToList();
-            this.metadataByRequestType = handlers.ToDictionary(x => x.RequestType, x => x);
             this.metadataByRequestName = handlers.ToDictionary(x => x.RequestType.Name, x => x);
         }
 
@@ -368,14 +366,12 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request payload is null.");
             }
 
-            var requestType = requestMessage.Payload.GetType();
-
             // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
 
-            if (!this.metadataByRequestType.TryGetValue(requestType, out metadata))
+            if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
             {
-                throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
+                throw new DetailedLogException($"No RPC handler for request `{requestMessage.Type}`.");
             }
 
             var context = new RpcContext
@@ -430,14 +426,12 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request payload is null.");
             }
 
-            var requestType = requestMessage.Payload.GetType();
-
             // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
 
-            if (!this.metadataByRequestType.TryGetValue(requestType, out metadata))
+            if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
             {
-                throw new DetailedLogException($"No RPC handler for request `{requestType.Name}`.");
+                throw new DetailedLogException($"No RPC handler for request `{requestMessage.Type}`.");
             }
 
             var context = new RpcContext
@@ -584,8 +578,13 @@ namespace Newsgirl.Shared
 
     public enum ReturnVariant
     {
+        // Task<TResponse>
         TaskOfResponse = 1,
+        
+        // Task<RpcResult<TResponse>>
         TaskOfResultOfResponse = 2,
+        
+        // Task<RpcResult>
         TaskOfResult = 3,
     }
 
@@ -646,6 +645,8 @@ namespace Newsgirl.Shared
         public object Payload { get; set; }
 
         public Dictionary<string, string> Headers { get; set; }
+        
+        public string Type { get; set; }
     }
 
     /// <summary>
