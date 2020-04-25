@@ -14,19 +14,38 @@ namespace Newsgirl.Server
     /// <summary>
     ///     Serves Rpc requests over HTTP.
     /// </summary>
-    public static class RpcRequestHandler
+    public class RpcRequestHandler
     {
+        private readonly RpcEngine rpcEngine;
+        private readonly ILog log;
+        private readonly InstanceProvider instanceProvider;
         private static readonly object SyncRoot = new object();
         private static bool initialized;
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
         private static Func<object, RpcRequestMessage> copyData;
         private static JsonSerializerOptions serializationOptions;
-
-        public static async Task HandleRequest(HttpContext context, InstanceProvider instanceProvider)
+        
+        private static void InitializeStaticCache()
         {
-            // Initialize.
-            RpcEngine rpcEngine;
-            
+            genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
+            copyData = CreateCopyDataMethod();
+            serializationOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+        }
+
+        public RpcRequestHandler(RpcEngine rpcEngine, ILog log, InstanceProvider instanceProvider)
+        {
+            this.rpcEngine = rpcEngine;
+            this.log = log;
+            this.instanceProvider = instanceProvider;
+        }
+
+        public async Task HandleRequest(HttpContext context)
+        {
+            // Initialize.            
             try
             {
                 if (!initialized)
@@ -41,12 +60,11 @@ namespace Newsgirl.Server
                     }
                 }
 
-                rpcEngine = instanceProvider.Get<RpcEngine>();
             }
             catch (Exception err)
             {
-                string errorID = await instanceProvider.Get<ILog>().Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
-                await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                string errorID = await this.log.Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
+                await this.WriteError(context.Response, $"General RPC error: {errorID}");
                 return;
             }
 
@@ -59,8 +77,8 @@ namespace Newsgirl.Server
             }
             catch (Exception err)
             {
-                string errorID = await instanceProvider.Get<ILog>().Error(err);
-                await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                string errorID = await this.log.Error(err);
+                await this.WriteError(context.Response, $"Failed to read RPC request body: {errorID}");
                 return;
             }
 
@@ -71,22 +89,36 @@ namespace Newsgirl.Server
             {
                 try
                 {
-                    requestMessageResult = ParseRequestMessage(requestBodyBytes, rpcEngine);
+                    requestMessageResult = this.ParseRequestMessage(requestBodyBytes);
                 }
                 catch (Exception err)
                 {
-                    string errorID = await instanceProvider.Get<ILog>().Error(err, new Dictionary<string, object>()
+                    long? bytePositionInLine = null;
+                    long? lineNumber = null;
+                    string jsonPath = null;
+                    
+                    if (err is JsonException jsonException)
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes.AsSpan())}
+                        bytePositionInLine = jsonException.BytePositionInLine;
+                        lineNumber = jsonException.LineNumber;
+                        jsonPath = jsonException.Path;
+                    }   
+                    
+                    string errorID = await this.log.Error(err, new Dictionary<string, object>
+                    {
+                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes.AsSpan())},
+                        {"bytePositionInLine", bytePositionInLine},
+                        {"lineNumber", lineNumber},
+                        {"jsonPath", jsonPath},
                     });
-                    await WriteError(context.Response, instanceProvider, $"General RPC error: {errorID}");
+                    await this.WriteError(context.Response, $"Failed to parse RPC body: {errorID}");
                     return;
                 }                
             }
 
             if (!requestMessageResult.IsOk)
             {
-                await WriteResult(context.Response, instanceProvider, requestMessageResult);
+                await this.WriteResult(context.Response, requestMessageResult);
                 return;
             }
 
@@ -97,30 +129,27 @@ namespace Newsgirl.Server
 
             try
             {
-                rpcResult = await rpcEngine.Execute(rpcRequestMessage, instanceProvider);
+                rpcResult = await this.rpcEngine.Execute(rpcRequestMessage, this.instanceProvider);
             }
             catch (Exception err)
             {
-                string errorID = await instanceProvider.Get<ILog>().Error(err, new Dictionary<string, object>
+                string errorID = await this.log.Error(err, new Dictionary<string, object>
                 {
                     {"rpcRequestMessage", rpcRequestMessage}
                 });
                 
-                await WriteError(context.Response, instanceProvider, $"RPC error ({rpcRequestMessage.Type}): {errorID}");
+                await this.WriteError(context.Response, $"RPC execution error ({rpcRequestMessage.Type}): {errorID}");
                 return;
             }
             
-            await WriteResult(context.Response, instanceProvider, rpcResult);
+            await this.WriteResult(context.Response, rpcResult);
         }
 
         /// <summary>
         ///     Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArrayHandle"/>.
         /// </summary>
-        private static RpcResult<RpcRequestMessage> ParseRequestMessage(
-            RentedByteArrayHandle bufferHandle, 
-            RpcEngine rpcEngine)
+        private RpcResult<RpcRequestMessage> ParseRequestMessage(RentedByteArrayHandle bufferHandle)
         {
-            // TODO: Error handling for bad json
             var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
 
             string rpcRequestType = typeModel.Type;
@@ -130,17 +159,16 @@ namespace Newsgirl.Server
                 return RpcResult.Error<RpcRequestMessage>("Request type is null or an empty string.");
             }
 
-            var metadata = rpcEngine.GetMetadataByRequestName(rpcRequestType);
+            var metadata = this.rpcEngine.GetMetadataByRequestName(rpcRequestType);
 
             if (metadata == null)
             {
-                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request `{rpcRequestType}`.");
+                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request: {rpcRequestType}.");
             }
 
             var deserializeType = genericRpcModelTable.GetOrAdd(
-                metadata.RequestType, x => typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(x));
+                metadata.RequestType, x => typeof(RpcRequestMessageDto<>).MakeGenericType(x));
 
-            // TODO: Error handling for bad json
             var payloadAndHeaders =
                 JsonSerializer.Deserialize(bufferHandle.AsSpan(), deserializeType, serializationOptions);
 
@@ -152,7 +180,7 @@ namespace Newsgirl.Server
         /// <summary>
         ///     Writes a <see cref="RpcResult{T}" /> to the HTTP result.
         /// </summary>
-        private static async ValueTask WriteResult<T>(this HttpResponse response, InstanceProvider instanceProvider, RpcResult<T> result)
+        private async ValueTask WriteResult<T>(HttpResponse response, RpcResult<T> result)
         {
             try
             {
@@ -161,31 +189,20 @@ namespace Newsgirl.Server
             }
             catch (Exception err)
             {
-                await instanceProvider.Get<ILog>().Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
+                await this.log.Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
                 {
                     {"result", result}
                 });
             }
         }
 
-        private static ValueTask WriteError(this HttpResponse response, InstanceProvider instanceProvider, string errorMessage)
+        private ValueTask WriteError(HttpResponse response, string errorMessage)
         {
-            return WriteResult(response, instanceProvider, RpcResult.Error<object>(errorMessage));
-        }
-        
-        private static void InitializeStaticCache()
-        {
-            genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
-            copyData = CreateCopyDataMethod();
-            serializationOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+            return this.WriteResult(response, RpcResult.Error<object>(errorMessage));
         }
 
         /// <summary>
-        ///     Creates a function that copies properties from an <see cref="RpcPayloadAndHeadersDto{T}" />
+        ///     Creates a function that copies properties from an <see cref="RpcRequestMessageDto{T}" />
         ///     instance to an <see cref="RpcRequestMessage" /> instance.
         /// </summary>
         private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
@@ -199,7 +216,7 @@ namespace Newsgirl.Server
             {
                 il.Emit(OpCodes.Dup);
                 il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, typeof(RpcPayloadAndHeadersDto<>).MakeGenericType(typeof(object)).GetProperty(property.Name)?.GetMethod!);
+                il.Emit(OpCodes.Call, typeof(RpcRequestMessageDto<>).MakeGenericType(typeof(object)).GetProperty(property.Name)?.GetMethod!);
                 il.Emit(OpCodes.Call, property.SetMethod!);    
             }
 
@@ -208,13 +225,16 @@ namespace Newsgirl.Server
             return copyDataMethod.CreateDelegate<Func<object, RpcRequestMessage>>();
         }
 
-        private class RpcPayloadAndHeadersDto<T>
+        private class RpcRequestMessageDto<T>
         {
             // ReSharper disable once UnusedMember.Local
             public T Payload { get; set; }
 
             // ReSharper disable once UnusedMember.Local
             public Dictionary<string, string> Headers { get; set; }
+            
+            // ReSharper disable once UnusedAutoPropertyAccessor.Local
+            public string Type { get; set; }
         }
 
         private struct RpcTypeDto

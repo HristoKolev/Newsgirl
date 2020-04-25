@@ -271,7 +271,7 @@ namespace Newsgirl.Shared
             delegateFieldMap.Add(executeHandler, typeBuilder.DefineField(
                 "executeHandlerDelegateField",
                 typeof(RpcRequestDelegate),
-    FieldAttributes.Private | FieldAttributes.Static
+                FieldAttributes.Private | FieldAttributes.Static
             ));
 
             for (int i = metadata.MiddlewareTypes.Count - 1; i >= 0; i--)
@@ -365,6 +365,11 @@ namespace Newsgirl.Shared
             {
                 throw new DetailedLogException("Request payload is null.");
             }
+            
+            if (string.IsNullOrWhiteSpace(requestMessage.Type))
+            {
+                throw new DetailedLogException("Request type is null or empty.");
+            }
 
             // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
@@ -424,6 +429,11 @@ namespace Newsgirl.Shared
             if (requestMessage.Payload == null)
             {
                 throw new DetailedLogException("Request payload is null.");
+            }
+            
+            if (string.IsNullOrWhiteSpace(requestMessage.Type))
+            {
+                throw new DetailedLogException("Request type is null or empty.");
             }
 
             // ReSharper disable once InlineOutVariableDeclaration
@@ -597,7 +607,7 @@ namespace Newsgirl.Shared
         public Type RequestType { get; set; }
         
         public Type ResponseType { get; set; }
-        
+
         public List<Type> Parameters { get; set; }
         
         public Dictionary<Type, RpcSupplementalAttribute> SupplementalAttributes { get; set; }

@@ -8,65 +8,89 @@ using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Shared.Tests
 {
+    using System.Runtime.Serialization;
+
     public class AsyncLockTest
     {
         [Fact]
         public async Task Does_Not_Allow_Concurrent_Access()
         {
-            string expectedString;
-            string actualString;
+            RaceConditionException expectedError = null;
             
-            (expectedString, actualString) = await RunConcurrentTest(async action =>
+            try
             {
-                await action();
-            });
+                await RunConcurrentTest(async action =>
+                {
+                    await action();
+                });
+            }
+            catch (RaceConditionException err)
+            {
+                expectedError = err;
+            }
 
-            Assert.NotEqual(expectedString, actualString);
-
+            if (expectedError == null)
+            {
+                throw new ApplicationException("Race condition did not occur when expected.");
+            }
+            
             var asyncLock = new AsyncLock();
 
-            (expectedString, actualString) = await RunConcurrentTest(async action =>
+            await RunConcurrentTest(async action =>
             {
                 using (await asyncLock.Lock())
                 {
                     await action();
                 }
             });
-            
-            Assert.Equal(expectedString, actualString);
         }
 
-        private static async Task<(string, string)> RunConcurrentTest(Func<Func<Task>, Task> wrapperFunc)
+        private static async Task RunConcurrentTest(Func<Func<Task>, Task> wrapperFunc)
         {
-            const int bufferSize = 100;
-            const int iterationCount = 2;
+            const int THREAD_COUNT = 2;
+            
+            bool open = false;
 
-            int[] buffer = new int[bufferSize];
-
-            var tasks = Enumerable.Range(0, iterationCount)
+            var tasks = Enumerable.Range(0, THREAD_COUNT)
                 .Select(_ => Task.Run(async () =>
                 {
-                    for (int i = 0; i < buffer.Length; i++)
+                    await wrapperFunc(async () =>
                     {
-                        var index = i;
-                        
-                        await wrapperFunc(async () =>
+                        if (open)
                         {
-                            await Task.Delay(1);
-                            
-                            buffer[index] = buffer[index] + 1;
-                        });
-                    }
+                            throw new RaceConditionException();
+                        }
+
+                        open = true;
+
+                        await Task.Delay(10);
+
+                        open = false;
+                    });
                 }));
 
             await Task.WhenAll(tasks);
+        }
 
-            int[] expected = Enumerable.Repeat(iterationCount, bufferSize).Select(x => x).ToArray();
+        private class RaceConditionException : Exception
+        {
+            public RaceConditionException()
+            {
+            }
 
-            string expectedString = string.Join(", ", expected.Select(x => x.ToString()));
-            string actualString = string.Join(", ", buffer.Select(x => x.ToString()));
+            public RaceConditionException(string message) : base(message)
+            {
+            }
 
-            return (expectedString, actualString);
+            public RaceConditionException(string message, Exception inner) : base(message, inner)
+            {
+            }
+
+            protected RaceConditionException(
+                SerializationInfo info,
+                StreamingContext context) : base(info, context)
+            {
+            }
         }
     }
 }

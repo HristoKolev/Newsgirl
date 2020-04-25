@@ -170,6 +170,18 @@ namespace Newsgirl.Testing
 
             Approvals.VerifyWithExtension(json, ".json");
         }
+        
+        public static void MatchJson(string json, string[] parameters = null)
+        {
+            string formatJson = JsonPrettyPrint.FormatJson(json);
+            
+            if (parameters != null)
+            {
+                NamerFactory.AdditionalInformation = string.Join("_", parameters);
+            }
+
+            Approvals.VerifyWithExtension(formatJson, ".json");
+        }
 
         public static void MatchError(Exception exception, string[] parameters = null)
         {

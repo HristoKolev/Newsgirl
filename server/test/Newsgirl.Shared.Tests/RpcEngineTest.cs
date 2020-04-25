@@ -340,7 +340,6 @@ namespace Newsgirl.Shared.Tests
                 await rpcEngine.Execute<ExecutorTestResponse>(null, GetDefaultInstanceProvider());
             });
         }
-
         
         [Fact]
         public async Task Execute_throws_on_null_message_payload()
@@ -365,6 +364,29 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
+        public async Task Execute_throws_on_null_message_type()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler)
+                },
+            }, GetLog());
+
+            await Snapshot.MatchError(async () =>
+            {
+                var rpcRequestMessage = new RpcRequestMessage
+                {
+                    Payload = new ExecutorTestRequest(),
+                    Type = null,
+                };
+                
+                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
+        }
+        
+        [Fact]
         public async Task ExecuteObject_throws_on_null_message()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
@@ -380,7 +402,7 @@ namespace Newsgirl.Shared.Tests
                 await rpcEngine.Execute(null, GetDefaultInstanceProvider());
             });
         }
-        
+
         [Fact]
         public async Task ExecuteObject_throws_on_null_message_payload()
         {
@@ -404,6 +426,29 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
+        public async Task ExecuteObject_throws_on_null_message_type()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler)
+                },
+            }, GetLog());
+
+            await Snapshot.MatchError(async () =>
+            {
+                var rpcRequestMessage = new RpcRequestMessage
+                {
+                    Payload = new ExecutorTestRequest(),
+                    Type = null,
+                };
+                
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
+        }
+        
+        [Fact]
         public async Task Execute_throws_when_it_cannot_match_a_handler()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
@@ -418,7 +463,8 @@ namespace Newsgirl.Shared.Tests
             {
                 var rpcRequestMessage = new RpcRequestMessage
                 {
-                    Payload = new NonRegisteredRequest()
+                    Payload = new NonRegisteredRequest(),
+                    Type = nameof(NonRegisteredRequest)
                 };
                 
                 await rpcEngine.Execute<NonRegisteredResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -440,7 +486,8 @@ namespace Newsgirl.Shared.Tests
             {
                 var rpcRequestMessage = new RpcRequestMessage
                 {
-                    Payload = new NonRegisteredRequest()
+                    Payload = new NonRegisteredRequest(),
+                    Type = nameof(NonRegisteredRequest)
                 };
                 
                 await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -462,7 +509,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -483,7 +531,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -507,7 +556,8 @@ namespace Newsgirl.Shared.Tests
                 Payload = new ExecutorTestRequest
                 {
                     Number = 42
-                }
+                },
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute<ExecutorTestResponse>(requestMessage, GetDefaultInstanceProvider());
@@ -530,7 +580,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -551,7 +602,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -679,7 +731,8 @@ namespace Newsgirl.Shared.Tests
             
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = request
+                Payload = request,
+                Type = nameof(MiddlewareTestRequest)
             };
             
             await rpcEngine.Execute<MiddlewareTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -775,7 +828,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new SimpleRequest1()
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
             };
             
             await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -816,7 +870,6 @@ namespace Newsgirl.Shared.Tests
         {
         }
         
-        
         [Fact]
         public async Task Execute_correctly_returns_result_of_response_type()
         {
@@ -830,7 +883,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new SimpleRequest1()
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
             };
             
             var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -869,7 +923,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage()
             {
-                Payload = new SimpleRequest1()
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
             };
             
             var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -908,7 +963,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new SimpleRequest1()
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
             };
             
             var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -943,7 +999,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new SimpleRequest1()
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
             };
             
             var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -974,7 +1031,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -1009,7 +1067,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -1048,7 +1107,8 @@ namespace Newsgirl.Shared.Tests
 
             var rpcRequestMessage = new RpcRequestMessage
             {
-                Payload = new ExecutorTestRequest()
+                Payload = new ExecutorTestRequest(),
+                Type = nameof(ExecutorTestRequest)
             };
             
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
@@ -1102,7 +1162,8 @@ namespace Newsgirl.Shared.Tests
             {
                 var rpcRequestMessage = new RpcRequestMessage
                 {
-                    Payload = new ExecutorTestRequest()
+                    Payload = new ExecutorTestRequest(),
+                    Type = nameof(ExecutorTestRequest)
                 };
                 
                 await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
