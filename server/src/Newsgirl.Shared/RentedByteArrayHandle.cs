@@ -24,6 +24,8 @@ namespace Newsgirl.Shared
             this.buffer = ArrayPool<byte>.Shared.Rent(length);
         }
 
+        public bool HasData => this.buffer != null;
+
         public void Dispose()
         {
             ArrayPool<byte>.Shared.Return(this.buffer);

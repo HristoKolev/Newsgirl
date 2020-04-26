@@ -6,7 +6,9 @@ namespace Newsgirl.Shared.Infrastructure
     using System.Linq;
     using System.Reflection;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Newtonsoft.Json;
     using Sentry;
     using Sentry.Protocol;
 
@@ -16,6 +18,8 @@ namespace Newsgirl.Shared.Infrastructure
         private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
         private ISentryClient sentryClient;
+        private readonly List<AsyncLocal<Func<Dictionary<string, object>>>> syncErrorDataHooks 
+            = new List<AsyncLocal<Func<Dictionary<string, object>>>>();
 
         public CustomLogger(CustomLoggerConfig config)
         {
@@ -139,7 +143,7 @@ namespace Newsgirl.Shared.Infrastructure
                 {
                     foreach (var kvp in detailedLogException.Details)
                     {
-                        sentryEvent.SetExtra(kvp.Key, kvp.Value);
+                        SetExtra(sentryEvent, kvp);
                     }
 
                     if (!string.IsNullOrWhiteSpace(detailedLogException.Fingerprint))
@@ -153,7 +157,20 @@ namespace Newsgirl.Shared.Infrastructure
             {
                 foreach (var kvp in additionalInfo)
                 {
-                    sentryEvent.SetExtra(kvp.Key, kvp.Value);
+                    SetExtra(sentryEvent, kvp);
+                }
+            }
+
+            foreach (var hook in this.syncErrorDataHooks)
+            {
+                var data = hook.Value?.Invoke();
+
+                if (data != null)
+                {
+                    foreach (var kvp in data)
+                    {
+                        SetExtra(sentryEvent, kvp);
+                    }
                 }
             }
 
@@ -189,6 +206,31 @@ namespace Newsgirl.Shared.Infrastructure
             return eventId.ToString();
         }
 
+        private static void SetExtra(SentryEvent sentryEvent, KeyValuePair<string, object> kvp)
+        {
+            try
+            {
+                string json = JsonConvert.SerializeObject(kvp.Value, new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    PreserveReferencesHandling = PreserveReferencesHandling.All,
+                    Error = (sender, args) =>
+                    {
+                        args.ErrorContext.Handled = true;
+                    }
+                });
+
+                var obj = JsonConvert.DeserializeObject(json);
+            
+                sentryEvent.SetExtra(kvp.Key, obj);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
         /// <summary>
         ///     Returns a flat list of all the exceptions down the .InnerException chain.
         /// </summary>
@@ -212,6 +254,11 @@ namespace Newsgirl.Shared.Infrastructure
             string frames = string.Join("\n", stackTrace.Frames.Select(frame => $"{frame.Module} => {frame.Function}"));
 
             return $"[{exception.GetType()}]\n{frames}";
+        }
+
+        public void AddSyncHook(AsyncLocal<Func<Dictionary<string,object>>> hook)
+        {
+            this.syncErrorDataHooks.Add(hook);
         }
     }
 

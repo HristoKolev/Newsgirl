@@ -39,3 +39,5 @@ services:
       - "./newsgirl-fetcher.json:/newsgirl-fetcher.json"
     networks:
       - br0
+    extra_hosts:
+      - "home-sentry.lan:${SENTRY_IP}"

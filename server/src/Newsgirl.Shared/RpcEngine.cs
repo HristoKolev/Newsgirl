@@ -35,14 +35,12 @@ namespace Newsgirl.Shared
             {
                 if (markedMethod.IsStatic)
                 {
-                    // ReSharper disable once PossibleNullReferenceException
-                    throw new DetailedLogException($"Static methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
+                    throw new DetailedLogException($"Static methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
                 
                 if (markedMethod.IsPrivate)
                 {
-                    // ReSharper disable once PossibleNullReferenceException
-                    throw new DetailedLogException($"Private methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
+                    throw new DetailedLogException($"Private methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 var bindAttribute = markedMethod.GetCustomAttribute<RpcBindAttribute>();
@@ -57,8 +55,7 @@ namespace Newsgirl.Shared
                     SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>(),
                 };
 
-                // ReSharper disable once AssignNullToNotNullAttribute
-                var allSupplementalAttributes = metadata.HandlerClass.GetCustomAttributes()
+                var allSupplementalAttributes = metadata.HandlerClass!.GetCustomAttributes()
                     .Concat(metadata.HandlerMethod.GetCustomAttributes())
                     .Where(x => x is RpcSupplementalAttribute)
                     .Cast<RpcSupplementalAttribute>()
@@ -81,8 +78,7 @@ namespace Newsgirl.Shared
                 {
                     if (!allowedParameterTypes.Contains(parameter))
                     {
-                        // ReSharper disable once PossibleNullReferenceException
-                        throw new DetailedLogException($"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType.Name}.{markedMethod.Name}");
+                        throw new DetailedLogException($"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                     }
                 }
 
@@ -155,19 +151,14 @@ namespace Newsgirl.Shared
             var il = method.GetILGenerator();
             
             il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty("Result")?.GetMethod);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("ErrorMessages")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty("Result")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("ErrorMessages")?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Error" && x.IsGenericMethod && x.GetParameters().First().ParameterType == typeof(string[])).MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty("Result")?.GetMethod);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("Headers")?.GetMethod);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("Headers")?.SetMethod);
+            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty("Result")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("Headers")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty("Headers")?.SetMethod!);
             
             il.Emit(OpCodes.Ret);
             
@@ -181,10 +172,8 @@ namespace Newsgirl.Shared
             var il = method.GetILGenerator();
             
             il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType)).GetProperty("Result")?.GetMethod);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty("Payload")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType)).GetProperty("Result")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty("Payload")?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Ret);
 
@@ -198,8 +187,7 @@ namespace Newsgirl.Shared
             var il = method.GetILGenerator();
             
             il.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(metadata.ResponseType).GetProperty("Result")?.GetMethod);
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(metadata.ResponseType).GetProperty("Result")?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Ret);
 
@@ -232,27 +220,22 @@ namespace Newsgirl.Shared
             // load the handler instance from the instanceProvider
             executeHandlerGen.Emit(OpCodes.Ldarg_1);
             executeHandlerGen.Emit(OpCodes.Ldtoken, metadata.HandlerClass);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            executeHandlerGen.Emit(OpCodes.Callvirt, getInstance);
+            executeHandlerGen.Emit(OpCodes.Callvirt, getInstance!);
 
             foreach (var parameter in metadata.Parameters)
             {
                 if (parameter == metadata.RequestType)
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("RequestMessage")?.GetMethod);
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload")?.GetMethod);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("RequestMessage")?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload")?.GetMethod!);
                 }
                 else
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Items")?.GetMethod);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Items")?.GetMethod!);
                     executeHandlerGen.Emit(OpCodes.Ldtoken, parameter);
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(Dictionary<Type, object>).GetMethod("get_Item"));
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(Dictionary<Type, object>).GetMethod("get_Item")!);
                 }
             }
                     
@@ -261,8 +244,7 @@ namespace Newsgirl.Shared
             
             executeHandlerGen.Emit(OpCodes.Ldarg_0);
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("ResponseTask")?.SetMethod);
+            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("ResponseTask")?.SetMethod!);
                     
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
             executeHandlerGen.Emit(OpCodes.Ret);
@@ -302,8 +284,7 @@ namespace Newsgirl.Shared
                 gen.Emit(OpCodes.Ldsfld, delegateFieldMap[lastMethod]);
                 
                 // call the middleware RUN function
-                // ReSharper disable once AssignNullToNotNullAttribute
-                gen.Emit(OpCodes.Call, middlewareType.GetMethod("Run"));
+                gen.Emit(OpCodes.Call, middlewareType.GetMethod("Run")!);
                 
                 gen.Emit(OpCodes.Ret);
                 
@@ -336,8 +317,7 @@ namespace Newsgirl.Shared
             
             initializeDelegateIlGen.Emit(OpCodes.Ret);
             
-            // ReSharper disable once PossibleNullReferenceException
-            var dynamicType = typeBuilder.CreateTypeInfo().AsType();
+            var dynamicType = typeBuilder.CreateTypeInfo()!.AsType();
 
             var methodInfo = dynamicType.GetMethod(lastMethod.Name, BindingFlags.NonPublic | BindingFlags.Static);
             
@@ -371,7 +351,6 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request type is null or empty.");
             }
 
-            // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
 
             if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
@@ -387,16 +366,7 @@ namespace Newsgirl.Shared
                 RequestMessage = requestMessage,
             };
 
-            try
-            {
-                await metadata.CompiledMethod(context, instanceProvider);
-            }
-            catch (Exception err)
-            {
-                await this.log.Error(err);
-
-                return RpcResult.Error<object>($"{err.GetType().Name}: {err.Message}");
-            }
+            await metadata.CompiledMethod(context, instanceProvider);
 
             switch (context.ReturnVariant)
             {
@@ -436,7 +406,6 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request type is null or empty.");
             }
 
-            // ReSharper disable once InlineOutVariableDeclaration
             RpcMetadata metadata;
 
             if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
@@ -452,16 +421,7 @@ namespace Newsgirl.Shared
                 RequestMessage = requestMessage,
             };
 
-            try
-            {
-                await metadata.CompiledMethod(context, instanceProvider);
-            }
-            catch (Exception err)
-            {
-                await this.log.Error(err);
-
-                return RpcResult.Error<TResponse>($"{err.GetType().Name}: {err.Message}");
-            }
+            await metadata.CompiledMethod(context, instanceProvider);
 
             switch (context.ResponseTask)
             {

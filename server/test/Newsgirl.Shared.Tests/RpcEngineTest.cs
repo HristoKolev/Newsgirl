@@ -568,7 +568,7 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public async Task Execute_returns_error_result_when_the_handler_throws()
+        public async Task Execute_throws_when_the_handler_throws()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -583,14 +583,15 @@ namespace Newsgirl.Shared.Tests
                 Payload = new ExecutorTestRequest(),
                 Type = nameof(ExecutorTestRequest)
             };
-            
-            var result = await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
-            
-            Snapshot.Match(result);
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
         }
         
         [Fact]
-        public async Task ExecuteObject_returns_error_result_when_the_handler_throws()
+        public async Task ExecuteObject_throws_when_the_handler_throws()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -605,10 +606,11 @@ namespace Newsgirl.Shared.Tests
                 Payload = new ExecutorTestRequest(),
                 Type = nameof(ExecutorTestRequest)
             };
-            
-            var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
-            
-            Snapshot.Match(result);
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
         }
         
         public class ThrowingExecutorTestHandler

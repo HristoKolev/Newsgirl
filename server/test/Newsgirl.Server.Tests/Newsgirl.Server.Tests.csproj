@@ -24,4 +24,8 @@
   <ItemGroup>
     <Folder Include="snapshots" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="newsgirl-server-test-config.json" />
+  </ItemGroup>
 </Project>

@@ -1,7 +1,9 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
     using Microsoft.AspNetCore.Http;
@@ -30,6 +32,8 @@ namespace Newsgirl.Server
         public IContainer IoC { get; set; }
 
         private HttpServer Server { get; set; }
+        
+        public AsyncLocals AsyncLocals { get; set; }
 
         public async ValueTask DisposeAsync()
         {
@@ -79,6 +83,8 @@ namespace Newsgirl.Server
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
+            this.AsyncLocals = new AsyncLocalsImpl();
+
             var builder = new ContainerBuilder();
 
             builder.RegisterModule<SharedModule>();
@@ -127,6 +133,16 @@ namespace Newsgirl.Server
         public CustomLoggerConfig Logging { get; set; }
     }
 
+    public interface AsyncLocals
+    {
+        public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; }
+    }
+
+    public class AsyncLocalsImpl : AsyncLocals
+    {
+        public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
+    }
+    
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;
@@ -141,6 +157,7 @@ namespace Newsgirl.Server
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings);
             builder.Register((c, p) => this.app.Log);
+            builder.Register((c, p) => this.app.AsyncLocals);
 
             // Per scope
             builder.Register((c, p) =>
