@@ -11,7 +11,6 @@ namespace Newsgirl.Benchmarks
         private static readonly Dictionary<string, Func<Task>> BenchmarkTable = new Dictionary<string, Func<Task>>
         {
             {"benchmark.net", RunBenchmarkNet},
-            {"aspnet-server", AspNetServer.Run}
         };
 
         private static async Task Main(string[] args)
