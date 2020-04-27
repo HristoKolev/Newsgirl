@@ -63,7 +63,7 @@ namespace Newsgirl.Shared.Tests
 
                         open = true;
 
-                        await Task.Delay(10);
+                        await Task.Delay(100);
 
                         open = false;
                     });

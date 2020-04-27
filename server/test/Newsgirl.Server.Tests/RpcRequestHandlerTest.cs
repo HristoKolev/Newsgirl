@@ -4,6 +4,7 @@ namespace Newsgirl.Server.Tests
     using System.Collections.Generic;
     using System.IO;
     using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
@@ -20,10 +21,14 @@ namespace Newsgirl.Server.Tests
             [RpcBind(typeof(IncrementTestRequest), typeof(IncrementTestResponse))]
             public Task<RpcResult<IncrementTestResponse>> Increment(IncrementTestRequest req)
             {
-                return Task.FromResult(RpcResult.Ok(new IncrementTestResponse
+                var result = RpcResult.Ok(new IncrementTestResponse
                 {
                     Num = req.Num + 1
-                }));
+                });
+                
+                result.Headers.Add("test_key", "test_value");
+                
+                return Task.FromResult(result);
             }
             
             [RpcBind(typeof(ThrowingTestRequest), typeof(ThrowingTestResponse))]
@@ -172,7 +177,7 @@ namespace Newsgirl.Server.Tests
         }
         
         [Fact]
-        public async Task Logs()
+        public async Task Logs_on_error()
         {
             var handler = await CreateHandlerRealLog(new RpcEngineOptions
             {
@@ -191,6 +196,32 @@ namespace Newsgirl.Server.Tests
                 
                 responseBody = await response.Content.ReadAsStringAsync();
             }
+
+            responseBody = Regex.Replace(responseBody, "[0-9A-f]{32}", "00000000000000000000000000000000");
+            
+            Snapshot.MatchJson(responseBody);
+        }
+        
+        [Fact]
+        public async Task Returns_correct_result()
+        {
+            var handler = CreateHandler(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(IncrementHandler)
+                },
+            });
+
+            string responseBody;
+            
+            await using (var tester = await HttpServerTester.Create(handler))
+            {
+                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"IncrementTestRequest\", \"payload\":{ \"num\": 33 } }"));
+                response.EnsureSuccessStatusCode();
+                
+                responseBody = await response.Content.ReadAsStringAsync();
+            }
             
             Snapshot.MatchJson(responseBody);
         }
@@ -198,7 +229,7 @@ namespace Newsgirl.Server.Tests
         private static RequestDelegate CreateHandler(RpcEngineOptions rpcEngineOptions)
         {
             var log = CreateLogStub();
-            var rpcEngine = new RpcEngine(rpcEngineOptions, log);
+            var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
             var asyncLocals = new AsyncLocalsImpl();
             var handler = new RpcRequestHandler(rpcEngine, log, instanceProvider, asyncLocals);
@@ -208,8 +239,7 @@ namespace Newsgirl.Server.Tests
         
         private static async Task<RequestDelegate> CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
         {
-            var log = CreateLogStub();
-            var rpcEngine = new RpcEngine(rpcEngineOptions, log);
+            var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
             var asyncLocals = new AsyncLocalsImpl();
             var handler = new RpcRequestHandler(rpcEngine, await CreateRealLog(asyncLocals), instanceProvider, asyncLocals);

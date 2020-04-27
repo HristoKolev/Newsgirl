@@ -12,13 +12,11 @@ namespace Newsgirl.Shared
     public class RpcEngine
     {
         private Dictionary<string, RpcMetadata> metadataByRequestName;
-        private readonly ILog log;
         
         public List<RpcMetadata> Metadata { get; private set; }
 
-        public RpcEngine(RpcEngineOptions options, ILog log)
+        public RpcEngine(RpcEngineOptions options)
         {
-            this.log = log;
             this.Build(options);
         }
         
@@ -175,6 +173,11 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType)).GetProperty("Result")?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty("Payload")?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods().First(x => x.Name == "Ok" && x.IsGenericMethod && x.GetParameters().Length == 1).MakeGenericMethod(typeof(object)));
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType)).GetProperty("Result")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty("Headers")?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty("Headers")?.SetMethod!);
             il.Emit(OpCodes.Ret);
 
             return method.CreateDelegate<Func<Task, RpcResult<object>>>();

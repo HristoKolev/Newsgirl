@@ -24,7 +24,7 @@ namespace Newsgirl.Shared.Tests
                     typeof(RpcMarkingTest2),
                     typeof(RpcMarkingTest3),
                 },
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             
@@ -61,7 +61,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(StaticRpcMethodHandler),
                     },
-                }, GetLog());
+                });
             });
         }
         
@@ -82,7 +82,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(PrivateRpcMethodHandler),
                     },
-                }, GetLog());
+                });
             });
         }
             
@@ -101,7 +101,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(RequestTypeTestHandler),
                 },
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -124,7 +124,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ResponseTypeTestHandler),
                 },
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -149,7 +149,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(InvalidParameterTestHandler),
                     },
-                }, GetLog());
+                });
             });
         }
         
@@ -172,7 +172,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(StringBuilder)
                 }
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -197,7 +197,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(InvalidReturnTypeTestHandler),
                     },
-                }, GetLog());
+                });
             });
         }
         
@@ -219,7 +219,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(CollidingRequestsTestHandler),
                     },
-                }, GetLog());
+                });
             });
         }
         
@@ -241,7 +241,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(SupplementalAttributesClassOnlyHandler),
                 },
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -269,7 +269,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(SupplementalAttributesMethodOnlyHandler),
                 },
-            }, GetLog());
+            });
 
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -297,7 +297,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(SupplementalAttributesTestHandler),
                 },
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -333,7 +333,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -350,7 +350,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -372,7 +372,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -395,7 +395,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -412,7 +412,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -434,7 +434,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -457,7 +457,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -480,7 +480,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -503,7 +503,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             ExecutorTestHandler.RunCount = 0;
 
@@ -527,7 +527,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -549,7 +549,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             var requestMessage = new RpcRequestMessage
             {
@@ -576,7 +576,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ThrowingExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -599,7 +599,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ThrowingExecutorTestHandler)
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -657,7 +657,7 @@ namespace Newsgirl.Shared.Tests
                     typeof(MiddlewareTestHandler),
                 },
                 MiddlewareTypes = null,
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -675,7 +675,7 @@ namespace Newsgirl.Shared.Tests
                     typeof(MiddlewareTestHandler),
                 },
                 MiddlewareTypes = Array.Empty<Type>(),
-            }, GetLog());
+            });
             
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
@@ -704,7 +704,7 @@ namespace Newsgirl.Shared.Tests
                     {
                         typeof(NonConformingMiddleware)
                     }
-                }, GetLog());
+                });
             });
         }
         
@@ -727,7 +727,7 @@ namespace Newsgirl.Shared.Tests
                     typeof(MiddlewareOrderTestMiddleware2),
                     typeof(MiddlewareOrderTestMiddleware3),
                 }
-            }, GetLog());
+            });
 
             var request = new MiddlewareTestRequest();
             
@@ -823,7 +823,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(AdditionalArgumentModel)
                 }
-            }, GetLog());
+            });
 
             var inArg = new AdditionalArgumentModel();
             AdditionalArgumentsMiddleware.AdditionalArg = inArg;
@@ -881,7 +881,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ResultOfResponseTypeTestHandler),
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -892,6 +892,8 @@ namespace Newsgirl.Shared.Tests
             var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
             
             Assert.Equal(ResultOfResponseTypeTestHandler.ResultValue, result);
+            
+            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
         }
         
         public class ResultOfResponseTypeTestHandler
@@ -904,9 +906,55 @@ namespace Newsgirl.Shared.Tests
 #pragma warning restore 1998
             {
                 ResultValue = RpcResult.Ok(new SimpleResponse1());
+                ResultValue.Headers.Add("handler_method_header1", "handler_method_header1_value");
                 return ResultValue;
             }
         }
+        
+        [Fact]
+        public async Task Execute_correctly_returns_headers()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ResultOfResponseTypeTestHandler),
+                },
+            });
+
+            var rpcRequestMessage = new RpcRequestMessage
+            {
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
+            };
+            
+            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+
+            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
+        }
+        
+        [Fact]
+        public async Task ExecuteObject_correctly_returns_headers()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ResultOfResponseTypeTestHandler),
+                },
+            });
+
+            var rpcRequestMessage = new RpcRequestMessage
+            {
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1)
+            };
+            
+            var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
+
+            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
+        }
+
         
         [Fact]
         public async Task Execute_correctly_returns_simple_result_type()
@@ -921,9 +969,9 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(SimpleResultMiddleware)
                 }
-            }, GetLog());
+            });
 
-            var rpcRequestMessage = new RpcRequestMessage()
+            var rpcRequestMessage = new RpcRequestMessage
             {
                 Payload = new SimpleRequest1(),
                 Type = nameof(SimpleRequest1)
@@ -961,7 +1009,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(NullResponseTaskMiddleware)
                 }
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -997,7 +1045,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(UnsupportedResponseTypeMiddleware)
                 }
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -1029,7 +1077,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ObjectTaskOfResponseTestHandler)
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -1065,7 +1113,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ObjectTaskOfResultOfResponseTestHandler)
                 },
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -1105,7 +1153,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ObjectTaskOfResultMiddleware)
                 }
-            }, GetLog());
+            });
 
             var rpcRequestMessage = new RpcRequestMessage
             {
@@ -1158,7 +1206,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(UnknownReturnVariantMiddleware)
                 }
-            }, GetLog());
+            });
 
             await Snapshot.MatchError(async () =>
             {
@@ -1204,7 +1252,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(GetMetadataByRequestNameTestHandler)
                 }
-            }, GetLog());
+            });
 
             var metadata = rpcEngine.GetMetadataByRequestName(nameof(ExecutorTestRequest));
             
@@ -1222,7 +1270,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(GetMetadataByRequestNameTestHandler)
                 }
-            }, GetLog());
+            });
 
             var metadata = rpcEngine.GetMetadataByRequestName(nameof(NonRegisteredRequest));
             

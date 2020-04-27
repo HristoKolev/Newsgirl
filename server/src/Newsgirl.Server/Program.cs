@@ -3,6 +3,7 @@ namespace Newsgirl.Server
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
@@ -34,6 +35,8 @@ namespace Newsgirl.Server
         private HttpServer Server { get; set; }
         
         public AsyncLocals AsyncLocals { get; set; }
+        
+        public RpcEngine RpcEngine { get; set; }
 
         public async ValueTask DisposeAsync()
         {
@@ -74,16 +77,27 @@ namespace Newsgirl.Server
 
             this.AppConfig.Logging.Release = this.AppVersion;
 
-            this.Log = new CustomLogger(this.AppConfig.Logging);
+            var logger = new CustomLogger(this.AppConfig.Logging);
+            logger.AddSyncHook(this.AsyncLocals.CollectHttpData);
+            this.Log = logger;
         }
 
         public async Task Initialize()
         {
+            this.AsyncLocals = new AsyncLocalsImpl();
+            
             await this.LoadConfig();
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
-            this.AsyncLocals = new AsyncLocalsImpl();
+            var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
+
+            var rpcEngineOptions = new RpcEngineOptions
+            {
+                PotentialHandlerTypes = potentialRpcTypes
+            };
+
+            this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
             var builder = new ContainerBuilder();
 
@@ -124,6 +138,15 @@ namespace Newsgirl.Server
         {
             return this.shutdownCompletionSource.Task;
         }
+        
+        public async Task Shutdown()
+        {
+            await this.Server.Stop();
+            
+            this.shutdownCompletionSource.SetResult(true);
+            
+            await this.shutdownCompletionSource.Task;
+        }
     }
 
     public class HttpServerAppConfig
@@ -142,6 +165,26 @@ namespace Newsgirl.Server
     {
         public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
     }
+
+    public class LifetimeScopeInstanceProvider : InstanceProvider
+    {
+        private readonly ILifetimeScope lifetimeScope;
+
+        public LifetimeScopeInstanceProvider(ILifetimeScope lifetimeScope)
+        {
+            this.lifetimeScope = lifetimeScope;
+        }
+        
+        public object Get(Type type)
+        {
+            return this.lifetimeScope.Resolve(type);
+        }
+
+        public T Get<T>()
+        {
+            return this.lifetimeScope.Resolve<T>();
+        }
+    }
     
     public class HttpServerIoCModule : Module
     {
@@ -158,6 +201,7 @@ namespace Newsgirl.Server
             builder.Register((c, p) => this.app.SystemSettings);
             builder.Register((c, p) => this.app.Log);
             builder.Register((c, p) => this.app.AsyncLocals);
+            builder.Register((c, p) => this.app.RpcEngine);
 
             // Per scope
             builder.Register((c, p) =>
@@ -165,18 +209,16 @@ namespace Newsgirl.Server
                 .InstancePerLifetimeScope();
             builder.RegisterType<DbService>().InstancePerLifetimeScope();
 
-            builder.Register((ctx, p) =>
+            builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
+            builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
+
+            var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.HandlerClass).Distinct();
+            
+            foreach (var handlerClass in handlerClasses)
             {
-                var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
-
-                var rpcEngineOptions = new RpcEngineOptions
-                {
-                    PotentialHandlerTypes = potentialRpcTypes
-                };
-
-                return new RpcEngine(rpcEngineOptions, ctx.Resolve<ILog>());
-            });
-
+                builder.RegisterType(handlerClass);
+            }
+ 
             base.Load(builder);
         }
     }

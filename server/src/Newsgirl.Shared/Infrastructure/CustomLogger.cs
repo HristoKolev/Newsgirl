@@ -8,7 +8,6 @@ namespace Newsgirl.Shared.Infrastructure
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
-    using Newtonsoft.Json;
     using Sentry;
     using Sentry.Protocol;
 
@@ -18,6 +17,7 @@ namespace Newsgirl.Shared.Infrastructure
         private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
         private ISentryClient sentryClient;
+        private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
         private readonly List<AsyncLocal<Func<Dictionary<string, object>>>> syncErrorDataHooks 
             = new List<AsyncLocal<Func<Dictionary<string, object>>>>();
 
@@ -79,8 +79,18 @@ namespace Newsgirl.Shared.Infrastructure
             }
             catch (Exception err)
             {
-                Console.WriteLine(err);
+                if (!this.config.DisableConsoleLogging)
+                {
+                    await Console.Error.WriteLineAsync(err.ToString());
+                }
+
+#if DEBUG
+                throw;
+#endif
+
+#pragma warning disable 162
                 return null;
+#pragma warning restore 162
             }
         }
 
@@ -208,27 +218,7 @@ namespace Newsgirl.Shared.Infrastructure
 
         private static void SetExtra(SentryEvent sentryEvent, KeyValuePair<string, object> kvp)
         {
-            try
-            {
-                string json = JsonConvert.SerializeObject(kvp.Value, new JsonSerializerSettings
-                {
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                    PreserveReferencesHandling = PreserveReferencesHandling.All,
-                    Error = (sender, args) =>
-                    {
-                        args.ErrorContext.Handled = true;
-                    }
-                });
-
-                var obj = JsonConvert.DeserializeObject(json);
-            
-                sentryEvent.SetExtra(kvp.Key, obj);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            sentryEvent.SetExtra(kvp.Key, kvp.Value);
         }
 
         /// <summary>
@@ -252,6 +242,8 @@ namespace Newsgirl.Shared.Infrastructure
             var stackTrace = SentryStackTraceFactory.Create(exception);
 
             string frames = string.Join("\n", stackTrace.Frames.Select(frame => $"{frame.Module} => {frame.Function}"));
+
+            frames = GiudRegex.Replace(frames, "00000000-0000-0000-0000-000000000000");
 
             return $"[{exception.GetType()}]\n{frames}";
         }

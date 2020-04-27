@@ -69,9 +69,40 @@ namespace Newsgirl.Server
                 return;
             }
 
-            // Read request body.
-            RentedByteArrayHandle requestBodyBytes;
+            RentedByteArrayHandle requestBodyBytes = default;
+            
+            // Diagnostic data in case of an error.
+            this.asyncLocals.CollectHttpData.Value = () =>
+            {
+                var data = new Dictionary<string, object>
+                {
+                    {"http", new Dictionary<string, object>
+                    {
+                        ["id"] = context.Connection.Id,
+                        ["localIP"] = context.Connection.LocalIpAddress + ":" + context.Connection.LocalPort,
+                        ["remoteIP"] = context.Connection.RemoteIpAddress + ":" + context.Connection.RemotePort,
+                        ["cookies"] = context.Request.Cookies.ToDictionary(x => x.Key, x => x.Value),
+                        ["headers"] = context.Request.Headers.ToDictionary(x => x.Key, x => x.Value),
+                        ["method"] = context.Request.Method,
+                        ["path"] = context.Request.Path.ToString(),
+                        ["query"] = context.Request.QueryString.ToString(),
+                        ["protocol"] = context.Request.Protocol,
+                        ["scheme"] = context.Request.Scheme,
+                        ["aborted"] = context.RequestAborted.IsCancellationRequested,
+                    }}
+                };
 
+                // ReSharper disable once AccessToModifiedClosure
+                if (requestBodyBytes.HasData)
+                {
+                    // ReSharper disable once AccessToModifiedClosure
+                    data["httpRequestBodyBase64"] = Convert.ToBase64String(requestBodyBytes.AsSpan());
+                }
+                
+                return data;
+            };
+
+            // Read request body.
             try
             {
                 requestBodyBytes = await context.Request.ReadToEnd();
@@ -82,23 +113,6 @@ namespace Newsgirl.Server
                 await this.WriteError(context.Response, $"Failed to read RPC request body: {errorID}");
                 return;
             }
-
-            this.asyncLocals.CollectHttpData.Value = () =>
-            {
-                var data = new Dictionary<string, object>
-                {
-                    ["request"] = context.Request,
-                    ["connection"] = context.Connection,
-                    ["traceIdentifier"] = context.TraceIdentifier,
-                };
-
-                if (requestBodyBytes.HasData)
-                {
-                    data["requestBodyBase64"] = Convert.ToBase64String(requestBodyBytes.AsSpan());
-                }
-                
-                return data;
-            };
 
             using (requestBodyBytes)
             {
@@ -124,7 +138,6 @@ namespace Newsgirl.Server
                     
                     string errorID = await this.log.Error(err, new Dictionary<string, object>
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestBodyBytes.AsSpan())},
                         {"bytePositionInLine", bytePositionInLine},
                         {"lineNumber", lineNumber},
                         {"jsonPath", jsonPath},
@@ -152,7 +165,7 @@ namespace Newsgirl.Server
                 {
                     string errorID = await this.log.Error(err, new Dictionary<string, object>
                     {
-                        {"rpcRequestMessage", rpcRequestMessage}
+                        {"rpcRequest", rpcRequestMessage}
                     });
                     
                     await this.WriteError(context.Response, $"RPC execution error ({rpcRequestMessage.Type}): {errorID}");
