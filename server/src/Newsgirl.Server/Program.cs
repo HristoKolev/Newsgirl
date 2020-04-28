@@ -18,7 +18,7 @@ namespace Newsgirl.Server
         // ReSharper disable once InconsistentNaming
         private readonly string AppVersion = typeof(HttpServerApp).Assembly.GetName().Version?.ToString();
 
-        private TaskCompletionSource<bool> shutdownCompletionSource;
+        private TaskCompletionSource<object> shutdownCompletionSource;
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
@@ -33,7 +33,7 @@ namespace Newsgirl.Server
         public IContainer IoC { get; set; }
 
         private HttpServer Server { get; set; }
-        
+
         public AsyncLocals AsyncLocals { get; set; }
         
         public RpcEngine RpcEngine { get; set; }
@@ -42,7 +42,9 @@ namespace Newsgirl.Server
         {
             this.AppConfigWatcher?.Dispose();
             this.AppConfigWatcher = null;
-
+            this.Server?.DisposeAsync();
+            this.Server = null;
+            
             if (this.IoC != null)
             {
                 await this.IoC.DisposeAsync();
@@ -111,11 +113,14 @@ namespace Newsgirl.Server
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
 
-        public async Task Run()
+        public async Task Start(string listenOnAddress = null)
         {
             var serverConfig = new HttpServerConfig
             {
-                Addresses = new[] {"http://127.0.0.1:5000"}
+                Addresses = new[]
+                {
+                    string.IsNullOrWhiteSpace(listenOnAddress) ? "http://127.0.0.1:5000" : listenOnAddress
+                }
             };
 
             async Task RequestDelegate(HttpContext context)
@@ -131,21 +136,22 @@ namespace Newsgirl.Server
             
             await this.Server.Start();
 
-            this.shutdownCompletionSource = new TaskCompletionSource<bool>();
+            this.shutdownCompletionSource = new TaskCompletionSource<object>();
         }
 
-        public Task WaitForShutdown()
+        public Task WaitForShutdownSignal()
         {
             return this.shutdownCompletionSource.Task;
         }
-        
-        public async Task Shutdown()
+
+        public void RequestShutdown()
         {
-            await this.Server.Stop();
-            
-            this.shutdownCompletionSource.SetResult(true);
-            
-            await this.shutdownCompletionSource.Task;
+            this.shutdownCompletionSource.SetResult(null);
+        }
+
+        public string GetAddress()
+        {
+            return this.Server.FirstAddress;
         }
     }
 
@@ -233,9 +239,14 @@ namespace Newsgirl.Server
                 {
                     await app.Initialize();
 
-                    await app.Run();
+                    await app.Start();
 
-                    await app.WaitForShutdown();
+                    Console.CancelKeyPress += (sender, args) =>
+                    {
+                        app.RequestShutdown();
+                    };
+
+                    await app.WaitForShutdownSignal();
 
                     return 0;
                 }
@@ -244,6 +255,10 @@ namespace Newsgirl.Server
                     if (app.Log != null)
                     {
                         await app.Log.Error(exception);
+                    }
+                    else
+                    {
+                        await Console.Error.WriteLineAsync(exception.ToString());
                     }
 
                     return 1;

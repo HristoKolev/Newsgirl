@@ -4,6 +4,7 @@ namespace Newsgirl.Server.Tests
     using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
+    using NSubstitute;
     using Shared.Infrastructure;
     using Xunit;
 
@@ -44,6 +45,25 @@ namespace Newsgirl.Server.Tests
 
                 Assert.Equal(200, (int) response.StatusCode);
                 Assert.Equal(43, responseNum);
+            }
+        }
+        
+        [Fact]
+        public async Task HttpServer_shuts_down_correctly()
+        {
+            var serverConfig = new HttpServerConfig
+            {
+                Addresses = new[] {"http://127.0.0.1:56962"}
+            };
+
+            var log = Substitute.For<ILog>();
+            static Task Handler(HttpContext context) => Task.CompletedTask;
+            var server = new HttpServerImpl(log, serverConfig, Handler);
+
+            for (int i = 0; i < 10; i++)
+            {
+                await server.Start();
+                await server.Stop();    
             }
         }
     }

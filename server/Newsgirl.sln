@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonTest", "..\research\Jso
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncLocalDemo", "..\research\AsyncLocalDemo\AsyncLocalDemo.csproj", "{E187D72E-995B-4454-A82A-A712674F832C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpTestClient", "..\research\HttpTestClient\HttpTestClient.csproj", "{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{E187D72E-995B-4454-A82A-A712674F832C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E187D72E-995B-4454-A82A-A712674F832C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E187D72E-995B-4454-A82A-A712674F832C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,5 +99,6 @@ Global
 		{3B9328D8-D132-49FC-976C-81F24C160277} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
 		{C137CCF7-BA3B-4CC1-B782-6A998F806099} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
 		{E187D72E-995B-4454-A82A-A712674F832C} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
+		{2CA96D6F-7709-4FE9-8B88-E0E7E63DBCB4} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
 	EndGlobalSection
 EndGlobal

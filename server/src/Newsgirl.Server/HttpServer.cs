@@ -17,18 +17,28 @@ namespace Newsgirl.Server
     /// <summary>
     ///     A wrapper around ASP.NET Core's IHost.
     /// </summary>
-    public class HttpServerImpl : HttpServer, IAsyncDisposable
+    public class HttpServerImpl : HttpServer
     {
         private readonly ILog log;
+        private readonly HttpServerConfig config;
         private readonly RequestDelegate requestDelegate;
 
         private bool disposed;
         private IHost host;
+        private bool started;
 
         public HttpServerImpl(ILog log, HttpServerConfig config, RequestDelegate requestDelegate)
         {
             this.log = log;
+            this.config = config;
             this.requestDelegate = requestDelegate;
+        }
+
+        public async Task Start()
+        {
+            this.ThrowIfDisposed();
+            this.ThrowIfStarted();
+            
             this.host = new HostBuilder()
                 .ConfigureWebHost(builder =>
                 {
@@ -41,25 +51,46 @@ namespace Newsgirl.Server
                         .Configure(this.Configure)
                         .CaptureStartupErrors(false)
                         .SuppressStatusMessages(true)
-                        .UseUrls(config.Addresses);
+                        .UseUrls(this.config.Addresses);
                 })
-                .ConfigureServices(serviceCollection => { serviceCollection.AddLogging(x => x.ClearProviders()); })
+                .ConfigureServices(this.ConfigureServices)
                 .UseEnvironment("production")
                 .Build();
+
+            await this.host.StartAsync();
+
+            this.started = true;
         }
 
-        public Task Start()
+        private void ConfigureServices(IServiceCollection serviceCollection)
         {
-            this.ThrowIfDisposed();
-
-            return this.host.StartAsync(new CancellationTokenSource(TimeSpan.FromSeconds(1)).Token);
+            serviceCollection.AddLogging(x => x.ClearProviders());
+            serviceCollection.AddSingleton<IHostLifetime, EmptyLifetime>();
         }
 
-        public Task Stop()
+        public async Task Stop()
         {
             this.ThrowIfDisposed();
+            this.ThrowIfStopped();
+            
+            var lifetime = this.host.Services.GetService<IHostApplicationLifetime>();
+            
+            var stoppedFired = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            
+            lifetime.ApplicationStopped.Register(() => stoppedFired.TrySetResult(null));
+            
+            lifetime.StopApplication();
+            
+            await stoppedFired.Task;
+            
+            await this.host.StopAsync();
 
-            return this.host.StopAsync(new CancellationTokenSource(TimeSpan.FromSeconds(1)).Token);
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            var asyncDisposable = (IAsyncDisposable) this.host;
+            await asyncDisposable.DisposeAsync();
+            this.host = null;
+
+            this.started = false;
         }
 
         public string FirstAddress
@@ -67,6 +98,7 @@ namespace Newsgirl.Server
             get
             {
                 this.ThrowIfDisposed();
+                this.ThrowIfStopped();
 
                 var server = this.host.Services.GetService<IServer>();
                 var addressesFeature = server.Features.Get<IServerAddressesFeature>();
@@ -82,11 +114,6 @@ namespace Newsgirl.Server
             }
 
             await this.Stop();
-
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            var asyncDisposable = (IAsyncDisposable) this.host;
-            await asyncDisposable.DisposeAsync();
-            this.host = null;
 
             this.disposed = true;
         }
@@ -109,11 +136,40 @@ namespace Newsgirl.Server
             app.Use(_ => this.requestDelegate);
         }
 
+        private void ThrowIfStarted()
+        {
+            if (this.started)
+            {
+                throw new NotSupportedException("The server must be started to perform this operation.");
+            }
+        }
+        
+        private void ThrowIfStopped()
+        {
+            if (!this.started)
+            {
+                throw new NotSupportedException("The server must be stopped to perform this operation.");
+            }
+        }
+        
         private void ThrowIfDisposed()
         {
             if (this.disposed)
             {
                 throw new ObjectDisposedException("AspNetCoreHttpServerImpl");
+            }
+        }
+
+        class EmptyLifetime : IHostLifetime
+        {
+            public Task StopAsync(CancellationToken cancellationToken)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task WaitForStartAsync(CancellationToken cancellationToken)
+            {
+                return Task.CompletedTask;
             }
         }
     }
@@ -123,7 +179,7 @@ namespace Newsgirl.Server
         public string[] Addresses { get; set; }
     }
 
-    public interface HttpServer
+    public interface HttpServer : IAsyncDisposable
     {
         string FirstAddress { get; }
         

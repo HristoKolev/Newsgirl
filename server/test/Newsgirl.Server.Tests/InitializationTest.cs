@@ -13,6 +13,8 @@ namespace Newsgirl.Server.Tests
 
     public class InitializationTest
     {
+        private const string RandomAddress = "http://127.0.0.1:0";
+
         private static async Task<HttpServerApp> CreateApp()
         {
             var app = new HttpServerApp();
@@ -31,16 +33,16 @@ namespace Newsgirl.Server.Tests
         {
             await using var app = await CreateApp();
 
-            await app.Run();
+            await app.Start(RandomAddress);
 
             var shutdownTask = Task.Run(async () =>
             {
                 await Task.Delay(100);
             
-                await app.Shutdown();
+                app.RequestShutdown();
             });
             
-            await app.WaitForShutdown();
+            await app.WaitForShutdownSignal();
 
             await shutdownTask;
         }
@@ -73,11 +75,11 @@ namespace Newsgirl.Server.Tests
         {
             await using var app = await CreateApp();
 
-            await app.Run();
+            await app.Start(RandomAddress);
             
             var client = new HttpClient
             {
-                BaseAddress = new Uri("http://127.0.0.1:5000"),
+                BaseAddress = new Uri(app.GetAddress())
             };
             
             var response = await client.PostAsync("/", new StringContent("{\"type\": \"PingRequest\", \"payload\":{} }"));
