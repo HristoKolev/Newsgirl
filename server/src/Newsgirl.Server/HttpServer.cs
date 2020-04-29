@@ -75,13 +75,11 @@ namespace Newsgirl.Server
             
             var lifetime = this.host.Services.GetService<IHostApplicationLifetime>();
             
-            var stoppedFired = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-            
-            lifetime.ApplicationStopped.Register(() => stoppedFired.TrySetResult(null));
-            
+            var stoppingFired = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            lifetime.ApplicationStopping.Register(() => stoppingFired.TrySetResult(null));
             lifetime.StopApplication();
-            
-            await stoppedFired.Task;
+
+            await stoppingFired.Task;
             
             await this.host.StopAsync();
 
@@ -160,7 +158,7 @@ namespace Newsgirl.Server
             }
         }
 
-        class EmptyLifetime : IHostLifetime
+        public class EmptyLifetime : IHostLifetime
         {
             public Task StopAsync(CancellationToken cancellationToken)
             {

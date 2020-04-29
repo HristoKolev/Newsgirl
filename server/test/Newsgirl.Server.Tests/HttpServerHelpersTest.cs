@@ -1,7 +1,12 @@
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.IO;
+    using System.Net;
     using System.Net.Http;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Shared.Infrastructure;
@@ -103,6 +108,54 @@ namespace Newsgirl.Server.Tests
             {
                 var response = await tester.Client.GetAsync("/");
 
+                Snapshot.MatchError(tester.Exception);
+            }
+        }
+        
+        [Fact]
+        public async Task ReadToEnd_throws_on_network_error()
+        {
+            static async Task Handler(HttpContext context)
+            {
+                using var dataHandle = await context.Request.ReadToEnd();
+                context.Response.StatusCode = 200;
+            }
+
+            await using (var tester = await HttpServerTester.Create(Handler))
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var uri = new Uri(tester.Server.FirstAddress);
+
+                    var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        LingerState = new LingerOption(true, 0), NoDelay = true
+                    };
+
+                    socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port));
+
+                    string requestJson = "{\"type\": \"PingRequest\", \"payload\":{ \"data\": \"dd\" } }";
+                    byte[] requestBody = JsonSerializer.SerializeToUtf8Bytes(requestJson);
+
+                    var requestHeaderBuilder = new StringBuilder();
+                    requestHeaderBuilder.Append("POST / HTTP/1.1\r\n");
+                    requestHeaderBuilder.Append($"Host: {uri.Host}\r\n");
+                    requestHeaderBuilder.Append("Content-Length: " + requestBody.Length + "\r\n");
+                    requestHeaderBuilder.Append("Connection: close\r\n");
+                    requestHeaderBuilder.Append("\r\n");
+
+                    socket.Send(
+                        Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString()),
+                        SocketFlags.None
+                    );
+                    socket.Send(requestBody, 0, requestBody.Length / 2, SocketFlags.None);
+                    socket.Close();
+
+                    socket = null;
+                        
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+                }
+                
                 Snapshot.MatchError(tester.Exception);
             }
         }

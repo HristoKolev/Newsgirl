@@ -1,0 +1,33 @@
+﻿[
+  {
+    "Details": {
+      "contentLength": 104
+    },
+    "Fingerprint": "HTTP_FAILED_TO_READ_REQUEST_BODY",
+    "Message": "Failed to read the HTTP request body.",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "newsgirl-server",
+    "HResult": -2146233088
+  },
+  {
+    "Message": "Connection reset by peer",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "System.Private.CoreLib",
+    "HResult": -2146232800
+  },
+  {
+    "ClassName": "System.Net.Sockets.SocketException",
+    "Message": "Connection reset by peer",
+    "Data": null,
+    "HelpURL": null,
+    "RemoteStackTraceString": null,
+    "RemoteStackIndex": 0,
+    "ExceptionMethod": null,
+    "HResult": -2147467259,
+    "Source": "Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets",
+    "WatsonBuckets": null,
+    "NativeErrorCode": 104
+  }
+]

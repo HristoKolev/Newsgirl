@@ -39,10 +39,10 @@ namespace Newsgirl.Server.Tests
             {
                 await Task.Delay(100);
             
-                app.RequestShutdown();
+                app.TriggerShutdown();
             });
             
-            await app.WaitForShutdownSignal();
+            await app.WaitForShutdownTrigger();
 
             await shutdownTask;
         }

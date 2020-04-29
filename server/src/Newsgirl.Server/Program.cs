@@ -139,12 +139,17 @@ namespace Newsgirl.Server
             this.shutdownCompletionSource = new TaskCompletionSource<object>();
         }
 
-        public Task WaitForShutdownSignal()
+        public async Task Stop()
+        {
+            await this.Server.Stop();
+        }
+
+        public Task WaitForShutdownTrigger()
         {
             return this.shutdownCompletionSource.Task;
         }
 
-        public void RequestShutdown()
+        public void TriggerShutdown()
         {
             this.shutdownCompletionSource.SetResult(null);
         }
@@ -243,10 +248,13 @@ namespace Newsgirl.Server
 
                     Console.CancelKeyPress += (sender, args) =>
                     {
-                        app.RequestShutdown();
+                        app.TriggerShutdown();
+                        args.Cancel = true;
                     };
+                    
+                    await app.WaitForShutdownTrigger();
 
-                    await app.WaitForShutdownSignal();
+                    await app.Stop();
 
                     return 0;
                 }
