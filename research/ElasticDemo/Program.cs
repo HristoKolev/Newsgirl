@@ -66,9 +66,9 @@
             var elasticConfig = new ElasticsearchConfig
             {
                 Url = "http://192.168.0.107:9200",
-                Username = "elastic",
-                Password = "changeme",
-                IndexName = "hristo_logs",
+                Username = "newsgirl_fetcher",
+                Password = "test123",
+                IndexName = "newsgirl-fetcher",
             };
 
             var client = new CustomElasticsearchClient(elasticConfig);

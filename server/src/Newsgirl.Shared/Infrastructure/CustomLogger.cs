@@ -5,9 +5,11 @@ namespace Newsgirl.Shared.Infrastructure
     using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
+    using System.Text.Json;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Elasticsearch.Net;
     using Sentry;
     using Sentry.Protocol;
 
@@ -21,6 +23,8 @@ namespace Newsgirl.Shared.Infrastructure
         private readonly List<AsyncLocal<Func<Dictionary<string, object>>>> syncErrorDataHooks 
             = new List<AsyncLocal<Func<Dictionary<string, object>>>>();
 
+        private ElasticLowLevelClient elasticsearchClient;
+
         public CustomLogger(CustomLoggerConfig config)
         {
             this.config = config;
@@ -31,34 +35,83 @@ namespace Newsgirl.Shared.Infrastructure
             {
                 this.CreateSentryClient();
             }
+
+            if (!this.config.DisableElasticsearchIntegration)
+            {
+                this.CreateElasticsearchClient();
+            }
         }
 
-        public void Debug(string message)
+        private void CreateElasticsearchClient()
         {
-            if (!this.config.EnableDebug)
+            if (this.elasticsearchClient != null)
             {
                 return;
             }
 
-            this.Log(message);
+            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(this.config.ElasticsearchConfig.Url));
+            elasticConnectionConfiguration.BasicAuthentication(this.config.ElasticsearchConfig.Username, this.config.ElasticsearchConfig.Password);
+            this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
         }
 
-        public void Debug(Func<string> func)
+        public Task Debug(string message)
         {
             if (!this.config.EnableDebug)
             {
-                return;
+                return Task.CompletedTask;
             }
 
-            this.Log(func());
+            return this.Log(message, null);
         }
 
-        public void Log(string message)
+        public Task Debug(string message, Dictionary<string, object> fields)
+        {
+            if (!this.config.EnableDebug)
+            {
+                return Task.CompletedTask;
+            }
+
+            return this.Log(message, fields);
+        }
+
+        public Task Debug(Func<string> func)
+        {
+            if (!this.config.EnableDebug)
+            {
+                return Task.CompletedTask;
+            }
+
+            return this.Log(func(), null);
+        }
+
+        public Task Debug(Func<(string, Dictionary<string, object>)> func)
+        {
+            if (!this.config.EnableDebug)
+            {
+                return Task.CompletedTask;
+            }
+
+            var (message, fields) = func();
+            
+            return this.Log(message, fields);
+        }
+
+        public Task Log(string message)
+        {
+            return this.Log(message, null);
+        }
+
+        public async Task Log(string message, Dictionary<string, object> fields)
         {
             if (!this.config.DisableConsoleLogging)
             {
-                Console.Out.WriteLine(message);
+                await Console.Out.WriteLineAsync(message);
             }
+            
+            fields ??= new Dictionary<string, object>();
+            fields.Add("message", message);
+
+            await this.SendToElasticsearch(fields);
         }
 
         public async Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
@@ -109,6 +162,22 @@ namespace Newsgirl.Shared.Infrastructure
             return this.Error(exception, null, null);
         }
 
+        private async Task SendToElasticsearch(Dictionary<string, object> fields)
+        {
+            this.CreateElasticsearchClient();
+            
+            fields.Add("log_date", DateTime.UtcNow.ToString("O"));
+            
+            string jsonBody = JsonSerializer.Serialize(fields);
+            
+            var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.config.ElasticsearchConfig.IndexName, jsonBody);
+
+            if (!response.Success)
+            {
+                throw new ApplicationException(response.ToString());
+            }
+        }
+        
         private void CreateSentryClient()
         {
             this.sentryClient ??= new SentryClient(new SentryOptions
@@ -256,11 +325,17 @@ namespace Newsgirl.Shared.Infrastructure
 
     public interface ILog
     {
-        void Debug(string message);
+        Task Debug(string message);
+        
+        Task Debug(string message, Dictionary<string, object> fields);
 
-        void Debug(Func<string> func);
+        Task Debug(Func<string> func);
+        
+        Task Debug(Func<(string, Dictionary<string, object>)> func);
 
-        void Log(string message);
+        Task Log(string message);
+        
+        Task Log(string message, Dictionary<string, object> fields);
 
         Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo);
         
@@ -287,6 +362,10 @@ namespace Newsgirl.Shared.Infrastructure
         public string SentryDsn { get; set; }
 
         public string Release { get; set; }
+        
+        public bool DisableElasticsearchIntegration { get; set; }
+
+        public ElasticsearchConfig ElasticsearchConfig { get; set; }
     }
 
     /// <summary>
@@ -451,6 +530,21 @@ namespace Newsgirl.Shared.Infrastructure
                 frame.Function = match.Groups[1].Value + " { <lambda> }";
             }
         }
+    }
+    
+    public class ElasticsearchConfig
+    {
+        public string Url { get; set; }
+
+        public string Username { get; set; }
+
+        public string Password { get; set; }
+        
+        public string IndexName { get; set; }
+    }
+    
+    public class CustomElasticsearchResponse : ElasticsearchResponseBase
+    {
     }
 
     public class DetailedLogException : Exception

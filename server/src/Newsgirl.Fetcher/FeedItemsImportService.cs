@@ -31,7 +31,7 @@ namespace Newsgirl.Fetcher
 
         public async Task ImportItems(FeedUpdateModel[] updates)
         {
-            this.log.Debug("Importing feed items...");
+            await this.log.Debug("Importing feed items...");
                 
             const string header =
                 "COPY public.feed_items " +
@@ -86,7 +86,7 @@ namespace Newsgirl.Fetcher
                 await importer.CompleteAsync();
             }
 
-            this.log.Debug("Updating the feeds hashes...");
+            await this.log.Debug("Updating the feeds hashes...");
 
             for (int i = 0; i < updates.Length; i++)
             {

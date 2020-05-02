@@ -6,6 +6,12 @@
     "ServerName": "hristo-ws",
     "EnableDebug": false,
     "DisableSentryIntegration": true,
-    "DisableConsoleLogging": false
+    "DisableConsoleLogging": false,
+    "ElasticsearchConfig": {
+      "Url": "http://dev-host.lan:9200",
+      "Username": "newsgirl_fetcher",
+      "Password": "test123",
+      "IndexName": "newsgirl-fetcher"
+    }
   }
 }

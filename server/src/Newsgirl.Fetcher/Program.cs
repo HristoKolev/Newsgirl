@@ -48,7 +48,7 @@
         {
             try
             {
-                this.Log.Log("Reloading config...");
+                await this.Log.Log("Reloading config...");
 
                 await this.LoadConfig();
             }
@@ -94,7 +94,7 @@
 
             var log = this.IoC.Resolve<ILog>();
 
-            log.Log($"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
+            await log.Log($"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
 
             await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
         }

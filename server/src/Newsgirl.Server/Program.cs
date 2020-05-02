@@ -62,7 +62,7 @@ namespace Newsgirl.Server
         {
             try
             {
-                this.Log.Log("Reloading config...");
+                await this.Log.Log("Reloading config...");
 
                 await this.LoadConfig();
             }
