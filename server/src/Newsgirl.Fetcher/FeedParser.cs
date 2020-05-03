@@ -2,6 +2,7 @@ namespace Newsgirl.Fetcher
 {
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using CodeHollow.FeedReader;
     using Newtonsoft.Json;
     using Shared.Data;
@@ -20,7 +21,7 @@ namespace Newsgirl.Fetcher
             this.log = log;
         }
 
-        public ParsedFeed Parse(string feedContent)
+        public async Task<ParsedFeed> Parse(string feedContent)
         {
             var materializedFeed = FeedReader.ReadFromString(feedContent);
 
@@ -42,7 +43,10 @@ namespace Newsgirl.Fetcher
 
                     if (stringID == null)
                     {
-                        this.log.Debug($"Cannot ID feed item: {JsonConvert.SerializeObject(feedItem)}");
+                        await this.log.Warn(x => x.Log("Cannot ID feed item.", new Dictionary<string, object>
+                        {
+                            {"feedItemJson", JsonConvert.SerializeObject(feedItem)}
+                        }));
 
                         continue;
                     }
@@ -53,7 +57,10 @@ namespace Newsgirl.Fetcher
 
                     if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
-                        this.log.Debug($"Feed item already added: {stringID}");
+                        await this.log.Warn(x => x.Log("Feed item already added.", new Dictionary<string, object>
+                        {
+                            {"stringID", stringID}
+                        }));
 
                         continue;
                     }
@@ -124,7 +131,7 @@ namespace Newsgirl.Fetcher
 
     public interface IFeedParser
     {
-        ParsedFeed Parse(string feedContent);
+        Task<ParsedFeed> Parse(string feedContent);
     }
 
     public class ParsedFeed

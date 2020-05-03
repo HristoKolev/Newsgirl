@@ -87,7 +87,7 @@ namespace Newsgirl.Fetcher.Tests
             Exception err = null;
             
             var log = Substitute.For<ILog>();
-            log.When(x => x.Debug(Arg.Any<Func<string>>())).Do(info => info.Arg<Func<string>>()());
+            log.When(x => x.Debug(Arg.Any<Func<ILog, Task>>())).Do(info => info.Arg<Func<ILog, Task>>()(log));
             await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
 
             var fetcher = new FeedFetcher(

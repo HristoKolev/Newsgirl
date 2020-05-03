@@ -65,7 +65,8 @@
 
             this.AppConfig.Logging.Release = this.AppVersion;
 
-            this.Log = new CustomLogger(this.AppConfig.Logging);
+            var errorReporter = new ErrorReporter(this.AppConfig.Logging);
+            this.Log = new CustomLogger(this.AppConfig.Logging, errorReporter);
         }
 
         public async Task InitializeAsync()

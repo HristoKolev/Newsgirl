@@ -79,8 +79,11 @@ namespace Newsgirl.Server
 
             this.AppConfig.Logging.Release = this.AppVersion;
 
-            var logger = new CustomLogger(this.AppConfig.Logging);
-            logger.AddSyncHook(this.AsyncLocals.CollectHttpData);
+            var errorReporter = new ErrorReporter(this.AppConfig.Logging);
+            errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
+            
+            var logger = new CustomLogger(this.AppConfig.Logging, errorReporter);
+            
             this.Log = logger;
         }
 
@@ -177,26 +180,6 @@ namespace Newsgirl.Server
         public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
     }
 
-    public class LifetimeScopeInstanceProvider : InstanceProvider
-    {
-        private readonly ILifetimeScope lifetimeScope;
-
-        public LifetimeScopeInstanceProvider(ILifetimeScope lifetimeScope)
-        {
-            this.lifetimeScope = lifetimeScope;
-        }
-        
-        public object Get(Type type)
-        {
-            return this.lifetimeScope.Resolve(type);
-        }
-
-        public T Get<T>()
-        {
-            return this.lifetimeScope.Resolve<T>();
-        }
-    }
-    
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;

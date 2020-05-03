@@ -21,7 +21,7 @@ namespace Newsgirl.Shared.Infrastructure
             this.lockDisposer = new LockDisposer(this.semaphore);
         }
 
-        public async Task<IDisposable> Lock()
+        public async ValueTask<IDisposable> Lock()
         {
             await this.semaphore.WaitAsync();
 

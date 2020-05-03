@@ -47,6 +47,9 @@
             string jsonBody = JsonSerializer.Serialize(fields);
             
             var response = await this.innerClient.IndexAsync<CustomElasticsearchResponse>(this.config.IndexName, jsonBody);
+            
+            
+            //this.innerClient.BulkAsync<>()
 
             if (!response.Success)
             {

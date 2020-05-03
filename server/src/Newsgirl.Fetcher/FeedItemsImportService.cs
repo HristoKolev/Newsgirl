@@ -31,14 +31,12 @@ namespace Newsgirl.Fetcher
 
         public async Task ImportItems(FeedUpdateModel[] updates)
         {
-            await this.log.Debug("Importing feed items...");
-                
-            const string header =
+            const string IMPORT_HEADER =
                 "COPY public.feed_items " +
                 "(feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) " +
                 "FROM STDIN (FORMAT BINARY)";
-
-            await using (var importer = this.dbConnection.BeginBinaryImport(header))
+            
+            await using (var importer = this.dbConnection.BeginBinaryImport(IMPORT_HEADER))
             {
                 for (int i = 0; i < updates.Length; i++)
                 {
@@ -86,7 +84,15 @@ namespace Newsgirl.Fetcher
                 await importer.CompleteAsync();
             }
 
-            await this.log.Debug("Updating the feeds hashes...");
+            await this.log.Debug(x =>
+            {
+                int importedCount = updates.Select(u => u.NewItems.Count).Sum();
+                
+                return x.Log("Feed items imported.", new Dictionary<string, object>
+                {
+                    {"importedCount", importedCount}
+                });
+            });
 
             for (int i = 0; i < updates.Length; i++)
             {
@@ -102,6 +108,11 @@ namespace Newsgirl.Fetcher
                     );
                 }
             }
+            
+            await this.log.Debug(x => x.Log("Feed hashes updated.", new Dictionary<string, object>
+            {
+                {"updateCount", updates.Length}
+            }));
         }
 
         public Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes)

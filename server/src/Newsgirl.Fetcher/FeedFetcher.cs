@@ -45,7 +45,10 @@ namespace Newsgirl.Fetcher
             
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
 
-            await this.log.Log($"Fetching {feeds.Count} feeds.");
+            await this.log.Debug(x => x.Log("Feeds ready for update.", new Dictionary<string, object>
+            {
+                {"feedCount", feeds.Count}
+            }));
 
             FeedUpdateModel[] updates;
 
@@ -72,18 +75,16 @@ namespace Newsgirl.Fetcher
                 }
             }
             
-            await this.log.Debug(() =>
+            await this.log.Debug(x =>
             {
-                int notChangedCount = updates.Count(x => x.NewItems == null || !x.NewItems.Any());
+                int changedCount = updates.Count(update => update.NewItems != null && update.NewItems.Any());
+                int unchangedCount = updates.Count(update => update.NewItems == null || !update.NewItems.Any());
 
-                return $"{notChangedCount} feeds unchanged.";
-            });
-
-            await this.log.Debug(() =>
-            {
-                int changedCount = updates.Count(x => x.NewItems != null && x.NewItems.Any());
-
-                return $"{changedCount} feeds changed.";
+                return this.log.Log("Updates ready for import.", new Dictionary<string, object>
+                {
+                    {"changedCount", changedCount},
+                    {"unchangedCount", unchangedCount},
+                });
             });
 
             await this.transactionService.ExecuteInTransactionAndCommit(async () =>
@@ -116,7 +117,10 @@ namespace Newsgirl.Fetcher
 
                 if (feedContentHash == feed.FeedContentHash)
                 {
-                    await this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching content hash.");
+                    await this.log.Debug(x => x.Log("Feed not changed. Matching content hash.", new Dictionary<string, object>
+                    {
+                        {"feedID", feed.FeedID}
+                    }));
                     
                     return new FeedUpdateModel
                     {
@@ -146,7 +150,7 @@ namespace Newsgirl.Fetcher
                 
                 try
                 {
-                    parsedFeed = this.feedParser.Parse(feedContent);                
+                    parsedFeed = await this.feedParser.Parse(feedContent);                
                 }
                 catch (Exception err)
                 {
@@ -162,8 +166,11 @@ namespace Newsgirl.Fetcher
 
                 if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
                 {
-                    await this.log.Debug($"Feed #{feed.FeedID} is not changed. Matching items hash.");
-                    
+                    await this.log.Debug(x => x.Log("Feed not changed. Matching items hash.", new Dictionary<string, object>
+                    {
+                        {"feedID", feed.FeedID}
+                    }));
+
                     return new FeedUpdateModel
                     {
                         Feed = feed,
@@ -180,9 +187,13 @@ namespace Newsgirl.Fetcher
                     
                     newHashes = new HashSet<long>(newHashArray);
                 }
-
-                await this.log.Debug($"Feed #{feed.FeedID} has {newHashes.Count} new items.");
                 
+                await this.log.Debug(x => x.Log("Feed changed.", new Dictionary<string, object>
+                {
+                    {"feedID", feed.FeedID},
+                    {"updateCount", newHashes.Count}
+                }));
+
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
                 for (int i = 0; i < parsedFeed.Items.Count; i++)
@@ -209,7 +220,10 @@ namespace Newsgirl.Fetcher
             }
             catch (Exception err)
             {
-                await this.log.Debug($"An error occurred while fetching feed #{feed.FeedID}.");
+                await this.log.Warn(x => x.Log("An error occurred while fetching feed.", new Dictionary<string, object>
+                {
+                    {"feedID", feed.FeedID}
+                }));
                 
                 await this.log.Error(err, new Dictionary<string, object>
                 {

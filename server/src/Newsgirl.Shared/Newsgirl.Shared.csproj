@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
 
     <IsPackable>false</IsPackable>
@@ -11,14 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="5.1.2" />
+    <PackageReference Include="Autofac" Version="5.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="PgNet" Version="1.0.6" />
-    <PackageReference Include="Sentry" Version="2.1.0" />
+    <PackageReference Include="PgNet" Version="1.0.12" />
+    <PackageReference Include="Sentry" Version="2.1.1" />
     <PackageReference Include="Elasticsearch.Net" Version="7.6.1" />
-    <PackageReference Include="System.Reactive" Version="4.3.1" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Reactive" Version="4.4.1" />
   </ItemGroup>
 
 </Project>

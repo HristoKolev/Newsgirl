@@ -23,7 +23,7 @@ namespace Newsgirl.Fetcher.Tests
 
             string feedContent = await TestHelper.GetResourceText(resourceName);
             
-            var parsedFeed = parser.Parse(feedContent);
+            var parsedFeed =  await parser.Parse(feedContent);
 
             Snapshot.Match(parsedFeed, new []{resourceName});
         }

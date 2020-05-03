@@ -251,8 +251,11 @@ namespace Newsgirl.Server.Tests
         {
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
             var appConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
-            var testLog = new CustomLogger(appConfig.Logging);
-            testLog.AddSyncHook(asyncLocals.CollectHttpData);
+            
+            var errorReporter = new ErrorReporter(appConfig.Logging);
+            errorReporter.AddSyncHook(asyncLocals.CollectHttpData);
+            var testLog = new CustomLogger(appConfig.Logging, errorReporter);
+            
             return testLog;
         }
 
