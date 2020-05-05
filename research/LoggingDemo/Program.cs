@@ -8,25 +8,29 @@
 
     internal static class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            var destinations = new LogConsumer<LogData>[]
+            var log = new StructuredLogger(builder =>
             {
-                new LogDataConsoleConsumer(),
-            };
-
-            await using (var log = new StructuredLogger<LogData>(destinations))
-            {
-                log.CurrentLevel = LogLevel.Warn;
-                
-                for (int i = 0; i < 100; i++)
+                builder.AddConfig("log_data", new LogConsumer<LogData>[]
                 {
-                    log.Warn(x => new LogData("Here cats are good.")
-                    {
-                        {"key", "val"}
-                    });   
-                }
+                    new LogDataConsoleConsumer(), 
+                });
+                
+                builder.SetEnabled(new string[0]);
+            });
+
+            log.SetEnabled(new []{"log_data"});
+            
+            for (int i = 0; i < 100; i++)
+            {
+                log.Log("log_data", () => new LogData("Here cats are good.")
+                {
+                    {"key", "val"}
+                });   
             }
+            
+            await log.DisposeAsync();
         }
     }
 
