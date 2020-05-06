@@ -6,6 +6,7 @@ namespace Newsgirl.Server.Tests
     using Microsoft.AspNetCore.Http;
     using NSubstitute;
     using Shared.Infrastructure;
+    using Testing;
     using Xunit;
 
     public class HttpServerTest
@@ -56,7 +57,7 @@ namespace Newsgirl.Server.Tests
                 Addresses = new[] {"http://127.0.0.1:56962"}
             };
 
-            var log = Substitute.For<ILog>();
+            var log = new StructuredLogMock();
             static Task Handler(HttpContext context) => Task.CompletedTask;
             var server = new HttpServerImpl(log, serverConfig, Handler);
 

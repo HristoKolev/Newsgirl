@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Data
+namespace Newsgirl.Shared
 {
     using System;
     using System.Collections.Generic;

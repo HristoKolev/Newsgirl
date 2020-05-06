@@ -2,9 +2,9 @@ namespace Newsgirl.Fetcher
 {
     using System.Collections.Generic;
     using System.IO;
-    using System.Threading.Tasks;
+    using System.Text.Json;
     using CodeHollow.FeedReader;
-    using Newtonsoft.Json;
+    using Shared;
     using Shared.Data;
     using Shared.Infrastructure;
 
@@ -21,7 +21,7 @@ namespace Newsgirl.Fetcher
             this.log = log;
         }
 
-        public async Task<ParsedFeed> Parse(string feedContent)
+        public ParsedFeed Parse(string feedContent)
         {
             var materializedFeed = FeedReader.ReadFromString(feedContent);
 
@@ -33,8 +33,6 @@ namespace Newsgirl.Fetcher
 
             using (var memoryStream = new MemoryStream(allItems.Count * 8))
             {
-                byte[] stringIDBytes;
-
                 for (int i = allItems.Count - 1; i >= 0; i--)
                 {
                     var feedItem = allItems[i];
@@ -43,24 +41,24 @@ namespace Newsgirl.Fetcher
 
                     if (stringID == null)
                     {
-                        await this.log.Warn(x => x.Log("Cannot ID feed item.", new Dictionary<string, object>
+                        this.log.General(() => new LogData("Cannot ID feed item.")
                         {
-                            {"feedItemJson", JsonConvert.SerializeObject(feedItem)}
-                        }));
+                            {"feedItemJson", JsonSerializer.Serialize(feedItem)}
+                        });
 
                         continue;
                     }
 
-                    stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
+                    var stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
 
                     long feedItemHash = this.hasher.ComputeHash(stringIDBytes);
 
                     if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
-                        await this.log.Warn(x => x.Log("Feed item already added.", new Dictionary<string, object>
+                        this.log.General(() => new LogData("Feed item already added.")
                         {
                             {"stringID", stringID}
-                        }));
+                        });
 
                         continue;
                     }
@@ -131,7 +129,7 @@ namespace Newsgirl.Fetcher
 
     public interface IFeedParser
     {
-        Task<ParsedFeed> Parse(string feedContent);
+        ParsedFeed Parse(string feedContent);
     }
 
     public class ParsedFeed

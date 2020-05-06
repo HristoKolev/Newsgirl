@@ -8,22 +8,35 @@ namespace Newsgirl.Benchmarks
     [MemoryDiagnoser]
     public class StructuredLoggerBenchmark
     {
+        private const string DebugConfig = "DebugConfig";
+        private const string WarnConfig = "WarnConfig";
+        
         [Params(10_000_000)]
         public int N;
 
-        private StructuredLogger<StructLogData> smallStructLogger;
-        private StructuredLogger<ClassLogData> smallClassLogger;
+        private StructuredLogger smallStructLogger;
+        private StructuredLogger smallClassLogger;
         
-        private StructuredLogger<LargeStructLogData> largeStructLogger;
-        private StructuredLogger<LargeClassLogData> largeClassLogger;
+        private StructuredLogger largeStructLogger;
+        private StructuredLogger largeClassLogger;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.smallStructLogger = CreateLogger(new NoOpConsumer<StructLogData>(), LogLevel.Warn);
-            this.smallClassLogger = CreateLogger(new NoOpConsumer<ClassLogData>(), LogLevel.Warn);
-            this.largeStructLogger = CreateLogger(new NoOpConsumer<LargeStructLogData>(), LogLevel.Warn);
-            this.largeClassLogger = CreateLogger(new NoOpConsumer<LargeClassLogData>(), LogLevel.Warn);
+            this.smallStructLogger = CreateLogger(new NoOpConsumer<StructLogData>());
+            this.smallClassLogger = CreateLogger(new NoOpConsumer<ClassLogData>());
+            this.largeStructLogger = CreateLogger(new NoOpConsumer<LargeStructLogData>());
+            this.largeClassLogger = CreateLogger(new NoOpConsumer<LargeClassLogData>());
+        }
+
+        private StructuredLogger CreateLogger<T>(NoOpConsumer<T> consumer)
+        {
+            var logger = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(WarnConfig, new LogConsumer<T>[] { consumer });
+            });
+
+            return logger;
         }
 
         [GlobalCleanup]
@@ -49,7 +62,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Debug(() => new StructLogData());
+                this.smallStructLogger.Log(DebugConfig, () => new StructLogData());
                 int v = Math.Abs(i);
             }
         }
@@ -59,7 +72,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Debug(() => new ClassLogData());
+                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData());
                 int v = Math.Abs(i);
             }
         }
@@ -69,7 +82,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Debug(() => new StructLogData { Number = i });
+                this.smallStructLogger.Log(DebugConfig, () => new StructLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -79,7 +92,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Debug(() => new ClassLogData { Number = i });
+                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -89,7 +102,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Warn(() => new StructLogData { Number = i });
+                this.smallStructLogger.Log(WarnConfig, () => new StructLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -99,7 +112,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Warn(() => new ClassLogData { Number = i });
+                this.smallClassLogger.Log(WarnConfig, () => new ClassLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -109,7 +122,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeStructLogger.Warn(() => new LargeStructLogData { Prop1 = i });
+                this.largeStructLogger.Log(WarnConfig, () => new LargeStructLogData { Prop1 = i });
                 int v = Math.Abs(i);
             }
         }
@@ -119,14 +132,9 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeClassLogger.Warn(() => new LargeClassLogData { Prop1 = i });
+                this.largeClassLogger.Log(WarnConfig, () => new LargeClassLogData { Prop1 = i });
                 int v = Math.Abs(i);
             }
-        }
-
-        private static StructuredLogger<T> CreateLogger<T>(LogConsumer<T> consumer, LogLevel logLevel)
-        {
-            return new StructuredLogger<T>(new[] { consumer }) { CurrentLevel = logLevel };
         }
     }
 

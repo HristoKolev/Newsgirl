@@ -18,7 +18,7 @@ namespace Newsgirl.Fetcher.Tests
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
             Assert.Equal(appConfigPath, app.AppConfigPath);
 
-            await app.InitializeAsync();
+            await app.Initialize();
 
             return app;
         }
@@ -28,7 +28,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             await using var app = await CreateFetcherApp();
 
-            await app.RunCycleAsync();
+            await app.RunCycle();
         }
 
         [Fact]

@@ -12,64 +12,75 @@ namespace Newsgirl.Shared
     using Sentry;
     using Sentry.Protocol;
 
-    public class ErrorReporter
+    public interface ErrorReporter
     {
-        private readonly CustomLoggerConfig config;
+        Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo);
+        
+        Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo);
+        
+        Task<string> Error(Exception exception, string fingerprint);
+        
+        Task<string> Error(Exception exception);
+    }
+
+    public class ErrorReporterImpl : ErrorReporter
+    {
+        private readonly ErrorReporterConfig config;
         private readonly AsyncLock sentryFlushLock;
         private readonly TimeSpan sentryFlushTimeout;
-        private ISentryClient sentryClient;
+        private readonly ISentryClient sentryClient;
         private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
         private readonly List<AsyncLocal<Func<Dictionary<string, object>>>> syncErrorDataHooks = new List<AsyncLocal<Func<Dictionary<string, object>>>>();
         
-        public ErrorReporter(CustomLoggerConfig config)
+        public ErrorReporterImpl(ErrorReporterConfig config)
         {
             this.config = config;
             this.sentryFlushLock = new AsyncLock();
             this.sentryFlushTimeout = TimeSpan.FromSeconds(60);
-
-            if (!this.config.DisableSentryIntegration)
+            this.sentryClient = new SentryClient(new SentryOptions
             {
-                this.CreateSentryClient();
-            }
+                AttachStacktrace = true,
+                Dsn = new Dsn(this.config.SentryDsn),
+                Release = this.config.Release
+            });
         }
         
         public async Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
             try
             {
-                if (!this.config.DisableConsoleLogging)
-                {
-                    await Console.Error.WriteLineAsync(exception.ToString());
-                }
-
-                if (!this.config.DisableSentryIntegration)
-                {
-                    return await this.SendToSentry(exception, additionalInfo, fingerprint);
-                }
-
-                return null;
+                await Console.Error.WriteLineAsync(exception.ToString());
+                
+                return await this.SendToSentry(exception, additionalInfo, fingerprint);
             }
             catch (Exception err)
             {
-                if (!this.config.DisableConsoleLogging)
-                {
-                    await Console.Error.WriteLineAsync(err.ToString());
-                }
-
+                await Console.Error.WriteLineAsync(err.ToString());
 #if DEBUG
                 throw;
-#endif
-
-#pragma warning disable 162
+#else
                 return null;
-#pragma warning restore 162
+#endif
             }
         }
-        
+
+        public Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo)
+        {
+            return this.Error(exception, null, additionalInfo);
+        }
+
+        public Task<string> Error(Exception exception, string fingerprint)
+        {
+            return this.Error(exception, fingerprint, null);
+        }
+
+        public Task<string> Error(Exception exception)
+        {
+            return this.Error(exception, null, null);
+        }
+
         private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo, string explicitlyDefinedFingerprint)
         {
-            this.CreateSentryClient();
-
             var sentryEvent = new SentryEvent(exception)
             {
                 Level = SentryLevel.Error
@@ -97,7 +108,7 @@ namespace Newsgirl.Shared
                 {
                     foreach (var kvp in detailedLogException.Details)
                     {
-                        SetExtra(sentryEvent, kvp);
+                        sentryEvent.SetExtra(kvp.Key, kvp.Value);
                     }
 
                     if (!string.IsNullOrWhiteSpace(detailedLogException.Fingerprint))
@@ -111,7 +122,7 @@ namespace Newsgirl.Shared
             {
                 foreach (var kvp in additionalInfo)
                 {
-                    SetExtra(sentryEvent, kvp);
+                    sentryEvent.SetExtra(kvp.Key, kvp.Value);
                 }
             }
 
@@ -123,7 +134,7 @@ namespace Newsgirl.Shared
                 {
                     foreach (var kvp in data)
                     {
-                        SetExtra(sentryEvent, kvp);
+                        sentryEvent.SetExtra(kvp.Key, kvp.Value);
                     }
                 }
             }
@@ -160,11 +171,6 @@ namespace Newsgirl.Shared
             return eventId.ToString();
         }
 
-        private static void SetExtra(SentryEvent sentryEvent, KeyValuePair<string, object> kvp)
-        {
-            sentryEvent.SetExtra(kvp.Key, kvp.Value);
-        }
-
         /// <summary>
         ///     Returns a flat list of all the exceptions down the .InnerException chain.
         /// </summary>
@@ -175,21 +181,11 @@ namespace Newsgirl.Shared
             while (exception != null)
             {
                 list.Add(exception);
+                
                 exception = exception.InnerException;
             }
 
             return list;
-        }
-        
-        
-        private void CreateSentryClient()
-        {
-            this.sentryClient ??= new SentryClient(new SentryOptions
-            {
-                AttachStacktrace = true,
-                Dsn = new Dsn(this.config.SentryDsn),
-                Release = this.config.Release
-            });
         }
 
         private static string GetFingerprint(Exception exception)
@@ -267,7 +263,7 @@ namespace Newsgirl.Shared
                     // Remove the frames until the call for capture with the SDK
                     if (firstFrames
                         // ReSharper disable once PatternAlwaysOfType
-                        && stackFrame.GetMethod() is MethodBase method
+                        && stackFrame?.GetMethod() is MethodBase method
                         && method.DeclaringType?.AssemblyQualifiedName?.StartsWith("Sentry") == true)
                     {
                         continue;
@@ -292,7 +288,6 @@ namespace Newsgirl.Shared
                 // ReSharper disable once PatternAlwaysOfType
                 if (stackFrame.GetMethod() is MethodBase method)
                 {
-                    // TODO: SentryStackFrame.TryParse and skip frame instead of these unknown values:
                     frame.Module = method.DeclaringType?.FullName ?? UNKNOWN_REQUIRED_FIELD;
                     frame.Package = method.DeclaringType?.Assembly.FullName;
                     frame.Function = method.Name;
@@ -371,6 +366,18 @@ namespace Newsgirl.Shared
                 }
             }
         }
+    }
+
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ErrorReporterConfig
+    {
+        public string ServerName { get; set; }
+
+        public string Environment { get; set; }
+
+        public string SentryDsn { get; set; }
+        
+        public string Release { get; set; }
     }
     
     public class DetailedLogException : Exception

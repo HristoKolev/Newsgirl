@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Newsgirl.Shared;
@@ -62,7 +61,8 @@ namespace Newsgirl.Fetcher.Tests
                 },
                 TestHelper.TransactionServiceStub,
                 new Hasher(), 
-                TestHelper.LogStub
+                TestHelper.LogStub,
+                TestHelper.ErrorReporterStub
             );
 
             await fetcher.FetchFeeds();
@@ -87,8 +87,10 @@ namespace Newsgirl.Fetcher.Tests
             Exception err = null;
             
             var log = Substitute.For<ILog>();
-            log.When(x => x.Debug(Arg.Any<Func<ILog, Task>>())).Do(info => info.Arg<Func<ILog, Task>>()(log));
-            await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+            log.When(x => x.Log(Arg.Any<string>(), Arg.Any<Func<LogData>>())).Do(info => info.Arg<Func<LogData>>()());
+
+            var errorReporter = Substitute.For<ErrorReporter>();
+            await errorReporter.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
 
             var fetcher = new FeedFetcher(
                 contentProvider,
@@ -97,7 +99,8 @@ namespace Newsgirl.Fetcher.Tests
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
                 new Hasher(), 
-                log
+                log,
+                errorReporter
             );
 
             await fetcher.FetchFeeds();
@@ -117,9 +120,8 @@ namespace Newsgirl.Fetcher.Tests
             var importService = Substitute.For<IFeedItemsImportService>();
             importService.GetFeedsForUpdate().Returns(Task.FromResult(feeds));
 
-            Exception err = null;
-            var log = Substitute.For<ILog>();
-            await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+            var errorReporter = new ErrorReporterMock();
+            var log = new StructuredLogMock();
 
             var feedParser = Substitute.For<IFeedParser>();
             feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
@@ -131,12 +133,13 @@ namespace Newsgirl.Fetcher.Tests
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
                 new Hasher(), 
-                log
+                log,
+                errorReporter
             );
 
             await fetcher.FetchFeeds();
 
-            Snapshot.MatchError(err);
+            Snapshot.MatchError(errorReporter.Errors.First().Item1);
         }
         
          
@@ -150,10 +153,9 @@ namespace Newsgirl.Fetcher.Tests
 
             var importService = Substitute.For<IFeedItemsImportService>();
             importService.GetFeedsForUpdate().Returns(Task.FromResult(feeds));
-
-            Exception err = null;
-            var log = Substitute.For<ILog>();
-            await log.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+            
+            var log = new StructuredLogMock();
+            var errorReporter = new ErrorReporterMock();
 
             var feedParser = Substitute.For<IFeedParser>();
             feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
@@ -170,12 +172,13 @@ namespace Newsgirl.Fetcher.Tests
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
                 new Hasher(), 
-                log
+                log,
+                errorReporter
             );
 
             await fetcher.FetchFeeds();
 
-            Snapshot.MatchError(err);
+            Snapshot.MatchError(errorReporter.Errors.First().Item1);
         }
 
         private static IFeedContentProvider TestResourceContentProvider
@@ -195,6 +198,5 @@ namespace Newsgirl.Fetcher.Tests
                 return contentProvider;
             }
         }
-
     }
 }

@@ -26,6 +26,8 @@ using Newsgirl.Testing;
 
 namespace Newsgirl.Testing
 {
+    using Shared;
+
     public static class TestHelper
     {
         // ReSharper disable once InconsistentNaming
@@ -74,6 +76,15 @@ namespace Newsgirl.Testing
             {
                 var logStub = Substitute.For<ILog>();
                 return logStub;
+            }
+        }
+        
+        public static ErrorReporter ErrorReporterStub
+        {
+            get
+            {
+                var stub = Substitute.For<ErrorReporter>();
+                return stub;
             }
         }
 
@@ -476,12 +487,60 @@ namespace Newsgirl.Testing
         {
             var assembly = typeof(ResourceHelper).Assembly;
 
-            var resourceStream =
-                assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
+            var resourceStream = assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
 
             using (var reader = new StreamReader(resourceStream, EncodingHelper.UTF8))
             {
                 return await reader.ReadToEndAsync();
+            }
+        }
+    }
+
+    public class ErrorReporterMock : ErrorReporter
+    {
+        private const string ZeroGuid = "61289445-04b7-4f59-bbdd-499c36861bc0";
+
+        public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
+        
+        public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
+        {
+            Errors.Add((exception, fingerprint, additionalInfo));
+
+            return Task.FromResult(ZeroGuid);
+        }
+
+        public Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo)
+        {
+            return this.Error(exception, null, additionalInfo);
+        }
+
+        public Task<string> Error(Exception exception, string fingerprint)
+        {
+            return this.Error(exception, fingerprint, null);
+        }
+
+        public Task<string> Error(Exception exception)
+        {
+            return this.Error(exception, null, null);
+        }
+    }
+
+    public class StructuredLogMock : ILog
+    {
+        public Dictionary<string, List<object>> Logs { get; } = new Dictionary<string, List<object>>();
+        
+        public void Log<T>(string key, Func<T> func)
+        {
+            if (!this.Logs.ContainsKey(key))
+            {
+                this.Logs.Add(key, new List<object>
+                {
+                    func()
+                });
+            }
+            else
+            {
+                this.Logs[key].Add(func());    
             }
         }
     }

@@ -20,7 +20,9 @@
 
         public SystemSettingsModel SystemSettings { get; private set; }
 
-        public ILog Log { get; private set; }
+        public StructuredLogger Log { get; private set; }
+        
+        public ErrorReporterImpl ErrorReporter { get; private set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
@@ -38,56 +40,62 @@
             }
 
             this.AppConfig = null;
-
             this.SystemSettings = null;
-
+            
+            await this.Log.DisposeAsync();
             this.Log = null;
+            
+            this.ErrorReporter = null;
         }
 
         private async Task ReloadStartupConfig()
         {
             try
             {
-                await this.Log.Log("Reloading config...");
+                this.Log.General(() => new LogData("Reloading config..."));
 
                 await this.LoadConfig();
             }
             catch (Exception exception)
             {
-                await this.Log.Error(exception);
+                await this.ErrorReporter.Error(exception);
             }
         }
 
         private async Task LoadConfig()
         {
-            this.AppConfig =
-                JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
-            this.AppConfig.Logging.Release = this.AppVersion;
-
-            var errorReporter = new ErrorReporter(this.AppConfig.Logging);
-            this.Log = new CustomLogger(this.AppConfig.Logging, errorReporter);
+            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+            this.ErrorReporter = errorReporter;
+            
+            this.Log = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                {
+                    new ConsoleLogConsumer<LogData>(),
+                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch), 
+                });
+            });
         }
 
-        public async Task InitializeAsync()
+        public async Task Initialize()
         {
             await this.LoadConfig();
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
             var builder = new ContainerBuilder();
-
             builder.RegisterModule<SharedModule>();
             builder.RegisterModule(new FetcherIoCModule(this));
-
             this.IoC = builder.Build();
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
 
-        public async Task RunCycleAsync()
+        public async Task RunCycle()
         {
             var fetcherInstance = this.IoC.Resolve<FeedFetcher>();
 
@@ -95,7 +103,7 @@
 
             var log = this.IoC.Resolve<ILog>();
 
-            await log.Log($"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
+            log.General(() => new LogData($"Waiting {this.SystemSettings.FetcherCyclePause} seconds..."));
 
             await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
         }
@@ -105,7 +113,15 @@
     {
         public string ConnectionString { get; set; }
 
-        public CustomLoggerConfig Logging { get; set; }
+        public ErrorReporterConfig ErrorReporter { get; set; }
+        
+        public LoggingConfig Logging { get; set; }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class LoggingConfig
+    {
+        public ElasticsearchConfig Elasticsearch { get; set; }
     }
 
     public class FetcherIoCModule : Module
@@ -121,7 +137,8 @@
         {
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings);
-            builder.Register((c, p) => this.app.Log);
+            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>();
+            builder.Register((c, p) => this.app.Log).As<ILog>();
 
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();
@@ -129,11 +146,9 @@
             builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 
             // Per scope
-            builder.Register((c, p) =>
-                    DbFactory.CreateConnection(this.app.AppConfig.ConnectionString))
-                .InstancePerLifetimeScope();
-
+            builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().InstancePerLifetimeScope();
+            
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
 
@@ -149,18 +164,22 @@
             {
                 try
                 {
-                    await app.InitializeAsync();
+                    await app.Initialize();
 
                     while (true)
                     {
-                        await app.RunCycleAsync();
+                        await app.RunCycle();
                     }
                 }
                 catch (Exception exception)
                 {
                     if (app.Log != null)
                     {
-                        await app.Log.Error(exception);
+                        await app.ErrorReporter.Error(exception);
+                    }
+                    else
+                    {
+                        await Console.Error.WriteLineAsync(exception.ToString());
                     }
 
                     return 1;

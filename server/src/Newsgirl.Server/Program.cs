@@ -26,7 +26,9 @@ namespace Newsgirl.Server
 
         public SystemSettingsModel SystemSettings { get; set; }
 
-        public ILog Log { get; set; }
+        public StructuredLogger Log { get; private set; }
+        
+        public ErrorReporterImpl ErrorReporter { get; private set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
@@ -42,6 +44,7 @@ namespace Newsgirl.Server
         {
             this.AppConfigWatcher?.Dispose();
             this.AppConfigWatcher = null;
+            
             this.Server?.DisposeAsync();
             this.Server = null;
             
@@ -52,39 +55,44 @@ namespace Newsgirl.Server
             }
 
             this.AppConfig = null;
-
             this.SystemSettings = null;
 
+            await this.Log.DisposeAsync();
             this.Log = null;
+            
+            this.ErrorReporter = null;
         }
 
         private async Task ReloadStartupConfig()
         {
             try
             {
-                await this.Log.Log("Reloading config...");
-
+                this.Log.General(() => new LogData("Reloading config..."));
                 await this.LoadConfig();
             }
             catch (Exception exception)
             {
-                await this.Log.Error(exception);
+                await this.ErrorReporter.Error(exception);
             }
         }
 
         private async Task LoadConfig()
         {
-            this.AppConfig =
-                JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
-            this.AppConfig.Logging.Release = this.AppVersion;
-
-            var errorReporter = new ErrorReporter(this.AppConfig.Logging);
+            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
             errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
-            
-            var logger = new CustomLogger(this.AppConfig.Logging, errorReporter);
-            
-            this.Log = logger;
+            this.ErrorReporter = errorReporter;
+
+            this.Log = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                {
+                    new ConsoleLogConsumer<LogData>(),
+                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch), 
+                });
+            });
         }
 
         public async Task Initialize()
@@ -96,23 +104,18 @@ namespace Newsgirl.Server
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
             var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
-
             var rpcEngineOptions = new RpcEngineOptions
             {
                 PotentialHandlerTypes = potentialRpcTypes
             };
-
             this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
             var builder = new ContainerBuilder();
-
             builder.RegisterModule<SharedModule>();
             builder.RegisterModule(new HttpServerIoCModule(this));
-
             this.IoC = builder.Build();
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
 
@@ -167,7 +170,15 @@ namespace Newsgirl.Server
     {
         public string ConnectionString { get; set; }
 
-        public CustomLoggerConfig Logging { get; set; }
+        public ErrorReporterConfig ErrorReporter { get; set; }
+        
+        public LoggingConfig Logging { get; set; }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class LoggingConfig
+    {
+        public ElasticsearchConfig Elasticsearch { get; set; }
     }
 
     public interface AsyncLocals
@@ -194,13 +205,12 @@ namespace Newsgirl.Server
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings);
             builder.Register((c, p) => this.app.Log);
+            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>();
             builder.Register((c, p) => this.app.AsyncLocals);
             builder.Register((c, p) => this.app.RpcEngine);
 
             // Per scope
-            builder.Register((c, p) =>
-                    DbFactory.CreateConnection(this.app.AppConfig.ConnectionString))
-                .InstancePerLifetimeScope();
+            builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().InstancePerLifetimeScope();
 
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
@@ -245,7 +255,7 @@ namespace Newsgirl.Server
                 {
                     if (app.Log != null)
                     {
-                        await app.Log.Error(exception);
+                        await app.ErrorReporter.Error(exception);
                     }
                     else
                     {

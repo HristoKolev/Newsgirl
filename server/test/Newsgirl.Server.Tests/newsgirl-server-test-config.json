@@ -1,13 +1,12 @@
 {
   "ConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;",
-  "Logging": {
+  "ErrorReporter": {
     "SentryDsn": "http://8a2401136dba4dbf86de7328f1d21b38@home-sentry.lan/6",
     "Environment": "testing",
-    "ServerName": "hristo-ws",
-    "EnableDebug": false,
-    "DisableSentryIntegration": false,
-    "DisableConsoleLogging": false,
-    "ElasticsearchConfig": {
+    "ServerName": "hristo-ws"
+  },
+  "Logging": {
+    "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl_server",
       "Password": "test123",

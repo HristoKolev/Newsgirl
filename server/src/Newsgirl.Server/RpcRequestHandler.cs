@@ -9,7 +9,6 @@ namespace Newsgirl.Server
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Shared;
-    using Shared.Infrastructure;
 
     /// <summary>
     ///     Serves Rpc requests over HTTP.
@@ -17,9 +16,9 @@ namespace Newsgirl.Server
     public class RpcRequestHandler
     {
         private readonly RpcEngine rpcEngine;
-        private readonly ILog log;
         private readonly InstanceProvider instanceProvider;
         private readonly AsyncLocals asyncLocals;
+        private readonly ErrorReporter errorReporter;
         private static readonly object SyncRoot = new object();
         private static bool initialized;
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
@@ -37,12 +36,12 @@ namespace Newsgirl.Server
             };
         }
 
-        public RpcRequestHandler(RpcEngine rpcEngine, ILog log, InstanceProvider instanceProvider, AsyncLocals asyncLocals)
+        public RpcRequestHandler(RpcEngine rpcEngine, InstanceProvider instanceProvider, AsyncLocals asyncLocals, ErrorReporter errorReporter)
         {
             this.rpcEngine = rpcEngine;
-            this.log = log;
             this.instanceProvider = instanceProvider;
             this.asyncLocals = asyncLocals;
+            this.errorReporter = errorReporter;
         }
 
         public async Task HandleRequest(HttpContext context)
@@ -64,7 +63,7 @@ namespace Newsgirl.Server
             }
             catch (Exception err)
             {
-                string errorID = await this.log.Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
+                string errorID = await this.errorReporter.Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
                 await this.WriteError(context.Response, $"General RPC error: {errorID}");
                 return;
             }
@@ -109,7 +108,7 @@ namespace Newsgirl.Server
             }
             catch (Exception err)
             {
-                string errorID = await this.log.Error(err);
+                string errorID = await this.errorReporter.Error(err);
                 await this.WriteError(context.Response, $"Failed to read RPC request body: {errorID}");
                 return;
             }
@@ -136,7 +135,7 @@ namespace Newsgirl.Server
                         jsonPath = jsonException.Path;
                     }   
                     
-                    string errorID = await this.log.Error(err, new Dictionary<string, object>
+                    string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
                     {
                         {"bytePositionInLine", bytePositionInLine},
                         {"lineNumber", lineNumber},
@@ -163,7 +162,7 @@ namespace Newsgirl.Server
                 }
                 catch (Exception err)
                 {
-                    string errorID = await this.log.Error(err, new Dictionary<string, object>
+                    string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
                     {
                         {"rpcRequest", rpcRequestMessage}
                     });
@@ -220,7 +219,7 @@ namespace Newsgirl.Server
             }
             catch (Exception err)
             {
-                await this.log.Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
+                await this.errorReporter.Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
                 {
                     {"result", result}
                 });

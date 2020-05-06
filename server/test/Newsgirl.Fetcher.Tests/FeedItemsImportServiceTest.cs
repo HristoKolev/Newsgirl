@@ -11,12 +11,14 @@ using Newsgirl.Testing;
 
 namespace Newsgirl.Fetcher.Tests
 {
+    using Shared;
+
     public class FeedItemsImportServiceTest : DatabaseTest
     {
         [Fact]
         public async Task GetFeedsForUpdate_Returns_All_Feeds()
         {
-            var log = Substitute.For<ILog>();
+            var log = new StructuredLogMock();
 
             var importService = new FeedItemsImportService(this.Db, DbConnection, log);
 
@@ -40,7 +42,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task ImportItems_Copies_Items_Correctly()
         {
-            var log = Substitute.For<ILog>();
+            var log = new StructuredLogMock();
 
             var importService = new FeedItemsImportService(this.Db, this.DbConnection, log);
 
@@ -126,7 +128,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task GetMissingFeedItems_Returns_Correct_Result()
         {
-            var log = Substitute.For<ILog>();
+            var log = new StructuredLogMock();
 
             var importService = new FeedItemsImportService(this.Db, this.DbConnection, log);
 

@@ -179,7 +179,7 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task Logs_on_error()
         {
-            var handler = await CreateHandlerRealLog(new RpcEngineOptions
+            var handler = CreateHandlerRealLog(new RpcEngineOptions
             {
                 PotentialHandlerTypes = new[]
                 {
@@ -197,8 +197,6 @@ namespace Newsgirl.Server.Tests
                 responseBody = await response.Content.ReadAsStringAsync();
             }
 
-            responseBody = Regex.Replace(responseBody, "[0-9A-f]{32}", "00000000000000000000000000000000");
-            
             Snapshot.MatchJson(responseBody);
         }
         
@@ -228,49 +226,27 @@ namespace Newsgirl.Server.Tests
 
         private static RequestDelegate CreateHandler(RpcEngineOptions rpcEngineOptions)
         {
-            var log = CreateLogStub();
+            var errorReporter = new ErrorReporterMock();
+            
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-            var asyncLocals = new AsyncLocalsImpl();
-            var handler = new RpcRequestHandler(rpcEngine, log, instanceProvider, asyncLocals);
+
+            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter);
             Task Handler(HttpContext context) => handler.HandleRequest(context);
             return Handler;
         }
         
-        private static async Task<RequestDelegate> CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
+        private static RequestDelegate CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
         {
+            var errorReporter = new ErrorReporterMock();
+            
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-            var asyncLocals = new AsyncLocalsImpl();
-            var handler = new RpcRequestHandler(rpcEngine, await CreateRealLog(asyncLocals), instanceProvider, asyncLocals);
+            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter);
             Task Handler(HttpContext context) => handler.HandleRequest(context);
             return Handler;
         }
-        
-        private static async Task<CustomLogger> CreateRealLog(AsyncLocals asyncLocals)
-        {
-            string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
-            var appConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
-            
-            var errorReporter = new ErrorReporter(appConfig.Logging);
-            errorReporter.AddSyncHook(asyncLocals.CollectHttpData);
-            var testLog = new CustomLogger(appConfig.Logging, errorReporter);
-            
-            return testLog;
-        }
-
-        private static ILog CreateLogStub()
-        {
-            const string GUID = "61289445-04b7-4f59-bbdd-499c36861bc0";
-            
-            var log = Substitute.For<ILog>();
-            log.Error(null).ReturnsForAnyArgs(x => GUID);
-            log.Error(null, (string) null).ReturnsForAnyArgs(x => GUID);
-            log.Error(null, (Dictionary<string, object>) null).ReturnsForAnyArgs(x => GUID);
-            log.Error(null, null, null).ReturnsForAnyArgs(x => GUID);
-            return log;
-        }
-
+ 
         private class FuncInstanceProvider : InstanceProvider
         {
             private readonly Func<Type, object> func;

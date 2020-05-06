@@ -6,6 +6,7 @@ namespace Newsgirl.Server.Tests
     using Microsoft.AspNetCore.Http;
     using NSubstitute;
     using Shared.Infrastructure;
+    using Testing;
 
     /// <summary>
     ///     A testing service that facilitates testing of <see cref="RequestDelegate" />'s.
@@ -49,7 +50,7 @@ namespace Newsgirl.Server.Tests
                 Addresses = new[] {"http://127.0.0.1:0"}
             };
 
-            var log = Substitute.For<ILog>();
+            var log = new StructuredLogMock();
 
             async Task Handler(HttpContext context)
             {

@@ -12,7 +12,7 @@ namespace Newsgirl.Server
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Shared.Infrastructure;
+    using Shared;
 
     /// <summary>
     ///     A wrapper around ASP.NET Core's IHost.
@@ -124,12 +124,12 @@ namespace Newsgirl.Server
 
             lifetime.ApplicationStarted.Register(() =>
             {
-                this.log.Log($"HTTP server is UP on {string.Join("; ", addresses)} ...");
+                this.log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
             });
 
-            lifetime.ApplicationStopping.Register(() => { this.log.Log("HTTP server is shutting down ..."); });
+            lifetime.ApplicationStopping.Register(() => { this.log.General(() => new LogData("HTTP server is shutting down ...")); });
 
-            lifetime.ApplicationStopped.Register(() => { this.log.Log("HTTP server is down ..."); });
+            lifetime.ApplicationStopped.Register(() => { this.log.General(() => new LogData("HTTP server is down ...")); });
 
             app.Use(_ => this.requestDelegate);
         }

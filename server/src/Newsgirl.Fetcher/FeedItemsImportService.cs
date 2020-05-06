@@ -1,16 +1,16 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using LinqToDB;
-using Npgsql;
-using NpgsqlTypes;
-
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Fetcher
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    using LinqToDB;
+    using Npgsql;
+    using NpgsqlTypes;
+
+    using Shared.Data;
+    using Shared;
+
     public class FeedItemsImportService : IFeedItemsImportService
     {
         private readonly DbService db;
@@ -84,14 +84,14 @@ namespace Newsgirl.Fetcher
                 await importer.CompleteAsync();
             }
 
-            await this.log.Debug(x =>
+            this.log.General(() =>
             {
-                int importedCount = updates.Select(u => u.NewItems.Count).Sum();
+                int importedCount = updates.Select(u => u.NewItems?.Count ?? 0).Sum();
                 
-                return x.Log("Feed items imported.", new Dictionary<string, object>
+                return new LogData("Feed items imported.")
                 {
                     {"importedCount", importedCount}
-                });
+                };
             });
 
             for (int i = 0; i < updates.Length; i++)
@@ -109,10 +109,10 @@ namespace Newsgirl.Fetcher
                 }
             }
             
-            await this.log.Debug(x => x.Log("Feed hashes updated.", new Dictionary<string, object>
+            this.log.General(() => new LogData("Feed hashes updated.")
             {
                 {"updateCount", updates.Length}
-            }));
+            });
         }
 
         public Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes)

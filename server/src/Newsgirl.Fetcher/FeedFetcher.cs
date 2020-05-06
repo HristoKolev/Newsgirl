@@ -18,6 +18,7 @@ namespace Newsgirl.Fetcher
         private readonly ITransactionService transactionService;
         private readonly Hasher hasher;
         private readonly ILog log;
+        private readonly ErrorReporter errorReporter;
         private readonly AsyncLock dbLock;
 
         public FeedFetcher(
@@ -27,7 +28,8 @@ namespace Newsgirl.Fetcher
             SystemSettingsModel systemSettings,
             ITransactionService transactionService,
             Hasher hasher,
-            ILog log)
+            ILog log,
+            ErrorReporter errorReporter)
         {
             this.feedContentProvider = feedContentProvider;
             this.feedParser = feedParser;
@@ -36,19 +38,20 @@ namespace Newsgirl.Fetcher
             this.transactionService = transactionService;
             this.hasher = hasher;
             this.log = log;
+            this.errorReporter = errorReporter;
             this.dbLock = new AsyncLock();
         }
 
         public async Task FetchFeeds()
         {
-            await this.log.Log("Beginning fetch cycle...");
+            this.log.General(() => new LogData("Beginning fetch cycle..."));
             
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
 
-            await this.log.Debug(x => x.Log("Feeds ready for update.", new Dictionary<string, object>
+            this.log.General(() => new LogData("Feeds ready for update.")
             {
                 {"feedCount", feeds.Count}
-            }));
+            });
 
             FeedUpdateModel[] updates;
 
@@ -75,16 +78,16 @@ namespace Newsgirl.Fetcher
                 }
             }
             
-            await this.log.Debug(x =>
+            this.log.General(() =>
             {
                 int changedCount = updates.Count(update => update.NewItems != null && update.NewItems.Any());
                 int unchangedCount = updates.Count(update => update.NewItems == null || !update.NewItems.Any());
 
-                return this.log.Log("Updates ready for import.", new Dictionary<string, object>
+                return new LogData("Updates ready for import.")
                 {
                     {"changedCount", changedCount},
                     {"unchangedCount", unchangedCount},
-                });
+                };
             });
 
             await this.transactionService.ExecuteInTransactionAndCommit(async () =>
@@ -92,7 +95,7 @@ namespace Newsgirl.Fetcher
                 await this.feedItemsImportService.ImportItems(updates);
             });
 
-            await this.log.Log("Fetch cycle complete.");
+            this.log.General(() => new LogData("Fetch cycle complete."));
         }
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
@@ -117,10 +120,10 @@ namespace Newsgirl.Fetcher
 
                 if (feedContentHash == feed.FeedContentHash)
                 {
-                    await this.log.Debug(x => x.Log("Feed not changed. Matching content hash.", new Dictionary<string, object>
+                    this.log.General(() => new LogData("Feed not changed. Matching content hash.")
                     {
                         {"feedID", feed.FeedID}
-                    }));
+                    });
                     
                     return new FeedUpdateModel
                     {
@@ -150,7 +153,7 @@ namespace Newsgirl.Fetcher
                 
                 try
                 {
-                    parsedFeed = await this.feedParser.Parse(feedContent);                
+                    parsedFeed = this.feedParser.Parse(feedContent);                
                 }
                 catch (Exception err)
                 {
@@ -166,10 +169,10 @@ namespace Newsgirl.Fetcher
 
                 if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
                 {
-                    await this.log.Debug(x => x.Log("Feed not changed. Matching items hash.", new Dictionary<string, object>
+                    this.log.General(() => new LogData("Feed not changed. Matching items hash.")
                     {
                         {"feedID", feed.FeedID}
-                    }));
+                    });
 
                     return new FeedUpdateModel
                     {
@@ -188,11 +191,11 @@ namespace Newsgirl.Fetcher
                     newHashes = new HashSet<long>(newHashArray);
                 }
                 
-                await this.log.Debug(x => x.Log("Feed changed.", new Dictionary<string, object>
+                this.log.General(() => new LogData("Feed changed.") 
                 {
                     {"feedID", feed.FeedID},
                     {"updateCount", newHashes.Count}
-                }));
+                });
 
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
@@ -220,12 +223,12 @@ namespace Newsgirl.Fetcher
             }
             catch (Exception err)
             {
-                await this.log.Warn(x => x.Log("An error occurred while fetching feed.", new Dictionary<string, object>
+                this.log.General(() => new LogData("An error occurred while fetching feed.")
                 {
                     {"feedID", feed.FeedID}
-                }));
+                });
                 
-                await this.log.Error(err, new Dictionary<string, object>
+                await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
                     {"feed", feed}
                 });
