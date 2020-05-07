@@ -60,6 +60,9 @@ namespace Newsgirl.Server
             await this.Log.DisposeAsync();
             this.Log = null;
             
+            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
+
             this.ErrorReporter = null;
         }
 
@@ -97,6 +100,9 @@ namespace Newsgirl.Server
 
         public async Task Initialize()
         {
+            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
+            
             this.AsyncLocals = new AsyncLocalsImpl();
             
             await this.LoadConfig();
@@ -117,6 +123,16 @@ namespace Newsgirl.Server
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+        }
+
+        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error(e.Exception?.InnerException);
+        }
+
+        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
 
         public async Task Start(string listenOnAddress = null)
@@ -203,11 +219,11 @@ namespace Newsgirl.Server
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((c, p) => this.app.SystemSettings);
-            builder.Register((c, p) => this.app.Log);
-            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>();
-            builder.Register((c, p) => this.app.AsyncLocals);
-            builder.Register((c, p) => this.app.RpcEngine);
+            builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
+            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<ILog>();
+            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
+            builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
+            builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();

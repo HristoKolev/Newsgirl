@@ -4,7 +4,6 @@ namespace Newsgirl.Fetcher
     using System.Net.Http;
     using System.Threading.Tasks;
     using Shared;
-    using Shared.Data;
 
     public class FeedContentProvider : IFeedContentProvider
     {

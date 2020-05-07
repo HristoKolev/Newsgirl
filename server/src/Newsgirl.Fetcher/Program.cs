@@ -45,6 +45,9 @@
             await this.Log.DisposeAsync();
             this.Log = null;
             
+            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
+            
             this.ErrorReporter = null;
         }
 
@@ -66,9 +69,8 @@
         {
             this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
-
-            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-            this.ErrorReporter = errorReporter;
+            
+            this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
             
             this.Log = new StructuredLogger(builder =>
             {
@@ -82,6 +84,9 @@
 
         public async Task Initialize()
         {
+            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
+
             await this.LoadConfig();
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
@@ -93,6 +98,16 @@
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+        }
+        
+        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error(e.Exception?.InnerException);
+        }
+
+        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
 
         public async Task RunCycle()
@@ -136,9 +151,9 @@
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((c, p) => this.app.SystemSettings);
-            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>();
-            builder.Register((c, p) => this.app.Log).As<ILog>();
+            builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
+            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
+            builder.Register((c, p) => this.app.Log).As<ILog>().ExternallyOwned();
 
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();

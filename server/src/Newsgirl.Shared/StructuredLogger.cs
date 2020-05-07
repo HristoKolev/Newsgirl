@@ -97,7 +97,9 @@ namespace Newsgirl.Shared
                         this.buffer[i] = item;
                     }
 
-                    await this.ProcessBatch(new ArraySegment<T>(this.buffer, 0, i));
+                    var segment = new ArraySegment<T>(this.buffer, 0, i);
+                    
+                    await this.ProcessBatch(segment);
                 }
                 finally
                 {
