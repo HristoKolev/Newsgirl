@@ -6,6 +6,7 @@
     "ServerName": "hristo-ws"
   },  
   "Logging": {
+    "EnabledConfigs": ["GENERAL_LOG"],
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl_server",

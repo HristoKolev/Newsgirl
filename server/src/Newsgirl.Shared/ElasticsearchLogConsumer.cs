@@ -10,7 +10,7 @@ namespace Newsgirl.Shared
         private readonly ElasticsearchConfig config;
         private readonly ElasticLowLevelClient elasticsearchClient;
 
-        public ElasticsearchLogConsumer(ElasticsearchConfig config)
+        public ElasticsearchLogConsumer(ElasticsearchConfig config, ErrorReporter errorReporter): base(errorReporter)
         {
             this.config = config;
             

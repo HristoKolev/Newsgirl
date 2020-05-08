@@ -65,9 +65,22 @@ namespace Newsgirl.Shared
     
     public abstract class LogConsumerBase<T> : LogConsumer<T>
     {
+        // ReSharper disable once MemberCanBePrivate.Global
+        protected readonly ErrorReporter ErrorReporter;
+
+        protected LogConsumerBase(ErrorReporter errorReporter)
+        {
+            this.ErrorReporter = errorReporter;
+        }
+        
         private Task runningTask;
         private T[] buffer;
         private ChannelReader<T> reader;
+#if DEBUG
+        private readonly TimeSpan timeBetweenRetry = TimeSpan.Zero;
+#else
+        private readonly TimeSpan timeBetweenRetry = TimeSpan.FromSeconds(5);
+#endif
 
         public void Start(ChannelReader<T> channelReader)
         {
@@ -98,8 +111,22 @@ namespace Newsgirl.Shared
                     }
 
                     var segment = new ArraySegment<T>(this.buffer, 0, i);
-                    
-                    await this.ProcessBatch(segment);
+
+                    for (int j = 0; j < 5; j++)
+                    {
+                        try
+                        {
+                            await this.ProcessBatch(segment);
+                            
+                            break;
+                        }
+                        catch (Exception exception)
+                        {
+                            await this.ErrorReporter.Error(exception);
+                            
+                            await Task.Delay(this.timeBetweenRetry);
+                        }
+                    }
                 }
                 finally
                 {
@@ -149,7 +176,7 @@ namespace Newsgirl.Shared
     public class StructuredLogger : IAsyncDisposable, ILog
     {
         private readonly Dictionary<string, object> consumersByConfigName;
-        private readonly HashSet<string> enabledConfigs;
+        private HashSet<string> enabledConfigs;
         
         public StructuredLogger(Action<StructuredLoggerBuilder> configure)
         {
@@ -157,15 +184,7 @@ namespace Newsgirl.Shared
             configure(builder);
             
             this.consumersByConfigName = builder.ConsumersByConfigName;
-
-            if (builder.ConfigNames == null)
-            {
-                this.enabledConfigs = new HashSet<string>(this.consumersByConfigName.Keys);
-            }
-            else
-            {
-                this.enabledConfigs = new HashSet<string>(builder.ConfigNames);
-            }
+            this.enabledConfigs = new HashSet<string>(this.consumersByConfigName.Keys);
         }
 
         public void Log<T>(string key, Func<T> func)
@@ -192,29 +211,19 @@ namespace Newsgirl.Shared
 
         public void SetEnabled(string[] configNames)
         {
-            this.enabledConfigs.Clear();
+            var newEnabledConfigs = new HashSet<string>(configNames);
 
-            for (int i = 0; i < configNames.Length; i++)
-            {
-                this.enabledConfigs.Add(configNames[i]);
-            }
+            this.enabledConfigs = newEnabledConfigs;
         }
     }
 
     public class StructuredLoggerBuilder
     {
-        public string[] ConfigNames { get; set; }
-        
         public Dictionary<string, object> ConsumersByConfigName { get; } = new Dictionary<string, object>();
         
         public void AddConfig<T>(string configName, LogConsumer<T>[] consumers)
         {
             this.ConsumersByConfigName.Add(configName, new LogProducer<T>(consumers));
-        }
-
-        public void SetEnabled(string[] configNames)
-        {
-            this.ConfigNames = configNames;
         }
     }
 }

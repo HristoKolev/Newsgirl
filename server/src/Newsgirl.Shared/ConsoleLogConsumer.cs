@@ -17,5 +17,9 @@ namespace Newsgirl.Shared
                 await Console.Out.WriteLineAsync(json);
             }
         }
+
+        public ConsoleLogConsumer(ErrorReporter errorReporter) : base(errorReporter)
+        {
+        }
     }
 }

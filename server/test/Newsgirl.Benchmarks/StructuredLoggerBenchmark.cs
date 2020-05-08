@@ -194,5 +194,9 @@ namespace Newsgirl.Benchmarks
         {
             return new ValueTask();
         }
+
+        public NoOpConsumer() : base(null)
+        {
+        }
     }
 }

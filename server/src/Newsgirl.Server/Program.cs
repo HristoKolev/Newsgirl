@@ -26,9 +26,9 @@ namespace Newsgirl.Server
 
         public SystemSettingsModel SystemSettings { get; set; }
 
-        public StructuredLogger Log { get; private set; }
+        public StructuredLogger Log { get; set; }
         
-        public ErrorReporterImpl ErrorReporter { get; private set; }
+        public ErrorReporter ErrorReporter { get; set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
@@ -83,19 +83,13 @@ namespace Newsgirl.Server
         {
             this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
-
+            
             var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
             errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
+            
             this.ErrorReporter = errorReporter;
 
-            this.Log = new StructuredLogger(builder =>
-            {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
-                {
-                    new ConsoleLogConsumer<LogData>(),
-                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch), 
-                });
-            });
+            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
         }
 
         public async Task Initialize()
@@ -106,6 +100,17 @@ namespace Newsgirl.Server
             this.AsyncLocals = new AsyncLocalsImpl();
             
             await this.LoadConfig();
+            
+            this.Log = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                {
+                    new ConsoleLogConsumer<LogData>(this.ErrorReporter),
+                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
+                });
+            });
+            
+            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
@@ -194,6 +199,8 @@ namespace Newsgirl.Server
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
+        public string[] EnabledConfigs { get; set; }
+        
         public ElasticsearchConfig Elasticsearch { get; set; }
     }
 

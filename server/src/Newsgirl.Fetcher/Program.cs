@@ -18,11 +18,11 @@
 
         public FetcherAppConfig AppConfig { get; private set; }
 
-        public SystemSettingsModel SystemSettings { get; private set; }
+        public SystemSettingsModel SystemSettings { get; set; }
 
         public StructuredLogger Log { get; private set; }
         
-        public ErrorReporterImpl ErrorReporter { get; private set; }
+        public ErrorReporter ErrorReporter { get; set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
@@ -69,17 +69,9 @@
         {
             this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
-            
             this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-            
-            this.Log = new StructuredLogger(builder =>
-            {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
-                {
-                    new ConsoleLogConsumer<LogData>(),
-                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch), 
-                });
-            });
+
+            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
         }
 
         public async Task Initialize()
@@ -88,6 +80,17 @@
             TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
 
             await this.LoadConfig();
+            
+            this.Log = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                {
+                    new ConsoleLogConsumer<LogData>(this.ErrorReporter),
+                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
+                });
+            });
+            
+            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
@@ -116,9 +119,7 @@
 
             await fetcherInstance.FetchFeeds();
 
-            var log = this.IoC.Resolve<ILog>();
-
-            log.General(() => new LogData($"Waiting {this.SystemSettings.FetcherCyclePause} seconds..."));
+            this.Log.General(() => new LogData($"Waiting {this.SystemSettings.FetcherCyclePause} seconds..."));
 
             await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
         }
@@ -137,6 +138,8 @@
     public class LoggingConfig
     {
         public ElasticsearchConfig Elasticsearch { get; set; }
+        
+        public string[] EnabledConfigs { get; set; }
     }
 
     public class FetcherIoCModule : Module
