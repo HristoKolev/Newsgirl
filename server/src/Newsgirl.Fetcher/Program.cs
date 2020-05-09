@@ -16,18 +16,85 @@
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
-        public FetcherAppConfig AppConfig { get; private set; }
+        public FetcherAppConfig AppConfig { get; set; }
 
         public SystemSettingsModel SystemSettings { get; set; }
 
-        public StructuredLogger Log { get; private set; }
+        public StructuredLogger Log { get; set; }
         
         public ErrorReporter ErrorReporter { get; set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
 
-        public IContainer IoC { get; private set; }
+        public IContainer IoC { get; set; }
 
+        public async Task Initialize()
+        {
+            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
+
+            await this.LoadConfig();
+            
+            this.Log = new StructuredLogger(builder =>
+            {
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                {
+                    new ConsoleLogDataConsumer(this.ErrorReporter),
+                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
+                });
+            });
+            
+            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
+
+            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
+
+            var builder = new ContainerBuilder();
+            builder.RegisterModule<SharedModule>();
+            builder.RegisterModule(new FetcherIoCModule(this));
+            this.IoC = builder.Build();
+
+            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
+            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+        }
+        
+        private async Task LoadConfig()
+        {
+            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig.ErrorReporter.Release = this.AppVersion;
+            
+            // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
+            if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
+            {
+                this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+            }
+
+            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
+        }
+        
+        private async Task ReloadStartupConfig()
+        {
+            try
+            {
+                this.Log.General(() => new LogData("Reloading config..."));
+
+                await this.LoadConfig();
+            }
+            catch (Exception exception)
+            {
+                await this.ErrorReporter.Error(exception);
+            }
+        }
+        
+        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error(e.Exception?.InnerException);
+        }
+
+        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
+        }
+        
         public async ValueTask DisposeAsync()
         {
             this.AppConfigWatcher?.Dispose();
@@ -48,69 +115,13 @@
             AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
             
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+            {
+                await disposableErrorReporter.DisposeAsync();
+            }
+
             this.ErrorReporter = null;
-        }
-
-        private async Task ReloadStartupConfig()
-        {
-            try
-            {
-                this.Log.General(() => new LogData("Reloading config..."));
-
-                await this.LoadConfig();
-            }
-            catch (Exception exception)
-            {
-                await this.ErrorReporter.Error(exception);
-            }
-        }
-
-        private async Task LoadConfig()
-        {
-            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
-            this.AppConfig.ErrorReporter.Release = this.AppVersion;
-            this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-
-            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
-        }
-
-        public async Task Initialize()
-        {
-            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
-
-            await this.LoadConfig();
-            
-            this.Log = new StructuredLogger(builder =>
-            {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
-                {
-                    new ConsoleLogConsumer<LogData>(this.ErrorReporter),
-                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
-                });
-            });
-            
-            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
-
-            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
-
-            var builder = new ContainerBuilder();
-            builder.RegisterModule<SharedModule>();
-            builder.RegisterModule(new FetcherIoCModule(this));
-            this.IoC = builder.Build();
-
-            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-        }
-        
-        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error(e.Exception?.InnerException);
-        }
-
-        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
 
         public async Task RunCycle()
@@ -137,9 +148,9 @@
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
-        public ElasticsearchConfig Elasticsearch { get; set; }
-        
         public string[] EnabledConfigs { get; set; }
+        
+        public ElasticsearchConfig Elasticsearch { get; set; }
     }
 
     public class FetcherIoCModule : Module

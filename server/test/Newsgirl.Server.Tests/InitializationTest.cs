@@ -17,7 +17,13 @@ namespace Newsgirl.Server.Tests
 
         private static async Task<HttpServerApp> CreateApp()
         {
-            var app = new HttpServerApp();
+            var app = new HttpServerApp
+            {
+                ErrorReporter = new ErrorReporterMock(new ErrorReporterMockConfig
+                {
+                    ThrowFirstErrorOnDispose = true,
+                })
+            };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);

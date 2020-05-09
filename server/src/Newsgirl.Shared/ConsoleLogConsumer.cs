@@ -4,21 +4,21 @@ namespace Newsgirl.Shared
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    public class ConsoleLogConsumer<T> : LogConsumerBase<T>
+    public class ConsoleLogDataConsumer : LogConsumerBase<LogData>
     {
-        protected override async ValueTask ProcessBatch(ArraySegment<T> data)
+        protected override async ValueTask ProcessBatch(ArraySegment<LogData> data)
         {
             for (int i = 0; i < data.Count; i++)
             {
                 var log = data[i];
 
-                string json = JsonSerializer.Serialize(log);
+                string json = JsonSerializer.Serialize(log.Fields);
 
                 await Console.Out.WriteLineAsync(json);
             }
         }
 
-        public ConsoleLogConsumer(ErrorReporter errorReporter) : base(errorReporter)
+        public ConsoleLogDataConsumer(ErrorReporter errorReporter) : base(errorReporter)
         {
         }
     }

@@ -6,13 +6,20 @@ namespace Newsgirl.Fetcher.Tests
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Core;
+    using Testing;
     using Xunit;
 
     public class InitializationTest
     {
         private static async Task<FetcherApp> CreateFetcherApp()
         {
-            var app = new FetcherApp();
+            var app = new FetcherApp
+            {
+                ErrorReporter = new ErrorReporterMock(new ErrorReporterMockConfig
+                {
+                    ThrowFirstErrorOnDispose = true
+                })
+            };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);

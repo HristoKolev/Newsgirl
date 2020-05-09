@@ -41,7 +41,7 @@ namespace Newsgirl.Shared
             {
                 AttachStacktrace = true,
                 Dsn = new Dsn(this.config.SentryDsn),
-                Release = this.config.Release
+                Release = this.config.Release,
             });
         }
         

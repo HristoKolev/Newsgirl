@@ -26,6 +26,7 @@ using Newsgirl.Testing;
 
 namespace Newsgirl.Testing
 {
+    using System.Runtime.ExceptionServices;
     using Shared;
 
     public static class TestHelper
@@ -496,16 +497,25 @@ namespace Newsgirl.Testing
         }
     }
 
-    public class ErrorReporterMock : ErrorReporter
+    public class ErrorReporterMock : ErrorReporter, IAsyncDisposable
     {
+        private readonly ErrorReporterMockConfig config;
         private const string ZeroGuid = "61289445-04b7-4f59-bbdd-499c36861bc0";
 
         public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
+
+        public ErrorReporterMock() : this(new ErrorReporterMockConfig())
+        {
+        }
+        
+        public ErrorReporterMock(ErrorReporterMockConfig config)
+        {
+            this.config = config;
+        }
         
         public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
-            Errors.Add((exception, fingerprint, additionalInfo));
-
+            this.Errors.Add((exception, fingerprint, additionalInfo));
             return Task.FromResult(ZeroGuid);
         }
 
@@ -523,6 +533,23 @@ namespace Newsgirl.Testing
         {
             return this.Error(exception, null, null);
         }
+
+        public ValueTask DisposeAsync()
+        {
+            if (this.config.ThrowFirstErrorOnDispose && this.Errors.Count > 0)
+            {
+                var firstException = this.Errors.First().Item1;
+                
+                ExceptionDispatchInfo.Capture(firstException).Throw();
+            }
+
+            return new ValueTask();
+        }
+    }
+
+    public class ErrorReporterMockConfig
+    {
+        public bool ThrowFirstErrorOnDispose { get; set; }
     }
 
     public class StructuredLogMock : ILog

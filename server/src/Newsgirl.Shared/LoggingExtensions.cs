@@ -15,7 +15,11 @@ namespace Newsgirl.Shared
     {
         public Dictionary<string, object> Fields { get; } = new Dictionary<string, object>();
 
-        public LogData(string message) => this.Fields.Add("message", message);
+        public LogData(string message)
+        {
+            this.Fields.Add("message", message);
+            this.Fields.Add("log_date", DateTime.UtcNow.ToString("O"));
+        }
 
         public void Add(string key, object val) => this.Fields.Add(key, val);
 

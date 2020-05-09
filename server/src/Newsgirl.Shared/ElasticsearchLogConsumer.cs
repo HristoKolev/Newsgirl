@@ -1,6 +1,7 @@
 namespace Newsgirl.Shared
 {
     using System;
+    using System.Collections.Generic;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Elasticsearch.Net;
@@ -23,11 +24,7 @@ namespace Newsgirl.Shared
         {
             for (int i = 0; i < data.Count; i++)
             {
-                var fields = data[i].Fields;
-                
-                fields.Add("log_date", DateTime.UtcNow.ToString("O"));
-            
-                string jsonBody = JsonSerializer.Serialize(fields);
+                string jsonBody = JsonSerializer.Serialize(data[i].Fields);
             
                 var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.config.IndexName, jsonBody);
 

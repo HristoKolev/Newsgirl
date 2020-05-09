@@ -39,59 +39,7 @@ namespace Newsgirl.Server
         public AsyncLocals AsyncLocals { get; set; }
         
         public RpcEngine RpcEngine { get; set; }
-
-        public async ValueTask DisposeAsync()
-        {
-            this.AppConfigWatcher?.Dispose();
-            this.AppConfigWatcher = null;
-            
-            this.Server?.DisposeAsync();
-            this.Server = null;
-            
-            if (this.IoC != null)
-            {
-                await this.IoC.DisposeAsync();
-                this.IoC = null;
-            }
-
-            this.AppConfig = null;
-            this.SystemSettings = null;
-
-            await this.Log.DisposeAsync();
-            this.Log = null;
-            
-            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
-
-            this.ErrorReporter = null;
-        }
-
-        private async Task ReloadStartupConfig()
-        {
-            try
-            {
-                this.Log.General(() => new LogData("Reloading config..."));
-                await this.LoadConfig();
-            }
-            catch (Exception exception)
-            {
-                await this.ErrorReporter.Error(exception);
-            }
-        }
-
-        private async Task LoadConfig()
-        {
-            this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
-            this.AppConfig.ErrorReporter.Release = this.AppVersion;
-            
-            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-            errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
-            
-            this.ErrorReporter = errorReporter;
-
-            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
-        }
-
+        
         public async Task Initialize()
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
@@ -105,7 +53,7 @@ namespace Newsgirl.Server
             {
                 builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
                 {
-                    new ConsoleLogConsumer<LogData>(this.ErrorReporter),
+                    new ConsoleLogDataConsumer(this.ErrorReporter),
                     new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
                 });
             });
@@ -129,6 +77,35 @@ namespace Newsgirl.Server
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
+        
+        private async Task LoadConfig()
+        {
+            this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            this.AppConfig.ErrorReporter.Release = this.AppVersion;
+
+            // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
+            if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
+            {
+                var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+                errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
+                this.ErrorReporter = errorReporter;
+            }
+
+            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
+        }
+
+        private async Task ReloadStartupConfig()
+        {
+            try
+            {
+                this.Log.General(() => new LogData("Reloading config..."));
+                await this.LoadConfig();
+            }
+            catch (Exception exception)
+            {
+                await this.ErrorReporter.Error(exception);
+            }
+        }
 
         private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
@@ -139,7 +116,39 @@ namespace Newsgirl.Server
         {
             await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
+        
+        public async ValueTask DisposeAsync()
+        {
+            this.AppConfigWatcher?.Dispose();
+            this.AppConfigWatcher = null;
+            
+            this.Server?.DisposeAsync();
+            this.Server = null;
+            
+            if (this.IoC != null)
+            {
+                await this.IoC.DisposeAsync();
+                this.IoC = null;
+            }
 
+            this.AppConfig = null;
+            this.SystemSettings = null;
+
+            await this.Log.DisposeAsync();
+            this.Log = null;
+            
+            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
+            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
+
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+            {
+                await disposableErrorReporter.DisposeAsync();
+            }
+            
+            this.ErrorReporter = null;
+        }
+      
         public async Task Start(string listenOnAddress = null)
         {
             var serverConfig = new HttpServerConfig
@@ -227,8 +236,9 @@ namespace Newsgirl.Server
         {
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<ILog>();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
+            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<ILog>();
+            
             builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
 
