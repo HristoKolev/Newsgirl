@@ -56,8 +56,11 @@ namespace Newsgirl.Shared
             catch (Exception err)
             {
                 await Console.Error.WriteLineAsync(err.ToString());
+#if DEBUG
                 throw;
+#else
                 return null;
+#endif
             }
         }
 
