@@ -19,10 +19,7 @@ namespace Newsgirl.Server.Tests
         {
             var app = new HttpServerApp
             {
-                ErrorReporter = new ErrorReporterMock(new ErrorReporterMockConfig
-                {
-                    ThrowFirstErrorOnDispose = true,
-                })
+                ErrorReporter = new ErrorReporterMock()
             };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");

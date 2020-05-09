@@ -15,10 +15,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var app = new FetcherApp
             {
-                ErrorReporter = new ErrorReporterMock(new ErrorReporterMockConfig
-                {
-                    ThrowFirstErrorOnDispose = true
-                })
+                ErrorReporter = new ErrorReporterMock()
             };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");

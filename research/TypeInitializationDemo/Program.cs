@@ -1,75 +1,58 @@
 ﻿namespace TypeInitializationDemo
 {
     using System;
-    using System.Threading;
 
-    public class Cats
+    internal static class Program
     {
-        public static string x = Log("x initialized");
-        public static string y = Log("y initialized", true);
-        
-        static  Cats()
+        private static void Main(string[] args)
         {
-            Console.WriteLine("Cats type init");
-        }
-        
-        public static string z = Log("z initialized");
-        
-        public static string Log(string message, bool shouldThrow = false)
-        {
-            if (shouldThrow)
+            var my1 = new My1
             {
-                Thread.Sleep(100);
-                
-                throw new ApplicationException($"thr + {message} + {new Random().Next()}");
-            }
-            
-            Console.WriteLine(message);
-            return message;
+                X = 1,
+                Y = 1,
+            };
+
+            My2 my2 = (My2)my1;
+
+            Console.WriteLine(my2.X);
+            Console.WriteLine(my2.Y);
         }
     }
 
-    static class Program
+    public class My1
     {
-        static void Main(string[] args)
+        public int X { get; set; }
+
+        public int Y { get; set; }
+
+        public static implicit operator My2(My1 my1)
         {
-            Console.WriteLine("start of Main");
-
-
-            Exception err1 = null;
-            
-            try
+            return new My2
             {
-                Cats.Log("static func");
-            }
-            catch (Exception e)
-            {
-                err1 = e;
-            }
-            
-            Console.WriteLine("after static func invocation.");
-
-            Exception err2 = null;
-            
-            try
-            {
-                SomeFunc();
-            }
-            catch (Exception e)
-            {
-                err2 = e;
-            }
-
-            Console.WriteLine(err1 == err2);
-
-            new Cats();
+                X = my1.X,
+                Y = my1.Y,
+            };
         }
+    }
+    
+    public class My2
+    {
+        public int X { get; set; }
 
-        static void SomeFunc()
-        {
-            Console.WriteLine("start of SomeFunc");
-            
-            Console.WriteLine(Cats.x.Length);
-        }
+        public int Y { get; set; }
+        //
+        // public static explicit operator My2(My1 my1)
+        // {
+        //     return new My2
+        //     {
+        //         X = my1.X +1,
+        //         Y = my1.Y +1,
+        //     };
+        // }
+    }
+
+    public class Operators
+    {
+        
     }
 }

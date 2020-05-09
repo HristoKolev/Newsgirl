@@ -75,11 +75,12 @@ namespace Newsgirl.Shared
         private Task runningTask;
         private T[] buffer;
         private ChannelReader<T> reader;
-#if DEBUG
-        private readonly TimeSpan timeBetweenRetry = TimeSpan.Zero;
-#else
-        private readonly TimeSpan timeBetweenRetry = TimeSpan.FromSeconds(5);
-#endif
+        
+        public TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
+
+        public int NumberOfRetries { get; set; } = 5;
+
+        public TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
 
         public void Start(ChannelReader<T> channelReader)
         {
@@ -89,50 +90,70 @@ namespace Newsgirl.Shared
 
         private async Task ReadFromChannel()
         {
-            while (await this.reader.WaitToReadAsync())
+            while (true)
             {
                 try
                 {
-                    this.buffer = ArrayPool<T>.Shared.Rent(16);
-
-                    T item;
-
-                    int i = 0;
-                    
-                    for (; this.reader.TryRead(out item); i += 1)
-                    {
-                        if (i == this.buffer.Length)
-                        {
-                            this.ResizeBuffer();
-                        }
-
-                        this.buffer[i] = item;
-                    }
-
-                    var segment = new ArraySegment<T>(this.buffer, 0, i);
-
-                    for (int j = 0; j < 5; j++)
+                    while (await this.reader.WaitToReadAsync())
                     {
                         try
                         {
-                            await this.ProcessBatch(segment);
-                            
-                            break;
+                            this.buffer = ArrayPool<T>.Shared.Rent(16);
+
+                            T item;
+
+                            int i = 0;
+                    
+                            for (; this.reader.TryRead(out item); i += 1)
+                            {
+                                if (i == this.buffer.Length)
+                                {
+                                    this.ResizeBuffer();
+                                }
+
+                                this.buffer[i] = item;
+                            }
+
+                            var segment = new ArraySegment<T>(this.buffer, 0, i);
+
+                            Exception exception = null;
+                    
+                            for (int j = 0; j < this.NumberOfRetries + 1; j++)
+                            {
+                                try
+                                {
+                                    await this.ProcessBatch(segment);
+                                    exception = null;
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    exception = ex;
+                                    await Task.Delay(this.TimeBetweenRetries);
+                                }
+                            }
+
+                            if (exception != null)
+                            {
+                                await this.ErrorReporter.Error(exception);
+                            }
                         }
-                        catch (Exception exception)
+                        finally
                         {
-                            await this.ErrorReporter.Error(exception);
-                            
-                            await Task.Delay(this.timeBetweenRetry);
+                            if (this.buffer != null)
+                            {
+                                ArrayPool<T>.Shared.Return(this.buffer);                        
+                            }
                         }
                     }
+
+                    break;
                 }
-                finally
+                catch (Exception ex)
                 {
-                    if (this.buffer != null)
-                    {
-                        ArrayPool<T>.Shared.Return(this.buffer);                        
-                    }
+                    await this.ErrorReporter.Error(ex);
+
+                    await Task.Delay(this.TimeBetweenMainLoopRestart);
                 }
             }
         }

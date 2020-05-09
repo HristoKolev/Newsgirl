@@ -139,7 +139,7 @@ namespace Newsgirl.Fetcher.Tests
 
             await fetcher.FetchFeeds();
 
-            Snapshot.MatchError(errorReporter.Errors.First().Item1);
+            Snapshot.MatchError(errorReporter.SingleException);
         }
         
          
@@ -178,7 +178,7 @@ namespace Newsgirl.Fetcher.Tests
 
             await fetcher.FetchFeeds();
 
-            Snapshot.MatchError(errorReporter.Errors.First().Item1);
+            Snapshot.MatchError(errorReporter.SingleException);
         }
 
         private static IFeedContentProvider TestResourceContentProvider

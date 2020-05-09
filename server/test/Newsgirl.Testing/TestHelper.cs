@@ -507,7 +507,22 @@ namespace Newsgirl.Testing
         public ErrorReporterMock() : this(new ErrorReporterMockConfig())
         {
         }
+
+        public Exception FirstException => this.Errors.First().Item1;
         
+        public Exception SingleException
+        {
+            get
+            {
+                if (this.Errors.Count > 1)
+                {
+                    throw new ApplicationException("SingleException is called with more that 1 error in the list.");
+                }
+                
+                return this.Errors.Single().Item1;
+            }
+        }
+
         public ErrorReporterMock(ErrorReporterMockConfig config)
         {
             this.config = config;
@@ -549,7 +564,7 @@ namespace Newsgirl.Testing
 
     public class ErrorReporterMockConfig
     {
-        public bool ThrowFirstErrorOnDispose { get; set; }
+        public bool ThrowFirstErrorOnDispose { get; set; } = true;
     }
 
     public class StructuredLogMock : ILog
