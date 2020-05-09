@@ -40,7 +40,7 @@ namespace Newsgirl.Server.Tests
 
                 // Check the bytes for equality.
                 var expectedBytes = EncodingHelper.UTF8.GetBytes(resourceText);
-                AssertExt.EqualByteArray(expectedBytes, responseBodyBytes);
+                AssertExt.SequentialEqual(expectedBytes, responseBodyBytes);
             }
         }
 
@@ -90,7 +90,7 @@ namespace Newsgirl.Server.Tests
 
                 var responseBody = await response.Content.ReadAsByteArrayAsync();
 
-                AssertExt.EqualByteArray(resourceBytes, responseBody);
+                AssertExt.SequentialEqual(resourceBytes, responseBody);
             }
         }
         

@@ -13,7 +13,6 @@ namespace Newsgirl.Shared
         private readonly UnboundedChannelOptions channelOptions = new UnboundedChannelOptions
         {
             SingleReader = true,
-            SingleWriter = true,
         };
  
         public LogProducer(LogConsumer<T>[] consumers)
@@ -180,6 +179,11 @@ namespace Newsgirl.Shared
         
         public StructuredLogger(Action<StructuredLoggerBuilder> configure)
         {
+            if (configure == null)
+            {
+                throw new DetailedLogException("The configure function is null.");
+            }
+            
             var builder = new StructuredLoggerBuilder();
             configure(builder);
             

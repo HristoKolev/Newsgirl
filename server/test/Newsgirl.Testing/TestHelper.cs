@@ -276,11 +276,11 @@ namespace Newsgirl.Testing
 
     public static class AssertExt
     {
-        public static void EqualByteArray(byte[] expected, byte[] actual)
+        public static void SequentialEqual<T>(IList<T> expected, IList<T> actual)
         {
-            Assert.Equal(expected.Length, actual.Length);
+            Assert.Equal(expected.Count, actual.Count);
 
-            for (int i = 0; i < expected.Length; i++)
+            for (int i = 0; i < expected.Count; i++)
             {
                 Assert.Equal(expected[i], actual[i]);
             }
