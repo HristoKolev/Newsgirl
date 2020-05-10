@@ -195,21 +195,24 @@ namespace Newsgirl.Shared
 
     public class StructuredLogger : IAsyncDisposable, ILog
     {
-        private readonly Dictionary<string, object> consumersByConfigName;
+        private readonly Action<StructuredLoggerBuilder> buildLogger;
+        private readonly Dictionary<string, object> producersByConfigName;
         private HashSet<string> enabledConfigs;
         
-        public StructuredLogger(Action<StructuredLoggerBuilder> configure)
+        public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
         {
-            if (configure == null)
+            if (buildLogger == null)
             {
-                throw new DetailedLogException("The configure function is null.");
+                throw new DetailedLogException("The build function is null.");
             }
-            
+
+            this.buildLogger = buildLogger;
+
             var builder = new StructuredLoggerBuilder();
-            configure(builder);
+            buildLogger(builder);
             
-            this.consumersByConfigName = builder.ConsumersByConfigName;
-            this.enabledConfigs = new HashSet<string>(this.consumersByConfigName.Keys);
+            this.producersByConfigName = builder.ConsumersByConfigName;
+            this.enabledConfigs = new HashSet<string>(this.producersByConfigName.Keys);
         }
 
         public void Log<T>(string key, Func<T> func)
@@ -219,7 +222,7 @@ namespace Newsgirl.Shared
                 return;
             }
             
-            var producer = (LogProducer<T>) this.consumersByConfigName[key];
+            var producer = (LogProducer<T>) this.producersByConfigName[key];
 
             var item = func();
             
@@ -228,7 +231,7 @@ namespace Newsgirl.Shared
 
         public async ValueTask DisposeAsync()
         {
-            foreach (var kvp in this.consumersByConfigName)
+            foreach (var kvp in this.producersByConfigName)
             {
                 await ((IAsyncDisposable) kvp.Value).DisposeAsync();
             }
@@ -244,11 +247,63 @@ namespace Newsgirl.Shared
 
     public class StructuredLoggerBuilder
     {
-        public Dictionary<string, object> ConsumersByConfigName { get; } = new Dictionary<string, object>();
+        public Dictionary<string, Dictionary<string, Func<object>>> LogProducerFactoryMap { get; } 
+            = new Dictionary<string, Dictionary<string, Func<object>>>();
         
-        public void AddConfig<T>(string configName, LogConsumer<T>[] consumers)
+        public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
         {
-            this.ConsumersByConfigName.Add(configName, new LogProducer<T>(consumers));
+            if (!this.LogProducerFactoryMap.ContainsKey(configName))
+            {
+                this.LogProducerFactoryMap.Add(configName, new Dictionary<string, Func<object>>());
+            }
+
+            var config = this.LogProducerFactoryMap[configName];
+
+            foreach (var (consumerName, consumerFactory) in consumerFactoryMap)
+            {
+                if (config.ContainsKey(consumerName))
+                {
+                    throw new DetailedLogException("There already is a consumer with the same name for this configuration.")
+                    {
+                        Details =
+                        {
+                            {"configName", configName},
+                            {"consumerName", consumerName},
+                        }
+                    };
+                }
+                
+                
+            }
+
+            
+            
+            config.Add(consumerName, () => new LogProducer<T>());
         }
+    }
+
+    public class StructuredLoggerBuilderConsumerMap<TLogData>
+    {
+        public string ConsumerName { get; set; }
+
+        public Func<LogConsumer<T>> Func { get; set; }
+    } 
+    
+    
+
+    public class StructuredLoggerConfig
+    {
+        public string Name { get; set; }
+        
+        public bool Enabled { get; set; }
+
+        public StructuredLoggerConsumerConfig[] Consumers { get; set; }
+    }
+    
+    public class StructuredLoggerConsumerConfig
+    {
+        public string Name { get; set; }
+        
+        public bool Enabled { get; set; }
     }
 }

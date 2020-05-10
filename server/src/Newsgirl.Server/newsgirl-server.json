@@ -1,12 +1,41 @@
 {
-  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",  
+  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
   "ErrorReporter": {
     "SentryDsn": "http://1de969f387b749e2b2bf3361d844f461@home-sentry.lan/7",
     "Environment": "development",
     "ServerName": "hristo-ws"
-  },  
+  },
   "Logging": {
-    "EnabledConfigs": ["GENERAL_LOG", "HTTP_REQUESTS"],
+    "StructuredLogger": [
+      {
+        "Name": "GENERAL_LOG",
+        "Enabled": true,
+        "Consumers": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      },
+      {
+        "Name": "HTTP_REQUESTS",
+        "Enabled": true,
+        "Consumers": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      }
+    ],
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl",

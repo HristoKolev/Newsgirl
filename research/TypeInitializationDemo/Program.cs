@@ -12,7 +12,7 @@
                 Y = 1,
             };
 
-            My2 my2 = (My2)my1;
+            My2 my2 = my1;
 
             Console.WriteLine(my2.X);
             Console.WriteLine(my2.Y);
@@ -40,7 +40,7 @@
         public int X { get; set; }
 
         public int Y { get; set; }
-        //
+        
         // public static explicit operator My2(My1 my1)
         // {
         //     return new My2
@@ -49,10 +49,5 @@
         //         Y = my1.Y +1,
         //     };
         // }
-    }
-
-    public class Operators
-    {
-        
     }
 }
