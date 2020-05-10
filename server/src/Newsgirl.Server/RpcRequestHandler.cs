@@ -19,6 +19,7 @@ namespace Newsgirl.Server
         private readonly InstanceProvider instanceProvider;
         private readonly AsyncLocals asyncLocals;
         private readonly ErrorReporter errorReporter;
+        private readonly ILog log;
         private static readonly object SyncRoot = new object();
         private static bool initialized;
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
@@ -36,14 +37,20 @@ namespace Newsgirl.Server
             };
         }
 
-        public RpcRequestHandler(RpcEngine rpcEngine, InstanceProvider instanceProvider, AsyncLocals asyncLocals, ErrorReporter errorReporter)
+        public RpcRequestHandler(
+            RpcEngine rpcEngine, 
+            InstanceProvider instanceProvider, 
+            AsyncLocals asyncLocals,
+            ErrorReporter errorReporter,
+            ILog log)
         {
             this.rpcEngine = rpcEngine;
             this.instanceProvider = instanceProvider;
             this.asyncLocals = asyncLocals;
             this.errorReporter = errorReporter;
+            this.log = log;
         }
-
+        
         public async Task HandleRequest(HttpContext context)
         {
             // Initialize.            
@@ -69,38 +76,16 @@ namespace Newsgirl.Server
             }
 
             RentedByteArrayHandle requestBodyBytes = default;
-            
-            // Diagnostic data in case of an error.
-            this.asyncLocals.CollectHttpData.Value = () =>
-            {
-                var data = new Dictionary<string, object>
-                {
-                    {"http", new Dictionary<string, object>
-                    {
-                        ["id"] = context.Connection.Id,
-                        ["localIP"] = context.Connection.LocalIpAddress + ":" + context.Connection.LocalPort,
-                        ["remoteIP"] = context.Connection.RemoteIpAddress + ":" + context.Connection.RemotePort,
-                        ["cookies"] = context.Request.Cookies.ToDictionary(x => x.Key, x => x.Value),
-                        ["headers"] = context.Request.Headers.ToDictionary(x => x.Key, x => x.Value),
-                        ["method"] = context.Request.Method,
-                        ["path"] = context.Request.Path.ToString(),
-                        ["query"] = context.Request.QueryString.ToString(),
-                        ["protocol"] = context.Request.Protocol,
-                        ["scheme"] = context.Request.Scheme,
-                        ["aborted"] = context.RequestAborted.IsCancellationRequested,
-                    }}
-                };
 
+            // Diagnostic data in case of an error.
+            this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
+            {
                 // ReSharper disable once AccessToModifiedClosure
-                if (requestBodyBytes.HasData)
-                {
-                    // ReSharper disable once AccessToModifiedClosure
-                    data["httpRequestBodyBase64"] = Convert.ToBase64String(requestBodyBytes.AsSpan());
-                }
-                
-                return data;
+                {"http", new HttpLogData(context, ref requestBodyBytes)}
             };
 
+            this.log.Http(() => new HttpLogData(context, ref requestBodyBytes));
+            
             // Read request body.
             try
             {
@@ -272,5 +257,62 @@ namespace Newsgirl.Server
             // ReSharper disable once UnusedAutoPropertyAccessor.Local
             public string Type { get; set; }
         }
+    }
+    
+    public class HttpLogData
+    {
+        public HttpLogData(HttpContext context, ref RentedByteArrayHandle requestBodyBytes)
+        {
+            this.DateTime = System.DateTime.UtcNow.ToString("O");
+            this.RequestID = context.Connection.Id;
+            this.LocalIp = context.Connection.LocalIpAddress + ":" + context.Connection.LocalPort;
+            this.RemoteIp = context.Connection.RemoteIpAddress + ":" + context.Connection.RemotePort;
+            this.Cookies = context.Request.Cookies.ToDictionary(x => x.Key, x => x.Value);
+            this.Headers = context.Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString());
+            this.Method = context.Request.Method;
+            this.Path = context.Request.Path.ToString();
+            this.Query = context.Request.QueryString.ToString();
+            this.Protocol = context.Request.Protocol;
+            this.Scheme = context.Request.Scheme;
+            this.Aborted = context.RequestAborted.IsCancellationRequested;
+            
+            if (requestBodyBytes.HasData)
+            {
+                this.HttpRequestBodyBase64 = Convert.ToBase64String(requestBodyBytes.AsSpan());
+            }
+        }
+
+        public string RequestID { get; set; }
+
+        public string LocalIp { get; set; }
+
+        public string RemoteIp { get; set; }
+
+        public Dictionary<string, string> Cookies { get; set; }
+            
+        public Dictionary<string, string> Headers { get; set; }
+            
+        public string Method { get; set; }
+            
+        public string Path { get; set; }
+            
+        public string Query { get; set; }
+            
+        public string Protocol { get; set; }
+            
+        public string Scheme { get; set; }
+            
+        public bool Aborted { get; set; }
+        
+        public string HttpRequestBodyBase64 { get; set; }
+
+        public string DateTime { get; set; }
+    }
+    
+    public static class HttpLoggingExtensions
+    {
+        public const string HttpKey = "HTTP_REQUESTS";
+
+        public static void Http(this ILog log, Func<HttpLogData> func) => log.Log(HttpKey, func);
     }
 }

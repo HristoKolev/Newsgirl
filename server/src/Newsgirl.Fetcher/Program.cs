@@ -40,7 +40,7 @@
                 builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
                 {
                     new ConsoleLogDataConsumer(this.ErrorReporter),
-                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
+                    new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-fetcher-general"), 
                 });
             });
             

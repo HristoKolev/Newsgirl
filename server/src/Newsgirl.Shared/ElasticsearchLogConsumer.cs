@@ -1,22 +1,21 @@
 namespace Newsgirl.Shared
 {
     using System;
-    using System.Collections.Generic;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Elasticsearch.Net;
 
-    public class ElasticsearchLogConsumer : LogConsumerBase<LogData>
+    public class ElasticsearchLogDataConsumer : LogConsumerBase<LogData>
     {
-        private readonly ElasticsearchConfig config;
+        private readonly string indexName;
         private readonly ElasticLowLevelClient elasticsearchClient;
 
-        public ElasticsearchLogConsumer(ElasticsearchConfig config, ErrorReporter errorReporter): base(errorReporter)
+        public ElasticsearchLogDataConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
         {
-            this.config = config;
-            
-            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(this.config.Url));
-            elasticConnectionConfiguration.BasicAuthentication(this.config.Username, this.config.Password);
+            this.indexName = indexName;
+
+            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(config.Url));
+            elasticConnectionConfiguration.BasicAuthentication(config.Username, config.Password);
             this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
         }
         
@@ -26,7 +25,37 @@ namespace Newsgirl.Shared
             {
                 string jsonBody = JsonSerializer.Serialize(data[i].Fields);
             
-                var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.config.IndexName, jsonBody);
+                var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
+
+                if (!response.Success)
+                {
+                    throw new ApplicationException(response.ToString());
+                }
+            }
+        }
+    }
+    
+    public class ElasticsearchConsumer<T> : LogConsumerBase<T>
+    {
+        private readonly string indexName;
+        private readonly ElasticLowLevelClient elasticsearchClient;
+
+        public ElasticsearchConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
+        {
+            this.indexName = indexName;
+
+            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(config.Url));
+            elasticConnectionConfiguration.BasicAuthentication(config.Username, config.Password);
+            this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
+        }
+        
+        protected override async ValueTask ProcessBatch(ArraySegment<T> data)
+        {
+            for (int i = 0; i < data.Count; i++)
+            {
+                string jsonBody = JsonSerializer.Serialize(data[i]);
+            
+                var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
 
                 if (!response.Success)
                 {
@@ -44,8 +73,6 @@ namespace Newsgirl.Shared
         public string Username { get; set; }
 
         public string Password { get; set; }
-        
-        public string IndexName { get; set; }
     }
         
     public class CustomElasticsearchResponse : ElasticsearchResponseBase

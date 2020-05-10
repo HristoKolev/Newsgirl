@@ -227,11 +227,12 @@ namespace Newsgirl.Server.Tests
         private static RequestDelegate CreateHandler(RpcEngineOptions rpcEngineOptions)
         {
             var errorReporter = new ErrorReporterMock();
+            var logMock = new StructuredLogMock();
             
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
 
-            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter);
+            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
             Task Handler(HttpContext context) => handler.HandleRequest(context);
             return Handler;
         }
@@ -239,10 +240,11 @@ namespace Newsgirl.Server.Tests
         private static RequestDelegate CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
         {
             var errorReporter = new ErrorReporterMock();
+            var logMock = new StructuredLogMock();
             
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter);
+            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
             Task Handler(HttpContext context) => handler.HandleRequest(context);
             return Handler;
         }

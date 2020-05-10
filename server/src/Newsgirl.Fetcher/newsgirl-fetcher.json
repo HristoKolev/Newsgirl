@@ -9,9 +9,8 @@
     "EnabledConfigs": ["GENERAL_LOG"],
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
-      "Username": "newsgirl_fetcher",
-      "Password": "test123",
-      "IndexName": "newsgirl-fetcher"
+      "Username": "newsgirl",
+      "Password": "test123"
     }
   }
 }

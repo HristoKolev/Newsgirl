@@ -54,7 +54,12 @@ namespace Newsgirl.Server
                 builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
                 {
                     new ConsoleLogDataConsumer(this.ErrorReporter),
-                    new ElasticsearchLogConsumer(this.AppConfig.Logging.Elasticsearch, this.ErrorReporter), 
+                    new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-general"), 
+                });
+                
+                builder.AddConfig(HttpLoggingExtensions.HttpKey, new LogConsumer<HttpLogData>[]
+                {
+                    new ElasticsearchConsumer<HttpLogData>(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-http"), 
                 });
             });
             
