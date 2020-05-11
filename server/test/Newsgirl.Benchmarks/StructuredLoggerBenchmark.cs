@@ -1,6 +1,7 @@
 namespace Newsgirl.Benchmarks
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using BenchmarkDotNet.Attributes;
     using Shared;
@@ -10,6 +11,7 @@ namespace Newsgirl.Benchmarks
     {
         private const string DebugConfig = "DebugConfig";
         private const string WarnConfig = "WarnConfig";
+        private const string NoopConsumerName = "WarnConfig";
         
         [Params(10_000_000)]
         public int N;
@@ -29,13 +31,30 @@ namespace Newsgirl.Benchmarks
             this.largeClassLogger = CreateLogger(new NoOpConsumer<LargeClassLogData>());
         }
 
-        private StructuredLogger CreateLogger<T>(NoOpConsumer<T> consumer)
+        private static StructuredLogger CreateLogger<T>(NoOpConsumer<T> consumer)
         {
             var logger = new StructuredLogger(builder =>
             {
-                builder.AddConfig(WarnConfig, new LogConsumer<T>[] { consumer });
+                builder.AddConfig(WarnConfig, new Dictionary<string, Func<LogConsumer<T>>>
+                {
+                    {NoopConsumerName, () => consumer}
+                });
             });
 
+            logger.Reconfigure(new[] {new StructuredLoggerConfig
+            {
+                Name = WarnConfig,
+                Enabled = true,
+                Consumers = new []
+                {
+                    new StructuredLoggerConsumerConfig
+                    {
+                        Name = NoopConsumerName,
+                        Enabled = true,
+                    }, 
+                }
+            }});
+            
             return logger;
         }
 

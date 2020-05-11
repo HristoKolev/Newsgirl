@@ -51,19 +51,19 @@ namespace Newsgirl.Server
             
             this.Log = new StructuredLogger(builder =>
             {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>()
                 {
-                    new ConsoleLogDataConsumer(this.ErrorReporter),
-                    new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-general"), 
+                    {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
+                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-general")},
                 });
                 
-                builder.AddConfig(HttpLoggingExtensions.HttpKey, new LogConsumer<HttpLogData>[]
+                builder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string,Func<LogConsumer<HttpLogData>>>()
                 {
-                    new ElasticsearchConsumer<HttpLogData>(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-http"), 
+                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-http")},
                 });
             });
             
-            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
+            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
@@ -95,8 +95,6 @@ namespace Newsgirl.Server
                 errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
                 this.ErrorReporter = errorReporter;
             }
-
-            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
         }
 
         private async Task ReloadStartupConfig()
@@ -105,6 +103,7 @@ namespace Newsgirl.Server
             {
                 this.Log.General(() => new LogData("Reloading config..."));
                 await this.LoadConfig();
+                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
             }
             catch (Exception exception)
             {
@@ -213,7 +212,7 @@ namespace Newsgirl.Server
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
-        public string[] EnabledConfigs { get; set; }
+        public StructuredLoggerConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
     }

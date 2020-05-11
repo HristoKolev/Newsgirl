@@ -3,8 +3,158 @@ namespace Newsgirl.Shared
     using System;
     using System.Buffers;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Channels;
     using System.Threading.Tasks;
+    
+    /// <summary>
+    /// Logging service for structured data.
+    /// TODO: Solve the apparent race condition. 
+    /// </summary>
+    public class StructuredLogger : IAsyncDisposable, ILog
+    {
+        private readonly Action<StructuredLoggerBuilder> buildLogger;
+        private Dictionary<string, object> producersByConfigName;
+
+        public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
+        {
+            this.buildLogger = buildLogger ?? throw new DetailedLogException("The build function is null.");
+        }
+
+        public void Log<T>(string key, Func<T> func)
+        {
+            var map = this.producersByConfigName;
+
+            if (!map.TryGetValue(key, out var producerObj))
+            {
+                return;
+            }
+
+            var item = func();
+            
+            ((LogProducer<T>)producerObj).Enqueue(item);
+        }
+
+        public Task Reconfigure(StructuredLoggerConfig[] configArray)
+        {
+            var builder = new StructuredLoggerBuilder();
+            this.buildLogger(builder);
+            
+            var map = new Dictionary<string, object>();
+
+            foreach (var (configName, producerFactory) in builder.LogProducerFactoryMap)
+            {
+                if (producerFactory == null)
+                {
+                    continue;
+                }
+                
+                map.Add(configName, producerFactory(configArray));
+            }
+
+            var oldMap = this.producersByConfigName;
+            this.producersByConfigName = map;
+            return DisposeProducers(oldMap);
+        }
+
+        private static Task DisposeProducers(Dictionary<string, object> producerMap)
+        {
+            var disposeTasks = new List<Task>();
+
+            foreach (var kvp in producerMap)
+            {
+                if (kvp.Value is IAsyncDisposable x)    
+                {
+                    disposeTasks.Add(x.DisposeAsync().AsTask());
+                }
+            }
+
+            return Task.WhenAll(disposeTasks);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeProducers(this.producersByConfigName);
+        }
+    }
+
+    /// <summary>
+    /// Builder for the <see cref="StructuredLogger"/>.
+    /// TODO: define invalid config behaviour. 
+    /// </summary>
+    public class StructuredLoggerBuilder
+    {
+        public Dictionary<string, Func<StructuredLoggerConfig[], object>> LogProducerFactoryMap { get; }
+            = new Dictionary<string, Func<StructuredLoggerConfig[], object>>(); 
+        
+        public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
+        {
+            if (this.LogProducerFactoryMap.ContainsKey(configName))
+            {
+                throw new DetailedLogException("There already is a configuration with this name.")
+                {
+                    Details =
+                    {
+                        {"configName", configName},
+                    }
+                };
+            }
+
+            this.LogProducerFactoryMap.Add(configName, configArray =>
+            {
+                var config = configArray.FirstOrDefault(x => x.Name == configName);
+
+                if (config == null || !config.Enabled)
+                {
+                    return null;
+                }
+                
+                var consumers = new List<LogConsumer<T>>();
+
+                foreach (var (consumerName, consumerFactory) in consumerFactoryMap)
+                {
+                    var consumerConfig = config.Consumers.FirstOrDefault(x => x.Name == consumerName);
+
+                    if (consumerConfig == null || !consumerConfig.Enabled)
+                    {
+                        continue;
+                    }
+                    
+                    consumers.Add(consumerFactory());
+                }
+
+                if (!consumers.Any())
+                {
+                    return null;
+                }
+                
+                return new LogProducer<T>(consumers.ToArray());
+            });
+        }
+    }
+ 
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class StructuredLoggerConfig
+    {
+        public string Name { get; set; }
+        
+        public bool Enabled { get; set; }
+
+        public StructuredLoggerConsumerConfig[] Consumers { get; set; }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class StructuredLoggerConsumerConfig
+    {
+        public string Name { get; set; }
+        
+        public bool Enabled { get; set; }
+    }
+    
+    public interface ILog
+    {
+        void Log<T>(string key, Func<T> func);
+    }
 
     public class LogProducer<T> : IAsyncDisposable
     {
@@ -76,10 +226,13 @@ namespace Newsgirl.Shared
         private T[] buffer;
         private ChannelReader<T> reader;
         
+        // ReSharper disable once MemberCanBeProtected.Global
         public TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
 
+        // ReSharper disable once MemberCanBeProtected.Global
         public int NumberOfRetries { get; set; } = 5;
 
+        // ReSharper disable once MemberCanBeProtected.Global
         public TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
 
         public void Start(ChannelReader<T> channelReader)
@@ -186,124 +339,5 @@ namespace Newsgirl.Shared
         protected abstract ValueTask ProcessBatch(ArraySegment<T> data);
         
         public virtual Task Stop() => this.runningTask;
-    }
-
-    public interface ILog
-    {
-        void Log<T>(string key, Func<T> func);
-    }
-
-    public class StructuredLogger : IAsyncDisposable, ILog
-    {
-        private readonly Action<StructuredLoggerBuilder> buildLogger;
-        private readonly Dictionary<string, object> producersByConfigName;
-        private HashSet<string> enabledConfigs;
-        
-        public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
-        {
-            if (buildLogger == null)
-            {
-                throw new DetailedLogException("The build function is null.");
-            }
-
-            this.buildLogger = buildLogger;
-
-            var builder = new StructuredLoggerBuilder();
-            buildLogger(builder);
-            
-            this.producersByConfigName = builder.ConsumersByConfigName;
-            this.enabledConfigs = new HashSet<string>(this.producersByConfigName.Keys);
-        }
-
-        public void Log<T>(string key, Func<T> func)
-        {
-            if (!this.enabledConfigs.Contains(key))
-            {
-                return;
-            }
-            
-            var producer = (LogProducer<T>) this.producersByConfigName[key];
-
-            var item = func();
-            
-            producer.Enqueue(item);
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            foreach (var kvp in this.producersByConfigName)
-            {
-                await ((IAsyncDisposable) kvp.Value).DisposeAsync();
-            }
-        }
-
-        public void SetEnabled(string[] configNames)
-        {
-            var newEnabledConfigs = new HashSet<string>(configNames);
-
-            this.enabledConfigs = newEnabledConfigs;
-        }
-    }
-
-    public class StructuredLoggerBuilder
-    {
-        public Dictionary<string, Dictionary<string, Func<object>>> LogProducerFactoryMap { get; } 
-            = new Dictionary<string, Dictionary<string, Func<object>>>();
-        
-        public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
-        {
-            if (!this.LogProducerFactoryMap.ContainsKey(configName))
-            {
-                this.LogProducerFactoryMap.Add(configName, new Dictionary<string, Func<object>>());
-            }
-
-            var config = this.LogProducerFactoryMap[configName];
-
-            foreach (var (consumerName, consumerFactory) in consumerFactoryMap)
-            {
-                if (config.ContainsKey(consumerName))
-                {
-                    throw new DetailedLogException("There already is a consumer with the same name for this configuration.")
-                    {
-                        Details =
-                        {
-                            {"configName", configName},
-                            {"consumerName", consumerName},
-                        }
-                    };
-                }
-                
-                
-            }
-
-            
-            
-            config.Add(consumerName, () => new LogProducer<T>());
-        }
-    }
-
-    public class StructuredLoggerBuilderConsumerMap<TLogData>
-    {
-        public string ConsumerName { get; set; }
-
-        public Func<LogConsumer<T>> Func { get; set; }
-    } 
-    
-    
-
-    public class StructuredLoggerConfig
-    {
-        public string Name { get; set; }
-        
-        public bool Enabled { get; set; }
-
-        public StructuredLoggerConsumerConfig[] Consumers { get; set; }
-    }
-    
-    public class StructuredLoggerConsumerConfig
-    {
-        public string Name { get; set; }
-        
-        public bool Enabled { get; set; }
     }
 }

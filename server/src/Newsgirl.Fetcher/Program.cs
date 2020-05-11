@@ -1,6 +1,7 @@
 ﻿namespace Newsgirl.Fetcher
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
     using Autofac;
@@ -37,14 +38,14 @@
             
             this.Log = new StructuredLogger(builder =>
             {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new LogConsumer<LogData>[]
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>
                 {
-                    new ConsoleLogDataConsumer(this.ErrorReporter),
-                    new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-fetcher-general"), 
+                    {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
+                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-fetcher-general")},
                 });
             });
             
-            this.Log.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
+            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
 
@@ -67,8 +68,6 @@
             {
                 this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
             }
-
-            this.Log?.SetEnabled(this.AppConfig.Logging.EnabledConfigs);
         }
         
         private async Task ReloadStartupConfig()
@@ -76,8 +75,8 @@
             try
             {
                 this.Log.General(() => new LogData("Reloading config..."));
-
                 await this.LoadConfig();
+                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
             }
             catch (Exception exception)
             {
@@ -148,7 +147,7 @@
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
-        public string[] EnabledConfigs { get; set; }
+        public StructuredLoggerConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
     }
