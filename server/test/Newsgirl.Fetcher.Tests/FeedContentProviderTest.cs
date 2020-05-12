@@ -1,7 +1,5 @@
 using System.Threading.Tasks;
 using Newsgirl.Shared;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
 using Xunit;
 
 namespace Newsgirl.Fetcher.Tests

@@ -10,8 +10,6 @@ namespace Newsgirl.Server
     using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
     using Shared;
-    using Shared.Data;
-    using Shared.Infrastructure;
 
     public class HttpServerApp : IAsyncDisposable
     {
@@ -54,12 +52,20 @@ namespace Newsgirl.Server
                 builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>()
                 {
                     {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
-                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-general")},
+                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                    )},
                 });
                 
                 builder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string,Func<LogConsumer<HttpLogData>>>()
                 {
-                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-server-http")},
+                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                    )},
                 });
             });
             
@@ -215,6 +221,16 @@ namespace Newsgirl.Server
         public StructuredLoggerConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
+    }
+
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ElasticsearchIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
+        
+        public string HttpLogIndex { get; set; }
     }
 
     public interface AsyncLocals

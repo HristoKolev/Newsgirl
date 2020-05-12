@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Infrastructure
+namespace Newsgirl.Shared
 {
     using System;
     using System.Threading;

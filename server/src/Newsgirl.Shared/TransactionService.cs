@@ -1,9 +1,8 @@
-namespace Newsgirl.Shared.Infrastructure
+namespace Newsgirl.Shared
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Data;
     using Npgsql;
 
     public class TransactionService : ITransactionService

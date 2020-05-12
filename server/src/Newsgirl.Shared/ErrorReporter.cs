@@ -8,7 +8,6 @@ namespace Newsgirl.Shared
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
-    using Infrastructure;
     using Sentry;
     using Sentry.Protocol;
 

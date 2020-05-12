@@ -6,11 +6,29 @@
     "ServerName": "hristo-ws"
   },
   "Logging": {
-    "EnabledConfigs": ["GENERAL_LOG"],
+    "StructuredLogger": [
+      {
+        "Name": "GENERAL_LOG",
+        "Enabled": true,
+        "Consumers": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      }
+    ],
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl",
-      "Password": "test123"
+      "Password": "test123"      
+    },
+    "ElasticsearchIndexes": {
+      "GeneralLogIndex": "newsgirl-fetcher-general-dev"
     }
   }
 }

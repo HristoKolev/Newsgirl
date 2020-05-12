@@ -10,7 +10,6 @@ namespace Newsgirl.Server.Tests
     using Newtonsoft.Json;
     using NSubstitute;
     using Shared;
-    using Shared.Infrastructure;
     using Testing;
     using Xunit;
 

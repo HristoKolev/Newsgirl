@@ -8,7 +8,7 @@ namespace Newsgirl.Server.Tests
     using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using Shared.Infrastructure;
+    using Shared;
     using Testing;
     using Xunit;
 

@@ -1,7 +1,6 @@
 namespace Newsgirl.Shared
 {
     using Autofac;
-    using Infrastructure;
 
     public class SharedModule : Module
     {

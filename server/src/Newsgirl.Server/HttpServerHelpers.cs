@@ -6,7 +6,6 @@ namespace Newsgirl.Server
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Shared;
-    using Shared.Infrastructure;
 
     public static class HttpServerHelpers
     {

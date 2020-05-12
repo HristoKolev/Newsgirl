@@ -6,11 +6,44 @@
     "ServerName": "hristo-ws"
   },
   "Logging": {
-    "EnabledConfigs": ["GENERAL_LOG", "HTTP_REQUESTS"],
+    "StructuredLogger": [
+      {
+        "Name": "GENERAL_LOG",
+        "Enabled": true,
+        "Consumers": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      },
+      {
+        "Name": "HTTP_REQUESTS",
+        "Enabled": true,
+        "Consumers": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      }
+    ],
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl",
-      "Password": "test123"
+      "Password": "test123"      
+    },
+    "ElasticsearchIndexes": {
+      "GeneralLogIndex": "newsgirl-server-general-test",
+      "HttpLogIndex": "newsgirl-server-http-test"
     }
   }
 }

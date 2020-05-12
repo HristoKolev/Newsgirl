@@ -2,7 +2,7 @@
   {
     "Details": {},
     "Fingerprint": null,
-    "Message": "The configure function is null.",
+    "Message": "The build function is null.",
     "Data": {},
     "HelpLink": null,
     "Source": "Newsgirl.Shared",

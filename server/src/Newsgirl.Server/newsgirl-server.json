@@ -39,7 +39,11 @@
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl",
-      "Password": "test123"
+      "Password": "test123"      
+    },
+    "ElasticsearchIndexes": {
+      "GeneralLogIndex": "newsgirl-server-general-dev",
+      "HttpLogIndex": "newsgirl-server-http-dev"
     }
   }
 }

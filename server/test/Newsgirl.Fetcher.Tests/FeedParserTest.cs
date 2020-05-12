@@ -1,11 +1,12 @@
 using System.Threading.Tasks;
 using Xunit;
-using Newsgirl.Shared.Infrastructure;
 using Newsgirl.Testing;
 using NSubstitute;
 
 namespace Newsgirl.Fetcher.Tests
 {
+    using Shared;
+
     public class FeedParserTest
     {
         [Theory]

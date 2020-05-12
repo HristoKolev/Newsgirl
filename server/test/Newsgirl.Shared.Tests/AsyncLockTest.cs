@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 
 using Xunit;
 
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Shared.Tests
 {
     using System.Runtime.Serialization;

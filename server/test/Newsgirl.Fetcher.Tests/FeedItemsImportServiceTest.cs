@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 
 using NSubstitute;
 using Xunit;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
 using Newsgirl.Testing;
 
 namespace Newsgirl.Fetcher.Tests

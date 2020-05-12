@@ -26,6 +26,8 @@ namespace Newsgirl.Shared.Tests
             
             await using (var logger = new StructuredLogger(Configure))
             {
+                await logger.Reconfigure(Array.Empty<StructuredLoggerConfig>());
+                
                 bool called = false;
                 
                 TestLogData LogFunc()
@@ -44,18 +46,39 @@ namespace Newsgirl.Shared.Tests
         public async Task Log_does_pass_data_to_consumers_when_config_is_available()
         {
             const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
             
             var consumerMock = new LogConsumerMock(null);
             
             void Configure(StructuredLoggerBuilder builder)
             {
-                builder.AddConfig(MOCK_KEY, new LogConsumer<TestLogData>[] { consumerMock });
+                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+                {
+                    {CONSUMER_NAME, () => consumerMock}
+                });
             }
             
             var expected = new List<TestLogData>();
             
             await using (var logger = new StructuredLogger(Configure))
             {
+                await logger.Reconfigure(new []
+                {
+                    new StructuredLoggerConfig
+                    {
+                        Name = MOCK_KEY,
+                        Enabled = true,
+                        Consumers = new []
+                        {
+                            new StructuredLoggerConsumerConfig
+                            {
+                                Name = CONSUMER_NAME,
+                                Enabled = true
+                            }
+                        }
+                    } 
+                });
+                
                 for (int j = 0; j < 5; j++)
                 {
                     for (int i = 0; i < 100; i++)
@@ -79,12 +102,16 @@ namespace Newsgirl.Shared.Tests
         public async Task Log_not_sent_to_consumers_when_the_config_is_not_enabled()
         {
             const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
             
             var consumerMock = new LogConsumerMock(null);
             
             void Configure(StructuredLoggerBuilder builder)
             {
-                builder.AddConfig(MOCK_KEY, new LogConsumer<TestLogData>[] { consumerMock });
+                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+                {
+                    {CONSUMER_NAME, () => consumerMock}
+                });
             }
             
             var expected = new List<TestLogData>();
@@ -93,14 +120,22 @@ namespace Newsgirl.Shared.Tests
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    if (j % 2 == 0)
+                    await logger.Reconfigure(new []
                     {
-                        logger.SetEnabled(Array.Empty<string>());
-                    }
-                    else
-                    {
-                        logger.SetEnabled(new []{MOCK_KEY});   
-                    }
+                        new StructuredLoggerConfig
+                        {
+                            Name = MOCK_KEY,
+                            Enabled = j % 2 == 1,
+                            Consumers = new []
+                            {
+                                new StructuredLoggerConsumerConfig
+                                {
+                                    Name = CONSUMER_NAME,
+                                    Enabled = true
+                                }
+                            }
+                        } 
+                    });
                     
                     for (int i = 0; i < 100; i++)
                     {
@@ -122,23 +157,102 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public async Task An_error_is_reported_when_a_consumer_throws()
+        public async Task Log_not_sent_to_consumer_when_the_consumer_is_not_enabled()
         {
             const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
             
-            var errorReporter = new ErrorReporterMock();
-            
-            var consumerMock = new LogConsumerMock(errorReporter);
+            var consumerMock = new LogConsumerMock(null);
             
             void Configure(StructuredLoggerBuilder builder)
             {
-                builder.AddConfig(MOCK_KEY, new LogConsumer<TestLogData>[] { consumerMock });
+                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+                {
+                    {CONSUMER_NAME, () => consumerMock}
+                });
             }
             
             var expected = new List<TestLogData>();
             
             await using (var logger = new StructuredLogger(Configure))
             {
+                for (int j = 0; j < 5; j++)
+                {
+                    await logger.Reconfigure(new []
+                    {
+                        new StructuredLoggerConfig
+                        {
+                            Name = MOCK_KEY,
+                            Enabled = true,
+                            Consumers = new []
+                            {
+                                new StructuredLoggerConsumerConfig
+                                {
+                                    Name = CONSUMER_NAME,
+                                    Enabled = j % 2 == 1
+                                }
+                            }
+                        } 
+                    });
+                    
+                    for (int i = 0; i < 100; i++)
+                    {
+                        var logData = new TestLogData();
+                        
+                        logger.Log(MOCK_KEY, () => logData);
+
+                        if (j % 2 == 1)
+                        {
+                            expected.Add(logData);   
+                        }
+                    }
+
+                    await Task.Delay(10);
+                }
+            }
+            
+            AssertExt.SequentialEqual(expected, consumerMock.Logs);
+        }
+
+        [Fact]
+        public async Task An_error_is_reported_when_a_consumer_throws()
+        {
+            const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
+
+            var errorReporter = new ErrorReporterMock();
+            
+            var consumerMock = new LogConsumerMock(errorReporter);
+            
+            void Configure(StructuredLoggerBuilder builder)
+            {
+                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+                {
+                    {CONSUMER_NAME, () => consumerMock}
+                });
+            }
+            
+            var expected = new List<TestLogData>();
+            
+            await using (var logger = new StructuredLogger(Configure))
+            {
+                await logger.Reconfigure(new []
+                {
+                    new StructuredLoggerConfig
+                    {
+                        Name = MOCK_KEY,
+                        Enabled = true,
+                        Consumers = new []
+                        {
+                            new StructuredLoggerConsumerConfig
+                            {
+                                Name = CONSUMER_NAME,
+                                Enabled = true
+                            }
+                        }
+                    } 
+                });
+                
                 for (int i = 0; i < 10; i++)
                 {
                     var logData = new TestLogData();
@@ -172,20 +286,41 @@ namespace Newsgirl.Shared.Tests
         public async Task Dispose_waits_for_the_consumers_to_finish()
         {
             const string MOCK_KEY = "MOCK_KEY";
-            
-            await using var errorReporter = new ErrorReporterMock(new ErrorReporterMockConfig());
+            const string CONSUMER_NAME = "LogConsumerMock";
+
+            await using var errorReporter = new ErrorReporterMock();
             
             var consumerMock = new LogConsumerMock(errorReporter);
             
             void Configure(StructuredLoggerBuilder builder)
             {
-                builder.AddConfig(MOCK_KEY, new LogConsumer<TestLogData>[] { consumerMock });
+                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+                {
+                    {CONSUMER_NAME, () => consumerMock}
+                });
             }
             
             var expected = new List<TestLogData>();
             
             await using (var logger = new StructuredLogger(Configure))
             {
+                await logger.Reconfigure(new []
+                {
+                    new StructuredLoggerConfig
+                    {
+                        Name = MOCK_KEY,
+                        Enabled = true,
+                        Consumers = new []
+                        {
+                            new StructuredLoggerConsumerConfig
+                            {
+                                Name = CONSUMER_NAME,
+                                Enabled = true
+                            }
+                        }
+                    } 
+                });
+                
                 consumerMock.WaitTime = TimeSpan.FromMilliseconds(10);
                 
                 for (int i = 0; i < 10; i++)

@@ -17,8 +17,6 @@ using Npgsql;
 using NSubstitute;
 using Xunit;
 using Xunit.Sdk;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
 using Newsgirl.Testing;
 
 [assembly: UseReporter(typeof(CustomReporter))]

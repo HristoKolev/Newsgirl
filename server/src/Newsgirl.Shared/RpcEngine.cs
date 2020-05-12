@@ -5,8 +5,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 
-using Newsgirl.Shared.Infrastructure;
-
 namespace Newsgirl.Shared
 {
     public class RpcEngine

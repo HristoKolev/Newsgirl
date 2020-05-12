@@ -1,4 +1,3 @@
-using Newsgirl.Shared.Infrastructure;
 using Xunit;
 
 namespace Newsgirl.Shared.Tests

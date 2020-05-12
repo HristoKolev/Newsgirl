@@ -19,6 +19,7 @@ namespace Newsgirl.Shared
         public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
         {
             this.buildLogger = buildLogger ?? throw new DetailedLogException("The build function is null.");
+            this.producersByConfigName = new Dictionary<string, object>();
         }
 
         public void Log<T>(string key, Func<T> func)
@@ -44,12 +45,14 @@ namespace Newsgirl.Shared
 
             foreach (var (configName, producerFactory) in builder.LogProducerFactoryMap)
             {
-                if (producerFactory == null)
+                var producer = producerFactory(configArray);
+                
+                if (producer == null)
                 {
                     continue;
                 }
                 
-                map.Add(configName, producerFactory(configArray));
+                map.Add(configName, producer);
             }
 
             var oldMap = this.producersByConfigName;
@@ -61,9 +64,9 @@ namespace Newsgirl.Shared
         {
             var disposeTasks = new List<Task>();
 
-            foreach (var kvp in producerMap)
+            foreach (var producer in producerMap.Values)
             {
-                if (kvp.Value is IAsyncDisposable x)    
+                if (producer is IAsyncDisposable x)    
                 {
                     disposeTasks.Add(x.DisposeAsync().AsTask());
                 }
@@ -182,9 +185,7 @@ namespace Newsgirl.Shared
         {
             for (int i = 0; i < this.channels.Length; i++)
             {
-                var channel = this.channels[i];
-
-                if (!channel.Writer.TryWrite(item))
+                if (!this.channels[i].Writer.TryWrite(item))
                 {
                     throw new ApplicationException("channel.Writer.TryWrite returned false.");
                 }

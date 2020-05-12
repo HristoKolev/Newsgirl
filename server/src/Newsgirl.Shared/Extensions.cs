@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Infrastructure
+namespace Newsgirl.Shared
 {
     public static class Extensions
     {

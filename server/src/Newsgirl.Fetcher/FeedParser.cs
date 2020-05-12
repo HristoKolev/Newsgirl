@@ -5,8 +5,6 @@ namespace Newsgirl.Fetcher
     using System.Text.Json;
     using CodeHollow.FeedReader;
     using Shared;
-    using Shared.Data;
-    using Shared.Infrastructure;
 
     public class FeedParser : IFeedParser
     {

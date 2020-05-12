@@ -7,8 +7,6 @@
     using Autofac;
     using Newtonsoft.Json;
     using Shared;
-    using Shared.Data;
-    using Shared.Infrastructure;
 
     public class FetcherApp : IAsyncDisposable
     {
@@ -41,7 +39,11 @@
                 builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>
                 {
                     {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
-                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(this.ErrorReporter, this.AppConfig.Logging.Elasticsearch, "newsgirl-fetcher-general")},
+                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
+                        this.ErrorReporter, 
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                    )},
                 });
             });
             
@@ -150,6 +152,14 @@
         public StructuredLoggerConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
+    }
+
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ElasticsearchIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
     }
 
     public class FetcherIoCModule : Module

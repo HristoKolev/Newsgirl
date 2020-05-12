@@ -1,10 +1,10 @@
-using System;
-using System.IO;
-using System.Reactive.Linq;
-using System.Threading.Tasks;
-
-namespace Newsgirl.Shared.Infrastructure
+namespace Newsgirl.Shared
 {
+    using System;
+    using System.IO;
+    using System.Reactive.Linq;
+    using System.Threading.Tasks;
+
     public class FileWatcher : IDisposable
     {
         private readonly FileSystemWatcher fileSystemWatcher;

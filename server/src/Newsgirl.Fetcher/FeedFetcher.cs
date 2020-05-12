@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Newsgirl.Shared;
-using Newsgirl.Shared.Data;
-using Newsgirl.Shared.Infrastructure;
 
 namespace Newsgirl.Fetcher
 {

@@ -5,7 +5,7 @@ namespace Newsgirl.Server.Tests
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using NSubstitute;
-    using Shared.Infrastructure;
+    using Shared;
     using Testing;
     using Xunit;
 
