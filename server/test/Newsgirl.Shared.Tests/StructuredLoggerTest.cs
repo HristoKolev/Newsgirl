@@ -136,7 +136,7 @@ namespace Newsgirl.Shared.Tests
                             }
                         } 
                     });
-                    
+
                     for (int i = 0; i < 100; i++)
                     {
                         var logData = new TestLogData();
@@ -340,7 +340,7 @@ namespace Newsgirl.Shared.Tests
     {
     }
 
-    public class LogConsumerMock : LogConsumerBase<TestLogData>
+    public class LogConsumerMock : LogConsumer<TestLogData>
     {
         public List<TestLogData> Logs { get; } = new List<TestLogData>();
 
@@ -355,7 +355,7 @@ namespace Newsgirl.Shared.Tests
             this.TimeBetweenMainLoopRestart = TimeSpan.Zero;
         }
 
-        protected override async ValueTask ProcessBatch(ArraySegment<TestLogData> data)
+        protected override async ValueTask Flush(ArraySegment<TestLogData> data)
         {
             if (this.WaitTime != TimeSpan.Zero)
             {

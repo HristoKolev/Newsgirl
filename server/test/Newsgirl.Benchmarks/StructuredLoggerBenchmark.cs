@@ -207,9 +207,9 @@ namespace Newsgirl.Benchmarks
         public int Number { get; set; }
     }
 
-    public class NoOpConsumer<T> : LogConsumerBase<T>
+    public class NoOpConsumer<T> : LogConsumer<T>
     {
-        protected override ValueTask ProcessBatch(ArraySegment<T> data)
+        protected override ValueTask Flush(ArraySegment<T> data)
         {
             return new ValueTask();
         }

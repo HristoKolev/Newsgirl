@@ -5,7 +5,7 @@ namespace Newsgirl.Shared
     using System.Threading.Tasks;
     using Elasticsearch.Net;
 
-    public class ElasticsearchLogDataConsumer : LogConsumerBase<LogData>
+    public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
     {
         private readonly string indexName;
         private readonly ElasticLowLevelClient elasticsearchClient;
@@ -19,7 +19,7 @@ namespace Newsgirl.Shared
             this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
         }
         
-        protected override async ValueTask ProcessBatch(ArraySegment<LogData> data)
+        protected override async ValueTask Flush(ArraySegment<LogData> data)
         {
             for (int i = 0; i < data.Count; i++)
             {
@@ -35,7 +35,7 @@ namespace Newsgirl.Shared
         }
     }
     
-    public class ElasticsearchConsumer<T> : LogConsumerBase<T>
+    public class ElasticsearchConsumer<T> : LogConsumer<T>
     {
         private readonly string indexName;
         private readonly ElasticLowLevelClient elasticsearchClient;
@@ -49,7 +49,7 @@ namespace Newsgirl.Shared
             this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
         }
         
-        protected override async ValueTask ProcessBatch(ArraySegment<T> data)
+        protected override async ValueTask Flush(ArraySegment<T> data)
         {
             for (int i = 0; i < data.Count; i++)
             {

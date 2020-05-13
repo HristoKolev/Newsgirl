@@ -4,9 +4,9 @@ namespace Newsgirl.Shared
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    public class ConsoleLogDataConsumer : LogConsumerBase<LogData>
+    public class ConsoleLogDataConsumer : LogConsumer<LogData>
     {
-        protected override async ValueTask ProcessBatch(ArraySegment<LogData> data)
+        protected override async ValueTask Flush(ArraySegment<LogData> data)
         {
             for (int i = 0; i < data.Count; i++)
             {

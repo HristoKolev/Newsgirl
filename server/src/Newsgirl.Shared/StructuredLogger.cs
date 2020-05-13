@@ -3,6 +3,7 @@ namespace Newsgirl.Shared
     using System;
     using System.Buffers;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading.Channels;
     using System.Threading.Tasks;
@@ -14,29 +15,28 @@ namespace Newsgirl.Shared
     public class StructuredLogger : IAsyncDisposable, ILog
     {
         private readonly Action<StructuredLoggerBuilder> buildLogger;
-        private Dictionary<string, object> producersByConfigName;
+        private LogProducerCollection producerCollection = new LogProducerCollection();
 
         public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
         {
             this.buildLogger = buildLogger ?? throw new DetailedLogException("The build function is null.");
-            this.producersByConfigName = new Dictionary<string, object>();
         }
 
         public void Log<T>(string key, Func<T> func)
         {
-            var map = this.producersByConfigName;
+            var producer = this.producerCollection.GetProducer<T>(key);
 
-            if (!map.TryGetValue(key, out var producerObj))
+            if (producer == null)
             {
                 return;
             }
 
             var item = func();
-            
-            ((LogProducer<T>)producerObj).Enqueue(item);
+
+            producer.Enqueue(item);
         }
 
-        public Task Reconfigure(StructuredLoggerConfig[] configArray)
+        public ValueTask Reconfigure(StructuredLoggerConfig[] configArray)
         {
             var builder = new StructuredLoggerBuilder();
             this.buildLogger(builder);
@@ -54,30 +54,15 @@ namespace Newsgirl.Shared
                 
                 map.Add(configName, producer);
             }
-
-            var oldMap = this.producersByConfigName;
-            this.producersByConfigName = map;
-            return DisposeProducers(oldMap);
+            
+            var oldCollection = this.producerCollection;
+            this.producerCollection = new LogProducerCollection(map);
+            return oldCollection.DisposeAsync();
         }
 
-        private static Task DisposeProducers(Dictionary<string, object> producerMap)
+        public ValueTask DisposeAsync()
         {
-            var disposeTasks = new List<Task>();
-
-            foreach (var producer in producerMap.Values)
-            {
-                if (producer is IAsyncDisposable x)    
-                {
-                    disposeTasks.Add(x.DisposeAsync().AsTask());
-                }
-            }
-
-            return Task.WhenAll(disposeTasks);
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await DisposeProducers(this.producersByConfigName);
+            return this.producerCollection.DisposeAsync();
         }
     }
 
@@ -158,34 +143,68 @@ namespace Newsgirl.Shared
     {
         void Log<T>(string key, Func<T> func);
     }
+    
+    public class LogProducerCollection : IAsyncDisposable
+    {
+        private readonly Dictionary<string, object> producersByConfigName;
 
+        public LogProducerCollection(Dictionary<string,object> producersByConfigName)
+        {
+            this.producersByConfigName = producersByConfigName;
+        }
+
+        public LogProducerCollection()
+        {
+            this.producersByConfigName = new Dictionary<string, object>();
+        }
+
+        public LogProducer<T> GetProducer<T>(string key)
+        {
+            if (!this.producersByConfigName.TryGetValue(key, out var producerObj))
+            {
+                return null;
+            }
+
+            var producer = (LogProducer<T>)producerObj;
+
+            return producer;
+        }
+        
+        public async ValueTask DisposeAsync()
+        {
+            var disposeTasks = new List<Task>();
+
+            foreach (var producer in this.producersByConfigName.Values)
+            {
+                if (producer is IAsyncDisposable x)    
+                {
+                    disposeTasks.Add(x.DisposeAsync().AsTask());
+                }
+            }
+
+            await Task.WhenAll(disposeTasks);
+        }
+    }
+    
     public class LogProducer<T> : IAsyncDisposable
     {
         private readonly LogConsumer<T>[] consumers;
-        private readonly Channel<T>[] channels;
-        private readonly UnboundedChannelOptions channelOptions = new UnboundedChannelOptions
-        {
-            SingleReader = true,
-        };
- 
+        
         public LogProducer(LogConsumer<T>[] consumers)
         {
             this.consumers = consumers;
-            this.channels = new Channel<T>[consumers.Length];
-            
-            for (int i = 0; i < consumers.Length; i++)
+
+            foreach (var consumer in consumers)
             {
-                var channel = Channel.CreateUnbounded<T>(this.channelOptions);
-                this.channels[i] = channel;
-                consumers[i].Start(channel.Reader);
+                consumer.Start();
             }
         }
  
         public void Enqueue(T item)
         {
-            for (int i = 0; i < this.channels.Length; i++)
+            for (int i = 0; i < this.consumers.Length; i++)
             {
-                if (!this.channels[i].Writer.TryWrite(item))
+                if (!this.consumers[i].Channel.Writer.TryWrite(item))
                 {
                     throw new ApplicationException("channel.Writer.TryWrite returned false.");
                 }
@@ -194,51 +213,44 @@ namespace Newsgirl.Shared
 
         public async ValueTask DisposeAsync()
         {
-            var exitTasks = new Task[this.consumers.Length];
-            
-            for (int i = 0; i < this.consumers.Length; i++)
+            var disposeTasks = new List<Task>();
+
+            foreach (var consumer in this.consumers)
             {
-                this.channels[i].Writer.Complete();
-                exitTasks[i] = this.consumers[i].Stop();
+                disposeTasks.Add(consumer.DisposeAsync().AsTask());
             }
 
-            await Task.WhenAll(exitTasks);
+            await Task.WhenAll(disposeTasks);
         }
     }
     
-    public interface LogConsumer<T>
+    /// <summary>
+    /// Base class for all log consumers.
+    /// </summary>
+    /// <typeparam name="TData">The type of data that the consumer consumes.</typeparam>
+    public abstract class LogConsumer<TData> : IAsyncDisposable
     {
-        void Start(ChannelReader<T> channelReader);
-
-        Task Stop();
-    }
-    
-    public abstract class LogConsumerBase<T> : LogConsumer<T>
-    {
-        // ReSharper disable once MemberCanBePrivate.Global
-        protected readonly ErrorReporter ErrorReporter;
-
-        protected LogConsumerBase(ErrorReporter errorReporter)
-        {
-            this.ErrorReporter = errorReporter;
-        }
-        
+        private readonly ErrorReporter errorReporter;
         private Task runningTask;
-        private T[] buffer;
-        private ChannelReader<T> reader;
+        private TData[] buffer;
         
-        // ReSharper disable once MemberCanBeProtected.Global
-        public TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
-
-        // ReSharper disable once MemberCanBeProtected.Global
-        public int NumberOfRetries { get; set; } = 5;
-
-        // ReSharper disable once MemberCanBeProtected.Global
-        public TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
-
-        public void Start(ChannelReader<T> channelReader)
+        protected LogConsumer(ErrorReporter errorReporter)
         {
-            this.reader = channelReader;
+            this.errorReporter = errorReporter;
+            this.buffer = ArrayPool<TData>.Shared.Rent(16);
+            this.Channel = System.Threading.Channels.Channel.CreateUnbounded<TData>();
+        }
+        
+        protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
+
+        protected int NumberOfRetries { get; set; } = 5;
+
+        protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
+
+        public Channel<TData> Channel { get; }
+        
+        public void Start()
+        {
             this.runningTask = Task.Run(this.ReadFromChannel);
         }
 
@@ -248,65 +260,57 @@ namespace Newsgirl.Shared
             {
                 try
                 {
-                    while (await this.reader.WaitToReadAsync())
+                    while (await this.Channel.Reader.WaitToReadAsync())
                     {
-                        try
+                        TData item;
+                        int i = 0;
+                    
+                        for (; this.Channel.Reader.TryRead(out item); i += 1)
                         {
-                            this.buffer = ArrayPool<T>.Shared.Rent(16);
-
-                            T item;
-
-                            int i = 0;
-                    
-                            for (; this.reader.TryRead(out item); i += 1)
+                            if (i == this.buffer.Length)
                             {
-                                if (i == this.buffer.Length)
-                                {
-                                    this.ResizeBuffer();
-                                }
-
-                                this.buffer[i] = item;
+                                this.ResizeBuffer();
                             }
 
-                            var segment = new ArraySegment<T>(this.buffer, 0, i);
+                            this.buffer[i] = item;
+                        }
 
-                            Exception exception = null;
+                        var segment = new ArraySegment<TData>(this.buffer, 0, i);
+
+                        Exception exception = null;
                     
-                            for (int j = 0; j < this.NumberOfRetries + 1; j++)
+                        for (int j = 0; j < this.NumberOfRetries + 1; j++)
+                        {
+                            try
                             {
-                                try
-                                {
-                                    await this.ProcessBatch(segment);
-                                    exception = null;
-                                    break;
-                                }
-                                catch (Exception ex)
-                                {
-                                    exception = ex;
-                                    await Task.Delay(this.TimeBetweenRetries);
-                                }
+                                await this.Flush(segment);
+                                
+                                exception = null;
+                                break;
                             }
-
-                            if (exception != null)
+                            catch (Exception ex)
                             {
-                                await this.ErrorReporter.Error(exception);
+                                exception = ex;
+                                
+                                await Task.Delay(this.TimeBetweenRetries);
                             }
                         }
-                        finally
+
+                        if (exception != null)
                         {
-                            if (this.buffer != null)
-                            {
-                                ArrayPool<T>.Shared.Return(this.buffer);                        
-                            }
+                            await this.errorReporter.Error(exception);
                         }
                     }
 
                     break;
                 }
-                catch (Exception ex)
+                // This should never happen if this code functions normally.
+                // Exceptions thrown in custom Flush implementations are caught earlier.
+                // The only way we get here is if the implementation of this method throws an exception.
+                catch (Exception ex)  
                 {
-                    await this.ErrorReporter.Error(ex);
-
+                    await this.errorReporter.Error(ex);
+                    
                     await Task.Delay(this.TimeBetweenMainLoopRestart);
                 }
             }
@@ -314,11 +318,11 @@ namespace Newsgirl.Shared
 
         private void ResizeBuffer()
         {
-            T[] newBuffer = null;
+            TData[] newBuffer = null;
 
             try
             {
-                newBuffer = ArrayPool<T>.Shared.Rent(this.buffer.Length * 2);
+                newBuffer = ArrayPool<TData>.Shared.Rent(this.buffer.Length * 2);
                 
                 Array.Copy(this.buffer, newBuffer, this.buffer.Length);
             }
@@ -326,19 +330,33 @@ namespace Newsgirl.Shared
             {
                 if (newBuffer != null)
                 {
-                    ArrayPool<T>.Shared.Return(newBuffer);                                        
+                    ArrayPool<TData>.Shared.Return(newBuffer);                                        
                 }
                                     
                 throw;
             }
 
-            ArrayPool<T>.Shared.Return(this.buffer);
-
+            ArrayPool<TData>.Shared.Return(this.buffer);
+            
             this.buffer = newBuffer;
         }
 
-        protected abstract ValueTask ProcessBatch(ArraySegment<T> data);
-        
-        public virtual Task Stop() => this.runningTask;
+        protected abstract ValueTask Flush(ArraySegment<TData> data);
+
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                Trace.WriteLine("complete " + this.GetType().Name);
+                
+                this.Channel.Writer.Complete();
+                
+                await this.runningTask;
+            }
+            finally
+            {
+                ArrayPool<TData>.Shared.Return(this.buffer);    
+            }
+        }
     }
 }
