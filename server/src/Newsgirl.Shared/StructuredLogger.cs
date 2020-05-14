@@ -93,17 +93,9 @@ namespace Newsgirl.Shared
 
             private int referenceCount;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void IncrementRc()
-            {
-                Interlocked.Increment(ref this.referenceCount);
-            }
-        
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void DecrementRc()
-            {
-                Interlocked.Decrement(ref this.referenceCount);
-            }
+            public void IncrementRc() => Interlocked.Increment(ref this.referenceCount);
+
+            public void DecrementRc() => Interlocked.Decrement(ref this.referenceCount);
 
             public Task WaitUntilUnused()
             {
@@ -249,7 +241,7 @@ namespace Newsgirl.Shared
     public abstract class LogConsumer<TData> : LogConsumerLifetime
     {
         private readonly ErrorReporter errorReporter;
-        private Task runningTask;
+        private Task readTask;
         private TData[] buffer;
         private bool started;
 
@@ -265,7 +257,7 @@ namespace Newsgirl.Shared
         protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
 
         public Channel<TData> Channel { get; private set; }
-        
+
         public void Start()
         {
             if (this.started)
@@ -275,7 +267,7 @@ namespace Newsgirl.Shared
             
             this.buffer = ArrayPool<TData>.Shared.Rent(16);
             this.Channel = System.Threading.Channels.Channel.CreateUnbounded<TData>();
-            this.runningTask = Task.Run(this.ReadFromChannel);
+            this.readTask = Task.Run(this.Read);
 
             this.started = true;
         }
@@ -290,17 +282,21 @@ namespace Newsgirl.Shared
             try
             {
                 this.Channel.Writer.Complete();
-                await this.runningTask;
+                await this.readTask;
             }
             finally
             {
                 ArrayPool<TData>.Shared.Return(this.buffer);    
             }
 
+            this.Channel = null;
+            this.readTask = null;
+            this.buffer = null;
+
             this.started = false;
         }
 
-        private async Task ReadFromChannel()
+        private async Task Read()
         {
             while (true)
             {
