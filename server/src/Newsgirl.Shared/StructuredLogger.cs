@@ -2,20 +2,21 @@ namespace Newsgirl.Shared
 {
     using System;
     using System.Buffers;
+    using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Channels;
     using System.Threading.Tasks;
     
     /// <summary>
     /// Logging service for structured data.
-    /// TODO: Solve the apparent race condition. 
     /// </summary>
     public class StructuredLogger : IAsyncDisposable, ILog
     {
         private readonly Action<StructuredLoggerBuilder> buildLogger;
-        private LogProducerCollection producerCollection = new LogProducerCollection();
+        private LogConsumerCollection consumerCollection = new LogConsumerCollection();
 
         public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
         {
@@ -24,45 +25,131 @@ namespace Newsgirl.Shared
 
         public void Log<T>(string key, Func<T> func)
         {
-            var producer = this.producerCollection.GetProducer<T>(key);
+            var collection = this.consumerCollection;
+            
+            collection.IncrementRc();
 
-            if (producer == null)
+            try
             {
-                return;
+                var consumers = collection.GetConsumers<T>(key);
+
+                if (consumers == null)
+                {
+                    return;
+                }
+
+                var item = func();
+
+                for (int i = 0; i < consumers.Length; i++)
+                {
+                    if (!consumers[i].Channel.Writer.TryWrite(item))
+                    {
+                        throw new ApplicationException("channel.Writer.TryWrite returned false.");
+                    }
+                }
             }
-
-            var item = func();
-
-            producer.Enqueue(item);
+            finally
+            {
+                collection.DecrementRc();
+            }
         }
 
-        public ValueTask Reconfigure(StructuredLoggerConfig[] configArray)
+        public async ValueTask Reconfigure(StructuredLoggerConfig[] configArray)
         {
             var builder = new StructuredLoggerBuilder();
             this.buildLogger(builder);
             
             var map = new Dictionary<string, object>();
 
-            foreach (var (configName, producerFactory) in builder.LogProducerFactoryMap)
+            foreach (var (configName, consumersFactory) in builder.LogConsumersFactoryMap)
             {
-                var producer = producerFactory(configArray);
+                var consumers = consumersFactory(configArray);
                 
-                if (producer == null)
+                if (consumers == null)
                 {
                     continue;
                 }
                 
-                map.Add(configName, producer);
+                map.Add(configName, consumers);
             }
             
-            var oldCollection = this.producerCollection;
-            this.producerCollection = new LogProducerCollection(map);
-            return oldCollection.DisposeAsync();
+            var oldCollection = this.consumerCollection;
+            
+            this.consumerCollection = new LogConsumerCollection(map);
+            
+            await oldCollection.WaitUntilUnused();
+            await oldCollection.DisposeAsync();
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            return this.producerCollection.DisposeAsync();
+            await this.consumerCollection.WaitUntilUnused();
+            await this.consumerCollection.DisposeAsync();
+        }
+
+        private class LogConsumerCollection : IAsyncDisposable
+        {
+            private readonly Dictionary<string, object> consumersByConfigName;
+
+            private int referenceCount;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void IncrementRc()
+            {
+                Interlocked.Increment(ref this.referenceCount);
+            }
+        
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void DecrementRc()
+            {
+                Interlocked.Decrement(ref this.referenceCount);
+            }
+
+            public Task WaitUntilUnused()
+            {
+                return Task.Run(async () =>
+                {
+                    while (this.referenceCount != 0)
+                    {
+                        await Task.Delay(100);
+                    }
+                });
+            }
+
+            public LogConsumerCollection(Dictionary<string,object> consumersByConfigName)
+            {
+                this.consumersByConfigName = consumersByConfigName;
+            }
+
+            public LogConsumerCollection()
+            {
+                this.consumersByConfigName = new Dictionary<string, object>();
+            }
+
+            public LogConsumer<T>[] GetConsumers<T>(string key)
+            {
+                if (!this.consumersByConfigName.TryGetValue(key, out var consumersObj))
+                {
+                    return null;
+                }
+
+                return (LogConsumer<T>[])consumersObj;
+            }
+        
+            public async ValueTask DisposeAsync()
+            {
+                var disposeTasks = new List<Task>();
+
+                foreach (var consumersObj in this.consumersByConfigName.Values)
+                {
+                    foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerLifetime>())
+                    {
+                        disposeTasks.Add(consumer.Stop());
+                    }
+                }
+
+                await Task.WhenAll(disposeTasks);
+            }
         }
     }
 
@@ -72,12 +159,12 @@ namespace Newsgirl.Shared
     /// </summary>
     public class StructuredLoggerBuilder
     {
-        public Dictionary<string, Func<StructuredLoggerConfig[], object>> LogProducerFactoryMap { get; }
+        public Dictionary<string, Func<StructuredLoggerConfig[], object>> LogConsumersFactoryMap { get; }
             = new Dictionary<string, Func<StructuredLoggerConfig[], object>>(); 
         
         public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
         {
-            if (this.LogProducerFactoryMap.ContainsKey(configName))
+            if (this.LogConsumersFactoryMap.ContainsKey(configName))
             {
                 throw new DetailedLogException("There already is a configuration with this name.")
                 {
@@ -88,7 +175,7 @@ namespace Newsgirl.Shared
                 };
             }
 
-            this.LogProducerFactoryMap.Add(configName, configArray =>
+            this.LogConsumersFactoryMap.Add(configName, configArray =>
             {
                 var config = configArray.FirstOrDefault(x => x.Name == configName);
 
@@ -107,8 +194,12 @@ namespace Newsgirl.Shared
                     {
                         continue;
                     }
+
+                    var consumer = consumerFactory();
                     
-                    consumers.Add(consumerFactory());
+                    consumer.Start();
+                    
+                    consumers.Add(consumer);
                 }
 
                 if (!consumers.Any())
@@ -116,7 +207,7 @@ namespace Newsgirl.Shared
                     return null;
                 }
                 
-                return new LogProducer<T>(consumers.ToArray());
+                return consumers.ToArray();
             });
         }
     }
@@ -143,102 +234,28 @@ namespace Newsgirl.Shared
     {
         void Log<T>(string key, Func<T> func);
     }
-    
-    public class LogProducerCollection : IAsyncDisposable
+
+    public interface LogConsumerLifetime
     {
-        private readonly Dictionary<string, object> producersByConfigName;
-
-        public LogProducerCollection(Dictionary<string,object> producersByConfigName)
-        {
-            this.producersByConfigName = producersByConfigName;
-        }
-
-        public LogProducerCollection()
-        {
-            this.producersByConfigName = new Dictionary<string, object>();
-        }
-
-        public LogProducer<T> GetProducer<T>(string key)
-        {
-            if (!this.producersByConfigName.TryGetValue(key, out var producerObj))
-            {
-                return null;
-            }
-
-            var producer = (LogProducer<T>)producerObj;
-
-            return producer;
-        }
+        void Start();
         
-        public async ValueTask DisposeAsync()
-        {
-            var disposeTasks = new List<Task>();
-
-            foreach (var producer in this.producersByConfigName.Values)
-            {
-                if (producer is IAsyncDisposable x)    
-                {
-                    disposeTasks.Add(x.DisposeAsync().AsTask());
-                }
-            }
-
-            await Task.WhenAll(disposeTasks);
-        }
+        Task Stop();
     }
-    
-    public class LogProducer<T> : IAsyncDisposable
-    {
-        private readonly LogConsumer<T>[] consumers;
-        
-        public LogProducer(LogConsumer<T>[] consumers)
-        {
-            this.consumers = consumers;
 
-            foreach (var consumer in consumers)
-            {
-                consumer.Start();
-            }
-        }
- 
-        public void Enqueue(T item)
-        {
-            for (int i = 0; i < this.consumers.Length; i++)
-            {
-                if (!this.consumers[i].Channel.Writer.TryWrite(item))
-                {
-                    throw new ApplicationException("channel.Writer.TryWrite returned false.");
-                }
-            }
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            var disposeTasks = new List<Task>();
-
-            foreach (var consumer in this.consumers)
-            {
-                disposeTasks.Add(consumer.DisposeAsync().AsTask());
-            }
-
-            await Task.WhenAll(disposeTasks);
-        }
-    }
-    
     /// <summary>
     /// Base class for all log consumers.
     /// </summary>
     /// <typeparam name="TData">The type of data that the consumer consumes.</typeparam>
-    public abstract class LogConsumer<TData> : IAsyncDisposable
+    public abstract class LogConsumer<TData> : LogConsumerLifetime
     {
         private readonly ErrorReporter errorReporter;
         private Task runningTask;
         private TData[] buffer;
-        
+        private bool started;
+
         protected LogConsumer(ErrorReporter errorReporter)
         {
             this.errorReporter = errorReporter;
-            this.buffer = ArrayPool<TData>.Shared.Rent(16);
-            this.Channel = System.Threading.Channels.Channel.CreateUnbounded<TData>();
         }
         
         protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
@@ -247,11 +264,40 @@ namespace Newsgirl.Shared
 
         protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
 
-        public Channel<TData> Channel { get; }
+        public Channel<TData> Channel { get; private set; }
         
         public void Start()
         {
+            if (this.started)
+            {
+                throw new DetailedLogException("The consumer is already started.");
+            }
+            
+            this.buffer = ArrayPool<TData>.Shared.Rent(16);
+            this.Channel = System.Threading.Channels.Channel.CreateUnbounded<TData>();
             this.runningTask = Task.Run(this.ReadFromChannel);
+
+            this.started = true;
+        }
+        
+        public async Task Stop()
+        {
+            if (!this.started)
+            {
+                throw new DetailedLogException("The consumer is already stopped.");
+            }
+            
+            try
+            {
+                this.Channel.Writer.Complete();
+                await this.runningTask;
+            }
+            finally
+            {
+                ArrayPool<TData>.Shared.Return(this.buffer);    
+            }
+
+            this.started = false;
         }
 
         private async Task ReadFromChannel()
@@ -342,21 +388,5 @@ namespace Newsgirl.Shared
         }
 
         protected abstract ValueTask Flush(ArraySegment<TData> data);
-
-        public async ValueTask DisposeAsync()
-        {
-            try
-            {
-                Trace.WriteLine("complete " + this.GetType().Name);
-                
-                this.Channel.Writer.Complete();
-                
-                await this.runningTask;
-            }
-            finally
-            {
-                ArrayPool<TData>.Shared.Return(this.buffer);    
-            }
-        }
     }
 }
