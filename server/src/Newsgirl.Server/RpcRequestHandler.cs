@@ -15,17 +15,21 @@ namespace Newsgirl.Server
     /// </summary>
     public class RpcRequestHandler
     {
-        private readonly RpcEngine rpcEngine;
-        private readonly InstanceProvider instanceProvider;
-        private readonly AsyncLocals asyncLocals;
-        private readonly ErrorReporter errorReporter;
-        private readonly ILog log;
         private static readonly object SyncRoot = new object();
         private static bool initialized;
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
         private static Func<object, RpcRequestMessage> copyData;
         private static JsonSerializerOptions serializationOptions;
         
+        private readonly RpcEngine rpcEngine;
+        private readonly InstanceProvider instanceProvider;
+        private readonly AsyncLocals asyncLocals;
+        private readonly ErrorReporter errorReporter;
+        private readonly ILog log;
+        
+        private RentedByteArrayHandle requestBody;
+        private HttpContext context;
+
         private static void InitializeStaticCache()
         {
             genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
@@ -53,6 +57,23 @@ namespace Newsgirl.Server
         
         public async Task HandleRequest(HttpContext context)
         {
+            this.context = context;
+            
+            // Diagnostic data in case of an error.
+            this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
+            {
+                {"http", new HttpLogData(context, ref this.requestBody)}
+            };
+
+            this.log.Http(() => new HttpLogData(context, ref this.requestBody));
+
+            var result = await this.HandleRequest2();
+
+            await this.WriteResult(context.Response, result);
+        }
+
+        private async Task<RpcResult> HandleRequest2()
+        {
             // Initialize.            
             try
             {
@@ -71,93 +92,75 @@ namespace Newsgirl.Server
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
-                await this.WriteError(context.Response, $"General RPC error: {errorID}");
-                return;
+                return RpcResult.Error<object>($"General RPC error: {errorID}");
             }
 
-            RentedByteArrayHandle requestBodyBytes = default;
-
-            // Diagnostic data in case of an error.
-            this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
-            {
-                // ReSharper disable once AccessToModifiedClosure
-                {"http", new HttpLogData(context, ref requestBodyBytes)}
-            };
-
-            this.log.Http(() => new HttpLogData(context, ref requestBodyBytes));
-            
             // Read request body.
             try
             {
-                requestBodyBytes = await context.Request.ReadToEnd();
+                this.requestBody = await context.Request.ReadToEnd();
             }
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err);
-                await this.WriteError(context.Response, $"Failed to read RPC request body: {errorID}");
-                return;
+                return RpcResult.Error<object>($"Failed to read RPC request body: {errorID}");
             }
-
-            using (requestBodyBytes)
+            
+            // Parse the RPC message.
+            RpcResult<RpcRequestMessage> requestMessageResult;
+        
+            try
             {
-                // Parse the RPC message.
-                RpcResult<RpcRequestMessage> requestMessageResult;
-                
-                try
-                {
-                    requestMessageResult = this.ParseRequestMessage(requestBodyBytes);
-                }
-                catch (Exception err)
-                {
-                    long? bytePositionInLine = null;
-                    long? lineNumber = null;
-                    string jsonPath = null;
-                    
-                    if (err is JsonException jsonException)
-                    {
-                        bytePositionInLine = jsonException.BytePositionInLine;
-                        lineNumber = jsonException.LineNumber;
-                        jsonPath = jsonException.Path;
-                    }   
-                    
-                    string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
-                    {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                    });
-                    await this.WriteError(context.Response, $"Failed to parse RPC body: {errorID}");
-                    return;
-                }
-
-                if (!requestMessageResult.IsOk)
-                {
-                    await this.WriteResult(context.Response, requestMessageResult);
-                    return;
-                }
-
-                RpcRequestMessage rpcRequestMessage = requestMessageResult.Payload;
-                
-                // Execute.
-                RpcResult<object> rpcResult;
-
-                try
-                {
-                    rpcResult = await this.rpcEngine.Execute(rpcRequestMessage, this.instanceProvider);
-                }
-                catch (Exception err)
-                {
-                    string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
-                    {
-                        {"rpcRequest", rpcRequestMessage}
-                    });
-                    
-                    await this.WriteError(context.Response, $"RPC execution error ({rpcRequestMessage.Type}): {errorID}");
-                    return;
-                }
-                
-                await this.WriteResult(context.Response, rpcResult);
+                requestMessageResult = this.ParseRequestMessage(this.requestBody);
             }
+            catch (Exception err)
+            {
+                long? bytePositionInLine = null;
+                long? lineNumber = null;
+                string jsonPath = null;
+            
+                if (err is JsonException jsonException)
+                {
+                    bytePositionInLine = jsonException.BytePositionInLine;
+                    lineNumber = jsonException.LineNumber;
+                    jsonPath = jsonException.Path;
+                }   
+            
+                string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
+                {
+                    {"bytePositionInLine", bytePositionInLine},
+                    {"lineNumber", lineNumber},
+                    {"jsonPath", jsonPath},
+                });
+
+                return RpcResult.Error<object>($"Failed to parse RPC body: {errorID}");
+            }
+
+            if (!requestMessageResult.IsOk)
+            {
+                return requestMessageResult;
+            }
+
+            RpcRequestMessage rpcRequestMessage = requestMessageResult.Payload;
+        
+            // Execute.
+            RpcResult<object> rpcResult;
+
+            try
+            {
+                rpcResult = await this.rpcEngine.Execute(rpcRequestMessage, this.instanceProvider);
+            }
+            catch (Exception err)
+            {
+                string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
+                {
+                    {"rpcRequest", rpcRequestMessage}
+                });
+
+                return RpcResult.Error<object>($"RPC execution error ({rpcRequestMessage.Type}): {errorID}");
+            }
+
+            return rpcResult;
         }
 
         /// <summary>
@@ -193,9 +196,9 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Writes a <see cref="RpcResult{T}" /> to the HTTP result.
+        ///     Writes a <see cref="RpcResult" /> to the HTTP result.
         /// </summary>
-        private async ValueTask WriteResult<T>(HttpResponse response, RpcResult<T> result)
+        private async ValueTask WriteResult(HttpResponse response, RpcResult result)
         {
             try
             {
@@ -209,11 +212,6 @@ namespace Newsgirl.Server
                     {"result", result}
                 });
             }
-        }
-
-        private ValueTask WriteError(HttpResponse response, string errorMessage)
-        {
-            return this.WriteResult(response, RpcResult.Error<object>(errorMessage));
         }
 
         /// <summary>

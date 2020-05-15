@@ -2,21 +2,17 @@ namespace Newsgirl.Shared
 {
     using System;
     using System.Buffers;
-    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Rents a byte[] of a given size from ArrayPool.Shared and returns it when disposed.
     /// </summary>
-    public readonly struct RentedByteArrayHandle : IDisposable
+    public class RentedByteArrayHandle : IDisposable
     {
         public readonly int Length;
         
         private readonly byte[] buffer;
 
-        public byte[] GetRentedArray()
-        {
-            return this.buffer;
-        }
+        public byte[] GetRentedArray() => this.buffer;
 
         public RentedByteArrayHandle(int length)
         {
@@ -26,21 +22,10 @@ namespace Newsgirl.Shared
 
         public bool HasData => this.buffer != null;
 
-        public void Dispose()
-        {
-            ArrayPool<byte>.Shared.Return(this.buffer);
-        }
+        public void Dispose() => ArrayPool<byte>.Shared.Return(this.buffer);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<byte> AsSpan()
-        {
-            return new Span<byte>(this.buffer, 0, this.Length);
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Memory<byte> AsMemory()
-        {
-            return new Memory<byte>(this.buffer, 0, this.Length);
-        }
+        public Span<byte> AsSpan() => new Span<byte>(this.buffer, 0, this.Length);
+
+        public Memory<byte> AsMemory() => new Memory<byte>(this.buffer, 0, this.Length);
     }
 }

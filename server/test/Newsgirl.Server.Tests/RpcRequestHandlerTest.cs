@@ -1,14 +1,9 @@
 namespace Newsgirl.Server.Tests
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
     using System.Net.Http;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using Newtonsoft.Json;
-    using NSubstitute;
     using Shared;
     using Testing;
     using Xunit;
