@@ -27,8 +27,11 @@ namespace Newsgirl.Server
         private readonly ErrorReporter errorReporter;
         private readonly ILog log;
         
+        private HttpContext httpContext;
         private RentedByteArrayHandle requestBody;
-        private HttpContext context;
+        private RpcRequestMessage rpcRequest;
+        private RpcResult<object> rpcResponse;
+        private DateTime requestStart;
 
         private static void InitializeStaticCache()
         {
@@ -42,8 +45,8 @@ namespace Newsgirl.Server
         }
 
         public RpcRequestHandler(
-            RpcEngine rpcEngine, 
-            InstanceProvider instanceProvider, 
+            RpcEngine rpcEngine,
+            InstanceProvider instanceProvider,
             AsyncLocals asyncLocals,
             ErrorReporter errorReporter,
             ILog log)
@@ -55,24 +58,62 @@ namespace Newsgirl.Server
             this.log = log;
         }
         
-        public async Task HandleRequest(HttpContext context)
+        public async Task HandleRequest(HttpContext httpContext)
         {
-            this.context = context;
+            this.httpContext = httpContext;
+            this.requestStart = DateTime.UtcNow;
             
             // Diagnostic data in case of an error.
             this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
             {
-                {"http", new HttpLogData(context, ref this.requestBody)}
+                {"http", new HttpLogData(
+                    httpContext,
+                    this.requestBody,
+                    this.rpcRequest,
+                    this.rpcResponse,
+                    this.rpcResponse == null || !this.rpcResponse.IsOk,
+                    this.requestStart
+                )}
             };
 
-            this.log.Http(() => new HttpLogData(context, ref this.requestBody));
+            RpcResult<object> result;
 
-            var result = await this.HandleRequest2();
+            try
+            {
+                result = await this.Process(httpContext);
+            }
+            catch (Exception err)
+            {
+                string errorID = await this.errorReporter.Error(err, "RPC_SERVER_ERROR");
+                result = RpcResult.Error<object>($"General RPC error: {errorID}");
+            }
+            finally
+            {
+                this.log.Http(() => new HttpLogData(
+                    httpContext,
+                    null,
+                    null,
+                    null,
+                    this.rpcResponse == null || !this.rpcResponse.IsOk,
+                    this.requestStart
+                ));
+                
+                this.log.HttpDetailed(() => new HttpLogData(
+                    httpContext,
+                    this.requestBody,
+                    this.rpcRequest,
+                    this.rpcResponse,
+                    this.rpcResponse == null || !this.rpcResponse.IsOk,
+                    this.requestStart
+                ));
+                
+                this.requestBody?.Dispose();
+            }
 
-            await this.WriteResult(context.Response, result);
+            await this.WriteResult(result);
         }
 
-        private async Task<RpcResult> HandleRequest2()
+        private async Task<RpcResult<object>> Process(HttpContext context)
         {
             // Initialize.            
             try
@@ -138,29 +179,27 @@ namespace Newsgirl.Server
 
             if (!requestMessageResult.IsOk)
             {
-                return requestMessageResult;
+                return RpcResult.Error<object>(requestMessageResult.ErrorMessages);
             }
 
-            RpcRequestMessage rpcRequestMessage = requestMessageResult.Payload;
+            this.rpcRequest = requestMessageResult.Payload;
         
             // Execute.
-            RpcResult<object> rpcResult;
-
             try
             {
-                rpcResult = await this.rpcEngine.Execute(rpcRequestMessage, this.instanceProvider);
+                this.rpcResponse = await this.rpcEngine.Execute(this.rpcRequest, this.instanceProvider);
             }
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
-                    {"rpcRequest", rpcRequestMessage}
+                    {"rpcRequest", this.rpcRequest}
                 });
 
-                return RpcResult.Error<object>($"RPC execution error ({rpcRequestMessage.Type}): {errorID}");
+                return RpcResult.Error<object>($"RPC execution error ({this.rpcRequest.Type}): {errorID}");
             }
 
-            return rpcResult;
+            return this.rpcResponse;
         }
 
         /// <summary>
@@ -198,12 +237,13 @@ namespace Newsgirl.Server
         /// <summary>
         ///     Writes a <see cref="RpcResult" /> to the HTTP result.
         /// </summary>
-        private async ValueTask WriteResult(HttpResponse response, RpcResult result)
+        private async ValueTask WriteResult<T>(RpcResult<T> result)
         {
             try
             {
-                response.StatusCode = 200;
-                await JsonSerializer.SerializeAsync(response.Body, result, serializationOptions);
+                this.httpContext.Response.StatusCode = 200;
+                
+                await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, serializationOptions);
             }
             catch (Exception err)
             {
@@ -259,9 +299,16 @@ namespace Newsgirl.Server
     
     public class HttpLogData
     {
-        public HttpLogData(HttpContext context, ref RentedByteArrayHandle requestBodyBytes)
+        public HttpLogData(HttpContext context,
+            RentedByteArrayHandle requestBody,
+            RpcRequestMessage rpcRequest,
+            RpcResult<object> rpcResponse,
+            bool requestFailed,
+            DateTime requestStart)
         {
-            this.DateTime = System.DateTime.UtcNow.ToString("O");
+            var now = System.DateTime.UtcNow;
+            
+            this.DateTime = now.ToString("O");
             this.RequestID = context.Connection.Id;
             this.LocalIp = context.Connection.LocalIpAddress + ":" + context.Connection.LocalPort;
             this.RemoteIp = context.Connection.RemoteIpAddress + ":" + context.Connection.RemotePort;
@@ -273,12 +320,32 @@ namespace Newsgirl.Server
             this.Protocol = context.Request.Protocol;
             this.Scheme = context.Request.Scheme;
             this.Aborted = context.RequestAborted.IsCancellationRequested;
-            
-            if (requestBodyBytes.HasData)
+
+            if (requestBody != null)
             {
-                this.HttpRequestBodyBase64 = Convert.ToBase64String(requestBodyBytes.AsSpan());
+                this.HttpRequestBodyBase64 = Convert.ToBase64String(requestBody.AsSpan());
             }
+
+            if (rpcRequest != null)
+            {
+                this.RpcRequest = JsonSerializer.Serialize(rpcRequest);
+            }
+            
+            if (rpcResponse != null)
+            {
+                this.RpcRequest = JsonSerializer.Serialize(rpcResponse);
+            }
+
+            this.StatusCode = context.Response.StatusCode;
+            this.RequestFailed = requestFailed;
+            this.RequestDuration = (now - requestStart).TotalMilliseconds;
         }
+
+        public double RequestDuration { get; set; }
+
+        public int StatusCode { get; set; }
+
+        public string RpcRequest { get; set; }
 
         public string RequestID { get; set; }
 
@@ -305,12 +372,17 @@ namespace Newsgirl.Server
         public string HttpRequestBodyBase64 { get; set; }
 
         public string DateTime { get; set; }
+        
+        public bool RequestFailed { get; }
     }
     
     public static class HttpLoggingExtensions
     {
         public const string HttpKey = "HTTP_REQUESTS";
+        public const string HttpDetailedKey = "HTTP_REQUESTS_DETAILED";
 
         public static void Http(this ILog log, Func<HttpLogData> func) => log.Log(HttpKey, func);
+        
+        public static void HttpDetailed(this ILog log, Func<HttpLogData> func) => log.Log(HttpDetailedKey, func);
     }
 }

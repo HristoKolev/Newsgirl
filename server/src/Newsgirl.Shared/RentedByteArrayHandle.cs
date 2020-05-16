@@ -8,8 +8,8 @@ namespace Newsgirl.Shared
     /// </summary>
     public class RentedByteArrayHandle : IDisposable
     {
-        public readonly int Length;
-        
+        public int Length { get; }
+
         private readonly byte[] buffer;
 
         public byte[] GetRentedArray() => this.buffer;
@@ -19,8 +19,6 @@ namespace Newsgirl.Shared
             this.Length = length;
             this.buffer = ArrayPool<byte>.Shared.Rent(length);
         }
-
-        public bool HasData => this.buffer != null;
 
         public void Dispose() => ArrayPool<byte>.Shared.Return(this.buffer);
 

@@ -49,7 +49,7 @@ namespace Newsgirl.Server
             
             this.Log = new StructuredLogger(builder =>
             {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>()
+                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
                 {
                     {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
                     {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
@@ -59,7 +59,16 @@ namespace Newsgirl.Server
                     )},
                 });
                 
-                builder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string,Func<LogConsumer<HttpLogData>>>()
+                builder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+                {
+                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                    )},
+                });
+                
+                builder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
                 {
                     {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
                         this.ErrorReporter,

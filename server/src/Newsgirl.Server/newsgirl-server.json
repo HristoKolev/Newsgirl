@@ -11,28 +11,24 @@
         "Name": "GENERAL_LOG",
         "Enabled": true,
         "Consumers": [
-          {
-            "Name": "ConsoleConsumer",
-            "Enabled": true
-          },
-          {
-            "Name": "ElasticsearchConsumer",
-            "Enabled": true
-          }
+          { "Name": "ConsoleConsumer", "Enabled": true },
+          { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
       },
       {
         "Name": "HTTP_REQUESTS",
+        "Enabled": false,
+        "Consumers": [
+          { "Name": "ConsoleConsumer", "Enabled": true },
+          { "Name": "ElasticsearchConsumer", "Enabled": true }
+        ]
+      },
+      {
+        "Name": "HTTP_REQUESTS_DETAILED",
         "Enabled": true,
         "Consumers": [
-          {
-            "Name": "ConsoleConsumer",
-            "Enabled": true
-          },
-          {
-            "Name": "ElasticsearchConsumer",
-            "Enabled": true
-          }
+          { "Name": "ConsoleConsumer", "Enabled": true },
+          { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
       }
     ],

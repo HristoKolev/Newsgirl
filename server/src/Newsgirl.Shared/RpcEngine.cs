@@ -652,7 +652,7 @@ namespace Newsgirl.Shared
             return new RpcResult<T> {ErrorMessages = new[] {message}};
         }
 
-        public static RpcResult Error<T>(string[] errorMessages)
+        public static RpcResult<T> Error<T>(string[] errorMessages)
         {
             return new RpcResult<T> {ErrorMessages = errorMessages};
         }
