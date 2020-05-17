@@ -32,6 +32,7 @@ namespace Newsgirl.Server
         private RpcRequestMessage rpcRequest;
         private RpcResult<object> rpcResponse;
         private DateTime requestStart;
+        private string requestType;
 
         private static void InitializeStaticCache()
         {
@@ -72,7 +73,8 @@ namespace Newsgirl.Server
                     this.rpcRequest,
                     this.rpcResponse,
                     this.rpcResponse == null || !this.rpcResponse.IsOk,
-                    this.requestStart
+                    this.requestStart,
+                    this.requestType
                 )}
             };
 
@@ -95,7 +97,8 @@ namespace Newsgirl.Server
                     null,
                     null,
                     this.rpcResponse == null || !this.rpcResponse.IsOk,
-                    this.requestStart
+                    this.requestStart,
+                    this.requestType
                 ));
                 
                 this.log.HttpDetailed(() => new HttpLogData(
@@ -104,7 +107,8 @@ namespace Newsgirl.Server
                     this.rpcRequest,
                     this.rpcResponse,
                     this.rpcResponse == null || !this.rpcResponse.IsOk,
-                    this.requestStart
+                    this.requestStart,
+                    this.requestType
                 ));
                 
                 this.requestBody?.Dispose();
@@ -209,18 +213,18 @@ namespace Newsgirl.Server
         {
             var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
 
-            string rpcRequestType = typeModel.Type;
+            this.requestType = typeModel.Type;
 
-            if (string.IsNullOrWhiteSpace(rpcRequestType))
+            if (string.IsNullOrWhiteSpace(this.requestType))
             {
                 return RpcResult.Error<RpcRequestMessage>("Request type is null or an empty string.");
             }
 
-            var metadata = this.rpcEngine.GetMetadataByRequestName(rpcRequestType);
+            var metadata = this.rpcEngine.GetMetadataByRequestName(this.requestType);
 
             if (metadata == null)
             {
-                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request: {rpcRequestType}.");
+                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request: {this.requestType}.");
             }
 
             var deserializeType = genericRpcModelTable.GetOrAdd(
@@ -304,7 +308,8 @@ namespace Newsgirl.Server
             RpcRequestMessage rpcRequest,
             RpcResult<object> rpcResponse,
             bool requestFailed,
-            DateTime requestStart)
+            DateTime requestStart,
+            string requestType)
         {
             var now = System.DateTime.UtcNow;
             
@@ -339,7 +344,10 @@ namespace Newsgirl.Server
             this.StatusCode = context.Response.StatusCode;
             this.RequestFailed = requestFailed;
             this.RequestDuration = (now - requestStart).TotalMilliseconds;
+            this.RequestType = requestType;
         }
+
+        public string RequestType { get; set; }
 
         public double RequestDuration { get; set; }
 

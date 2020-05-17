@@ -86,9 +86,7 @@ namespace Newsgirl.Server.Tests
             };
             
             var response = await client.PostAsync("/", new StringContent("{\"type\": \"PingRequest\", \"payload\":{} }"));
-            
             response.EnsureSuccessStatusCode();
-            
             string responseBody = await response.Content.ReadAsStringAsync();
             
             Snapshot.MatchJson(responseBody);
