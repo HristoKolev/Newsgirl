@@ -10,6 +10,8 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Newsgirl.Fetcher.Tests
 {
+    using Shared.Logging;
+
     public class FeedFetcherTest
     {
         [Fact]

@@ -5,6 +5,7 @@ namespace Newsgirl.Benchmarks
     using System.Threading.Tasks;
     using BenchmarkDotNet.Attributes;
     using Shared;
+    using Shared.Logging;
 
     [MemoryDiagnoser]
     public class StructuredLoggerBenchmark

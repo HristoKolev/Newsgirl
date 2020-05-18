@@ -10,6 +10,7 @@ namespace Newsgirl.Server
     using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
     using Shared;
+    using Shared.Logging;
 
     public class HttpServerApp : IAsyncDisposable
     {

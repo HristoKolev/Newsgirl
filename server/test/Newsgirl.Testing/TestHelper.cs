@@ -26,6 +26,7 @@ namespace Newsgirl.Testing
 {
     using System.Runtime.ExceptionServices;
     using Shared;
+    using Shared.Logging;
 
     public static class TestHelper
     {

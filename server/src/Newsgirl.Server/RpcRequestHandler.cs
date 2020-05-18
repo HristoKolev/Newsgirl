@@ -9,6 +9,7 @@ namespace Newsgirl.Server
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Shared;
+    using Shared.Logging;
 
     /// <summary>
     ///     Serves Rpc requests over HTTP.

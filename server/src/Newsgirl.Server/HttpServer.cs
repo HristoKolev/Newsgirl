@@ -13,6 +13,7 @@ namespace Newsgirl.Server
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using Shared;
+    using Shared.Logging;
 
     /// <summary>
     ///     A wrapper around ASP.NET Core's IHost.

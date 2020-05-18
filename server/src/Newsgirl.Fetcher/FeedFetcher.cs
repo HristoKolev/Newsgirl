@@ -7,6 +7,8 @@ using Newsgirl.Shared;
 
 namespace Newsgirl.Fetcher
 {
+    using Shared.Logging;
+
     public class FeedFetcher
     {
         private readonly IFeedContentProvider feedContentProvider;

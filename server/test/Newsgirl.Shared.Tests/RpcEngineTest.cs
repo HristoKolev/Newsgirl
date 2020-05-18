@@ -10,6 +10,8 @@ using NSubstitute;
 
 namespace Newsgirl.Shared.Tests
 {
+    using Logging;
+
     public class RpcEngineTest
     {
         [Fact]

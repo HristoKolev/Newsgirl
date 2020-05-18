@@ -3,6 +3,7 @@ namespace Newsgirl.Shared.Tests
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Logging;
     using Testing;
     using Xunit;
 

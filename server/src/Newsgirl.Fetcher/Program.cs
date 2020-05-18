@@ -7,6 +7,7 @@
     using Autofac;
     using Newtonsoft.Json;
     using Shared;
+    using Shared.Logging;
 
     public class FetcherApp : IAsyncDisposable
     {

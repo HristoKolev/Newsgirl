@@ -8,6 +8,7 @@ namespace Newsgirl.Fetcher
     using Npgsql;
     using NpgsqlTypes;
     using Shared;
+    using Shared.Logging;
 
     public class FeedItemsImportService : IFeedItemsImportService
     {

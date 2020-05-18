@@ -4,6 +4,7 @@ namespace Newsgirl.Shared
     using System.Text.Json;
     using System.Threading.Tasks;
     using Elasticsearch.Net;
+    using Logging;
 
     public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
     {
