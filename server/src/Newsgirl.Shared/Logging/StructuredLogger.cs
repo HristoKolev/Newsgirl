@@ -86,22 +86,9 @@ namespace Newsgirl.Shared.Logging
 
         private class LogConsumerCollection : IAsyncDisposable
         {
-            private readonly Dictionary<string, object> consumersByConfigName;
-
-            private int referenceCount;
-
-            public void IncrementRc() => Interlocked.Increment(ref this.referenceCount);
-
-            public void DecrementRc() => Interlocked.Decrement(ref this.referenceCount);
-
-            public async Task WaitUntilUnused()
-            {
-                while (this.referenceCount != 0)
-                {
-                    await Task.Delay(100);
-                }
-            }
-
+            public readonly Dictionary<string, object> consumersByConfigName;
+            public int referenceCount;
+            
             public LogConsumerCollection(Dictionary<string,object> consumersByConfigName)
             {
                 this.consumersByConfigName = consumersByConfigName;
@@ -111,17 +98,15 @@ namespace Newsgirl.Shared.Logging
             {
                 this.consumersByConfigName = new Dictionary<string, object>();
             }
-
-            public LogConsumer<T>[] GetConsumers<T>(string key)
+ 
+            public async Task WaitUntilUnused()
             {
-                if (!this.consumersByConfigName.TryGetValue(key, out var consumersObj))
+                while (this.referenceCount != 0)
                 {
-                    return null;
+                    await Task.Delay(100);
                 }
-
-                return (LogConsumer<T>[])consumersObj;
             }
-        
+            
             public async ValueTask DisposeAsync()
             {
                 var disposeTasks = new List<Task>();
@@ -145,7 +130,7 @@ namespace Newsgirl.Shared.Logging
     /// </summary>
     public class StructuredLoggerBuilder
     {
-        public Dictionary<string, Func<StructuredLoggerConfig[], object>> LogConsumersFactoryMap { get; }
+        private Dictionary<string, Func<StructuredLoggerConfig[], object>> LogConsumersFactoryMap { get; }
             = new Dictionary<string, Func<StructuredLoggerConfig[], object>>(); 
         
         public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
