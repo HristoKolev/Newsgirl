@@ -1,21 +1,13 @@
 namespace ConsoleApp1
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Threading;
-    using System.Threading.Tasks;
+    using System.Threading.Channels;
 
-    internal static class Program
-    {
-        private static void Main(string[] args)
-        {
-        }
-    }
-    
     /// <summary>
     /// TODO: define invalid config behaviour. 
     /// </summary>
@@ -73,7 +65,7 @@ namespace ConsoleApp1
             });
         }
 
-        public ILog Build()
+        public StructuredLogger Build()
         {
             // The type.
             var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
@@ -81,27 +73,19 @@ namespace ConsoleApp1
                 TypeAttributes.Public | TypeAttributes.Class,
                 typeof(StructuredLogger)
             );
-            
-            // The constructor.
+ 
             var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
             var ctorIl = ctor.GetILGenerator();
-            var baseCtor = typeof(StructuredLogger).GetConstructor(
-                BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.Instance, 
-                null, 
-                new Type[0],
-                null
-            );
-            
-            ctorIl.Emit(OpCodes.Ldarg_0);
-            ctorIl.Emit(OpCodes.Call, baseCtor!);
             ctorIl.Emit(OpCodes.Ret);
 
-            // The ILog implementation.
-            typeBuilder.AddInterfaceImplementation(typeof(ILog));
-
+            // The Log<T> implementation.
             var logMethod = typeBuilder.DefineMethod(
                 "Log",
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final
+                MethodAttributes.Public |
+                MethodAttributes.ReuseSlot |
+                MethodAttributes.HideBySig |
+                MethodAttributes.Final |
+                MethodAttributes.Virtual
             );
 
             var typeParameter = logMethod.DefineGenericParameters("TLogData")[0];
@@ -110,28 +94,74 @@ namespace ConsoleApp1
             logMethod.SetReturnType(typeof(void));
 
             var il = logMethod.GetILGenerator();
+            var consumerCollectionLocal = il.DeclareLocal(typeof(LogConsumerCollection));
+            var itemLocal = il.DeclareLocal(typeParameter);
+            var arrayIndexLocal = il.DeclareLocal(typeof(int));
             
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, typeof(StructuredLogger).GetField("consumerCollection", BindingFlags.NonPublic | BindingFlags.Instance)!);
-            il.Emit(OpCodes.Ldflda, typeof(StructuredLogger).GetField("ReferenceCount", BindingFlags.NonPublic | BindingFlags.Instance)!);
-            il.Emit(OpCodes.Call, typeof(Interlocked)
-                .GetMethods(BindingFlags.Static | BindingFlags.Public)
-                .First(x => x.Name == "Increment" &&
-                            x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType()));
+            il.Emit(OpCodes.Stloc, consumerCollectionLocal);
+
+            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
+            il.Emit(OpCodes.Ldflda, typeof(LogConsumerCollection).GetField("ReferenceCount", BindingFlags.Public | BindingFlags.Instance)!);
+            il.Emit(OpCodes.Call, typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x => x.Name == "Increment" && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType()));
             il.Emit(OpCodes.Pop);
 
             il.BeginExceptionBlock();
+
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Callvirt, TypeBuilder.GetMethod(typeof(Func<>).MakeGenericType(typeParameter), typeof(Func<>).GetMethod("Invoke")!));
+            il.Emit(OpCodes.Stloc, itemLocal);
             
+            var loopCheckLabel = il.DefineLabel();
+            var loopBodyLabel = il.DefineLabel();
             
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stloc, arrayIndexLocal);
+            il.Emit(OpCodes.Br_S, loopCheckLabel);
+            
+            // body step
+            il.MarkLabel(loopBodyLabel);
+            
+            // Load the writer array.
+            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
+            il.Emit(OpCodes.Ldfld, typeof(LogConsumerCollection).GetField("ConsumerWriters")!);
+            
+            // Get element at index.
+            il.Emit(OpCodes.Ldloc, arrayIndexLocal);
+            il.Emit(OpCodes.Ldelem_Ref);
+
+            // Use the writer.
+            il.Emit(OpCodes.Ldloc, itemLocal);
+            il.Emit(OpCodes.Callvirt, TypeBuilder.GetMethod(typeof(ChannelWriter<>).MakeGenericType(typeParameter), typeof(ChannelWriter<>).GetMethod("TryWrite")!));
+            il.Emit(OpCodes.Pop);
+            
+            // Increment step.
+            il.Emit(OpCodes.Ldloc, arrayIndexLocal);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stloc, arrayIndexLocal);
+            
+            // Compare step.
+            il.MarkLabel(loopCheckLabel);
+            
+            // Load the index.
+            il.Emit(OpCodes.Ldloc, arrayIndexLocal);
+            
+            // Load the writer array.
+            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
+            il.Emit(OpCodes.Ldfld, typeof(LogConsumerCollection).GetField("ConsumerWriters")!);
+            
+            // Compare.
+            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Blt_S, loopBodyLabel);
             
             il.BeginFinallyBlock();
             
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldflda, typeof(StructuredLogger).GetField("referenceCount", BindingFlags.NonPublic | BindingFlags.Instance)!);
-            il.Emit(OpCodes.Call, typeof(Interlocked)
-                .GetMethods(BindingFlags.Static | BindingFlags.Public)
-                .First(x => x.Name == "Decrement" &&
-                            x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType()));
+            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
+            il.Emit(OpCodes.Ldflda, typeof(LogConsumerCollection).GetField("ReferenceCount", BindingFlags.Public | BindingFlags.Instance)!);
+            il.Emit(OpCodes.Call, typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x => x.Name == "Decrement" && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType()));
             il.Emit(OpCodes.Pop);
             
             il.EndExceptionBlock();
@@ -142,107 +172,9 @@ namespace ConsoleApp1
             var generatedType = typeBuilder.CreateType();
             
             var instance = (StructuredLogger) Activator.CreateInstance(generatedType);
+            instance.SetFactoryMap(this.logConsumersFactoryMap);
 
             return instance;
         }
-    }
- 
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class StructuredLoggerConfig
-    {
-        public string Name { get; set; }
-        
-        public bool Enabled { get; set; }
-
-        public StructuredLoggerConsumerConfig[] Consumers { get; set; }
-    }
-    
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class StructuredLoggerConsumerConfig
-    {
-        public string Name { get; set; }
-        
-        public bool Enabled { get; set; }
-    }
-
-    public abstract class StructuredLogger : IAsyncDisposable, ILog
-    {
-        private Dictionary<string, Func<StructuredLoggerConfig[], object>> logConsumersFactoryMap; 
-        
-        protected LogConsumerCollection consumerCollection;
-
-        public async ValueTask Reconfigure(StructuredLoggerConfig[] configArray)
-        {
-            var map = new Dictionary<string, object>();
-
-            foreach (var (configName, consumersFactory) in logConsumersFactoryMap)
-            {
-                var consumers = consumersFactory(configArray);
-                
-                if (consumers == null)
-                {
-                    continue;
-                }
-                
-                map.Add(configName, consumers);
-            }
-            
-            var oldCollection = this.consumerCollection;
-            
-            this.consumerCollection = new LogConsumerCollection
-            {
-                ConsumersByConfigName = map,
-                ConsumerWriters = map.Values.SelectMany(x => ((IEnumerable)x)
-                    .Cast<LogConsumerLifetime>().Select(x => x.GetWriter())).ToArray()
-            };
-            
-            await oldCollection.WaitUntilUnused();
-            await oldCollection.DisposeAsync();
-        }
-        
-        public abstract void Log<TData>(string configName, Func<TData> item);
-
-        public async ValueTask DisposeAsync()
-        {
-            await this.consumerCollection.WaitUntilUnused();
-            await this.consumerCollection.DisposeAsync();
-        }
-    }
-
-    public class LogConsumerCollection
-    {
-        public Dictionary<string, object> ConsumersByConfigName;
-        
-        public object[] ConsumerWriters;
-        
-        public int ReferenceCount;
-        
-        public async Task WaitUntilUnused()
-        {
-            while (this.ReferenceCount != 0)
-            {
-                await Task.Delay(100);
-            }
-        }
-        
-        public async ValueTask DisposeAsync()
-        {
-            var disposeTasks = new List<Task>();
-
-            foreach (var consumersObj in this.ConsumersByConfigName.Values)
-            {
-                foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerLifetime>())
-                {
-                    disposeTasks.Add(consumer.Stop());
-                }
-            }
-
-            await Task.WhenAll(disposeTasks);
-        }
-    }
-    
-    public interface ILog
-    {
-        void Log<TData>(string configName, Func<TData> item); 
     }
 }
