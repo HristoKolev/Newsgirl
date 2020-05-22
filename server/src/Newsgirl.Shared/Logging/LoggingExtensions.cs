@@ -1,9 +1,8 @@
-namespace Newsgirl.Shared
+namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using Logging;
 
     public static class GeneralLoggingExtensions
     {

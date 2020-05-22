@@ -34,13 +34,14 @@ namespace Newsgirl.Benchmarks
 
         private static StructuredLogger CreateLogger<T>(NoOpConsumer<T> consumer)
         {
-            var logger = new StructuredLogger(builder =>
+            var builder = new StructuredLoggerBuilder();
+            
+            builder.AddConfig(WarnConfig, new Dictionary<string, Func<LogConsumer<T>>>
             {
-                builder.AddConfig(WarnConfig, new Dictionary<string, Func<LogConsumer<T>>>
-                {
-                    {NoopConsumerName, () => consumer}
-                });
+                {NoopConsumerName, () => consumer}
             });
+            
+            var logger = builder.Build();
 
             logger.Reconfigure(new[] {new StructuredLoggerConfig
             {

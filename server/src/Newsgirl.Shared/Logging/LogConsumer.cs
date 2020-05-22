@@ -4,6 +4,7 @@ namespace Newsgirl.Shared.Logging
     using System.Buffers;
     using System.Threading.Channels;
     using System.Threading.Tasks;
+    using Shared;
 
     /// <summary>
     /// Base class for all log consumers.
@@ -64,6 +65,11 @@ namespace Newsgirl.Shared.Logging
             this.buffer = null;
 
             this.started = false;
+        }
+
+        public object GetWriter()
+        {
+            return this.Channel.Writer;
         }
 
         private async Task Read()
@@ -155,11 +161,13 @@ namespace Newsgirl.Shared.Logging
 
         protected abstract ValueTask Flush(ArraySegment<TData> data);
     }
-    
+
     public interface LogConsumerLifetime
     {
         void Start();
         
         Task Stop();
+
+        object GetWriter();
     }
 }

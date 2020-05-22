@@ -48,36 +48,37 @@ namespace Newsgirl.Server
             
             await this.LoadConfig();
             
-            this.Log = new StructuredLogger(builder =>
+            var slBuilder = new StructuredLoggerBuilder();
+            
+            slBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
             {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
-                {
-                    {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
-                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
-                    )},
-                });
-                
-                builder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
-                {
-                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                    )},
-                });
-                
-                builder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
-                {
-                    {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                    )},
-                });
+                {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
+                {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
+                    this.ErrorReporter,
+                    this.AppConfig.Logging.Elasticsearch,
+                    this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                )},
             });
+                
+            slBuilder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            {
+                {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                    this.ErrorReporter,
+                    this.AppConfig.Logging.Elasticsearch,
+                    this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                )},
+            });
+                
+            slBuilder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            {
+                {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                    this.ErrorReporter,
+                    this.AppConfig.Logging.Elasticsearch,
+                    this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                )},
+            });
+            
+            this.Log = slBuilder.Build();
             
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 

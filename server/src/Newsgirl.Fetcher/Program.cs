@@ -35,18 +35,18 @@
 
             await this.LoadConfig();
             
-            this.Log = new StructuredLogger(builder =>
+            var slBuilder = new StructuredLoggerBuilder();
+            slBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>
             {
-                builder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>
-                {
-                    {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
-                    {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
-                        this.ErrorReporter, 
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
-                    )},
-                });
+                {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
+                {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
+                    this.ErrorReporter, 
+                    this.AppConfig.Logging.Elasticsearch,
+                    this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                )},
             });
+            
+            this.Log = slBuilder.Build();
             
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 

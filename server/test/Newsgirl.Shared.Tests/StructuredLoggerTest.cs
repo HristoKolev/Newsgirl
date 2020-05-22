@@ -10,22 +10,11 @@ namespace Newsgirl.Shared.Tests
     public class StructuredLoggerTest
     {
         [Fact]
-        public void Ctor_throws_on_null_config_function()
-        {
-            Snapshot.MatchError(() =>
-            {
-                new StructuredLogger(null);
-            });
-        }
-        
-        [Fact]
         public async Task Log_is_noop_when_there_are_no_registered_configs()
         {
-            void Configure(StructuredLoggerBuilder builder)
-            {
-            }
+            var builder = new StructuredLoggerBuilder();
             
-            await using (var logger = new StructuredLogger(Configure))
+            await using (var logger = builder.Build())
             {
                 await logger.Reconfigure(Array.Empty<StructuredLoggerConfig>());
                 
@@ -50,18 +39,17 @@ namespace Newsgirl.Shared.Tests
             const string CONSUMER_NAME = "LogConsumerMock";
             
             var consumerMock = new LogConsumerMock(null);
-            
-            void Configure(StructuredLoggerBuilder builder)
-            {
-                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
-                {
-                    {CONSUMER_NAME, () => consumerMock}
-                });
-            }
-            
+
             var expected = new List<TestLogData>();
             
-            await using (var logger = new StructuredLogger(Configure))
+            var builder = new StructuredLoggerBuilder();
+            
+            builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock}
+            });
+            
+            await using (var logger = builder.Build())
             {
                 await logger.Reconfigure(new []
                 {
@@ -107,17 +95,16 @@ namespace Newsgirl.Shared.Tests
             
             var consumerMock = new LogConsumerMock(null);
             
-            void Configure(StructuredLoggerBuilder builder)
-            {
-                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
-                {
-                    {CONSUMER_NAME, () => consumerMock}
-                });
-            }
-            
             var expected = new List<TestLogData>();
             
-            await using (var logger = new StructuredLogger(Configure))
+            var builder = new StructuredLoggerBuilder();
+            
+            builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock}
+            });
+            
+            await using (var logger = builder.Build())
             {
                 for (int j = 0; j < 5; j++)
                 {
@@ -165,17 +152,15 @@ namespace Newsgirl.Shared.Tests
             
             var consumerMock = new LogConsumerMock(null);
             
-            void Configure(StructuredLoggerBuilder builder)
-            {
-                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
-                {
-                    {CONSUMER_NAME, () => consumerMock}
-                });
-            }
-            
             var expected = new List<TestLogData>();
+
+            var builder = new StructuredLoggerBuilder();
+            builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock}
+            });
             
-            await using (var logger = new StructuredLogger(Configure))
+            await using (var logger = builder.Build())
             {
                 for (int j = 0; j < 5; j++)
                 {
@@ -224,18 +209,16 @@ namespace Newsgirl.Shared.Tests
             var errorReporter = new ErrorReporterMock();
             
             var consumerMock = new LogConsumerMock(errorReporter);
-            
-            void Configure(StructuredLoggerBuilder builder)
-            {
-                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
-                {
-                    {CONSUMER_NAME, () => consumerMock}
-                });
-            }
-            
+
             var expected = new List<TestLogData>();
+
+            var builder = new StructuredLoggerBuilder();
+            builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock}
+            });
             
-            await using (var logger = new StructuredLogger(Configure))
+            await using (var logger = builder.Build())
             {
                 await logger.Reconfigure(new []
                 {
@@ -293,17 +276,15 @@ namespace Newsgirl.Shared.Tests
             
             var consumerMock = new LogConsumerMock(errorReporter);
             
-            void Configure(StructuredLoggerBuilder builder)
-            {
-                builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
-                {
-                    {CONSUMER_NAME, () => consumerMock}
-                });
-            }
-            
             var expected = new List<TestLogData>();
+
+            var builder = new StructuredLoggerBuilder();
+            builder.AddConfig(MOCK_KEY, new Dictionary<string, Func<LogConsumer<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock}
+            });
             
-            await using (var logger = new StructuredLogger(Configure))
+            await using (var logger = builder.Build())
             {
                 await logger.Reconfigure(new []
                 {

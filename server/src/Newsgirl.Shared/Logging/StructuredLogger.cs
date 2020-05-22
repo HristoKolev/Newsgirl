@@ -4,61 +4,24 @@ namespace Newsgirl.Shared.Logging
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
-    /// <summary>
-    /// Logging service for structured data.
-    /// </summary>
-    public class StructuredLogger : IAsyncDisposable, ILog
+    public abstract class StructuredLogger : IAsyncDisposable, ILog
     {
-        private readonly Action<StructuredLoggerBuilder> buildLogger;
-        private LogConsumerCollection consumerCollection = new LogConsumerCollection();
+        private Dictionary<string, Func<StructuredLoggerConfig[], object>> factoryMap;
 
-        public StructuredLogger(Action<StructuredLoggerBuilder> buildLogger)
+        protected LogConsumerCollection consumerCollection;
+
+        public void SetFactoryMap(Dictionary<string, Func<StructuredLoggerConfig[], object>> map)
         {
-            this.buildLogger = buildLogger ?? throw new DetailedLogException("The build function is null.");
+            this.factoryMap = map;
         }
-
-        public void Log<T>(string key, Func<T> func)
-        {
-            var collection = this.consumerCollection;
-            
-            collection.IncrementRc();
-
-            try
-            {
-                var consumers = collection.GetConsumers<T>(key);
-
-                if (consumers == null)
-                {
-                    return;
-                }
-
-                var item = func();
-
-                for (int i = 0; i < consumers.Length; i++)
-                {
-                    if (!consumers[i].Channel.Writer.TryWrite(item))
-                    {
-                        throw new ApplicationException("channel.Writer.TryWrite returned false.");
-                    }
-                }
-            }
-            finally
-            {
-                collection.DecrementRc();
-            }
-        }
-
+        
         public async ValueTask Reconfigure(StructuredLoggerConfig[] configArray)
         {
-            var builder = new StructuredLoggerBuilder();
-            this.buildLogger(builder);
-            
             var map = new Dictionary<string, object>();
 
-            foreach (var (configName, consumersFactory) in builder.LogConsumersFactoryMap)
+            foreach (var (configName, consumersFactory) in this.factoryMap)
             {
                 var consumers = consumersFactory(configArray);
                 
@@ -72,117 +35,68 @@ namespace Newsgirl.Shared.Logging
             
             var oldCollection = this.consumerCollection;
             
-            this.consumerCollection = new LogConsumerCollection(map);
-            
-            await oldCollection.WaitUntilUnused();
-            await oldCollection.DisposeAsync();
+            this.consumerCollection = new LogConsumerCollection
+            {
+                ConsumersByConfigName = map,
+                ConsumerWriters = map.Values
+                    .SelectMany(x => ((IEnumerable)x).Cast<LogConsumerLifetime>())
+                    .Select(x => x.GetWriter())
+                    .ToArray()
+            };
+
+            if (oldCollection != null)
+            {
+                await oldCollection.WaitUntilUnused();
+                await oldCollection.DisposeAsync();    
+            }
         }
+        
+        public abstract void Log<TData>(string configName, Func<TData> item);
 
         public async ValueTask DisposeAsync()
         {
             await this.consumerCollection.WaitUntilUnused();
             await this.consumerCollection.DisposeAsync();
         }
-
-        private class LogConsumerCollection : IAsyncDisposable
-        {
-            public readonly Dictionary<string, object> consumersByConfigName;
-            public int referenceCount;
-            
-            public LogConsumerCollection(Dictionary<string,object> consumersByConfigName)
-            {
-                this.consumersByConfigName = consumersByConfigName;
-            }
-
-            public LogConsumerCollection()
-            {
-                this.consumersByConfigName = new Dictionary<string, object>();
-            }
- 
-            public async Task WaitUntilUnused()
-            {
-                while (this.referenceCount != 0)
-                {
-                    await Task.Delay(100);
-                }
-            }
-            
-            public async ValueTask DisposeAsync()
-            {
-                var disposeTasks = new List<Task>();
-
-                foreach (var consumersObj in this.consumersByConfigName.Values)
-                {
-                    foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerLifetime>())
-                    {
-                        disposeTasks.Add(consumer.Stop());
-                    }
-                }
-
-                await Task.WhenAll(disposeTasks);
-            }
-        }
     }
-
-    /// <summary>
-    /// Builder for the <see cref="StructuredLogger"/>.
-    /// TODO: define invalid config behaviour. 
-    /// </summary>
-    public class StructuredLoggerBuilder
+    
+    public class LogConsumerCollection
     {
-        private Dictionary<string, Func<StructuredLoggerConfig[], object>> LogConsumersFactoryMap { get; }
-            = new Dictionary<string, Func<StructuredLoggerConfig[], object>>(); 
+        public Dictionary<string, object> ConsumersByConfigName;
         
-        public void AddConfig<T>(string configName, Dictionary<string, Func<LogConsumer<T>>> consumerFactoryMap)
+        public object[] ConsumerWriters;
+        
+        public int ReferenceCount;
+        
+        public async Task WaitUntilUnused()
         {
-            if (this.LogConsumersFactoryMap.ContainsKey(configName))
+            while (this.ReferenceCount != 0)
             {
-                throw new DetailedLogException("There already is a configuration with this name.")
+                await Task.Delay(100);
+            }
+        }
+        
+        public async ValueTask DisposeAsync()
+        {
+            var disposeTasks = new List<Task>();
+
+            foreach (var consumersObj in this.ConsumersByConfigName.Values)
+            {
+                foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerLifetime>())
                 {
-                    Details =
-                    {
-                        {"configName", configName},
-                    }
-                };
+                    disposeTasks.Add(consumer.Stop());
+                }
             }
 
-            this.LogConsumersFactoryMap.Add(configName, configArray =>
-            {
-                var config = configArray.FirstOrDefault(x => x.Name == configName);
-
-                if (config == null || !config.Enabled)
-                {
-                    return null;
-                }
-                
-                var consumers = new List<LogConsumer<T>>();
-
-                foreach (var (consumerName, consumerFactory) in consumerFactoryMap)
-                {
-                    var consumerConfig = config.Consumers.FirstOrDefault(x => x.Name == consumerName);
-
-                    if (consumerConfig == null || !consumerConfig.Enabled)
-                    {
-                        continue;
-                    }
-
-                    var consumer = consumerFactory();
-                    
-                    consumer.Start();
-                    
-                    consumers.Add(consumer);
-                }
-
-                if (!consumers.Any())
-                {
-                    return null;
-                }
-                
-                return consumers.ToArray();
-            });
+            await Task.WhenAll(disposeTasks);
         }
     }
- 
+        
+    public interface ILog
+    {
+        void Log<TData>(string configName, Func<TData> item); 
+    }
+    
     // ReSharper disable once ClassNeverInstantiated.Global
     public class StructuredLoggerConfig
     {
@@ -200,11 +114,4 @@ namespace Newsgirl.Shared.Logging
         
         public bool Enabled { get; set; }
     }
-    
-    public interface ILog
-    {
-        void Log<T>(string key, Func<T> func);
-    }
-
-
 }

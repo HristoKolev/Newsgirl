@@ -1,4 +1,4 @@
-namespace ConsoleApp1
+namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Collections.Generic;
@@ -7,6 +7,7 @@ namespace ConsoleApp1
     using System.Reflection.Emit;
     using System.Threading;
     using System.Threading.Channels;
+    using Shared;
 
     /// <summary>
     /// TODO: define invalid config behaviour. 
