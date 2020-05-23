@@ -74,7 +74,10 @@ namespace Newsgirl.Shared.Logging
                 TypeAttributes.Public | TypeAttributes.Class,
                 typeof(StructuredLogger)
             );
- 
+
+            var writerFieldsByConfigName = this.logConsumersFactoryMap.ToDictionary(x => x.Key, x =>
+                typeBuilder.DefineField(x.Key + "__writers", typeof(object[]), FieldAttributes.Family));
+
             var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
             var ctorIl = ctor.GetILGenerator();
             ctorIl.Emit(OpCodes.Ret);
@@ -98,6 +101,9 @@ namespace Newsgirl.Shared.Logging
             var consumerCollectionLocal = il.DeclareLocal(typeof(LogConsumerCollection));
             var itemLocal = il.DeclareLocal(typeParameter);
             var arrayIndexLocal = il.DeclareLocal(typeof(int));
+            var writerArrayLocal = il.DeclareLocal(typeof(object[]));
+
+            var exitLabel = il.DefineLabel();
             
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, typeof(StructuredLogger).GetField("consumerCollection", BindingFlags.NonPublic | BindingFlags.Instance)!);
@@ -108,6 +114,31 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Call, typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x => x.Name == "Increment" && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType()));
             il.Emit(OpCodes.Pop);
 
+            var afterWritersSelect = il.DefineLabel();
+
+            foreach (var (configName, _) in this.logConsumersFactoryMap)
+            {
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldstr, configName);
+                il.Emit(OpCodes.Call, typeof(string).GetMethod("op_Equality")!);
+
+                var nextLabel = il.DefineLabel();
+                il.Emit(OpCodes.Brfalse_S, nextLabel);
+                
+                il.Emit(OpCodes.Ldfld, writerFieldsByConfigName[configName]);
+                il.Emit(OpCodes.Stloc, writerArrayLocal);
+                
+                il.Emit(OpCodes.Br_S, afterWritersSelect);
+                
+                il.MarkLabel(nextLabel);
+            }
+            
+            il.Emit(OpCodes.Br_S, exitLabel);
+            
+            il.MarkLabel(afterWritersSelect);
+            
+            il.Emit(OpCodes.Pop);
+            
             il.BeginExceptionBlock();
 
             il.Emit(OpCodes.Ldarg_2);
@@ -125,9 +156,8 @@ namespace Newsgirl.Shared.Logging
             il.MarkLabel(loopBodyLabel);
             
             // Load the writer array.
-            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
-            il.Emit(OpCodes.Ldfld, typeof(LogConsumerCollection).GetField("ConsumerWriters")!);
-            
+            il.Emit(OpCodes.Ldloc, writerArrayLocal);
+
             // Get element at index.
             il.Emit(OpCodes.Ldloc, arrayIndexLocal);
             il.Emit(OpCodes.Ldelem_Ref);
@@ -150,8 +180,7 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Ldloc, arrayIndexLocal);
             
             // Load the writer array.
-            il.Emit(OpCodes.Ldloc, consumerCollectionLocal);
-            il.Emit(OpCodes.Ldfld, typeof(LogConsumerCollection).GetField("ConsumerWriters")!);
+            il.Emit(OpCodes.Ldloc, writerArrayLocal);
             
             // Compare.
             il.Emit(OpCodes.Ldlen);
@@ -166,6 +195,8 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Pop);
             
             il.EndExceptionBlock();
+            
+            il.MarkLabel(exitLabel);
             
             il.Emit(OpCodes.Ret);
             

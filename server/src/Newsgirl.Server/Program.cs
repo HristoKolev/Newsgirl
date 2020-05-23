@@ -48,9 +48,9 @@ namespace Newsgirl.Server
             
             await this.LoadConfig();
             
-            var slBuilder = new StructuredLoggerBuilder();
+            var loggerBuilder = new StructuredLoggerBuilder();
             
-            slBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
+            loggerBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
                 {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
@@ -60,7 +60,7 @@ namespace Newsgirl.Server
                 )},
             });
                 
-            slBuilder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            loggerBuilder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
             {
                 {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
                     this.ErrorReporter,
@@ -69,7 +69,7 @@ namespace Newsgirl.Server
                 )},
             });
                 
-            slBuilder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            loggerBuilder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
             {
                 {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
                     this.ErrorReporter,
@@ -78,7 +78,7 @@ namespace Newsgirl.Server
                 )},
             });
             
-            this.Log = slBuilder.Build();
+            this.Log = loggerBuilder.Build();
             
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
