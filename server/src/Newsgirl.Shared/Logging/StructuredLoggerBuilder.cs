@@ -4,9 +4,6 @@ namespace Newsgirl.Shared.Logging
     using System.Collections.Generic;
     using System.Linq;
 
-    /// <summary>
-    /// TODO: define invalid config behaviour. 
-    /// </summary>
     public class StructuredLoggerBuilder
     {
         private readonly Dictionary<string, Func<StructuredLoggerConfig[], object>> logConsumersFactoryMap

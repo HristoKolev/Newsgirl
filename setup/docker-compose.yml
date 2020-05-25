@@ -40,4 +40,5 @@ services:
     networks:
       - br0
     extra_hosts:
-      - "home-sentry.lan:${SENTRY_IP}"
+      - "home-sentry.lan:${LOCAL_IP}"
+      - "dev-host.lan:${LOCAL_IP}"

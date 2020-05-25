@@ -32,6 +32,7 @@ namespace Newsgirl.Shared.Logging
             }
             
             var oldCollection = this.consumerCollection;
+            
             this.consumerCollection = LogConsumerCollection.Build(map);
 
             if (oldCollection != null)

@@ -9,7 +9,7 @@ namespace Newsgirl.Shared.Logging
     /// <summary>
     /// Base class for all log consumers.
     /// </summary>
-    public abstract class LogConsumer<TData> : LogConsumerLifetime
+    public abstract class LogConsumer<TData> : LogConsumerControl
     {
         private readonly ErrorReporter errorReporter;
         private Task readTask;
@@ -23,11 +23,11 @@ namespace Newsgirl.Shared.Logging
         
         protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
 
-        protected int NumberOfRetries { get; set; } = 5;
+        protected int NumberOfRetries { get; set; } = 10;
 
         protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
 
-        public Channel<TData> Channel { get; private set; }
+        private Channel<TData> Channel { get; set; }
 
         public void Start()
         {
@@ -95,28 +95,18 @@ namespace Newsgirl.Shared.Logging
 
                         var segment = new ArraySegment<TData>(this.buffer, 0, i);
 
-                        Exception exception = null;
-                    
                         for (int j = 0; j < this.NumberOfRetries + 1; j++)
                         {
                             try
                             {
                                 await this.Flush(segment);
-                                
-                                exception = null;
                                 break;
                             }
-                            catch (Exception ex)
+                            catch (Exception exception)
                             {
-                                exception = ex;
-                                
+                                await this.errorReporter.Error(exception);
                                 await Task.Delay(this.TimeBetweenRetries);
                             }
-                        }
-
-                        if (exception != null)
-                        {
-                            await this.errorReporter.Error(exception);
                         }
                     }
 
@@ -162,10 +152,8 @@ namespace Newsgirl.Shared.Logging
         protected abstract ValueTask Flush(ArraySegment<TData> data);
     }
 
-    public interface LogConsumerLifetime
+    public interface LogConsumerControl
     {
-        void Start();
-        
         Task Stop();
 
         object GetWriter();

@@ -505,13 +505,6 @@ namespace Newsgirl.Shared
         {
             return (T) methodInfo.CreateDelegate(typeof(T));
         }
-        
-        public static void DefineDefaultConstructor(this TypeBuilder typeBuilder)
-        {
-            var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
-            var il = ctor.GetILGenerator();
-            il.Emit(OpCodes.Ret);
-        }
     }
     
     public class RpcContext

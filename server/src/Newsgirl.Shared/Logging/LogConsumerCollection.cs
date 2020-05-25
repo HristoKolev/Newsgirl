@@ -10,7 +10,7 @@ namespace Newsgirl.Shared.Logging
     using System.Threading.Channels;
     using System.Threading.Tasks;
 
-    public abstract class LogConsumerCollection : ILog
+    public abstract class LogConsumerCollection
     {
         private Dictionary<string, object> consumersByConfigName;
 
@@ -30,7 +30,7 @@ namespace Newsgirl.Shared.Logging
 
             foreach (var consumersObj in this.consumersByConfigName.Values)
             {
-                foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerLifetime>())
+                foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerControl>())
                 {
                     disposeTasks.Add(consumer.Stop());
                 }
@@ -43,14 +43,15 @@ namespace Newsgirl.Shared.Logging
         
         public static LogConsumerCollection Build(Dictionary<string, object> map)
         {
-            // The type.
             var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
-                "LogConsumerCollection+" + Guid.NewGuid(),
+                nameof(LogConsumerCollection) + "+" + Guid.NewGuid(),
                 TypeAttributes.Public | TypeAttributes.Class,
                 typeof(LogConsumerCollection)
             );
 
-            typeBuilder.DefineDefaultConstructor();
+            var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
+            var ctorIl = ctor.GetILGenerator();
+            ctorIl.Emit(OpCodes.Ret);
             
             EmitLog(typeBuilder, map);
 
@@ -61,7 +62,7 @@ namespace Newsgirl.Shared.Logging
             foreach (var (configName, consumersObj) in map)
             {
                 var array = ((IEnumerable) consumersObj)
-                    .Cast<LogConsumerLifetime>()
+                    .Cast<LogConsumerControl>()
                     .Select(consumer => consumer.GetWriter())
                     .ToArray();
 
@@ -69,7 +70,7 @@ namespace Newsgirl.Shared.Logging
                 field!.SetValue(instance, array);
             }
 
-            instance.consumersByConfigName = map;
+            instance!.consumersByConfigName = map;
 
             return instance;
         }
@@ -172,6 +173,8 @@ namespace Newsgirl.Shared.Logging
                 typeof(ChannelWriter<>).GetMethod("TryWrite")!
             ));
             il.Emit(OpCodes.Pop);
+            
+            // TODO: throw if false 
 
             // Increment step. i++
             il.Emit(OpCodes.Ldloc, arrayIndexLocal);
@@ -188,7 +191,6 @@ namespace Newsgirl.Shared.Logging
             // writerArrayLocal.Length
             il.Emit(OpCodes.Ldloc, writerArrayLocal);
             il.Emit(OpCodes.Ldlen);
-            il.Emit(OpCodes.Conv_I4);
 
             // Compare.
             il.Emit(OpCodes.Blt_S, loopBodyLabel);

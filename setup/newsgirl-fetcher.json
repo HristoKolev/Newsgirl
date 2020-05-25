@@ -1,12 +1,35 @@
 {
     "ConnectionString": "Server=db;Port=5432;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
-    "Logging": {
+    "ErrorReporter": {
       "SentryDsn": "http://8979f5ca401143c4b69409493fccfd5c@home-sentry.lan/5",
       "Environment": "staging",
-      "ServerName": "docker-vm1",
-      "EnableDebug": false,
-      "DisableSentryIntegration": false,
-      "DisableConsoleLogging": false    
+      "ServerName": "docker-vm1"
+    },
+    "Logging": {
+      "StructuredLogger": [
+        {
+          "Name": "GENERAL_LOG",
+          "Enabled": true,
+          "Consumers": [
+            {
+              "Name": "ConsoleConsumer",
+              "Enabled": true
+            },
+            {
+              "Name": "ElasticsearchConsumer",
+              "Enabled": true
+            }
+          ]
+        }
+      ],
+      "Elasticsearch": {
+        "Url": "http://dev-host.lan:9200",
+        "Username": "newsgirl",
+        "Password": "test123"      
+      },
+      "ElasticsearchIndexes": {
+        "GeneralLogIndex": "newsgirl-fetcher-general-dev"
+      }
     }
   }
   

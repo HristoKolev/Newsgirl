@@ -8,6 +8,7 @@
     using Newtonsoft.Json;
     using Shared;
     using Shared.Logging;
+    using Shared.Logging.Consumers;
 
     public class FetcherApp : IAsyncDisposable
     {
