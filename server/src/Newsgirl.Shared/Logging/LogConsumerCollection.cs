@@ -67,6 +67,7 @@ namespace Newsgirl.Shared.Logging
                     .ToArray();
 
                 var field = type.GetField(configName + "_writers", BindingFlags.Public | BindingFlags.Instance);
+                
                 field!.SetValue(instance, array);
             }
 

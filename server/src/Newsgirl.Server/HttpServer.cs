@@ -12,11 +12,12 @@ namespace Newsgirl.Server
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Shared;
     using Shared.Logging;
 
     /// <summary>
     ///     A wrapper around ASP.NET Core's IHost.
+    ///     TODO: What happens when a request is aborted.
+    ///     TODO: What happens when a request is in process and we dispose the server.
     /// </summary>
     public class HttpServerImpl : HttpServer
     {

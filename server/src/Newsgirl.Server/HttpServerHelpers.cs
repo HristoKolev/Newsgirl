@@ -72,41 +72,41 @@ namespace Newsgirl.Server
         /// </summary>
         public static async ValueTask<RentedByteArrayHandle> ReadToEnd(this HttpRequest request)
         {
-            if (!request.ContentLength.HasValue)
+            if (request.ContentLength.HasValue)
             {
-                throw new DetailedLogException("The `ContentLength` header is not present.");
-            }
+                var bufferHandle = new RentedByteArrayHandle((int) request.ContentLength.Value);
 
-            var bufferHandle = new RentedByteArrayHandle((int) request.ContentLength.Value);
-
-            try
-            {
-                int read;
-                int offset = 0;
-
-                var buffer = bufferHandle.GetRentedArray();
-
-                while ((read = await request.Body.ReadAsync(buffer, offset, bufferHandle.Length - offset)) > 0)
+                try
                 {
-                    offset += read;
-                }
-            }
-            catch (Exception err)
-            {
-                int length = bufferHandle.Length;
-                bufferHandle.Dispose();
+                    int read;
+                    int offset = 0;
 
-                throw new DetailedLogException("Failed to read the HTTP request body.", err)
-                {
-                    Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
-                    Details =
+                    var buffer = bufferHandle.GetRentedArray();
+
+                    while ((read = await request.Body.ReadAsync(buffer, offset, bufferHandle.Length - offset)) > 0)
                     {
-                        {"contentLength", length}
+                        offset += read;
                     }
-                };
+                }
+                catch (Exception err)
+                {
+                    int length = bufferHandle.Length;
+                    bufferHandle.Dispose();
+
+                    throw new DetailedLogException("Failed to read the HTTP request body.", err)
+                    {
+                        Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
+                        Details =
+                        {
+                            {"contentLength", length}
+                        }
+                    };
+                }
+
+                return bufferHandle;
             }
 
-            return bufferHandle;
+            
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared
+namespace Newsgirl.Shared.Logging.Consumers
 {
     using System;
     using System.Text.Json;
