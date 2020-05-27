@@ -93,24 +93,7 @@ namespace Newsgirl.Server.Tests
                 AssertExt.SequentialEqual(resourceBytes, responseBody);
             }
         }
-        
-        [Fact]
-        public async Task ReadToEnd_throws_when_no_contentType_is_provided()
-        {
-            static async Task Handler(HttpContext context)
-            {
-                using var dataHandle = await context.Request.ReadToEnd();
-                context.Response.StatusCode = 200;
-            }
 
-            await using (var tester = await HttpServerTester.Create(Handler))
-            {
-                var response = await tester.Client.GetAsync("/");
-
-                Snapshot.MatchError(tester.Exception);
-            }
-        }
-        
         [Fact]
         public async Task ReadToEnd_throws_on_network_error()
         {

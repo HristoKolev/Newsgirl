@@ -5,10 +5,13 @@ namespace Newsgirl.Server
     using System.Text;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
+    using Microsoft.IO;
     using Shared;
 
     public static class HttpServerHelpers
     {
+        private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
+
         /// <summary>
         ///     Writes a string in UTF-8 encoding and closes the stream.
         /// </summary>
@@ -105,8 +108,30 @@ namespace Newsgirl.Server
 
                 return bufferHandle;
             }
-
             
+            var memoryStream = MemoryStreamManager.GetStream();
+            
+            try
+            {
+                await request.Body.CopyToAsync(memoryStream);
+            }
+            catch (Exception err)
+            {
+                long length = memoryStream.Length;
+                // ReSharper disable once MethodHasAsyncOverload
+                memoryStream.Dispose();
+
+                throw new DetailedLogException("Failed to read the HTTP request body.", err)
+                {
+                    Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
+                    Details =
+                    {
+                        {"contentLength", length}
+                    }
+                };
+            }
+
+            return new RentedByteArrayHandle(memoryStream);
         }
     }
 }

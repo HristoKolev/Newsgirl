@@ -145,6 +145,11 @@ namespace Newsgirl.Server
             try
             {
                 this.requestBody = await context.Request.ReadToEnd();
+
+                if (this.requestBody.Length == 0)
+                {
+                    throw new ApplicationException("The request has an empty body.");
+                }
             }
             catch (Exception err)
             {
