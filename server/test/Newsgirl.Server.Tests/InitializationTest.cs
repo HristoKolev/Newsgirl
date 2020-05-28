@@ -45,7 +45,7 @@ namespace Newsgirl.Server.Tests
                 app.TriggerShutdown();
             });
             
-            await app.WaitForShutdownTrigger();
+            await app.AwaitShutdownTrigger();
 
             await shutdownTask;
         }

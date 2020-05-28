@@ -19,6 +19,8 @@ namespace Newsgirl.Server
         private readonly string AppVersion = typeof(HttpServerApp).Assembly.GetName().Version?.ToString();
 
         private TaskCompletionSource<object> shutdownCompletionSource;
+        
+        private ManualResetEventSlim shutdownCompleted = new ManualResetEventSlim();
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
@@ -141,34 +143,41 @@ namespace Newsgirl.Server
         
         public async ValueTask DisposeAsync()
         {
-            this.AppConfigWatcher?.Dispose();
-            this.AppConfigWatcher = null;
-            
-            this.Server?.DisposeAsync();
-            this.Server = null;
-            
-            if (this.IoC != null)
+            try
             {
-                await this.IoC.DisposeAsync();
-                this.IoC = null;
+                this.AppConfigWatcher?.Dispose();
+                this.AppConfigWatcher = null;
+
+                this.Server?.DisposeAsync();
+                this.Server = null;
+
+                if (this.IoC != null)
+                {
+                    await this.IoC.DisposeAsync();
+                    this.IoC = null;
+                }
+
+                this.AppConfig = null;
+                this.SystemSettings = null;
+
+                await this.Log.DisposeAsync();
+                this.Log = null;
+
+                AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
+                TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
+
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+                {
+                    await disposableErrorReporter.DisposeAsync();
+                }
+
+                this.ErrorReporter = null;
             }
-
-            this.AppConfig = null;
-            this.SystemSettings = null;
-
-            await this.Log.DisposeAsync();
-            this.Log = null;
-            
-            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
-
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+            finally
             {
-                await disposableErrorReporter.DisposeAsync();
+                this.shutdownCompleted.Set();
             }
-            
-            this.ErrorReporter = null;
         }
       
         public async Task Start(string listenOnAddress = null)
@@ -202,7 +211,7 @@ namespace Newsgirl.Server
             await this.Server.Stop();
         }
 
-        public Task WaitForShutdownTrigger()
+        public Task AwaitShutdownTrigger()
         {
             return this.shutdownCompletionSource.Task;
         }
@@ -210,6 +219,11 @@ namespace Newsgirl.Server
         public void TriggerShutdown()
         {
             this.shutdownCompletionSource.SetResult(null);
+        }
+        
+        public void WaitForShutdownToComplete()
+        {
+            this.shutdownCompleted.Wait();
         }
 
         public string GetAddress()
@@ -304,13 +318,19 @@ namespace Newsgirl.Server
 
                     await app.Start();
 
+                    AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
+                    {
+                        app.TriggerShutdown();
+                        app.WaitForShutdownToComplete();
+                    };
+
                     Console.CancelKeyPress += (sender, args) =>
                     {
                         app.TriggerShutdown();
-                        args.Cancel = true;
+                        app.WaitForShutdownToComplete();
                     };
-                    
-                    await app.WaitForShutdownTrigger();
+
+                    await app.AwaitShutdownTrigger();
 
                     await app.Stop();
 
