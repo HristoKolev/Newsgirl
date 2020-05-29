@@ -20,7 +20,7 @@ namespace Newsgirl.Server
 
         private TaskCompletionSource<object> shutdownCompletionSource;
         
-        private ManualResetEventSlim shutdownCompleted = new ManualResetEventSlim();
+        private readonly ManualResetEventSlim shutdownCompleted = new ManualResetEventSlim();
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
@@ -36,7 +36,7 @@ namespace Newsgirl.Server
 
         public IContainer IoC { get; set; }
 
-        private HttpServer Server { get; set; }
+        private CustomHttpServer Server { get; set; }
 
         public AsyncLocals AsyncLocals { get; set; }
         
@@ -182,7 +182,7 @@ namespace Newsgirl.Server
       
         public async Task Start(string listenOnAddress = null)
         {
-            var serverConfig = new HttpServerConfig
+            var serverConfig = new CustomHttpServerConfig
             {
                 Addresses = new[]
                 {
@@ -199,8 +199,12 @@ namespace Newsgirl.Server
                 }
             }
 
-            this.Server = new HttpServerImpl(this.Log, serverConfig, RequestDelegate);
+            this.Server = new CustomHttpServerImpl(serverConfig, RequestDelegate);
             
+            this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
+            this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
+            this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
+
             await this.Server.Start();
 
             this.shutdownCompletionSource = new TaskCompletionSource<object>();

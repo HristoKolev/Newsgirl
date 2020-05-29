@@ -1,6 +1,6 @@
 namespace Newsgirl.Shared
 {
-    public static class Extensions
+    public static class StringExtensions
     {
         /// <summary>
         ///     I use this to prevent empty strings from being stored in the database.

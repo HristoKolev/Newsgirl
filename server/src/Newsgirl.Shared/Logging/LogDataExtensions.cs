@@ -24,5 +24,10 @@ namespace Newsgirl.Shared.Logging
         public void Add(string key, object val) => this.Fields.Add(key, val);
 
         IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
+
+        public static implicit operator LogData(string x)
+        {
+            return new LogData(x);
+        }
     }
 }

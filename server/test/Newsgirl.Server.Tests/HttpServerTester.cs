@@ -9,10 +9,10 @@ namespace Newsgirl.Server.Tests
 
     /// <summary>
     ///     A testing service that facilitates testing of <see cref="RequestDelegate" />'s.
-    ///     Creates <see cref="HttpServerImpl" /> with given <see cref="RequestDelegate" /> and starts it on a random port.
+    ///     Creates <see cref="CustomHttpServerImpl" /> with given <see cref="RequestDelegate" /> and starts it on a random port.
     ///     Creates an <see cref="HttpClient" /> with <see cref="HttpClient.BaseAddress" /> that points to the
-    ///     <see cref="HttpServerImpl" />.
-    ///     Disposes both <see cref="HttpServerImpl" /> and <see cref="HttpClient" /> when <see cref="DisposeAsync" /> is
+    ///     <see cref="CustomHttpServerImpl" />.
+    ///     Disposes both <see cref="CustomHttpServerImpl" /> and <see cref="HttpClient" /> when <see cref="DisposeAsync" /> is
     ///     called.
     /// </summary>
     public class HttpServerTester : IAsyncDisposable
@@ -27,7 +27,7 @@ namespace Newsgirl.Server.Tests
         /// </summary>
         public Exception Exception { get; set; }
 
-        public HttpServerImpl Server { get; set; }
+        public CustomHttpServerImpl Server { get; set; }
 
         public HttpClient Client { get; set; }
 
@@ -44,12 +44,10 @@ namespace Newsgirl.Server.Tests
         {
             var tester = new HttpServerTester();
 
-            var serverConfig = new HttpServerConfig
+            var serverConfig = new CustomHttpServerConfig
             {
                 Addresses = new[] {"http://127.0.0.1:0"}
             };
-
-            var log = new StructuredLogMock();
 
             async Task Handler(HttpContext context)
             {
@@ -64,7 +62,7 @@ namespace Newsgirl.Server.Tests
                 }
             }
 
-            var server = new HttpServerImpl(log, serverConfig, Handler);
+            var server = new CustomHttpServerImpl(serverConfig, Handler);
 
             await server.Start();
 

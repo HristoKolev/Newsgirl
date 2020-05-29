@@ -60,16 +60,16 @@ namespace Newsgirl.Server
             this.log = log;
         }
         
-        public async Task HandleRequest(HttpContext httpContext)
+        public async Task HandleRequest(HttpContext ctx)
         {
-            this.httpContext = httpContext;
+            this.httpContext = ctx;
             this.requestStart = DateTime.UtcNow;
             
             // Diagnostic data in case of an error.
             this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
             {
                 {"http", new HttpLogData(
-                    httpContext,
+                    this.httpContext,
                     this.requestBody,
                     this.rpcRequest,
                     this.rpcResponse,
@@ -83,7 +83,7 @@ namespace Newsgirl.Server
 
             try
             {
-                result = await this.Process(httpContext);
+                result = await this.Process();
             }
             catch (Exception err)
             {
@@ -93,7 +93,7 @@ namespace Newsgirl.Server
             finally
             {
                 this.log.Http(() => new HttpLogData(
-                    httpContext,
+                    this.httpContext,
                     null,
                     null,
                     null,
@@ -103,7 +103,7 @@ namespace Newsgirl.Server
                 ));
                 
                 this.log.HttpDetailed(() => new HttpLogData(
-                    httpContext,
+                    this.httpContext,
                     this.requestBody,
                     this.rpcRequest,
                     this.rpcResponse,
@@ -118,7 +118,7 @@ namespace Newsgirl.Server
             await this.WriteResult(result);
         }
 
-        private async Task<RpcResult<object>> Process(HttpContext context)
+        private async Task<RpcResult<object>> Process()
         {
             // Initialize.            
             try
@@ -144,7 +144,7 @@ namespace Newsgirl.Server
             // Read request body.
             try
             {
-                this.requestBody = await context.Request.ReadToEnd();
+                this.requestBody = await this.httpContext.Request.ReadToEnd();
 
                 if (this.requestBody.Length == 0)
                 {

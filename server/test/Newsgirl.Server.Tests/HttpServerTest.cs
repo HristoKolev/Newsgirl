@@ -52,14 +52,13 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task HttpServer_shuts_down_correctly()
         {
-            var serverConfig = new HttpServerConfig
+            var serverConfig = new CustomHttpServerConfig
             {
                 Addresses = new[] {"http://127.0.0.1:56962"}
             };
 
-            var log = new StructuredLogMock();
             static Task Handler(HttpContext context) => Task.CompletedTask;
-            var server = new HttpServerImpl(log, serverConfig, Handler);
+            var server = new CustomHttpServerImpl(serverConfig, Handler);
 
             for (int i = 0; i < 10; i++)
             {
