@@ -180,16 +180,8 @@ namespace Newsgirl.Server
             }
         }
       
-        public async Task Start(string listenOnAddress = null)
+        public async Task Start(string listenOnAddress)
         {
-            var serverConfig = new CustomHttpServerConfig
-            {
-                Addresses = new[]
-                {
-                    string.IsNullOrWhiteSpace(listenOnAddress) ? "http://127.0.0.1:5000" : listenOnAddress
-                }
-            };
-
             async Task RequestDelegate(HttpContext context)
             {
                 await using (var requestScope = this.IoC.BeginLifetimeScope())
@@ -199,13 +191,16 @@ namespace Newsgirl.Server
                 }
             }
 
-            this.Server = new CustomHttpServerImpl(serverConfig, RequestDelegate);
+            this.Server = new CustomHttpServerImpl(RequestDelegate);
             
             this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
             this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
             this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
 
-            await this.Server.Start();
+            await this.Server.Start(new HttpServerConfig
+            {
+                Addresses = new[] { listenOnAddress }
+            });
 
             this.shutdownCompletionSource = new TaskCompletionSource<object>();
         }
@@ -320,7 +315,7 @@ namespace Newsgirl.Server
                 {
                     await app.Initialize();
 
-                    await app.Start();
+                    await app.Start("http://127.0.0.1:5000");
 
                     AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
                     {

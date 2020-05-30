@@ -14,7 +14,6 @@ namespace Newsgirl.Server
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Microsoft.IO;
     using Shared;
 
     /// <summary>
@@ -24,26 +23,33 @@ namespace Newsgirl.Server
     /// </summary>
     public class CustomHttpServerImpl : CustomHttpServer
     {
-        private readonly CustomHttpServerConfig config;
         private readonly RequestDelegate requestDelegate;
 
         private bool disposed;
         private IHost host;
         private bool started;
 
-        public CustomHttpServerImpl(CustomHttpServerConfig config, RequestDelegate requestDelegate)
+        public CustomHttpServerImpl(RequestDelegate requestDelegate)
         {
-            this.config = config;
             this.requestDelegate = requestDelegate;
         }
         
+        /// <summary>
+        /// Fires when the server starts with the bound addresses as an argument.
+        /// </summary>
         public event Action<string[]> Started;
         
+        /// <summary>
+        /// Fires when shutdown is triggered.
+        /// </summary>
         public event Action Stopping;
         
+        /// <summary>
+        /// Fires when the server is properly shut down. 
+        /// </summary>
         public event Action Stopped;
 
-        public async Task Start()
+        public async Task Start(HttpServerConfig config)
         {
             this.ThrowIfDisposed();
             this.ThrowIfStarted();
@@ -60,7 +66,7 @@ namespace Newsgirl.Server
                         .Configure(this.Configure)
                         .CaptureStartupErrors(false)
                         .SuppressStatusMessages(true)
-                        .UseUrls(this.config.Addresses);
+                        .UseUrls(config.Addresses);
                 })
                 .ConfigureServices(this.ConfigureServices)
                 .UseEnvironment("production")
@@ -162,7 +168,7 @@ namespace Newsgirl.Server
             }
         }
 
-        public class EmptyLifetime : IHostLifetime
+        private class EmptyLifetime : IHostLifetime
         {
             public Task StopAsync(CancellationToken cancellationToken)
             {
@@ -176,7 +182,7 @@ namespace Newsgirl.Server
         }
     }
 
-    public class CustomHttpServerConfig
+    public class HttpServerConfig
     {
         public string[] Addresses { get; set; }
     }
@@ -191,15 +197,13 @@ namespace Newsgirl.Server
         
         public event Action Stopped;
 
-        Task Start();
+        Task Start(HttpServerConfig config);
 
         Task Stop();
     }
     
-    public static class CustomHttpServerExtensions
+    public static class HttpContextExtensions
     {
-        private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
-
         /// <summary>
         ///     Writes a string in UTF-8 encoding and closes the stream.
         /// </summary>
@@ -297,7 +301,7 @@ namespace Newsgirl.Server
                 return bufferHandle;
             }
             
-            var memoryStream = MemoryStreamManager.GetStream();
+            var memoryStream = MemoryStreamPool.Shared.GetStream();
             
             try
             {

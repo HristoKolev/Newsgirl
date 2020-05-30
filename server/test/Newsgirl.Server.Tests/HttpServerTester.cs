@@ -44,11 +44,6 @@ namespace Newsgirl.Server.Tests
         {
             var tester = new HttpServerTester();
 
-            var serverConfig = new CustomHttpServerConfig
-            {
-                Addresses = new[] {"http://127.0.0.1:0"}
-            };
-
             async Task Handler(HttpContext context)
             {
                 try
@@ -62,9 +57,12 @@ namespace Newsgirl.Server.Tests
                 }
             }
 
-            var server = new CustomHttpServerImpl(serverConfig, Handler);
+            var server = new CustomHttpServerImpl(Handler);
 
-            await server.Start();
+            await server.Start(new HttpServerConfig
+            {
+                Addresses = new[] {"http://127.0.0.1:0"}
+            });
 
             var client = new HttpClient
             {

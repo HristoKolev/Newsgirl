@@ -52,17 +52,15 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task HttpServer_shuts_down_correctly()
         {
-            var serverConfig = new CustomHttpServerConfig
-            {
-                Addresses = new[] {"http://127.0.0.1:56962"}
-            };
-
             static Task Handler(HttpContext context) => Task.CompletedTask;
-            var server = new CustomHttpServerImpl(serverConfig, Handler);
+            var server = new CustomHttpServerImpl(Handler);
 
             for (int i = 0; i < 10; i++)
             {
-                await server.Start();
+                await server.Start(new HttpServerConfig
+                {
+                    Addresses = new[] {"http://127.0.0.1:0"}
+                });
                 await server.Stop();    
             }
         }
