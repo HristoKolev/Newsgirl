@@ -1,6 +1,7 @@
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Sockets;
@@ -107,7 +108,7 @@ namespace Newsgirl.Server.Tests
             {
                 for (int i = 0; i < 100; i++)
                 {
-                    var uri = new Uri(tester.Server.FirstAddress);
+                    var uri = new Uri(tester.Server.BoundAddresses.First());
 
                     var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
                     {

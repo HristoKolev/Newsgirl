@@ -1,6 +1,7 @@
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
@@ -66,7 +67,7 @@ namespace Newsgirl.Server.Tests
 
             var client = new HttpClient
             {
-                BaseAddress = new Uri(server.FirstAddress)
+                BaseAddress = new Uri(server.BoundAddresses.First())
             };
 
             tester.Server = server;

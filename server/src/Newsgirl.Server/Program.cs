@@ -2,6 +2,7 @@ namespace Newsgirl.Server
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -227,7 +228,7 @@ namespace Newsgirl.Server
 
         public string GetAddress()
         {
-            return this.Server.FirstAddress;
+            return this.Server.BoundAddresses.First();
         }
     }
 

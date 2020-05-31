@@ -24,10 +24,10 @@ namespace Newsgirl.Server
     public class CustomHttpServerImpl : CustomHttpServer
     {
         private readonly RequestDelegate requestDelegate;
-
         private bool disposed;
         private IHost host;
         private bool started;
+        private string[] boundAddresses;
 
         public CustomHttpServerImpl(RequestDelegate requestDelegate)
         {
@@ -73,6 +73,11 @@ namespace Newsgirl.Server
                 .Build();
 
             await this.host.StartAsync();
+            
+            var server = this.host.Services.GetService<IServer>();
+            var addressesFeature = server.Features.Get<IServerAddressesFeature>();
+            
+            this.boundAddresses = addressesFeature.Addresses.ToArray();
 
             this.started = true;
         }
@@ -103,19 +108,19 @@ namespace Newsgirl.Server
             await asyncDisposable.DisposeAsync();
             this.host = null;
 
+            this.boundAddresses = null;
+            
             this.started = false;
         }
 
-        public string FirstAddress
+        public string[] BoundAddresses
         {
             get
             {
                 this.ThrowIfDisposed();
                 this.ThrowIfStopped();
 
-                var server = this.host.Services.GetService<IServer>();
-                var addressesFeature = server.Features.Get<IServerAddressesFeature>();
-                return addressesFeature.Addresses.FirstOrDefault();
+                return this.boundAddresses;
             }
         }
 
@@ -189,7 +194,7 @@ namespace Newsgirl.Server
 
     public interface CustomHttpServer : IAsyncDisposable
     {
-        string FirstAddress { get; }
+        string[] BoundAddresses { get; }
         
         public event Action<string[]> Started;
         
