@@ -2,7 +2,6 @@ namespace Newsgirl.Server
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -181,7 +180,7 @@ namespace Newsgirl.Server
             }
         }
       
-        public async Task Start(string listenOnAddress)
+        public async Task Start(params string[] listenOnAddresses)
         {
             async Task RequestDelegate(HttpContext context)
             {
@@ -200,7 +199,7 @@ namespace Newsgirl.Server
 
             await this.Server.Start(new HttpServerConfig
             {
-                Addresses = new[] { listenOnAddress }
+                Addresses = listenOnAddresses
             });
 
             this.shutdownCompletionSource = new TaskCompletionSource<object>();

@@ -2,17 +2,22 @@ namespace Newsgirl.Shared
 {
     using System;
     using System.IO;
-    using System.Reactive.Linq;
     using System.Threading.Tasks;
 
     public class FileWatcher : IDisposable
     {
         private readonly FileSystemWatcher fileSystemWatcher;
-        private readonly IDisposable subscription;
+        private readonly Func<Task> onChange;
+        private readonly TimeSpan throttleDuration;
         
-        public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttle = null)
+        private readonly AsyncLock asyncLock = new AsyncLock();
+        private DateTime lastFired;
+        private Task timeoutTask;
+
+        public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttleDuration = null)
         {
-            throttle ??= TimeSpan.FromSeconds(1);
+            this.onChange = onChange;
+            this.throttleDuration = throttleDuration ?? TimeSpan.FromSeconds(1);
             
             var watcher = new FileSystemWatcher
             {
@@ -26,46 +31,52 @@ namespace Newsgirl.Shared
                                | NotifyFilters.Security,
                 Filter = Path.GetFileName(filePath),
             };
-
-            var changed = Observable.FromEvent<FileSystemEventHandler, FileSystemEventArgs>(
-                handler => (sender, args) => handler(args),
-                handler => watcher.Changed += handler,
-                handler => watcher.Changed -= handler
-            );
-
-            var created = Observable.FromEvent<FileSystemEventHandler, FileSystemEventArgs>(
-                handler => (sender, args) => handler(args),
-                handler => watcher.Created += handler,
-                handler => watcher.Created -= handler
-            );
-
-            var renamed = Observable.FromEvent<RenamedEventHandler, FileSystemEventArgs>(
-                handler => (sender, args) => handler(args),
-                handler => watcher.Renamed += handler,
-                handler => watcher.Renamed -= handler
-            );
-
-            var deleted = Observable.FromEvent<FileSystemEventHandler, FileSystemEventArgs>(
-                handler => (sender, args) => handler(args),
-                handler => watcher.Deleted += handler,
-                handler => watcher.Deleted -= handler
-            );
-
-            var subscriptionHandle = changed.Merge(created)
-                   .Merge(renamed)
-                   .Merge(deleted)
-                   .Throttle(throttle.Value)
-                   .Subscribe(async x => await onChange());
+            
+            watcher.Changed += this.WatcherOnChanged;
+            watcher.Created += this.WatcherOnCreated;
+            watcher.Renamed += this.WatcherOnRenamed;
+            watcher.Deleted += this.WatcherOnDeleted;
 
             watcher.EnableRaisingEvents = true;
 
             this.fileSystemWatcher = watcher;
-            this.subscription = subscriptionHandle;
+        }
+
+        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.Invoke();
+
+        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.Invoke();
+
+        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.Invoke();
+
+        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.Invoke();
+        
+        private async void Invoke()
+        {
+            using (await this.asyncLock.Lock())
+            {
+                this.lastFired = DateTime.UtcNow;
+
+                if (this.timeoutTask == null || this.timeoutTask.IsCompleted)
+                {
+                    
+                }
+                
+                this.timeoutTask ??= Task.Run(async () =>
+                {
+                    await Task.Delay(this.throttleDuration);
+                    
+                    
+                });
+            }
         }
 
         public void Dispose()
         {
-            this.subscription?.Dispose();
+            this.fileSystemWatcher.Changed += this.WatcherOnChanged;
+            this.fileSystemWatcher.Created += this.WatcherOnCreated;
+            this.fileSystemWatcher.Renamed += this.WatcherOnRenamed;
+            this.fileSystemWatcher.Deleted += this.WatcherOnDeleted;
+
             this.fileSystemWatcher?.Dispose();
         }
     }
