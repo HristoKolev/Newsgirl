@@ -11,7 +11,6 @@ namespace Newsgirl.Shared
         private readonly TimeSpan throttleDuration;
         
         private readonly AsyncLock asyncLock = new AsyncLock();
-        private DateTime lastFired;
         private Task timeoutTask;
 
         public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttleDuration = null)
@@ -54,11 +53,8 @@ namespace Newsgirl.Shared
         {
             using (await this.asyncLock.Lock())
             {
-                this.lastFired = DateTime.UtcNow;
-
                 if (this.timeoutTask == null || this.timeoutTask.IsCompleted)
                 {
-                    
                 }
                 
                 this.timeoutTask ??= Task.Run(async () =>

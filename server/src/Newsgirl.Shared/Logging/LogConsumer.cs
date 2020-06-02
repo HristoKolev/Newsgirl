@@ -21,7 +21,7 @@ namespace Newsgirl.Shared.Logging
             this.errorReporter = errorReporter;
         }
         
-        protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(5);
+        protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(30);
 
         protected int NumberOfRetries { get; set; } = 10;
 
