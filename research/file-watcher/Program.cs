@@ -1,20 +1,51 @@
-namespace Newsgirl.Shared
-{
-    using System;
-    using System.IO;
-    using System.Threading.Tasks;
-    using System.Threading;
+﻿using System;
 
+namespace file_watcher
+{
+    using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    static class Program
+    {
+        static async Task Main(string[] args)
+        {
+            Action onChange = () =>
+            {
+                Console.WriteLine($"changed... {DateTime.Now:O}");
+            };
+            
+            var tcs = new TaskCompletionSource<object>();
+
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
+                eventArgs.Cancel = true;
+                tcs.SetResult(null);
+            };
+            
+            const string filePath = "/work/projects/Newsgirl/research/file-watcher/test.txt";
+            
+            using (var fw = new FileWatcher(filePath, onChange, TimeSpan.FromSeconds(1)))
+            {
+                Console.WriteLine("started...");
+                await tcs.Task;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("exiting...");
+        }
+    }
+    
     public class FileWatcher : IDisposable
     {
         private readonly FileSystemWatcher fileSystemWatcher;
-        private readonly Func<Task> onChange;
+        private readonly Action onChange;
         private readonly TimeSpan throttleDuration;
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
         
-        private readonly AsyncLock asyncLock = new AsyncLock();
         private Timer timer;
 
-        public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttleDuration = null)
+        public FileWatcher(string filePath, Action onChange, TimeSpan? throttleDuration = null)
         {
             this.onChange = onChange;
             this.throttleDuration = throttleDuration ?? TimeSpan.FromSeconds(1);
@@ -38,7 +69,7 @@ namespace Newsgirl.Shared
             watcher.Deleted += this.WatcherOnDeleted;
 
             watcher.EnableRaisingEvents = true;
-            
+
             this.fileSystemWatcher = watcher;
         }
 
@@ -50,29 +81,40 @@ namespace Newsgirl.Shared
 
         private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.Invoke();
         
-        private async void Invoke()
+        private void Invoke()
         {
-            using (await this.asyncLock.Lock())
+            this.semaphore.Wait();
+
+            try
             {
                 if (this.timer != null)
                 {
                     return;
                 }
 
-                await this.onChange();
-
-                this.timer = new Timer(async s =>
+                this.onChange();
+            
+                this.timer = new Timer(s =>
                 {
-                    await this.timer.DisposeAsync();
-                    
-                    using (await this.asyncLock.Lock())
+                    this.semaphore.Wait();
+
+                    try
                     {
-                        await this.onChange();
-                        
+                        this.onChange();
+                
+                        this.timer.Dispose();
                         this.timer = null;
+                    }
+                    finally
+                    {
+                        this.semaphore.Release();
                     }
 
                 }, null, this.throttleDuration, this.throttleDuration);
+            }
+            finally
+            {
+                this.semaphore.Release();
             }
         }
 
@@ -87,3 +129,4 @@ namespace Newsgirl.Shared
         }
     }
 }
+ 
