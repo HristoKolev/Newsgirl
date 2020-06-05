@@ -40,15 +40,10 @@ namespace file_watcher
     {
         private readonly FileSystemWatcher fileSystemWatcher;
         private readonly Action onChange;
-        private readonly TimeSpan throttleDuration;
-        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
-        
-        private Timer timer;
 
         public FileWatcher(string filePath, Action onChange, TimeSpan? throttleDuration = null)
         {
-            this.onChange = onChange;
-            this.throttleDuration = throttleDuration ?? TimeSpan.FromSeconds(1);
+            this.onChange = DelegateHelpers.Throttle(onChange, throttleDuration ?? TimeSpan.FromSeconds(1));
             
             var watcher = new FileSystemWatcher
             {
@@ -73,50 +68,13 @@ namespace file_watcher
             this.fileSystemWatcher = watcher;
         }
 
-        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.Invoke();
+        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.onChange();
 
-        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.Invoke();
+        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.onChange();
 
-        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.Invoke();
+        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.onChange();
 
-        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.Invoke();
-        
-        private void Invoke()
-        {
-            this.semaphore.Wait();
-
-            try
-            {
-                if (this.timer != null)
-                {
-                    return;
-                }
-
-                this.onChange();
-            
-                this.timer = new Timer(s =>
-                {
-                    this.semaphore.Wait();
-
-                    try
-                    {
-                        this.onChange();
-                
-                        this.timer.Dispose();
-                        this.timer = null;
-                    }
-                    finally
-                    {
-                        this.semaphore.Release();
-                    }
-
-                }, null, this.throttleDuration, this.throttleDuration);
-            }
-            finally
-            {
-                this.semaphore.Release();
-            }
-        }
+        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.onChange();
 
         public void Dispose()
         {
@@ -126,6 +84,52 @@ namespace file_watcher
             this.fileSystemWatcher.Deleted += this.WatcherOnDeleted;
 
             this.fileSystemWatcher?.Dispose();
+        }
+    }
+
+    public static class DelegateHelpers
+    {
+        public static Action Throttle(Action x, TimeSpan duration)
+        {
+            var semaphore = new SemaphoreSlim(1, 1);
+            Timer timer = null;
+            
+            return () =>
+            {
+                semaphore.Wait();
+
+                try
+                {
+                    if (timer != null)
+                    {
+                        return;
+                    }
+
+                    x();
+            
+                    timer = new Timer(s =>
+                    {
+                        semaphore.Wait();
+
+                        try
+                        {
+                            x();
+                
+                            timer.Dispose();
+                            timer = null;
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+
+                    }, null, duration, duration);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            };
         }
     }
 }
