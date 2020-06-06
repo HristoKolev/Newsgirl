@@ -52,7 +52,7 @@
             
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
-            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
+            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
 
             var builder = new ContainerBuilder();
             builder.RegisterModule<SharedModule>();

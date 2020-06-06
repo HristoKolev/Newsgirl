@@ -2,22 +2,15 @@ namespace Newsgirl.Shared
 {
     using System;
     using System.IO;
-    using System.Threading.Tasks;
-    using System.Threading;
 
     public class FileWatcher : IDisposable
     {
         private readonly FileSystemWatcher fileSystemWatcher;
-        private readonly Func<Task> onChange;
-        private readonly TimeSpan throttleDuration;
-        
-        private readonly AsyncLock asyncLock = new AsyncLock();
-        private Timer timer;
+        private readonly Action onChange;
 
-        public FileWatcher(string filePath, Func<Task> onChange, TimeSpan? throttleDuration = null)
+        public FileWatcher(string filePath, Action onChange, TimeSpan? throttleDuration = null)
         {
-            this.onChange = onChange;
-            this.throttleDuration = throttleDuration ?? TimeSpan.FromSeconds(1);
+            this.onChange = DelegateHelper.Debounce(onChange, throttleDuration ?? TimeSpan.FromSeconds(1));
             
             var watcher = new FileSystemWatcher
             {
@@ -42,39 +35,13 @@ namespace Newsgirl.Shared
             this.fileSystemWatcher = watcher;
         }
 
-        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.Invoke();
+        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.onChange();
 
-        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.Invoke();
+        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.onChange();
 
-        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.Invoke();
+        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.onChange();
 
-        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.Invoke();
-        
-        private async void Invoke()
-        {
-            using (await this.asyncLock.Lock())
-            {
-                if (this.timer != null)
-                {
-                    return;
-                }
-
-                await this.onChange();
-
-                this.timer = new Timer(async s =>
-                {
-                    await this.timer.DisposeAsync();
-                    
-                    using (await this.asyncLock.Lock())
-                    {
-                        await this.onChange();
-                        
-                        this.timer = null;
-                    }
-
-                }, null, this.throttleDuration, this.throttleDuration);
-            }
-        }
+        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.onChange();
 
         public void Dispose()
         {

@@ -85,7 +85,7 @@ namespace Newsgirl.Server
             
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
-            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, this.ReloadStartupConfig);
+            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
 
             var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
             var rpcEngineOptions = new RpcEngineOptions

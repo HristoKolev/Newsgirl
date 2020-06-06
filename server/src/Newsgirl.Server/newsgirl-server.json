@@ -8,7 +8,7 @@
   "Logging": {
     "StructuredLogger": [
       {
-        "Name": "GENERAL_LOG",
+        "Name": "GENERAL_LOG",        
         "Enabled": true,
         "Consumers": [
           { "Name": "ConsoleConsumer", "Enabled": true },
