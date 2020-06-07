@@ -131,7 +131,10 @@ namespace Newsgirl.Server
                 return;
             }
 
-            await this.Stop();
+            if (this.started)
+            {
+                await this.Stop();
+            }
 
             this.disposed = true;
         }
@@ -153,7 +156,7 @@ namespace Newsgirl.Server
         {
             if (this.started)
             {
-                throw new NotSupportedException("The server must be started to perform this operation.");
+                throw new NotSupportedException("The server must be stopped to perform this operation.");
             }
         }
         
@@ -161,7 +164,7 @@ namespace Newsgirl.Server
         {
             if (!this.started)
             {
-                throw new NotSupportedException("The server must be stopped to perform this operation.");
+                throw new NotSupportedException("The server must be started to perform this operation.");
             }
         }
         

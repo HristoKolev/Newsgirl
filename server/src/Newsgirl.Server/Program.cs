@@ -18,11 +18,10 @@ namespace Newsgirl.Server
         // ReSharper disable once InconsistentNaming
         private readonly string AppVersion = typeof(HttpServerApp).Assembly.GetName().Version?.ToString();
 
-        private TaskCompletionSource<object> shutdownCompletionSource;
+        private TaskCompletionSource<object> shutdownTriggered;
+        private ManualResetEventSlim shutdownCompleted;
         
-        private readonly ManualResetEventSlim shutdownCompleted = new ManualResetEventSlim();
-
-        public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
+        public string AppConfigPath { get; set; }
 
         public HttpServerAppConfig AppConfig { get; set; }
 
@@ -41,11 +40,23 @@ namespace Newsgirl.Server
         public AsyncLocals AsyncLocals { get; set; }
         
         public RpcEngine RpcEngine { get; set; }
-        
-        public async Task Initialize()
+
+        public bool Started { get; set; }
+
+        public async Task Start(params string[] listenOnAddresses)
         {
+            if (this.Started)
+            {
+                throw new ApplicationException("The application is already started.");
+            }
+            
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
+
+            this.AppConfigPath = EnvVariableHelper.Get("APP_CONFIG_PATH");
+            
+            this.shutdownTriggered = new TaskCompletionSource<object>();
+            this.shutdownCompleted = new ManualResetEventSlim();
             
             this.AsyncLocals = new AsyncLocalsImpl();
             
@@ -101,6 +112,28 @@ namespace Newsgirl.Server
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+            
+            async Task RequestDelegate(HttpContext context)
+            {
+                await using (var requestScope = this.IoC.BeginLifetimeScope())
+                {
+                    var handler = requestScope.Resolve<RpcRequestHandler>();
+                    await handler.HandleRequest(context);
+                }
+            }
+
+            this.Server = new CustomHttpServerImpl(RequestDelegate);
+            
+            this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
+            this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
+            this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
+
+            await this.Server.Start(new HttpServerConfig
+            {
+                Addresses = listenOnAddresses
+            });
+
+            this.Started = true;
         }
         
         private async Task LoadConfig()
@@ -131,25 +164,33 @@ namespace Newsgirl.Server
             }
         }
 
-        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        public async ValueTask Stop()
         {
-            await this.ErrorReporter.Error(e.Exception?.InnerException);
-        }
-
-        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
-        }
-        
-        public async ValueTask DisposeAsync()
-        {
+            if (!this.Started)
+            {
+                throw new ApplicationException("The application is already stopped.");
+            }
+            
             try
             {
-                this.AppConfigWatcher?.Dispose();
-                this.AppConfigWatcher = null;
+                this.AppConfigPath = null;
 
-                this.Server?.DisposeAsync();
-                this.Server = null;
+                this.shutdownTriggered = null;
+                
+                if (this.AppConfigWatcher != null)
+                {
+                    this.AppConfigWatcher.Dispose();
+                    this.AppConfigWatcher = null;    
+                }
+
+                if (this.Server != null)
+                {
+                    await this.Server.Stop();
+                    await this.Server.DisposeAsync();
+                    this.Server = null;    
+                }
+
+                this.RpcEngine = null;
 
                 if (this.IoC != null)
                 {
@@ -160,64 +201,68 @@ namespace Newsgirl.Server
                 this.AppConfig = null;
                 this.SystemSettings = null;
 
-                await this.Log.DisposeAsync();
-                this.Log = null;
-
+                if (this.Log != null)
+                {
+                    await this.Log.DisposeAsync();
+                    this.Log = null;    
+                }
+                
                 AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
                 TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
 
-                // ReSharper disable once SuspiciousTypeConversion.Global
-                if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+                if (this.ErrorReporter != null)
                 {
-                    await disposableErrorReporter.DisposeAsync();
-                }
+                    // ReSharper disable once SuspiciousTypeConversion.Global
+                    if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
+                    {
+                        await disposableErrorReporter.DisposeAsync();
+                    }
 
-                this.ErrorReporter = null;
+                    this.ErrorReporter = null;    
+                }
+                
+                this.AsyncLocals = null;
             }
             finally
             {
-                this.shutdownCompleted.Set();
-            }
-        }
-      
-        public async Task Start(params string[] listenOnAddresses)
-        {
-            async Task RequestDelegate(HttpContext context)
-            {
-                await using (var requestScope = this.IoC.BeginLifetimeScope())
+                if (this.shutdownCompleted != null)
                 {
-                    var handler = requestScope.Resolve<RpcRequestHandler>();
-                    await handler.HandleRequest(context);
+                    this.shutdownCompleted.Set();
+                    this.shutdownCompleted = null;    
                 }
+
+                this.Started = false;
+            }
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            if (this.Started)
+            {
+                return this.Stop();    
             }
 
-            this.Server = new CustomHttpServerImpl(RequestDelegate);
-            
-            this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
-            this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
-            this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
-
-            await this.Server.Start(new HttpServerConfig
-            {
-                Addresses = listenOnAddresses
-            });
-
-            this.shutdownCompletionSource = new TaskCompletionSource<object>();
+            return new ValueTask();
         }
-
-        public async Task Stop()
+        
+        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            await this.Server.Stop();
+            await this.ErrorReporter.Error(e.Exception?.InnerException);
         }
 
+        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
+        }
+        
         public Task AwaitShutdownTrigger()
         {
-            return this.shutdownCompletionSource.Task;
+            return this.shutdownTriggered.Task;
         }
 
         public void TriggerShutdown()
         {
-            this.shutdownCompletionSource.SetResult(null);
+            this.shutdownTriggered.SetResult(null);
         }
         
         public void WaitForShutdownToComplete()
@@ -313,21 +358,26 @@ namespace Newsgirl.Server
             {
                 try
                 {
-                    await app.Initialize();
-
-                    await app.Start("http://127.0.0.1:5000");
-
                     AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
                     {
-                        app.TriggerShutdown();
-                        app.WaitForShutdownToComplete();
+                        if (app.Started)
+                        {
+                            app.TriggerShutdown();
+                            app.WaitForShutdownToComplete();    
+                        }
                     };
 
                     Console.CancelKeyPress += (sender, args) =>
                     {
-                        app.TriggerShutdown();
-                        app.WaitForShutdownToComplete();
+                        if (app.Started)
+                        {
+                            args.Cancel = true;
+                            app.TriggerShutdown();
+                            app.WaitForShutdownToComplete();    
+                        }
                     };
+                    
+                    await app.Start("http://127.0.0.1:5000");
 
                     await app.AwaitShutdownTrigger();
 
