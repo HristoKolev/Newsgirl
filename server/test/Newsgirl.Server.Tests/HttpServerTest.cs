@@ -4,9 +4,7 @@ namespace Newsgirl.Server.Tests
     using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using NSubstitute;
     using Shared;
-    using Testing;
     using Xunit;
 
     public class HttpServerTest

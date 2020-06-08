@@ -49,9 +49,6 @@ namespace Newsgirl.Server
             {
                 throw new ApplicationException("The application is already started.");
             }
-            
-            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
 
             this.AppConfigPath = EnvVariableHelper.Get("APP_CONFIG_PATH");
             
@@ -207,9 +204,6 @@ namespace Newsgirl.Server
                     this.Log = null;    
                 }
                 
-                AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
-                TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
-
                 if (this.ErrorReporter != null)
                 {
                     // ReSharper disable once SuspiciousTypeConversion.Global
@@ -244,17 +238,7 @@ namespace Newsgirl.Server
 
             return new ValueTask();
         }
-        
-        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error(e.Exception?.InnerException);
-        }
 
-        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
-        }
-        
         public Task AwaitShutdownTrigger()
         {
             return this.shutdownTriggered.Task;
@@ -354,50 +338,73 @@ namespace Newsgirl.Server
     {
         private static async Task<int> Main()
         {
-            await using (var app = new HttpServerApp())
+            var app = new HttpServerApp();
+            
+            async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
             {
-                try
-                {
-                    AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
-                    {
-                        if (app.Started)
-                        {
-                            app.TriggerShutdown();
-                            app.WaitForShutdownToComplete();    
-                        }
-                    };
+                await app.ErrorReporter.Error(e.Exception?.InnerException);
+            }
 
-                    Console.CancelKeyPress += (sender, args) =>
-                    {
-                        if (app.Started)
-                        {
-                            args.Cancel = true;
-                            app.TriggerShutdown();
-                            app.WaitForShutdownToComplete();    
-                        }
-                    };
+            async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+            {
+                await app.ErrorReporter.Error((Exception) e.ExceptionObject);
+            }
+            
+            void OnProcessExit(object sender, EventArgs args)
+            {
+                if (app.Started)
+                {
+                    app.TriggerShutdown();
+                    app.WaitForShutdownToComplete();
+                }
+            }
+
+            void OnCancelKeyPress(object sender, ConsoleCancelEventArgs args)
+            {
+                if (app.Started)
+                {
+                    args.Cancel = true;
+                    app.TriggerShutdown();
+                    app.WaitForShutdownToComplete();
+                }
+            }
+
+            try
+            {
+                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+                AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+                AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+                Console.CancelKeyPress += OnCancelKeyPress;
                     
-                    await app.Start("http://127.0.0.1:5000");
+                await app.Start("http://127.0.0.1:5000");
 
-                    await app.AwaitShutdownTrigger();
+                await app.AwaitShutdownTrigger();
 
-                    await app.Stop();
+                await app.Stop();
 
-                    return 0;
-                }
-                catch (Exception exception)
+                return 0;
+            }
+            catch (Exception exception)
+            {
+                if (app.Log != null)
                 {
-                    if (app.Log != null)
-                    {
-                        await app.ErrorReporter.Error(exception);
-                    }
-                    else
-                    {
-                        await Console.Error.WriteLineAsync(exception.ToString());
-                    }
-
-                    return 1;
+                    await app.ErrorReporter.Error(exception);
                 }
+                else
+                {
+                    await Console.Error.WriteLineAsync(exception.ToString());
+                }
+
+                return 1;
+            }
+            finally
+            {
+                await app.DisposeAsync();
+                
+                Console.CancelKeyPress -= OnCancelKeyPress;
+                AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
+                AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
             }
         }
     }

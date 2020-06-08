@@ -13,80 +13,140 @@ namespace Newsgirl.Server.Tests
 
     public class InitializationTest
     {
-        private const string RandomAddress = "http://127.0.0.1:0";
-
-        private static async Task<HttpServerApp> CreateTestApp()
-        {
-            var app = new HttpServerApp
-            {
-                ErrorReporter = new ErrorReporterMock()
-            };
-            
-            string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
-            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
-
-            await app.Start(RandomAddress);
-            
-            Assert.Equal(appConfigPath, app.AppConfigPath);
-            
-            return app;
-        }
-
+ 
         [Fact]
-        public async Task Server_Runs_Without_Error()
+        public async Task Server_Shuts_Down_Correctly()
         {
-            await using var app = await CreateTestApp();
-
-            var shutdownTask = Task.Run(async () =>
+            await using (var tester = await HttpServerAppTester.Create())
             {
-                await Task.Delay(100);
+                var shutdownTask = Task.Run(async () =>
+                {
+                    await Task.Delay(100);
             
-                app.TriggerShutdown();
-            });
+                    tester.App.TriggerShutdown();
+                });
             
-            await app.AwaitShutdownTrigger();
+                await tester.App.AwaitShutdownTrigger();
 
-            await shutdownTask;
+                await shutdownTask;    
+            }
         }
 
         [Fact]
         public async Task IoC_Resolves_All_Registered_Types()
         {
-            await using var app = await CreateTestApp();
-
-            var ignored = new[]
+            await using (var tester = await HttpServerAppTester.Create())
             {
-                typeof(ILifetimeScope),
-                typeof(IComponentContext)
-            };
+                var ignored = new[]
+                {
+                    typeof(ILifetimeScope),
+                    typeof(IComponentContext)
+                };
 
-            var registeredTypes = app.IoC.ComponentRegistry.Registrations
-                .SelectMany(x => x.Services)
-                .Select(x => ((TypedService) x).ServiceType)
-                .Where(x => !ignored.Contains(x))
-                .ToList();
+                var registeredTypes = tester.App.IoC.ComponentRegistry.Registrations
+                    .SelectMany(x => x.Services)
+                    .Select(x => ((TypedService) x).ServiceType)
+                    .Where(x => !ignored.Contains(x))
+                    .ToList();
 
-            foreach (var registeredType in registeredTypes)
-            {
-                app.IoC.Resolve(registeredType);
+                foreach (var registeredType in registeredTypes)
+                {
+                    tester.App.IoC.Resolve(registeredType);
+                }
             }
         }
         
         [Fact]
         public async Task Responds_to_request()
         {
-            await using var app = await CreateTestApp();
-
-            var client = new HttpClient
+            await using (var tester = await HttpServerAppTester.Create())
             {
-                BaseAddress = new Uri(app.GetAddress())
-            };
+                var client = new HttpClient
+                {
+                    BaseAddress = new Uri(tester.App.GetAddress())
+                };
             
-            var response = await client.PostAsync("/", new StringContent("{\"type\": \"PingRequest\", \"payload\":{} }"));
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
+                var response = await client.PostAsync("/", new StringContent("{\"type\": \"PingRequest\", \"payload\":{} }"));
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
             
-            Snapshot.MatchJson(responseBody);
+                Snapshot.MatchJson(responseBody);
+            }
+        }
+    }
+
+    public class HttpServerAppTester : IAsyncDisposable
+    {
+        public HttpServerApp App { get; private set; }
+        
+        public static async Task<HttpServerAppTester> Create()
+        {
+            var tester = new HttpServerAppTester();
+            
+            var app = new HttpServerApp();
+            
+            TaskScheduler.UnobservedTaskException += tester.OnUnobservedTaskException;
+            AppDomain.CurrentDomain.UnhandledException += tester.OnUnhandledException;
+            
+            Assert.Null(app.Log);
+            Assert.Null(app.AppConfig);
+            Assert.Null(app.AsyncLocals);
+            Assert.Null(app.ErrorReporter);
+            Assert.Null(app.IoC);
+            Assert.Null(app.RpcEngine);
+            Assert.Null(app.SystemSettings);
+            Assert.Null(app.AppConfigPath);
+            Assert.False(app.Started);
+            
+            app.ErrorReporter = new ErrorReporterMock();
+
+            string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
+            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
+
+            await app.Start("http://127.0.0.1:0");
+            
+            Assert.Equal(appConfigPath, app.AppConfigPath);
+            
+            Assert.NotNull(app.Log);
+            Assert.NotNull(app.AppConfig);
+            Assert.NotNull(app.AsyncLocals);
+            Assert.NotNull(app.ErrorReporter);
+            Assert.NotNull(app.IoC);
+            Assert.NotNull(app.RpcEngine);
+            Assert.NotNull(app.SystemSettings);
+            Assert.True(app.Started);
+
+            tester.App = app;
+            
+            return tester;
+        }
+
+        private async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            await this.App.ErrorReporter.Error(e.Exception?.InnerException);
+        }
+
+        private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            await this.App.ErrorReporter.Error((Exception) e.ExceptionObject);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await this.App.DisposeAsync();
+            
+            Assert.Null(this.App.Log);
+            Assert.Null(this.App.AppConfig);
+            Assert.Null(this.App.AsyncLocals);
+            Assert.Null(this.App.ErrorReporter);
+            Assert.Null(this.App.IoC);
+            Assert.Null(this.App.RpcEngine);
+            Assert.Null(this.App.SystemSettings);
+            Assert.Null(this.App.AppConfigPath);
+            Assert.False(this.App.Started);
+            
+            TaskScheduler.UnobservedTaskException -= this.OnUnobservedTaskException;
+            AppDomain.CurrentDomain.UnhandledException -= this.OnUnhandledException;
         }
     }
 }
