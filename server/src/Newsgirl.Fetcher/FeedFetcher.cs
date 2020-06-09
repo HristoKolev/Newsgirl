@@ -15,7 +15,7 @@ namespace Newsgirl.Fetcher
         private readonly IFeedParser feedParser;
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
-        private readonly ITransactionService transactionService;
+        private readonly DbTransactionService transactionService;
         private readonly Hasher hasher;
         private readonly ILog log;
         private readonly ErrorReporter errorReporter;
@@ -26,7 +26,7 @@ namespace Newsgirl.Fetcher
             IFeedParser feedParser,
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
-            ITransactionService transactionService,
+            DbTransactionService transactionService,
             Hasher hasher,
             ILog log,
             ErrorReporter errorReporter)

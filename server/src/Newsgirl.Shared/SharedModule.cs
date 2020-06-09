@@ -7,8 +7,8 @@ namespace Newsgirl.Shared
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<SystemSettingsService>().InstancePerLifetimeScope();
-            builder.RegisterType<TransactionService>().As<ITransactionService>().InstancePerLifetimeScope();
-            builder.RegisterType<DateProvider>().As<IDateProvider>().SingleInstance();
+            builder.RegisterType<DbTransactionServiceImpl>().As<DbTransactionService>().InstancePerLifetimeScope();
+            builder.RegisterType<DateProviderImpl>().As<DateProvider>().SingleInstance();
 
             base.Load(builder);
         }

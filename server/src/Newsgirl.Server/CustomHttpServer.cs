@@ -271,13 +271,13 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Reads the request stream to the end and returns <see cref="RentedByteArrayHandle" /> with the contents.
+        ///     Reads the request stream to the end and returns <see cref="RentedByteArray" /> with the contents.
         /// </summary>
-        public static async ValueTask<RentedByteArrayHandle> ReadToEnd(this HttpRequest request)
+        public static async ValueTask<RentedByteArray> ReadToEnd(this HttpRequest request)
         {
             if (request.ContentLength.HasValue)
             {
-                var bufferHandle = new RentedByteArrayHandle((int) request.ContentLength.Value);
+                var bufferHandle = new RentedByteArray((int) request.ContentLength.Value);
 
                 try
                 {
@@ -331,7 +331,7 @@ namespace Newsgirl.Server
                 };
             }
 
-            return new RentedByteArrayHandle(memoryStream);
+            return new RentedByteArray(memoryStream);
         }
     }
 }

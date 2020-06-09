@@ -2,16 +2,16 @@ namespace Newsgirl.Shared
 {
     using System;
 
-    public class DateProvider : IDateProvider
+    public interface DateProvider
+    {
+        DateTime Now();
+    }
+    
+    public class DateProviderImpl : DateProvider
     {
         public DateTime Now()
         {
             return DateTime.UtcNow;
         }
-    }
-
-    public interface IDateProvider
-    {
-        DateTime Now();
     }
 }

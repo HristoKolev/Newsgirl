@@ -60,11 +60,11 @@ namespace Newsgirl.Testing
 
         public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        public static IDateProvider DateProviderStub
+        public static DateProvider DateProviderStub
         {
             get
             {
-                var dateStub = Substitute.For<IDateProvider>();
+                var dateStub = Substitute.For<DateProvider>();
                 dateStub.Now().Returns(Date2000);
                 return dateStub;
             }
@@ -88,11 +88,11 @@ namespace Newsgirl.Testing
             }
         }
 
-        public static ITransactionService TransactionServiceStub
+        public static DbTransactionService TransactionServiceStub
         {
             get
             {
-                var transactionService = Substitute.For<ITransactionService>();
+                var transactionService = Substitute.For<DbTransactionService>();
                 transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>())
                     .Returns(info => info.Arg<Func<Task>>()());
                 transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction, Task>>())

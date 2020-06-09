@@ -3,14 +3,20 @@ namespace Newsgirl.Shared
     using System;
     using System.IO;
 
+    /// <summary>
+    /// Watches for changes of a file.
+    /// When the file is changed the `onChange` callback is invoked
+    /// The callback invocations are debounced by the `debounceTime`.
+    /// It stops watching for changes when it's disposed. 
+    /// </summary>
     public class FileWatcher : IDisposable
     {
         private readonly FileSystemWatcher fileSystemWatcher;
         private readonly Action onChange;
 
-        public FileWatcher(string filePath, Action onChange, TimeSpan? throttleDuration = null)
+        public FileWatcher(string filePath, Action onChange, TimeSpan? debounceTime = null)
         {
-            this.onChange = DelegateHelper.Debounce(onChange, throttleDuration ?? TimeSpan.FromSeconds(1));
+            this.onChange = DelegateHelper.Debounce(onChange, debounceTime ?? TimeSpan.FromSeconds(1));
             
             var watcher = new FileSystemWatcher
             {

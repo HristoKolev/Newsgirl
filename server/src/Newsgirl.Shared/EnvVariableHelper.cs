@@ -4,6 +4,9 @@ namespace Newsgirl.Shared
 
     public static class EnvVariableHelper
     {
+        /// <summary>
+        /// Env variable by name.
+        /// </summary>
         public static string Get(string name)
         {
             string value = Environment.GetEnvironmentVariable(name);

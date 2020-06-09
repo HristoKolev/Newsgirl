@@ -9,11 +9,11 @@ namespace Newsgirl.Fetcher
 
     public class FeedParser : IFeedParser
     {
-        private readonly IDateProvider dateProvider;
+        private readonly DateProvider dateProvider;
         private readonly Hasher hasher;
         private readonly ILog log;
 
-        public FeedParser(Hasher hasher, IDateProvider dateProvider, ILog log)
+        public FeedParser(Hasher hasher, DateProvider dateProvider, ILog log)
         {
             this.hasher = hasher;
             this.dateProvider = dateProvider;

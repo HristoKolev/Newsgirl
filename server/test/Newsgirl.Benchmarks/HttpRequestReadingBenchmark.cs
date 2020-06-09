@@ -46,7 +46,7 @@ namespace Newsgirl.Benchmarks
                 // ReSharper disable once PossibleInvalidOperationException
                 int contentLength = (int) context.Request.ContentLength.Value;
             
-                 var bufferHandle = new RentedByteArrayHandle(contentLength);
+                 var bufferHandle = new RentedByteArray(contentLength);
             
                 while (await context.Request.Body.ReadAsync(bufferHandle.AsMemory()) > 0) { }
             }

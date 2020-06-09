@@ -61,7 +61,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                using var bufferHolder = new RentedByteArrayHandle(this.Size);
+                using var bufferHolder = new RentedByteArray(this.Size);
 
                 GC.KeepAlive(bufferHolder.GetRentedArray());
             }
@@ -78,7 +78,7 @@ namespace Newsgirl.Benchmarks
         
         private async Task AsyncArrayPoolBuffer_Impl()
         {
-            using var bufferHolder = new RentedByteArrayHandle(this.Size);
+            using var bufferHolder = new RentedByteArray(this.Size);
             
             await Task.Delay(0);
             

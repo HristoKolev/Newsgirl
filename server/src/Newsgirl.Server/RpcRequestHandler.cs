@@ -29,7 +29,7 @@ namespace Newsgirl.Server
         private readonly ILog log;
         
         private HttpContext httpContext;
-        private RentedByteArrayHandle requestBody;
+        private RentedByteArray requestBody;
         private RpcRequestMessage rpcRequest;
         private RpcResult<object> rpcResponse;
         private DateTime requestStart;
@@ -213,9 +213,9 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArrayHandle"/>.
+        ///     Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArray"/>.
         /// </summary>
-        private RpcResult<RpcRequestMessage> ParseRequestMessage(RentedByteArrayHandle bufferHandle)
+        private RpcResult<RpcRequestMessage> ParseRequestMessage(RentedByteArray bufferHandle)
         {
             var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
 
@@ -310,7 +310,7 @@ namespace Newsgirl.Server
     public class HttpLogData
     {
         public HttpLogData(HttpContext context,
-            RentedByteArrayHandle requestBody,
+            RentedByteArray requestBody,
             RpcRequestMessage rpcRequest,
             RpcResult<object> rpcResponse,
             bool requestFailed,
