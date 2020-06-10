@@ -1,9 +1,9 @@
 namespace Newsgirl.Shared.Logging.Consumers
 {
     using System;
+    using System.Net.Http;
     using System.Text.Json;
     using System.Threading.Tasks;
-    using Elasticsearch.Net;
     using Logging;
 
     public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
@@ -75,8 +75,18 @@ namespace Newsgirl.Shared.Logging.Consumers
 
         public string Password { get; set; }
     }
-        
-    public class CustomElasticsearchResponse : ElasticsearchResponseBase
+
+    public class ElasticsearchClient
     {
+        private readonly HttpClient httpClient;
+
+        public ElasticsearchClient(HttpClient httpClient)
+        {
+            this.httpClient = httpClient;
+        }
+
+        public ElasticsearchClient() : this(new HttpClient())
+        {
+        }
     }
 }
