@@ -9,15 +9,12 @@ namespace Newsgirl.Shared.Logging.Consumers
     public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
     {
         private readonly string indexName;
-        private readonly ElasticLowLevelClient elasticsearchClient;
+        private readonly ElasticsearchClient elasticsearchClient;
 
         public ElasticsearchLogDataConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
         {
             this.indexName = indexName;
-
-            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(config.Url));
-            elasticConnectionConfiguration.BasicAuthentication(config.Username, config.Password);
-            this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
+            this.elasticsearchClient = new ElasticsearchClient(config);
         }
         
         protected override async ValueTask Flush(ArraySegment<LogData> data)
@@ -39,15 +36,12 @@ namespace Newsgirl.Shared.Logging.Consumers
     public class ElasticsearchConsumer<T> : LogConsumer<T>
     {
         private readonly string indexName;
-        private readonly ElasticLowLevelClient elasticsearchClient;
+        private readonly ElasticsearchClient elasticsearchClient;
 
         public ElasticsearchConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
         {
             this.indexName = indexName;
-
-            var elasticConnectionConfiguration = new ConnectionConfiguration(new Uri(config.Url));
-            elasticConnectionConfiguration.BasicAuthentication(config.Username, config.Password);
-            this.elasticsearchClient = new ElasticLowLevelClient(elasticConnectionConfiguration);
+            this.elasticsearchClient = new ElasticsearchClient(config);
         }
         
         protected override async ValueTask Flush(ArraySegment<T> data)
@@ -79,13 +73,19 @@ namespace Newsgirl.Shared.Logging.Consumers
     public class ElasticsearchClient
     {
         private readonly HttpClient httpClient;
+        private readonly ElasticsearchConfig config;
 
-        public ElasticsearchClient(HttpClient httpClient)
+        public ElasticsearchClient(HttpClient httpClient, ElasticsearchConfig config)
         {
             this.httpClient = httpClient;
+            this.config = config;
         }
 
-        public ElasticsearchClient() : this(new HttpClient())
+        public ElasticsearchClient(ElasticsearchConfig config) : this(new HttpClient(), config)
+        {
+        }
+
+        public Task Index(string index)
         {
         }
     }
