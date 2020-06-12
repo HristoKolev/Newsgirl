@@ -17,19 +17,21 @@ namespace Newsgirl.Shared.Logging.Consumers
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
         
-        protected override async ValueTask Flush(ArraySegment<LogData> data)
+        protected override   ValueTask Flush(ArraySegment<LogData> data)
         {
-            for (int i = 0; i < data.Count; i++)
-            {
-                string jsonBody = JsonSerializer.Serialize(data[i].Fields);
+            // for (int i = 0; i < data.Count; i++)
+            // {
+            //     string jsonBody = JsonSerializer.Serialize(data[i].Fields);
+            //
+            //     var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
+            //
+            //     if (!response.Success)
+            //     {
+            //         throw new ApplicationException(response.ToString());
+            //     }
+            // }
             
-                var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
-
-                if (!response.Success)
-                {
-                    throw new ApplicationException(response.ToString());
-                }
-            }
+            return new ValueTask();
         }
     }
     
@@ -44,19 +46,21 @@ namespace Newsgirl.Shared.Logging.Consumers
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
         
-        protected override async ValueTask Flush(ArraySegment<T> data)
+        protected override   ValueTask Flush(ArraySegment<T> data)
         {
-            for (int i = 0; i < data.Count; i++)
-            {
-                string jsonBody = JsonSerializer.Serialize(data[i]);
+            // for (int i = 0; i < data.Count; i++)
+            // {
+            //     string jsonBody = JsonSerializer.Serialize(data[i]);
+            //
+            //     var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
+            //
+            //     if (!response.Success)
+            //     {
+            //         throw new ApplicationException(response.ToString());
+            //     }
+            // }
             
-                var response = await this.elasticsearchClient.IndexAsync<CustomElasticsearchResponse>(this.indexName, jsonBody);
-
-                if (!response.Success)
-                {
-                    throw new ApplicationException(response.ToString());
-                }
-            }
+            return new ValueTask();
         }
     }
     
@@ -87,6 +91,7 @@ namespace Newsgirl.Shared.Logging.Consumers
 
         public Task Index(string index)
         {
+            return Task.CompletedTask;
         }
     }
 }
