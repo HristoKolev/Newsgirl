@@ -20,6 +20,7 @@ namespace Newsgirl.Shared
 
                     try
                     {
+                        // ReSharper disable once PossibleNullReferenceException
                         timer.Dispose();
                         timer = null;
 

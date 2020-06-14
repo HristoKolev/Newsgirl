@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Logging.Consumers
+namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Buffers;
@@ -8,7 +8,6 @@ namespace Newsgirl.Shared.Logging.Consumers
     using System.Net.Http.Headers;
     using System.Text.Json;
     using System.Threading.Tasks;
-    using Logging;
 
     public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
     {

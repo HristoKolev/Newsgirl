@@ -1,9 +1,8 @@
-namespace Newsgirl.Shared.Logging.Consumers
+namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Text.Json;
     using System.Threading.Tasks;
-    using Logging;
 
     public class ConsoleLogDataConsumer : LogConsumer<LogData>
     {
