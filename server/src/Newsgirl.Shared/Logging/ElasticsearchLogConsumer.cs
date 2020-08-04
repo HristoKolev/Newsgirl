@@ -9,7 +9,7 @@ namespace Newsgirl.Shared.Logging
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    public class ElasticsearchLogDataConsumer : LogConsumer<LogData>
+    public class ElasticsearchLogDataConsumer : LogDestination<LogData>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
@@ -43,7 +43,7 @@ namespace Newsgirl.Shared.Logging
         }
     }
     
-    public class ElasticsearchConsumer<T> : LogConsumer<T>
+    public class ElasticsearchConsumer<T> : LogDestination<T>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
@@ -78,7 +78,10 @@ namespace Newsgirl.Shared.Logging
         private readonly HttpClient httpClient;
         private readonly byte[] bulkHeaderBytes = EncodingHelper.UTF8.GetBytes("{\"create\":{}}\n");
         private readonly byte[] bulkNewLineBytes = EncodingHelper.UTF8.GetBytes("\n");
-        private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions {PropertyNameCaseInsensitive = true};
+        private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public ElasticsearchClient(HttpClient httpClient, ElasticsearchConfig config)
         {
@@ -87,9 +90,7 @@ namespace Newsgirl.Shared.Logging
             httpClient.Timeout = TimeSpan.FromMinutes(1);
             httpClient.BaseAddress = new Uri(config.Url);
 
-            string basicToken = Convert.ToBase64String(
-                EncodingHelper.UTF8.GetBytes($"{config.Username}:{config.Password}")
-            );
+            string basicToken = Convert.ToBase64String(EncodingHelper.UTF8.GetBytes($"{config.Username}:{config.Password}"));
             
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicToken);
         }

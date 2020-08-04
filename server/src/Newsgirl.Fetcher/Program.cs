@@ -37,7 +37,7 @@
             
             var loggerBuilder = new StructuredLoggerBuilder();
             
-            loggerBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogConsumer<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
                 {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
@@ -151,7 +151,7 @@
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
-        public StructuredLoggerConfig[] StructuredLogger { get; set; }
+        public EventStreamConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
 

@@ -25,9 +25,6 @@ namespace Newsgirl.Shared.Logging
 
         IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
 
-        public static implicit operator LogData(string x)
-        {
-            return new LogData(x);
-        }
+        public static implicit operator LogData(string x) => new LogData(x);
     }
 }

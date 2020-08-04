@@ -4,7 +4,7 @@ namespace Newsgirl.Shared.Logging
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    public class ConsoleLogDataConsumer : LogConsumer<LogData>
+    public class ConsoleLogDataConsumer : LogDestination<LogData>
     {
         public ConsoleLogDataConsumer(ErrorReporter errorReporter) : base(errorReporter)
         {

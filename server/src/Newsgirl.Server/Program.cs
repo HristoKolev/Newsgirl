@@ -60,7 +60,7 @@ namespace Newsgirl.Server
             
             var loggerBuilder = new StructuredLoggerBuilder();
             
-            loggerBuilder.AddConfig(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogConsumer<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<LogDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
                 {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
@@ -70,7 +70,7 @@ namespace Newsgirl.Server
                 )},
             });
                 
-            loggerBuilder.AddConfig(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<LogDestination<HttpLogData>>>
             {
                 {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
                     this.ErrorReporter,
@@ -79,7 +79,7 @@ namespace Newsgirl.Server
                 )},
             });
                 
-            loggerBuilder.AddConfig(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogConsumer<HttpLogData>>>
+            loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<LogDestination<HttpLogData>>>
             {
                 {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
                     this.ErrorReporter,
@@ -271,7 +271,7 @@ namespace Newsgirl.Server
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
-        public StructuredLoggerConfig[] StructuredLogger { get; set; }
+        public EventStreamConfig[] StructuredLogger { get; set; }
         
         public ElasticsearchConfig Elasticsearch { get; set; }
 
