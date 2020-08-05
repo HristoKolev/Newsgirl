@@ -25,7 +25,7 @@ namespace Newsgirl.Shared.Tests
                 Interlocked.Increment(ref changeCount);
             }
 
-            using (var watcher = new FileWatcher(testFilePath, OnFileChange, TimeSpan.FromMilliseconds(10)))
+            using (var _ = new FileWatcher(testFilePath, OnFileChange, TimeSpan.FromMilliseconds(20)))
             {
                 for (int i = 0; i < 10; i++)
                 {

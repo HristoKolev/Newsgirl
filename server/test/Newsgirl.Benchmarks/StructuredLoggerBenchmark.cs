@@ -36,7 +36,7 @@ namespace Newsgirl.Benchmarks
         {
             var builder = new StructuredLoggerBuilder();
             
-            builder.AddEventStream(WarnConfig, new Dictionary<string, Func<LogDestination<T>>>
+            builder.AddEventStream(WarnConfig, new Dictionary<string, Func<EventDestination<T>>>
             {
                 {NoopConsumerName, () => consumer}
             });
@@ -49,7 +49,7 @@ namespace Newsgirl.Benchmarks
                 Enabled = true,
                 Destinations = new []
                 {
-                    new LogDestinationConfig
+                    new EventDestinationConfig
                     {
                         Name = NoopConsumerName,
                         Enabled = true,
@@ -209,7 +209,7 @@ namespace Newsgirl.Benchmarks
         public int Number { get; set; }
     }
 
-    public class NoOpConsumer<T> : LogDestination<T>
+    public class NoOpConsumer<T> : EventDestination<T>
     {
         protected override ValueTask Flush(ArraySegment<T> data)
         {

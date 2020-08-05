@@ -44,7 +44,7 @@ namespace Newsgirl.Shared.Tests
             
             var builder = new StructuredLoggerBuilder();
             
-            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<LogDestination<TestLogData>>>
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
                 {CONSUMER_NAME, () => consumerMock}
             });
@@ -59,7 +59,7 @@ namespace Newsgirl.Shared.Tests
                         Enabled = true,
                         Destinations = new []
                         {
-                            new LogDestinationConfig
+                            new EventDestinationConfig
                             {
                                 Name = CONSUMER_NAME,
                                 Enabled = true
@@ -99,7 +99,7 @@ namespace Newsgirl.Shared.Tests
             
             var builder = new StructuredLoggerBuilder();
             
-            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<LogDestination<TestLogData>>>
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
                 {CONSUMER_NAME, () => consumerMock}
             });
@@ -116,7 +116,7 @@ namespace Newsgirl.Shared.Tests
                             Enabled = j % 2 == 1,
                             Destinations = new []
                             {
-                                new LogDestinationConfig
+                                new EventDestinationConfig
                                 {
                                     Name = CONSUMER_NAME,
                                     Enabled = true
@@ -155,7 +155,7 @@ namespace Newsgirl.Shared.Tests
             var expected = new List<TestLogData>();
 
             var builder = new StructuredLoggerBuilder();
-            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<LogDestination<TestLogData>>>
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
                 {CONSUMER_NAME, () => consumerMock}
             });
@@ -172,7 +172,7 @@ namespace Newsgirl.Shared.Tests
                             Enabled = true,
                             Destinations = new []
                             {
-                                new LogDestinationConfig
+                                new EventDestinationConfig
                                 {
                                     Name = CONSUMER_NAME,
                                     Enabled = j % 2 == 1
@@ -213,7 +213,7 @@ namespace Newsgirl.Shared.Tests
             var expected = new List<TestLogData>();
 
             var builder = new StructuredLoggerBuilder();
-            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<LogDestination<TestLogData>>>
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
                 {CONSUMER_NAME, () => consumerMock}
             });
@@ -228,7 +228,7 @@ namespace Newsgirl.Shared.Tests
                         Enabled = true,
                         Destinations = new []
                         {
-                            new LogDestinationConfig
+                            new EventDestinationConfig
                             {
                                 Name = CONSUMER_NAME,
                                 Enabled = true
@@ -279,7 +279,7 @@ namespace Newsgirl.Shared.Tests
             var expected = new List<TestLogData>();
 
             var builder = new StructuredLoggerBuilder();
-            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<LogDestination<TestLogData>>>
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
                 {CONSUMER_NAME, () => consumerMock}
             });
@@ -294,7 +294,7 @@ namespace Newsgirl.Shared.Tests
                         Enabled = true,
                         Destinations = new []
                         {
-                            new LogDestinationConfig
+                            new EventDestinationConfig
                             {
                                 Name = CONSUMER_NAME,
                                 Enabled = true
@@ -322,7 +322,7 @@ namespace Newsgirl.Shared.Tests
     {
     }
 
-    public class LogConsumerMock : LogDestination<TestLogData>
+    public class LogConsumerMock : EventDestination<TestLogData>
     {
         public List<TestLogData> Logs { get; } = new List<TestLogData>();
 

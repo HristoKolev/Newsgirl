@@ -2,11 +2,9 @@ namespace Newsgirl.Shared.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using Xunit;
-    using Xunit.Sdk;
 
     public class ErrorReporterTest
     {

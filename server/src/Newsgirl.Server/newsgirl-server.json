@@ -10,7 +10,7 @@
       {
         "Name": "GENERAL_LOG",        
         "Enabled": true,
-        "Consumers": [
+        "Destinations": [
           { "Name": "ConsoleConsumer", "Enabled": true },
           { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
@@ -18,7 +18,7 @@
       {
         "Name": "HTTP_REQUESTS",
         "Enabled": false,
-        "Consumers": [
+        "Destinations": [
           { "Name": "ConsoleConsumer", "Enabled": true },
           { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
@@ -26,7 +26,7 @@
       {
         "Name": "HTTP_REQUESTS_DETAILED",
         "Enabled": true,
-        "Consumers": [
+        "Destinations": [
           { "Name": "ConsoleConsumer", "Enabled": true },
           { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]

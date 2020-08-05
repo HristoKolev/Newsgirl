@@ -119,6 +119,7 @@ namespace Newsgirl.Fetcher
             return this.db.ExecuteScalar<long[]>(
                 "select get_missing_feed_items(:feed_id, :hashes);", 
                 this.db.CreateParameter("feed_id", feedID),
+                // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
                 this.db.CreateParameter("hashes", feedItemHashes, NpgsqlDbType.Bigint | NpgsqlDbType.Array)
             );
         }

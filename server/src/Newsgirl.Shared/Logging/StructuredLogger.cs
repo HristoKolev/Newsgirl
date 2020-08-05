@@ -2,7 +2,6 @@ namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Buffers;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
@@ -11,13 +10,35 @@ namespace Newsgirl.Shared.Logging
     using System.Threading.Channels;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// The primary logging API. This is what gets passed around by IoC and used by other code.
+    /// </summary>
+    public interface ILog
+    {
+        /// <summary>
+        /// Enqueues an event providing the event stream name and a function that creates the event.
+        /// If the event stream is not enabled or no destinations exists for that event stream,
+        /// the function will not be called.   
+        /// </summary>
+        void Log<TEventData>(string eventStreamName, Func<TEventData> item); 
+    }
+    
+    /// <summary>
+    /// This is the API that we use to define all possible event streams and their destinations.
+    /// </summary>
     public class StructuredLoggerBuilder
     {
-        private readonly Dictionary<string, Func<EventStreamConfig[], object>> destinationsFactoryMap
-            = new Dictionary<string, Func<EventStreamConfig[], object>>(); 
+        /// <summary>
+        /// This is the resulting data structure. The key is the event stream name and the value is a function that
+        /// takes the current event source configuration and returns an array of event destinations for that event source.
+        /// </summary>
+        private readonly Dictionary<string, Func<EventStreamConfig[], object[]>> destinationsFactoryMap
+            = new Dictionary<string, Func<EventStreamConfig[], object[]>>(); 
         
-        public void AddEventStream<T>(string eventStreamName, Dictionary<string, Func<LogDestination<T>>> factoryMap)
+        public void AddEventStream<TEventData>(string eventStreamName, Dictionary<string, Func<EventDestination<TEventData>>> factoryMap)
         {
+            // TODO: check for null
+            
             if (this.destinationsFactoryMap.ContainsKey(eventStreamName))
             {
                 throw new DetailedLogException("There already is an event stream with this name.")
@@ -38,7 +59,7 @@ namespace Newsgirl.Shared.Logging
                     return null;
                 }
                 
-                var destinations = new List<LogDestination<T>>();
+                var destinations = new List<EventDestination<TEventData>>();
 
                 foreach (var (destinationName, destinationFactory) in factoryMap)
                 {
@@ -61,12 +82,17 @@ namespace Newsgirl.Shared.Logging
                     return null;
                 }
                 
+                // ReSharper disable once CoVariantArrayConversion
                 return destinations.ToArray();
             });
         }
-
+        
+        /// <summary>
+        /// Creates a StructuredLogger instance with the current configuration.
+        /// </summary>
         public StructuredLogger Build()
         {
+            // TODO: lock this instance after this method call.
             return new StructuredLogger(this.destinationsFactoryMap);
         }
     }
@@ -77,46 +103,63 @@ namespace Newsgirl.Shared.Logging
         
         public bool Enabled { get; set; }
 
-        public LogDestinationConfig[] Destinations { get; set; }
+        public EventDestinationConfig[] Destinations { get; set; }
     }
     
-    public class LogDestinationConfig
+    public class EventDestinationConfig
     {
         public string Name { get; set; }
         
         public bool Enabled { get; set; }
     }
     
-    public class StructuredLogger : IAsyncDisposable, ILog
+    /// <summary>
+    /// An implementation of ILog that can hot swap EventDestinationCollection instances when the configuration changes.
+    /// Dispatches all events to the current EventDestinationCollection instance.
+    /// Reconfigure must be called before any calls to Log.
+    /// </summary>
+    public class StructuredLogger : ILog, IAsyncDisposable
     {
-        private readonly Dictionary<string, Func<EventStreamConfig[], object>> factoryMap;
+        /// <summary>
+        /// The key is the event stream name and the value is a function that takes the current event source
+        /// configuration and returns an array of event destinations for that event source.
+        /// </summary>
+        private readonly Dictionary<string, Func<EventStreamConfig[], object[]>> destinationsFactoryMap;
 
-        private LogConsumerCollection destinationCollection;
+        /// <summary>
+        /// Events received by calls of Log are delegated to this instance.
+        /// </summary>
+        private EventDestinationCollection eventDestinationCollection;
 
-        public StructuredLogger(Dictionary<string, Func<EventStreamConfig[], object>> factoryMap)
+        public StructuredLogger(Dictionary<string, Func<EventStreamConfig[], object[]>> destinationsFactoryMap)
         {
-            this.factoryMap = factoryMap;
+            this.destinationsFactoryMap = destinationsFactoryMap;
         }
 
-        public async ValueTask Reconfigure(EventStreamConfig[] configArray)
+        /// <summary>
+        /// Takes an event stream configuration array and builds a new destination collection replacing the old one.
+        /// The old collection gets disposed.
+        /// Must be called before any calls to Log.
+        /// </summary>
+        public async ValueTask Reconfigure(EventStreamConfig[] eventStreamConfigArray)
         {
-            var map = new Dictionary<string, object>();
+            var destinationsByEventStreamName = new Dictionary<string, object[]>();
 
-            foreach (var (configName, destinationFactory) in this.factoryMap)
+            foreach (var (eventStreamName, destinationFactory) in this.destinationsFactoryMap)
             {
-                var destinations = destinationFactory(configArray);
+                var destinations = destinationFactory(eventStreamConfigArray);
                 
                 if (destinations == null)
                 {
                     continue;
                 }
                 
-                map.Add(configName, destinations);
+                destinationsByEventStreamName.Add(eventStreamName, destinations);
             }
             
-            var oldCollection = this.destinationCollection;
+            var oldCollection = this.eventDestinationCollection;
             
-            this.destinationCollection = LogConsumerCollection.Build(map);
+            this.eventDestinationCollection = EventDestinationCollection.Build(destinationsByEventStreamName);
 
             if (oldCollection != null)
             {
@@ -124,103 +167,114 @@ namespace Newsgirl.Shared.Logging
             }
         }
 
-        public void Log<TData>(string configName, Func<TData> item)
+        public void Log<TEventData>(string eventStreamName, Func<TEventData> item)
         {
-            this.destinationCollection.Log(configName, item);
+            this.eventDestinationCollection.Log(eventStreamName, item);
         }
 
         public ValueTask DisposeAsync()
         {
-            return this.destinationCollection.DisposeAsync();
+            // TODO: test dispose before any call to Reconfigure.
+            return this.eventDestinationCollection?.DisposeAsync() ?? new ValueTask();
         }
     }
 
-    public interface ILog
+    /// <summary>
+    /// An implementation of ILog that provides a performant way of dispatching events to their destinations
+    /// based on their event stream names.
+    /// </summary>
+    public abstract class EventDestinationCollection : ILog, IAsyncDisposable 
     {
-        void Log<TData>(string configName, Func<TData> item); 
-    }
-    
-    public abstract class LogConsumerCollection
-    {
-        private Dictionary<string, object> consumersByConfigName;
+        private Dictionary<string, object[]> destinationsByEventStreamName;
 
-        // ReSharper disable once MemberCanBePrivate.Global
-        // ReSharper disable once FieldCanBeMadeReadOnly.Global
-        // ReSharper disable once ConvertToConstant.Global
-        protected int ReferenceCount = 0;
+        /// <summary>
+        /// This counts how many concurrent calls to Log are executing at a specific moment.
+        /// Gets incremented at the start of the Log call and gets decremented at the end.
+        /// </summary>
+        protected int ConcurrentLogCalls = 0;
         
+        /// <summary>
+        /// Gets implemented by the generated class.
+        /// No blocking work is done here. Destinations receive the events asynchronously.
+        /// </summary>
+        public abstract void Log<TEventData>(string eventStreamName, Func<TEventData> item);
+        
+        /// <summary>
+        /// Waits until all calls to Log have exited and then disposes all event destinations concurrently.  
+        /// </summary>
         public async ValueTask DisposeAsync()
         {
-            while (this.ReferenceCount != 0)
+            while (this.ConcurrentLogCalls != 0)
             {
                 await Task.Delay(10);
             }
             
             var disposeTasks = new List<Task>();
 
-            foreach (var consumersObj in this.consumersByConfigName.Values)
+            foreach (var destinationsArray in this.destinationsByEventStreamName.Values)
             {
-                foreach (var consumer in ((IEnumerable)consumersObj).Cast<LogConsumerControl>())
+                for (int i = 0; i < destinationsArray.Length; i++)
                 {
-                    disposeTasks.Add(consumer.Stop());
+                    var destination = (EventDestination)destinationsArray[i];
+                    
+                    disposeTasks.Add(destination.Stop());
                 }
             }
 
             await Task.WhenAll(disposeTasks);
         }
 
-        public abstract void Log<TData>(string configName, Func<TData> item);
-        
-        public static LogConsumerCollection Build(Dictionary<string, object> map)
+        /// <summary>
+        /// Takes a map of event stream name and array of destinations and creates an instance
+        /// of EventDestinationCollection that is optimized for that specific configuration.
+        /// </summary>
+        public static EventDestinationCollection Build(Dictionary<string, object[]> destinationsByEventStreamName)
         {
             var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
-                nameof(LogConsumerCollection) + "+" + Guid.NewGuid(),
+                nameof(EventDestinationCollection) + "+" + Guid.NewGuid(),
                 TypeAttributes.Public | TypeAttributes.Class,
-                typeof(LogConsumerCollection)
+                typeof(EventDestinationCollection)
             );
 
             var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
             var ctorIl = ctor.GetILGenerator();
             ctorIl.Emit(OpCodes.Ret);
             
-            EmitLog(typeBuilder, map);
+            EmitLog(typeBuilder, destinationsByEventStreamName);
 
             var type = typeBuilder.CreateType();
 
-            var instance = (LogConsumerCollection) Activator.CreateInstance(type);
+            var instance = (EventDestinationCollection) Activator.CreateInstance(type);
             
-            foreach (var (configName, consumersObj) in map)
+            foreach (var (eventStreamName, destinationArray) in destinationsByEventStreamName)
             {
-                var array = ((IEnumerable) consumersObj)
-                    .Cast<LogConsumerControl>()
-                    .Select(consumer => consumer.GetWriter())
-                    .ToArray();
+                var writers = destinationArray.Cast<EventDestination>().Select(x => x.GetWriter()).ToArray();
 
-                var field = type.GetField(configName + "_writers", BindingFlags.Public | BindingFlags.Instance);
+                var field = type.GetField(eventStreamName + "_writers", BindingFlags.Public | BindingFlags.Instance);
                 
-                field!.SetValue(instance, array);
+                field!.SetValue(instance, writers);
             }
 
-            instance!.consumersByConfigName = map;
+            instance!.destinationsByEventStreamName = destinationsByEventStreamName;
 
             return instance;
         }
 
-        private static void EmitLog(TypeBuilder typeBuilder, Dictionary<string, object> map)
+        private static void EmitLog(TypeBuilder typeBuilder, Dictionary<string, object[]> destinationsByEventStreamName)
         {
             // Interlocked.Increment
             var incrementMethod = typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x =>
-                x.Name == "Increment" && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
+                x.Name == nameof(Interlocked.Increment) && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
             
             // Interlocked.Decrement
             var decrementMethod = typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x =>
-                x.Name == "Decrement" && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
+                x.Name == nameof(Interlocked.Decrement) && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
             
-            // LogConsumerCollection.ReferenceCount
-            var referenceCountField = typeof(LogConsumerCollection).GetField("ReferenceCount", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            // EventDestinationCollection.ConcurrentLogCalls
+            var callCounterField = typeof(EventDestinationCollection).GetField(nameof(ConcurrentLogCalls), BindingFlags.NonPublic | BindingFlags.Instance)!;
             
             var logMethod = typeBuilder.DefineMethod(
-                "Log",
+                nameof(Log),
                 MethodAttributes.Public |
                 MethodAttributes.ReuseSlot |
                 MethodAttributes.HideBySig |
@@ -241,12 +295,12 @@ namespace Newsgirl.Shared.Logging
             var exitLabel = il.DefineLabel();
             var afterWritersSelect = il.DefineLabel();
             
-            foreach (string configName in map.Keys)
+            foreach (string eventStreamName in destinationsByEventStreamName.Keys)
             {
-                var field = typeBuilder.DefineField(configName + "_writers", typeof(object[]), FieldAttributes.Public);
+                var field = typeBuilder.DefineField(eventStreamName + "_writers", typeof(object[]), FieldAttributes.Public);
 
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Ldstr, configName);
+                il.Emit(OpCodes.Ldstr, eventStreamName);
                 il.Emit(OpCodes.Call, typeof(string).GetMethod("op_Equality")!);
 
                 var nextLabel = il.DefineLabel();
@@ -265,9 +319,9 @@ namespace Newsgirl.Shared.Logging
 
             il.MarkLabel(afterWritersSelect);
             
-            // Interlocked.Increment(ref this.ReferenceCount);
+            // Interlocked.Increment(ref this.ConcurrentLogCalls);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldflda, referenceCountField!);
+            il.Emit(OpCodes.Ldflda, callCounterField!);
             il.Emit(OpCodes.Call, incrementMethod);
             il.Emit(OpCodes.Pop);
 
@@ -277,7 +331,7 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Ldarg_2);
             il.Emit(OpCodes.Callvirt, TypeBuilder.GetMethod(
                 typeof(Func<>).MakeGenericType(typeParameter),
-                typeof(Func<>).GetMethod("Invoke")!)
+                typeof(Func<>).GetMethod(nameof(Func<object>.Invoke))!)
             );
             il.Emit(OpCodes.Stloc, itemLocal);
 
@@ -301,7 +355,7 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Ldloc, itemLocal);
             il.Emit(OpCodes.Callvirt, TypeBuilder.GetMethod(
                 typeof(ChannelWriter<>).MakeGenericType(typeParameter),
-                typeof(ChannelWriter<>).GetMethod("TryWrite")!
+                typeof(ChannelWriter<>).GetMethod(nameof(ChannelWriter<object>.TryWrite))!
             ));
             il.Emit(OpCodes.Pop);
             
@@ -328,9 +382,9 @@ namespace Newsgirl.Shared.Logging
 
             il.BeginFinallyBlock();
             
-            // Interlocked.Decrement(ref this.ReferenceCount);
+            // Interlocked.Decrement(ref this.ConcurrentLogCalls);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldflda, referenceCountField!);
+            il.Emit(OpCodes.Ldflda, callCounterField!);
             il.Emit(OpCodes.Call, decrementMethod);
             il.Emit(OpCodes.Pop);
 
@@ -341,18 +395,24 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Ret);
         }
     }
-        
+
     /// <summary>
-    /// Base class for all log consumers.
+    /// Base class for all event destinations.
+    /// When started enqueues a task on the thread pool that reads items from it's Channel{TEventData} instance.
+    /// Buffers events in an internal buffer and calls the abstract Flush passing an ArraySegment{TEventData}
+    /// to the implementer.
+    /// If the implementer throws an exception Flush is retried for configurable number of times with a configurable
+    /// pause between each call.
     /// </summary>
-    public abstract class LogDestination<TData> : LogConsumerControl
+    public abstract class EventDestination<TEventData> : EventDestination
     {
         private readonly ErrorReporter errorReporter;
         private Task readTask;
-        private TData[] buffer;
+        private TEventData[] buffer;
         private bool started;
+        private Channel<TEventData> channel;
 
-        protected LogDestination(ErrorReporter errorReporter)
+        protected EventDestination(ErrorReporter errorReporter)
         {
             this.errorReporter = errorReporter;
         }
@@ -362,18 +422,18 @@ namespace Newsgirl.Shared.Logging
         protected int NumberOfRetries { get; set; } = 10;
 
         protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
-
-        private Channel<TData> Channel { get; set; }
+        
+        protected abstract ValueTask Flush(ArraySegment<TEventData> data);
 
         public void Start()
         {
             if (this.started)
             {
-                throw new DetailedLogException("The consumer is already started.");
+                throw new DetailedLogException("The destination is already started.");
             }
             
-            this.buffer = ArrayPool<TData>.Shared.Rent(16);
-            this.Channel = System.Threading.Channels.Channel.CreateUnbounded<TData>();
+            this.buffer = ArrayPool<TEventData>.Shared.Rent(16);
+            this.channel = Channel.CreateUnbounded<TEventData>();
             this.readTask = Task.Run(this.Read);
 
             this.started = true;
@@ -383,20 +443,20 @@ namespace Newsgirl.Shared.Logging
         {
             if (!this.started)
             {
-                throw new DetailedLogException("The consumer is already stopped.");
+                throw new DetailedLogException("The destination is already stopped.");
             }
             
             try
             {
-                this.Channel.Writer.Complete();
+                this.channel.Writer.Complete();
                 await this.readTask;
             }
             finally
             {
-                ArrayPool<TData>.Shared.Return(this.buffer);    
+                ArrayPool<TEventData>.Shared.Return(this.buffer);    
             }
 
-            this.Channel = null;
+            this.channel = null;
             this.readTask = null;
             this.buffer = null;
 
@@ -405,7 +465,7 @@ namespace Newsgirl.Shared.Logging
 
         public object GetWriter()
         {
-            return this.Channel.Writer;
+            return this.channel.Writer;
         }
 
         private async Task Read()
@@ -414,12 +474,12 @@ namespace Newsgirl.Shared.Logging
             {
                 try
                 {
-                    while (await this.Channel.Reader.WaitToReadAsync())
+                    while (await this.channel.Reader.WaitToReadAsync())
                     {
-                        TData item;
+                        TEventData item;
                         int i = 0;
                     
-                        for (; this.Channel.Reader.TryRead(out item); i += 1)
+                        for (; this.channel.Reader.TryRead(out item); i += 1)
                         {
                             if (i == this.buffer.Length)
                             {
@@ -429,7 +489,7 @@ namespace Newsgirl.Shared.Logging
                             this.buffer[i] = item;
                         }
 
-                        var segment = new ArraySegment<TData>(this.buffer, 0, i);
+                        var segment = new ArraySegment<TEventData>(this.buffer, 0, i);
 
                         for (int j = 0; j < this.NumberOfRetries + 1; j++)
                         {
@@ -454,7 +514,6 @@ namespace Newsgirl.Shared.Logging
                 catch (Exception ex)  
                 {
                     await this.errorReporter.Error(ex);
-                    
                     await Task.Delay(this.TimeBetweenMainLoopRestart);
                 }
             }
@@ -462,11 +521,11 @@ namespace Newsgirl.Shared.Logging
 
         private void ResizeBuffer()
         {
-            TData[] newBuffer = null;
+            TEventData[] newBuffer = null;
 
             try
             {
-                newBuffer = ArrayPool<TData>.Shared.Rent(this.buffer.Length * 2);
+                newBuffer = ArrayPool<TEventData>.Shared.Rent(this.buffer.Length * 2);
                 
                 Array.Copy(this.buffer, newBuffer, this.buffer.Length);
             }
@@ -474,21 +533,22 @@ namespace Newsgirl.Shared.Logging
             {
                 if (newBuffer != null)
                 {
-                    ArrayPool<TData>.Shared.Return(newBuffer);                                        
+                    ArrayPool<TEventData>.Shared.Return(newBuffer);                                        
                 }
                                     
                 throw;
             }
 
-            ArrayPool<TData>.Shared.Return(this.buffer);
+            ArrayPool<TEventData>.Shared.Return(this.buffer);
             
             this.buffer = newBuffer;
         }
-
-        protected abstract ValueTask Flush(ArraySegment<TData> data);
     }
 
-    public interface LogConsumerControl
+    /// <summary>
+    /// This interface exists to allow some operations on EventDestination{T} that do not need T to be exposed.
+    /// </summary>
+    public interface EventDestination
     {
         Task Stop();
 

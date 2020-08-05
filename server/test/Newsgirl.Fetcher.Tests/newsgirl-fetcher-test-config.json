@@ -10,7 +10,7 @@
       {
         "Name": "GENERAL_LOG",
         "Enabled": true,
-        "Consumers": [
+        "Destinations": [
           {
             "Name": "ConsoleConsumer",
             "Enabled": true

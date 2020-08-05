@@ -37,10 +37,10 @@
             
             var loggerBuilder = new StructuredLoggerBuilder();
             
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<LogDestination<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralKey, new Dictionary<string,Func<EventDestination<LogData>>>
             {
-                {"ConsoleConsumer", () => new ConsoleLogDataConsumer(this.ErrorReporter)},
-                {"ElasticsearchConsumer", () => new ElasticsearchLogDataConsumer(
+                {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
+                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination(
                     this.ErrorReporter, 
                     this.AppConfig.Logging.Elasticsearch,
                     this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex

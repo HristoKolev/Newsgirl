@@ -11,7 +11,7 @@ namespace Newsgirl.Shared.Tests
         {
             int i = 0;
             var duration = TimeSpan.FromMilliseconds(20);
-            var delta = TimeSpan.FromMilliseconds(5);
+            var delta = TimeSpan.FromMilliseconds(10);
             
             var run = DelegateHelper.Debounce(() => i++, duration);
 

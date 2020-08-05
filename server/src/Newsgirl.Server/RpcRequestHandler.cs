@@ -70,6 +70,7 @@ namespace Newsgirl.Server
             {
                 {"http", new HttpLogData(
                     this.httpContext,
+                    // ReSharper disable once AccessToDisposedClosure
                     this.requestBody,
                     this.rpcRequest,
                     this.rpcResponse,
@@ -104,6 +105,7 @@ namespace Newsgirl.Server
                 
                 this.log.HttpDetailed(() => new HttpLogData(
                     this.httpContext,
+                    // ReSharper disable once AccessToDisposedClosure
                     this.requestBody,
                     this.rpcRequest,
                     this.rpcResponse,

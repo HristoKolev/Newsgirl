@@ -45,7 +45,7 @@ namespace Newsgirl.Shared
                 {
                     HandlerClass = markedMethod.DeclaringType,
                     HandlerMethod = markedMethod,
-                    RequestType = bindAttribute.RequestType,
+                    RequestType = bindAttribute!.RequestType,
                     ResponseType = bindAttribute.ResponseType,
                     Parameters = markedMethod.GetParameters().Select(x => x.ParameterType).ToList(),
                     SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>(),

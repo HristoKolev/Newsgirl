@@ -570,18 +570,18 @@ namespace Newsgirl.Testing
     {
         public Dictionary<string, List<object>> Logs { get; } = new Dictionary<string, List<object>>();
         
-        public void Log<T>(string key, Func<T> func)
+        public void Log<T>(string eventStreamName, Func<T> func)
         {
-            if (!this.Logs.ContainsKey(key))
+            if (!this.Logs.ContainsKey(eventStreamName))
             {
-                this.Logs.Add(key, new List<object>
+                this.Logs.Add(eventStreamName, new List<object>
                 {
                     func()
                 });
             }
             else
             {
-                this.Logs[key].Add(func());    
+                this.Logs[eventStreamName].Add(func());    
             }
         }
     }

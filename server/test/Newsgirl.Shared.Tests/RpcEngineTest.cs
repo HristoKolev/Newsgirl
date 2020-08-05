@@ -56,7 +56,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {
@@ -77,7 +77,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {

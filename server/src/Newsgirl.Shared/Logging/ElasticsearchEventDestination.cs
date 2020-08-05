@@ -9,12 +9,12 @@ namespace Newsgirl.Shared.Logging
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    public class ElasticsearchLogDataConsumer : LogDestination<LogData>
+    public class ElasticsearchEventDestination : EventDestination<LogData>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
 
-        public ElasticsearchLogDataConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
+        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
         {
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
@@ -43,7 +43,7 @@ namespace Newsgirl.Shared.Logging
         }
     }
     
-    public class ElasticsearchConsumer<T> : LogDestination<T>
+    public class ElasticsearchConsumer<T> : EventDestination<T>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
