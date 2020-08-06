@@ -60,7 +60,7 @@ namespace Newsgirl.Server
             
             var loggerBuilder = new StructuredLoggerBuilder();
             
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralKey, new Dictionary<string, Func<EventDestination<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
                 {"ElasticsearchConsumer", () => new ElasticsearchEventDestination(
@@ -72,7 +72,7 @@ namespace Newsgirl.Server
                 
             loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
-                {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
                     this.ErrorReporter,
                     this.AppConfig.Logging.Elasticsearch,
                     this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
@@ -81,7 +81,7 @@ namespace Newsgirl.Server
                 
             loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
-                {"ElasticsearchConsumer", () => new ElasticsearchConsumer<HttpLogData>(
+                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
                     this.ErrorReporter,
                     this.AppConfig.Logging.Elasticsearch,
                     this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex

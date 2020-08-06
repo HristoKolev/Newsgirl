@@ -8,7 +8,32 @@ namespace Newsgirl.Shared.Logging
     using System.Net.Http.Headers;
     using System.Text.Json;
     using System.Threading.Tasks;
+    
+    /// <summary>
+    /// Prints events to `stdout`.
+    /// </summary>
+    public class ConsoleEventDestination : EventDestination<LogData>
+    {
+        public ConsoleEventDestination(ErrorReporter errorReporter) : base(errorReporter)
+        {
+        }
+        
+        protected override async ValueTask Flush(ArraySegment<LogData> data)
+        {
+            for (int i = 0; i < data.Count; i++)
+            {
+                var log = data[i];
 
+                string json = JsonSerializer.Serialize(log.Fields);
+
+                await Console.Out.WriteLineAsync(json);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Sends LogData events to ELK.
+    /// </summary>
     public class ElasticsearchEventDestination : EventDestination<LogData>
     {
         private readonly string indexName;
@@ -43,12 +68,15 @@ namespace Newsgirl.Shared.Logging
         }
     }
     
-    public class ElasticsearchConsumer<T> : EventDestination<T>
+    /// <summary>
+    /// Sends events to ELK.
+    /// </summary>
+    public class ElasticsearchEventDestination<T> : EventDestination<T>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
 
-        public ElasticsearchConsumer(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
+        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
         {
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
@@ -60,18 +88,9 @@ namespace Newsgirl.Shared.Logging
         }
     }
     
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class ElasticsearchConfig
-    {
-        public string Url { get; set; }
-
-        public string Username { get; set; }
-
-        public string Password { get; set; }
-    }
-
     /// <summary>
     /// A simple client for elasticsearch.
+    /// Currently only supports bulk indexing.
     /// </summary>
     public class ElasticsearchClient
     {
@@ -154,5 +173,18 @@ namespace Newsgirl.Shared.Logging
         {
             public bool Errors { get; set; }
         }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ElasticsearchConfig
+    {
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        public string Url { get; set; }
+
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        public string Username { get; set; }
+
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        public string Password { get; set; }
     }
 }
