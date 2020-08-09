@@ -2,7 +2,7 @@ namespace Newsgirl.Shared
 {
     using System;
     using Autofac;
-
+    
     public interface InstanceProvider
     {
         object Get(Type type);

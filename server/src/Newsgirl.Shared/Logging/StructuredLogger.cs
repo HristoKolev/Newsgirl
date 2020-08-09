@@ -230,7 +230,7 @@ namespace Newsgirl.Shared.Logging
         /// </summary>
         public static EventDestinationCollection Build(Dictionary<string, object[]> destinationsByEventStreamName)
         {
-            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
+            var typeBuilder = ReflectionEmmitHelper.ModuleBuilder.DefineType(
                 nameof(EventDestinationCollection) + "+" + Guid.NewGuid(),
                 TypeAttributes.Public | TypeAttributes.Class,
                 typeof(EventDestinationCollection)

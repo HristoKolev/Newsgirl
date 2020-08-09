@@ -9,9 +9,9 @@ namespace Newsgirl.Shared
 {
     public class RpcEngine
     {
-        private Dictionary<string, RpcMetadata> metadataByRequestName;
+        private Dictionary<string, RpcRequestMetadata> metadataByRequestName;
         
-        public List<RpcMetadata> Metadata { get; private set; }
+        public List<RpcRequestMetadata> Metadata { get; private set; }
 
         public RpcEngine(RpcEngineOptions options)
         {
@@ -25,7 +25,7 @@ namespace Newsgirl.Shared
             var markedMethods = options.PotentialHandlerTypes.SelectMany(type => type.GetMethods(methodFlag))
                 .Where(info => info.GetCustomAttribute<RpcBindAttribute>() != null).ToList();
 
-            var handlers = new List<RpcMetadata>(markedMethods.Count);
+            var handlers = new List<RpcRequestMetadata>(markedMethods.Count);
 
             foreach (var markedMethod in markedMethods)
             {
@@ -41,7 +41,7 @@ namespace Newsgirl.Shared
 
                 var bindAttribute = markedMethod.GetCustomAttribute<RpcBindAttribute>();
 
-                var metadata = new RpcMetadata
+                var metadata = new RpcRequestMetadata
                 {
                     HandlerClass = markedMethod.DeclaringType,
                     HandlerMethod = markedMethod,
@@ -140,7 +140,7 @@ namespace Newsgirl.Shared
         }
 
         // ReSharper disable once UnusedParameter.Local
-        private static Func<Task, RpcResult<object>> GetConvertTaskOfResult(RpcMetadata metadata)
+        private static Func<Task, RpcResult<object>> GetConvertTaskOfResult(RpcRequestMetadata metadata)
         {
             var method = new DynamicMethod("convertTaskOfResult", typeof(RpcResult<object>), new []{typeof(Task)});
             
@@ -161,7 +161,7 @@ namespace Newsgirl.Shared
             return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
-        private static Func<Task, RpcResult<object>> GetConvertTaskOfResultOfResponse(RpcMetadata metadata)
+        private static Func<Task, RpcResult<object>> GetConvertTaskOfResultOfResponse(RpcRequestMetadata metadata)
         {
             var method = new DynamicMethod("convertTaskOfResultOfResponse", typeof(RpcResult<object>), new []{typeof(Task)});
 
@@ -181,7 +181,7 @@ namespace Newsgirl.Shared
             return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
-        private static Func<Task, RpcResult<object>> GetConvertTaskOfResponse(RpcMetadata metadata)
+        private static Func<Task, RpcResult<object>> GetConvertTaskOfResponse(RpcRequestMetadata metadata)
         {
             var method = new DynamicMethod("convertTaskOfResponse", typeof(RpcResult<object>), new []{typeof(Task)});
 
@@ -195,11 +195,11 @@ namespace Newsgirl.Shared
             return method.CreateDelegate<Func<Task, RpcResult<object>>>();
         }
 
-        private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcMetadata metadata)
+        private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcRequestMetadata metadata)
         {
             var getInstance = typeof(InstanceProvider).GetMethod("Get", new[] {typeof(Type)});
 
-            var typeBuilder = IlGeneratorHelper.ModuleBuilder.DefineType(
+            var typeBuilder = ReflectionEmmitHelper.ModuleBuilder.DefineType(
                 "RpcMiddlewareDynamicType+" + Guid.NewGuid(),
                 TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | 
                 TypeAttributes.Abstract | TypeAttributes.AutoClass | TypeAttributes.AnsiClass
@@ -352,7 +352,7 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request type is null or empty.");
             }
 
-            RpcMetadata metadata;
+            RpcRequestMetadata metadata;
 
             if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
             {
@@ -407,7 +407,7 @@ namespace Newsgirl.Shared
                 throw new DetailedLogException("Request type is null or empty.");
             }
 
-            RpcMetadata metadata;
+            RpcRequestMetadata metadata;
 
             if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
             {
@@ -453,7 +453,7 @@ namespace Newsgirl.Shared
             }
         }
 
-        public RpcMetadata GetMetadataByRequestName(string requestName)
+        public RpcRequestMetadata GetMetadataByRequestName(string requestName)
         {
             if (this.metadataByRequestName.TryGetValue(requestName, out var metadata))
             {
@@ -463,50 +463,10 @@ namespace Newsgirl.Shared
             return null;
         }
     }
-    
-    public static class IlGeneratorHelper
-    {
-        private static bool initialized;
-        private static readonly object SyncRoot = new object();
-        private static ModuleBuilder moduleBuilder;
 
-        private static void Initialize()
-        {
-            if (initialized)
-            {
-                return;
-            }
-
-            lock (SyncRoot)
-            {
-                if (initialized)
-                {
-                    return;
-                }
-
-                var assemblyName = new AssemblyName("DynamicAssembly+" + Guid.NewGuid());
-                var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-                moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name);
-
-                initialized = true;
-            }
-        }
-
-        public static ModuleBuilder ModuleBuilder
-        {
-            get
-            {
-                Initialize();
-                return moduleBuilder;
-            }
-        }
-
-        public static T CreateDelegate<T>(this MethodInfo methodInfo) where T : Delegate
-        {
-            return (T) methodInfo.CreateDelegate(typeof(T));
-        }
-    }
-    
+    /// <summary>
+    /// Represents an RPC request in execution. 
+    /// </summary>
     public class RpcContext
     {
         private Task responseTask;
@@ -519,7 +479,7 @@ namespace Newsgirl.Shared
             set => this.responseTask = value;
         }
 
-        public RpcMetadata Metadata { get; set; }
+        public RpcRequestMetadata Metadata { get; set; }
         
         public ReturnVariant ReturnVariant { get; set; }
         
@@ -531,6 +491,9 @@ namespace Newsgirl.Shared
         }
     }
     
+    /// <summary>
+    /// Base interface for all RPC middleware classes.
+    /// </summary>
     public interface RpcMiddleware
     {
         Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next);
@@ -544,22 +507,13 @@ namespace Newsgirl.Shared
 
         public Type[] MiddlewareTypes { get; set; }
         
+        /// <summary>
+        /// Types that are allowed to be injected into handler methods.
+        /// </summary>
         public Type[] HandlerArgumentTypeWhiteList { get; set; }
     }
 
-    public enum ReturnVariant
-    {
-        // Task<TResponse>
-        TaskOfResponse = 1,
-        
-        // Task<RpcResult<TResponse>>
-        TaskOfResultOfResponse = 2,
-        
-        // Task<RpcResult>
-        TaskOfResult = 3,
-    }
-
-    public class RpcMetadata
+    public class RpcRequestMetadata
     {
         public Type HandlerClass { get; set; }
 
@@ -586,6 +540,18 @@ namespace Newsgirl.Shared
         public Func<Task, RpcResult<object>> ConvertTaskOfResult { get; set; }
     }
     
+    public enum ReturnVariant
+    {
+        // Task<TResponse>
+        TaskOfResponse = 1,
+        
+        // Task<RpcResult<TResponse>>
+        TaskOfResultOfResponse = 2,
+        
+        // Task<RpcResult>
+        TaskOfResult = 3,
+    }
+    
     /// <summary>
     /// This is used to mark methods as RPC handlers.
     /// </summary>
@@ -604,16 +570,20 @@ namespace Newsgirl.Shared
     }
     
     /// <summary>
-    /// This is the base type for all supplemental attributes
+    /// This is the base type for all supplemental attributes.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public abstract class RpcSupplementalAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// The input to the RPC engine.
+    /// </summary>
     public class RpcRequestMessage
     {
         public object Payload { get; set; }
+        
 
         public Dictionary<string, string> Headers { get; set; }
         
