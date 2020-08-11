@@ -34,9 +34,14 @@ namespace Newsgirl.Shared
                     throw new DetailedLogException($"Static methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
                 
-                if (markedMethod.IsPrivate)
+                if (!markedMethod.IsPublic)
                 {
-                    throw new DetailedLogException($"Private methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                    throw new DetailedLogException($"Only public methods can be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                }
+                
+                if (markedMethod.IsVirtual)
+                {
+                    throw new DetailedLogException($"Virtual methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 var bindAttribute = markedMethod.GetCustomAttribute<RpcBindAttribute>();
@@ -97,7 +102,7 @@ namespace Newsgirl.Shared
                         $" handler method `{metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}`.");
                 }
 
-                var collidingMetadata = handlers.FirstOrDefault(x => x.RequestType == metadata.RequestType);
+                var collidingMetadata = handlers.FirstOrDefault(x => x.RequestType.Name == metadata.RequestType.Name);
 
                 if (collidingMetadata != null)
                 {
@@ -228,13 +233,13 @@ namespace Newsgirl.Shared
                 if (parameter == metadata.RequestType)
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("RequestMessage")?.GetMethod!);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty("Payload")?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.RequestMessage))?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty(nameof(RpcRequestMessage.Payload))?.GetMethod!);
                 }
                 else
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("Items")?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.Items))?.GetMethod!);
                     executeHandlerGen.Emit(OpCodes.Ldtoken, parameter);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(Dictionary<Type, object>).GetMethod("get_Item")!);
                 }
@@ -245,7 +250,7 @@ namespace Newsgirl.Shared
             
             executeHandlerGen.Emit(OpCodes.Ldarg_0);
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
-            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty("ResponseTask")?.SetMethod!);
+            executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.ResponseTask))?.SetMethod!);
                     
             executeHandlerGen.Emit(OpCodes.Ldloc_0);
             executeHandlerGen.Emit(OpCodes.Ret);

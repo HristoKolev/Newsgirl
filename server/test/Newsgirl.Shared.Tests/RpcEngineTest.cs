@@ -1,3 +1,10 @@
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedMember.Local
+// ReSharper disable UnusedParameter.Global
+// ReSharper disable ClassNeverInstantiated.Global
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,7 +80,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void Ctor_throws_when_private_method_is_marked()
+        public void Ctor_throws_when_non_public_method_is_marked()
         {
             Snapshot.MatchError(() =>
             {
@@ -81,20 +88,41 @@ namespace Newsgirl.Shared.Tests
                 {
                     PotentialHandlerTypes = new[]
                     {
-                        typeof(PrivateRpcMethodHandler),
+                        typeof(NonPublicRpcMethodHandler),
                     },
                 });
             });
         }
             
-        public class PrivateRpcMethodHandler
+        public class NonPublicRpcMethodHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             private Task RpcMethod() => Task.CompletedTask;
         }
+        
+        [Fact]
+        public void Ctor_throws_when_virtual_method_is_marked()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(VirtualRpcMethodHandler),
+                    },
+                });
+            });
+        }
+            
+        public class VirtualRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public virtual Task RpcMethod() => Task.CompletedTask;
+        }
 
         [Fact]
-        public void Metadata_has_correct_request_type()
+        public void Metadata_entry_has_correct_request_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -117,7 +145,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void Metadata_has_correct_response_type()
+        public void Metadata_entry_has_correct_response_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -140,34 +168,34 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void Ctor_throws_on_invalid_parameter_type()
+        public void Ctor_throws_on_unrecognized_method_parameter_type()
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {
-                        typeof(InvalidParameterTestHandler),
+                        typeof(UnrecognizedParameterTestHandler),
                     },
                 });
             });
         }
         
-        public class InvalidParameterTestHandler
+        public class UnrecognizedParameterTestHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public Task<SimpleResponse1> RpcMethod(StringBuilder sb) => Task.FromResult(new SimpleResponse1());
         }
         
         [Fact]
-        public void Ctor_works_when_parameter_type_is_explicitly_allowed()
+        public void Ctor_allows_whitelisted_parameter_types()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(ExplicitlyAllowParameterTypeTestHandler),
+                    typeof(AllowWhitelistedParameterTypeTestHandler),
                 },
                 HandlerArgumentTypeWhiteList = new []
                 {
@@ -181,50 +209,49 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(typeof(StringBuilder), metadata.Parameters.Single());
         }
         
-        public class ExplicitlyAllowParameterTypeTestHandler
+        public class AllowWhitelistedParameterTypeTestHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public Task<SimpleResponse1> RpcMethod(StringBuilder sb) => Task.FromResult(new SimpleResponse1());
         }
  
         [Fact]
-        public void Ctor_throws_on_invalid_return_type()
+        public void Ctor_throws_on_unrecognized_return_type()
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {
-                        typeof(InvalidReturnTypeTestHandler),
+                        typeof(UnrecognizedReturnTypeTestHandler),
                     },
                 });
             });
         }
         
-        public class InvalidReturnTypeTestHandler
+        public class UnrecognizedReturnTypeTestHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public StringBuilder RpcMethod(SimpleRequest1 req) => null;
         }
 
-
         [Fact]
-        public void Ctor_throws_on_colliding_request_types()
+        public void Ctor_throws_when_multiple_handlers_are_bound_to_the_same_request_type()
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                 _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {
-                        typeof(CollidingRequestsTestHandler),
+                        typeof(MultipleHandlersBoundToTheSameRequestTypeTestHandler),
                     },
                 });
             });
         }
         
-        public class CollidingRequestsTestHandler
+        public class MultipleHandlersBoundToTheSameRequestTypeTestHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public Task<SimpleResponse1> RpcMethod() => Task.FromResult(new SimpleResponse1());
@@ -234,13 +261,13 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void Metadata_has_class_level_supplemental_attributes()
+        public void Metadata_entry_has_class_level_supplemental_attributes()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(SupplementalAttributesClassOnlyHandler),
+                    typeof(ClassLevelSupplementalAttributesHandler),
                 },
             });
             
@@ -249,26 +276,26 @@ namespace Newsgirl.Shared.Tests
             
             Assert.Single(metadata.SupplementalAttributes);
             
-            var attribute = metadata.SupplementalAttributes.Single().Value as TestSupplementalAttribute;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
             
             Assert.Equal(123, attribute.Value);
         }
         
         [TestSupplemental(123)]
-        public class SupplementalAttributesClassOnlyHandler
+        public class ClassLevelSupplementalAttributesHandler
         {
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
             public Task<SimpleResponse1> RpcMethod() => Task.FromResult(new SimpleResponse1());
         }
         
         [Fact]
-        public void Metadata_has_method_level_supplemental_attributes()
+        public void Metadata_entry_has_method_level_supplemental_attributes()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(SupplementalAttributesMethodOnlyHandler),
+                    typeof(MethodLevelSupplementalAttributesHandler),
                 },
             });
 
@@ -277,12 +304,12 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Single(metadata.SupplementalAttributes);
             
-            var attribute = metadata.SupplementalAttributes.Single().Value as TestSupplementalAttribute;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
             
             Assert.Equal(456, attribute.Value);
         }
         
-        public class SupplementalAttributesMethodOnlyHandler
+        public class MethodLevelSupplementalAttributesHandler
         {
             [TestSupplemental(456)]
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
@@ -305,7 +332,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Single(metadata.SupplementalAttributes);
             
-            var attribute = metadata.SupplementalAttributes.Single().Value as TestSupplementalAttribute;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
             
             Assert.Equal(456, attribute.Value);
         }
@@ -450,7 +477,7 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public async Task Execute_throws_when_it_cannot_match_a_handler()
+        public async Task Execute_throws_when_no_handler_found_for_request_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -473,7 +500,7 @@ namespace Newsgirl.Shared.Tests
         }
         
         [Fact]
-        public async Task ExecuteObject_throws_when_it_cannot_match_a_handler()
+        public async Task ExecuteObject_throws_when_no_handler_found_for_request_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -625,7 +652,7 @@ namespace Newsgirl.Shared.Tests
         
         public class ExecutorTestHandler
         {
-            public static int RunCount = 0;
+            public static int RunCount;
 
             public static ExecutorTestRequest Request;
             
@@ -695,7 +722,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                new RpcEngine(new RpcEngineOptions
+                _ = new RpcEngine(new RpcEngineOptions
                 {
                     PotentialHandlerTypes = new[]
                     {
@@ -746,13 +773,11 @@ namespace Newsgirl.Shared.Tests
         public class MiddlewareOrderTestHandler
         {
             [RpcBind(typeof(MiddlewareTestRequest), typeof(MiddlewareTestResponse))]
-#pragma warning disable 1998
-            public async Task<MiddlewareTestResponse> RpcMethod(MiddlewareTestRequest request)
-#pragma warning restore 1998
+            public Task<MiddlewareTestResponse> RpcMethod(MiddlewareTestRequest request)
             {
                 request.Trace.Add(this.GetType().Name + "_HandlerMethod");
                 
-                return new MiddlewareTestResponse();
+                return Task.FromResult(new MiddlewareTestResponse());
             }
         }
         
@@ -847,13 +872,11 @@ namespace Newsgirl.Shared.Tests
             public static AdditionalArgumentModel AdditionalArg { get; set; }
             
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
-#pragma warning disable 1998
-            public async Task<SimpleResponse1> RpcMethod(SimpleRequest1 request, AdditionalArgumentModel additionalArgument)
-#pragma warning restore 1998
+            public Task<SimpleResponse1> RpcMethod(SimpleRequest1 request, AdditionalArgumentModel additionalArgument)
             {
                 AdditionalArg = additionalArgument;
 
-                return new SimpleResponse1();
+                return Task.FromResult(new SimpleResponse1());
             }
         }
         
@@ -902,13 +925,11 @@ namespace Newsgirl.Shared.Tests
             public static RpcResult<SimpleResponse1> ResultValue { get; set; }
             
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
-#pragma warning disable 1998
-            public async Task<RpcResult<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
-#pragma warning restore 1998
+            public Task<RpcResult<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
             {
                 ResultValue = RpcResult.Ok(new SimpleResponse1());
                 ResultValue.Headers.Add("handler_method_header1", "handler_method_header1_value");
-                return ResultValue;
+                return Task.FromResult(ResultValue);
             }
         }
         
@@ -986,14 +1007,14 @@ namespace Newsgirl.Shared.Tests
         
         public class SimpleResultMiddleware : RpcMiddleware
         {
-#pragma warning disable 1998
-            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-#pragma warning restore 1998
+            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
                 var result = RpcResult.Error("test123");
                 result.Headers.Add("header1", "value1");
                 
                 context.SetResponse(result);
+                
+                return Task.CompletedTask;
             }
         }
         
@@ -1025,11 +1046,10 @@ namespace Newsgirl.Shared.Tests
         
         public class NullResponseTaskMiddleware : RpcMiddleware
         {
-#pragma warning disable 1998
-            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-#pragma warning restore 1998
+            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                // do nothing, context.responseTask stays null 
+                // do nothing, context.responseTask stays null
+                return Task.CompletedTask;
             }
         }
         
@@ -1061,11 +1081,11 @@ namespace Newsgirl.Shared.Tests
         
         public class UnsupportedResponseTypeMiddleware : RpcMiddleware
         {
-#pragma warning disable 1998
-            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-#pragma warning restore 1998
+            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                context.SetResponse(new StringBuilder()); 
+                context.SetResponse(new StringBuilder());
+                
+                return Task.CompletedTask;
             }
         }
         

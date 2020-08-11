@@ -1,0 +1,11 @@
+﻿[
+  {
+    "Details": {},
+    "Fingerprint": null,
+    "Message": "Only public methods can be bound as an RPC handlers. NonPublicRpcMethodHandler.RpcMethod",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "Newsgirl.Shared",
+    "HResult": -2146233088
+  }
+]
