@@ -1,11 +1,11 @@
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace Newsgirl.Shared.Tests
 {
+    using System.Collections.Concurrent;
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Xunit;
+
     public class ObjectPoolTest
     {
         [Fact]
@@ -13,10 +13,10 @@ namespace Newsgirl.Shared.Tests
         {
             const int THREAD_COUNT = 10;
             const int WORK_ITEM_COUNT = THREAD_COUNT * 10;
-            
+
             ThreadPool.SetMinThreads(THREAD_COUNT, 10);
             ThreadPool.SetMaxThreads(THREAD_COUNT, 10);
-            
+
             var pool = new ObjectPool<PoolTestObject>(() => Task.FromResult(new PoolTestObject()));
 
             var set = new ConcurrentDictionary<PoolTestObject, int>();
@@ -31,12 +31,10 @@ namespace Newsgirl.Shared.Tests
                 })).ToList();
 
             await Task.WhenAll(tasks);
-            
+
             Assert.InRange(set.Count, 1, THREAD_COUNT);
         }
     }
 
-    public class PoolTestObject
-    {
-    }
+    public class PoolTestObject { }
 }

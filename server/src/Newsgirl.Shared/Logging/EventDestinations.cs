@@ -8,16 +8,14 @@ namespace Newsgirl.Shared.Logging
     using System.Net.Http.Headers;
     using System.Text.Json;
     using System.Threading.Tasks;
-    
+
     /// <summary>
     /// Prints events to `stdout`.
     /// </summary>
     public class ConsoleEventDestination : EventDestination<LogData>
     {
-        public ConsoleEventDestination(ErrorReporter errorReporter) : base(errorReporter)
-        {
-        }
-        
+        public ConsoleEventDestination(ErrorReporter errorReporter) : base(errorReporter) { }
+
         protected override async ValueTask Flush(ArraySegment<LogData> data)
         {
             for (int i = 0; i < data.Count; i++)
@@ -30,7 +28,7 @@ namespace Newsgirl.Shared.Logging
             }
         }
     }
-    
+
     /// <summary>
     /// Sends LogData events to ELK.
     /// </summary>
@@ -39,12 +37,12 @@ namespace Newsgirl.Shared.Logging
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
 
-        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
+        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName) : base(errorReporter)
         {
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
-        
+
         protected override ValueTask Flush(ArraySegment<LogData> data)
         {
             var array = ArrayPool<Dictionary<string, object>>.Shared.Rent(data.Count);
@@ -67,7 +65,7 @@ namespace Newsgirl.Shared.Logging
             }
         }
     }
-    
+
     /// <summary>
     /// Sends events to ELK.
     /// </summary>
@@ -76,18 +74,18 @@ namespace Newsgirl.Shared.Logging
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
 
-        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName): base(errorReporter)
+        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName) : base(errorReporter)
         {
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
-        
+
         protected override ValueTask Flush(ArraySegment<T> data)
         {
             return this.elasticsearchClient.BulkCreate(this.indexName, data);
         }
     }
-    
+
     /// <summary>
     /// A simple client for elasticsearch.
     /// Currently only supports bulk indexing.
@@ -97,26 +95,25 @@ namespace Newsgirl.Shared.Logging
         private readonly HttpClient httpClient;
         private readonly byte[] bulkHeaderBytes = EncodingHelper.UTF8.GetBytes("{\"create\":{}}\n");
         private readonly byte[] bulkNewLineBytes = EncodingHelper.UTF8.GetBytes("\n");
+
         private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
         };
 
         public ElasticsearchClient(HttpClient httpClient, ElasticsearchConfig config)
         {
             this.httpClient = httpClient;
-            
+
             httpClient.Timeout = TimeSpan.FromMinutes(1);
             httpClient.BaseAddress = new Uri(config.Url);
 
             string basicToken = Convert.ToBase64String(EncodingHelper.UTF8.GetBytes($"{config.Username}:{config.Password}"));
-            
+
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicToken);
         }
 
-        public ElasticsearchClient(ElasticsearchConfig config) : this(new HttpClient(), config)
-        {
-        }
+        public ElasticsearchClient(ElasticsearchConfig config) : this(new HttpClient(), config) { }
 
         public async ValueTask BulkCreate<T>(string index, ArraySegment<T> data)
         {
@@ -132,9 +129,9 @@ namespace Newsgirl.Shared.Logging
             memStream.Position = 0;
 
             var content = new StreamContent(memStream);
-            
+
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            
+
             var response = await this.httpClient.PostAsync(
                 new Uri(index + "/_bulk", UriKind.Relative),
                 content
@@ -148,12 +145,12 @@ namespace Newsgirl.Shared.Logging
                 {
                     Details =
                     {
-                        {"elasticsearchResponseStatusCode", (int)response.StatusCode},
-                        {"elasticsearchResponseJson", responseBody},                    
-                    }
-                };    
+                        {"elasticsearchResponseStatusCode", (int) response.StatusCode},
+                        {"elasticsearchResponseJson", responseBody},
+                    },
+                };
             }
-            
+
             var responseDto = JsonSerializer.Deserialize<ElasticsearchBulkResponse>(responseBody, JsonSerializerOptions);
 
             if (responseDto.Errors)
@@ -162,8 +159,8 @@ namespace Newsgirl.Shared.Logging
                 {
                     Details =
                     {
-                        {"elasticsearchResponseJson", responseBody},                    
-                    }
+                        {"elasticsearchResponseJson", responseBody},
+                    },
                 };
             }
         }
@@ -174,7 +171,7 @@ namespace Newsgirl.Shared.Logging
             public bool Errors { get; set; }
         }
     }
-    
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ElasticsearchConfig
     {

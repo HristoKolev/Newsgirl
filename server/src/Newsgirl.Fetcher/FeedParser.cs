@@ -42,7 +42,7 @@ namespace Newsgirl.Fetcher
                     {
                         this.log.General(() => new LogData("Cannot ID feed item.")
                         {
-                            {"feedItemJson", JsonSerializer.Serialize(feedItem)}
+                            {"feedItemJson", JsonSerializer.Serialize(feedItem)},
                         });
 
                         continue;
@@ -56,7 +56,7 @@ namespace Newsgirl.Fetcher
                     {
                         this.log.General(() => new LogData("Feed item already added.")
                         {
-                            {"stringID", stringID}
+                            {"stringID", stringID},
                         });
 
                         continue;
@@ -68,7 +68,7 @@ namespace Newsgirl.Fetcher
                         FeedItemTitle = feedItem.Title.SomethingOrNull()?.Trim(),
                         FeedItemDescription = feedItem.Description.SomethingOrNull()?.Trim(),
                         FeedItemAddedTime = fetchTime,
-                        FeedItemHash = feedItemHash
+                        FeedItemHash = feedItemHash,
                     });
 
                     memoryStream.Write(stringIDBytes, 0, stringIDBytes.Length);

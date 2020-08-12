@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
-using Newsgirl.Testing;
-using Xunit;
-
 namespace Newsgirl.Shared.Tests
 {
+    using System.Threading.Tasks;
+    using Testing;
+    using Xunit;
+
     public class SystemSettingsServiceTest : DatabaseTest
     {
         [Fact]
@@ -12,7 +12,7 @@ namespace Newsgirl.Shared.Tests
             var systemSettingsService = new SystemSettingsService(this.Db);
 
             var settings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-            
+
             Snapshot.Match(settings);
         }
     }

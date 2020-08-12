@@ -28,11 +28,11 @@ namespace Newsgirl.Benchmarks
             this.jsonSerializerOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             };
-            
-            this.streamTester = HttpServerTester.Create(StreamHandler).GetAwaiter().GetResult();
-            this.pipeTester = HttpServerTester.Create(PipeHandler).GetAwaiter().GetResult();
+
+            this.streamTester = HttpServerTester.Create(this.StreamHandler).GetAwaiter().GetResult();
+            this.pipeTester = HttpServerTester.Create(this.PipeHandler).GetAwaiter().GetResult();
         }
 
         [GlobalCleanup]
@@ -88,7 +88,7 @@ namespace Newsgirl.Benchmarks
                 throw;
             }
         }
-        
+
         [Benchmark]
         public void StreamWrite()
         {
@@ -111,7 +111,7 @@ namespace Newsgirl.Benchmarks
 
             public MyItem[] payload { get; set; }
         }
- 
+
         public class MyItem
         {
             public string prop1 { get; set; }

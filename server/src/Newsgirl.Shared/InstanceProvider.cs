@@ -2,14 +2,14 @@ namespace Newsgirl.Shared
 {
     using System;
     using Autofac;
-    
+
     public interface InstanceProvider
     {
         object Get(Type type);
-        
+
         T Get<T>();
     }
-    
+
     public class LifetimeScopeInstanceProvider : InstanceProvider
     {
         private readonly ILifetimeScope lifetimeScope;
@@ -18,7 +18,7 @@ namespace Newsgirl.Shared
         {
             this.lifetimeScope = lifetimeScope;
         }
-        
+
         public object Get(Type type)
         {
             return this.lifetimeScope.Resolve(type);

@@ -6,7 +6,7 @@ namespace Newsgirl.Shared
     {
         DateTime Now();
     }
-    
+
     public class DateProviderImpl : DateProvider
     {
         public DateTime Now()

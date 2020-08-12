@@ -15,7 +15,7 @@ namespace Newsgirl.Shared
         }
 
         /// <summary>
-        ///     Reads the settings from the database.
+        /// Reads the settings from the database.
         /// </summary>
         public async Task<T> ReadSettings<T>() where T : new()
         {
@@ -45,22 +45,22 @@ namespace Newsgirl.Shared
     }
 
     /// <summary>
-    ///     Settings read from the database.
+    /// Settings read from the database.
     /// </summary>
     public class SystemSettingsModel
     {
         /// <summary>
-        ///     The UserAgent used for http calls to the RSS endpoints.
+        /// The UserAgent used for http calls to the RSS endpoints.
         /// </summary>
         public string HttpClientUserAgent { get; set; }
 
         /// <summary>
-        ///     The timeout for the http calls.
+        /// The timeout for the http calls.
         /// </summary>
         public int HttpClientRequestTimeout { get; set; }
 
         /// <summary>
-        ///     The pause between fetch cycles.
+        /// The pause between fetch cycles.
         /// </summary>
         public int FetcherCyclePause { get; set; }
 

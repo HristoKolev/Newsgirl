@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Newsgirl.Shared;
-
 namespace Newsgirl.Fetcher
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Shared;
     using Shared.Logging;
 
     public class FeedFetcher
@@ -45,12 +43,12 @@ namespace Newsgirl.Fetcher
         public async Task FetchFeeds()
         {
             this.log.General(() => new LogData("Beginning fetch cycle..."));
-            
+
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
 
             this.log.General(() => new LogData("Feeds ready for update.")
             {
-                {"feedCount", feeds.Count}
+                {"feedCount", feeds.Count},
             });
 
             FeedUpdateModel[] updates;
@@ -58,7 +56,7 @@ namespace Newsgirl.Fetcher
             if (this.systemSettings.ParallelFeedFetching)
             {
                 var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
-            
+
                 for (int i = 0; i < feeds.Count; i++)
                 {
                     var feed = feeds[i];
@@ -70,14 +68,14 @@ namespace Newsgirl.Fetcher
             else
             {
                 updates = new FeedUpdateModel[feeds.Count];
-                
+
                 for (int i = 0; i < feeds.Count; i++)
                 {
                     var feed = feeds[i];
                     updates[i] = await this.ProcessFeed(feed);
                 }
             }
-            
+
             this.log.General(() =>
             {
                 int changedCount = updates.Count(update => update.NewItems != null && update.NewItems.Any());
@@ -103,7 +101,7 @@ namespace Newsgirl.Fetcher
             try
             {
                 byte[] feedContentBytes;
-                
+
                 try
                 {
                     feedContentBytes = await this.feedContentProvider.GetFeedContent(feed);
@@ -122,9 +120,9 @@ namespace Newsgirl.Fetcher
                 {
                     this.log.General(() => new LogData("Feed not changed. Matching content hash.")
                     {
-                        {"feedID", feed.FeedID}
+                        {"feedID", feed.FeedID},
                     });
-                    
+
                     return new FeedUpdateModel
                     {
                         Feed = feed,
@@ -144,16 +142,16 @@ namespace Newsgirl.Fetcher
                         Fingerprint = "FEED_CONTENT_UTF8_PARSE_FAILED",
                         Details =
                         {
-                            {"feedContentBytes", Convert.ToBase64String(feedContentBytes)}
-                        }
+                            {"feedContentBytes", Convert.ToBase64String(feedContentBytes)},
+                        },
                     };
                 }
 
                 ParsedFeed parsedFeed;
-                
+
                 try
                 {
-                    parsedFeed = this.feedParser.Parse(feedContent);                
+                    parsedFeed = this.feedParser.Parse(feedContent);
                 }
                 catch (Exception err)
                 {
@@ -162,8 +160,8 @@ namespace Newsgirl.Fetcher
                         Fingerprint = "FEED_CONTENT_PARSE_FAILED",
                         Details =
                         {
-                            {"content", feedContent}
-                        }
+                            {"content", feedContent},
+                        },
                     };
                 }
 
@@ -171,7 +169,7 @@ namespace Newsgirl.Fetcher
                 {
                     this.log.General(() => new LogData("Feed not changed. Matching items hash.")
                     {
-                        {"feedID", feed.FeedID}
+                        {"feedID", feed.FeedID},
                     });
 
                     return new FeedUpdateModel
@@ -181,20 +179,20 @@ namespace Newsgirl.Fetcher
                 }
 
                 long[] itemHashes = parsedFeed.FeedItemHashes.ToArray();
-                
+
                 HashSet<long> newHashes;
 
                 using (await this.dbLock.Lock())
                 {
                     var newHashArray = await this.feedItemsImportService.GetMissingFeedItems(feed.FeedID, itemHashes);
-                    
+
                     newHashes = new HashSet<long>(newHashArray);
                 }
-                
-                this.log.General(() => new LogData("Feed changed.") 
+
+                this.log.General(() => new LogData("Feed changed.")
                 {
                     {"feedID", feed.FeedID},
-                    {"updateCount", newHashes.Count}
+                    {"updateCount", newHashes.Count},
                 });
 
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
@@ -225,14 +223,14 @@ namespace Newsgirl.Fetcher
             {
                 this.log.General(() => new LogData("An error occurred while fetching feed.")
                 {
-                    {"feedID", feed.FeedID}
+                    {"feedID", feed.FeedID},
                 });
-                
+
                 await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
-                    {"feed", feed}
+                    {"feed", feed},
                 });
-                
+
                 return new FeedUpdateModel
                 {
                     Feed = feed,

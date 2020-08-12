@@ -10,17 +10,15 @@ namespace Newsgirl.Server
         {
             return Task.FromResult(new PingResponse
             {
-                Message = "Works."
+                Message = "Works.",
             });
         }
     }
-    
+
     public class PingResponse
     {
         public string Message { get; set; }
     }
 
-    public class PingRequest
-    {
-    }
+    public class PingRequest { }
 }

@@ -7,7 +7,7 @@ namespace Newsgirl.Shared
     /// Watches for changes of a file.
     /// When the file is changed the `onChange` callback is invoked
     /// The callback invocations are debounced by the `debounceTime`.
-    /// It stops watching for changes when it's disposed. 
+    /// It stops watching for changes when it's disposed.
     /// </summary>
     public class FileWatcher : IDisposable
     {
@@ -17,7 +17,7 @@ namespace Newsgirl.Shared
         public FileWatcher(string filePath, Action onChange, TimeSpan? debounceTime = null)
         {
             this.onChange = DelegateHelper.Debounce(onChange, debounceTime ?? TimeSpan.FromSeconds(1));
-            
+
             var watcher = new FileSystemWatcher
             {
                 Path = Path.GetDirectoryName(filePath),
@@ -30,24 +30,36 @@ namespace Newsgirl.Shared
                                | NotifyFilters.Security,
                 Filter = Path.GetFileName(filePath),
             };
-            
+
             watcher.Changed += this.WatcherOnChanged;
             watcher.Created += this.WatcherOnCreated;
             watcher.Renamed += this.WatcherOnRenamed;
             watcher.Deleted += this.WatcherOnDeleted;
 
             watcher.EnableRaisingEvents = true;
-            
+
             this.fileSystemWatcher = watcher;
         }
 
-        private void WatcherOnDeleted(object sender, FileSystemEventArgs e) => this.onChange();
+        private void WatcherOnDeleted(object sender, FileSystemEventArgs e)
+        {
+            this.onChange();
+        }
 
-        private void WatcherOnRenamed(object sender, RenamedEventArgs e) => this.onChange();
+        private void WatcherOnRenamed(object sender, RenamedEventArgs e)
+        {
+            this.onChange();
+        }
 
-        private void WatcherOnCreated(object sender, FileSystemEventArgs e) => this.onChange();
+        private void WatcherOnCreated(object sender, FileSystemEventArgs e)
+        {
+            this.onChange();
+        }
 
-        private void WatcherOnChanged(object sender, FileSystemEventArgs e) => this.onChange();
+        private void WatcherOnChanged(object sender, FileSystemEventArgs e)
+        {
+            this.onChange();
+        }
 
         public void Dispose()
         {

@@ -7,13 +7,11 @@ namespace Newsgirl.Server.Tests
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Core;
-    using Server;
     using Testing;
     using Xunit;
 
     public class InitializationTest
     {
- 
         [Fact]
         public async Task Server_Shuts_Down_Correctly()
         {
@@ -22,13 +20,13 @@ namespace Newsgirl.Server.Tests
                 var shutdownTask = Task.Run(async () =>
                 {
                     await Task.Delay(100);
-            
+
                     tester.App.TriggerShutdown();
                 });
-            
+
                 await tester.App.AwaitShutdownTrigger();
 
-                await shutdownTask;    
+                await shutdownTask;
             }
         }
 
@@ -40,7 +38,7 @@ namespace Newsgirl.Server.Tests
                 var ignored = new[]
                 {
                     typeof(ILifetimeScope),
-                    typeof(IComponentContext)
+                    typeof(IComponentContext),
                 };
 
                 var registeredTypes = tester.App.IoC.ComponentRegistry.Registrations
@@ -55,7 +53,7 @@ namespace Newsgirl.Server.Tests
                 }
             }
         }
-        
+
         [Fact]
         public async Task Responds_to_request()
         {
@@ -63,13 +61,13 @@ namespace Newsgirl.Server.Tests
             {
                 var client = new HttpClient
                 {
-                    BaseAddress = new Uri(tester.App.GetAddress())
+                    BaseAddress = new Uri(tester.App.GetAddress()),
                 };
-            
+
                 var response = await client.PostAsync("/", new StringContent("{\"type\": \"PingRequest\", \"payload\":{} }"));
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-            
+
                 Snapshot.MatchJson(responseBody);
             }
         }
@@ -78,16 +76,16 @@ namespace Newsgirl.Server.Tests
     public class HttpServerAppTester : IAsyncDisposable
     {
         public HttpServerApp App { get; private set; }
-        
+
         public static async Task<HttpServerAppTester> Create()
         {
             var tester = new HttpServerAppTester();
-            
+
             var app = new HttpServerApp();
-            
+
             TaskScheduler.UnobservedTaskException += tester.OnUnobservedTaskException;
             AppDomain.CurrentDomain.UnhandledException += tester.OnUnhandledException;
-            
+
             Assert.Null(app.Log);
             Assert.Null(app.AppConfig);
             Assert.Null(app.AsyncLocals);
@@ -97,16 +95,16 @@ namespace Newsgirl.Server.Tests
             Assert.Null(app.SystemSettings);
             Assert.Null(app.AppConfigPath);
             Assert.False(app.Started);
-            
+
             app.ErrorReporter = new ErrorReporterMock();
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
             Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
 
             await app.Start("http://127.0.0.1:0");
-            
+
             Assert.Equal(appConfigPath, app.AppConfigPath);
-            
+
             Assert.NotNull(app.Log);
             Assert.NotNull(app.AppConfig);
             Assert.NotNull(app.AsyncLocals);
@@ -117,7 +115,7 @@ namespace Newsgirl.Server.Tests
             Assert.True(app.Started);
 
             tester.App = app;
-            
+
             return tester;
         }
 
@@ -134,7 +132,7 @@ namespace Newsgirl.Server.Tests
         public async ValueTask DisposeAsync()
         {
             await this.App.DisposeAsync();
-            
+
             Assert.Null(this.App.Log);
             Assert.Null(this.App.AppConfig);
             Assert.Null(this.App.AsyncLocals);
@@ -144,7 +142,7 @@ namespace Newsgirl.Server.Tests
             Assert.Null(this.App.SystemSettings);
             Assert.Null(this.App.AppConfigPath);
             Assert.False(this.App.Started);
-            
+
             TaskScheduler.UnobservedTaskException -= this.OnUnobservedTaskException;
             AppDomain.CurrentDomain.UnhandledException -= this.OnUnhandledException;
         }

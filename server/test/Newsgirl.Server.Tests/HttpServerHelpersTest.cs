@@ -112,13 +112,13 @@ namespace Newsgirl.Server.Tests
 
                     var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
                     {
-                        LingerState = new LingerOption(true, 0), NoDelay = true
+                        LingerState = new LingerOption(true, 0), NoDelay = true,
                     };
 
                     socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port));
 
                     string requestJson = "{\"type\": \"PingRequest\", \"payload\":{ \"data\": \"dd\" } }";
-                    byte[] requestBody = JsonSerializer.SerializeToUtf8Bytes(requestJson);
+                    var requestBody = JsonSerializer.SerializeToUtf8Bytes(requestJson);
 
                     var requestHeaderBuilder = new StringBuilder();
                     requestHeaderBuilder.Append("POST / HTTP/1.1\r\n");
@@ -135,10 +135,10 @@ namespace Newsgirl.Server.Tests
                     socket.Close();
 
                     socket = null;
-                        
+
                     GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
                 }
-                
+
                 Snapshot.MatchError(tester.Exception);
             }
         }

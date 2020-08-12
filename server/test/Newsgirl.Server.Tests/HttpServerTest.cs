@@ -46,20 +46,24 @@ namespace Newsgirl.Server.Tests
                 Assert.Equal(43, responseNum);
             }
         }
-        
+
         [Fact]
         public async Task HttpServer_shuts_down_correctly()
         {
-            static Task Handler(HttpContext context) => Task.CompletedTask;
+            static Task Handler(HttpContext context)
+            {
+                return Task.CompletedTask;
+            }
+
             var server = new CustomHttpServerImpl(Handler);
 
             for (int i = 0; i < 10; i++)
             {
                 await server.Start(new HttpServerConfig
                 {
-                    Addresses = new[] {"http://127.0.0.1:0"}
+                    Addresses = new[] {"http://127.0.0.1:0"},
                 });
-                await server.Stop();    
+                await server.Stop();
             }
         }
     }

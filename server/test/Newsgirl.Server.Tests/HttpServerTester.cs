@@ -5,26 +5,22 @@ namespace Newsgirl.Server.Tests
     using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using NSubstitute;
-    using Testing;
 
     /// <summary>
-    ///     A testing service that facilitates testing of <see cref="RequestDelegate" />'s.
-    ///     Creates <see cref="CustomHttpServerImpl" /> with given <see cref="RequestDelegate" /> and starts it on a random port.
-    ///     Creates an <see cref="HttpClient" /> with <see cref="HttpClient.BaseAddress" /> that points to the
-    ///     <see cref="CustomHttpServerImpl" />.
-    ///     Disposes both <see cref="CustomHttpServerImpl" /> and <see cref="HttpClient" /> when <see cref="DisposeAsync" /> is
-    ///     called.
+    /// A testing service that facilitates testing of <see cref="RequestDelegate" />'s.
+    /// Creates <see cref="CustomHttpServerImpl" /> with given <see cref="RequestDelegate" /> and starts it on a random port.
+    /// Creates an <see cref="HttpClient" /> with <see cref="HttpClient.BaseAddress" /> that points to the
+    /// <see cref="CustomHttpServerImpl" />.
+    /// Disposes both <see cref="CustomHttpServerImpl" /> and <see cref="HttpClient" /> when <see cref="DisposeAsync" /> is
+    /// called.
     /// </summary>
     public class HttpServerTester : IAsyncDisposable
     {
-        private HttpServerTester()
-        {
-        }
+        private HttpServerTester() { }
 
         /// <summary>
-        ///     This gets populated with an <see cref="Exception" /> object
-        ///     if the given <see cref="RequestDelegate" /> throws.
+        /// This gets populated with an <see cref="Exception" /> object
+        /// if the given <see cref="RequestDelegate" /> throws.
         /// </summary>
         public Exception Exception { get; set; }
 
@@ -39,7 +35,7 @@ namespace Newsgirl.Server.Tests
         }
 
         /// <summary>
-        ///     Creates and starts a new instance of <see cref="HttpServerTester" />
+        /// Creates and starts a new instance of <see cref="HttpServerTester" />
         /// </summary>
         public static async Task<HttpServerTester> Create(RequestDelegate requestDelegate)
         {
@@ -62,12 +58,12 @@ namespace Newsgirl.Server.Tests
 
             await server.Start(new HttpServerConfig
             {
-                Addresses = new[] {"http://127.0.0.1:0"}
+                Addresses = new[] {"http://127.0.0.1:0"},
             });
 
             var client = new HttpClient
             {
-                BaseAddress = new Uri(server.BoundAddresses.First())
+                BaseAddress = new Uri(server.BoundAddresses.First()),
             };
 
             tester.Server = server;

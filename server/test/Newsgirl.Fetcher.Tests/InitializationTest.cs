@@ -15,7 +15,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var app = new FetcherApp
             {
-                ErrorReporter = new ErrorReporterMock()
+                ErrorReporter = new ErrorReporterMock(),
             };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
@@ -43,7 +43,7 @@ namespace Newsgirl.Fetcher.Tests
             var ignored = new[]
             {
                 typeof(ILifetimeScope),
-                typeof(IComponentContext)
+                typeof(IComponentContext),
             };
 
             var registeredTypes = app.IoC.ComponentRegistry.Registrations

@@ -51,16 +51,14 @@ namespace Newsgirl.Benchmarks
 
             this.requestTable = new Dictionary<string, Type>
             {
-                {"Req1", this.wrapperType}
+                {"Req1", this.wrapperType},
             };
 
             this.serializationOptions = new JsonSerializerOptions {PropertyNameCaseInsensitive = true};
         }
 
         [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-        }
+        public void GlobalCleanup() { }
 
         [Benchmark]
         public void DirectDeserialize()

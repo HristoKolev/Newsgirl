@@ -4,13 +4,13 @@ namespace Newsgirl.Benchmarks
     using System.Threading;
     using System.Threading.Tasks;
     using BenchmarkDotNet.Attributes;
-    
+
     [MemoryDiagnoser]
     public class AsyncLocalBenchmark
     {
         private static AsyncLocal<Func<Task<int>>> local;
         private static Func<Task<int>> localDirect;
-        
+
         [Params(1_000_000)]
         public int N;
 
@@ -24,9 +24,7 @@ namespace Newsgirl.Benchmarks
         }
 
         [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-        }
+        public void GlobalCleanup() { }
 
         [Benchmark(Baseline = true)]
         public void ALCode()
@@ -46,7 +44,7 @@ namespace Newsgirl.Benchmarks
                 {
                     return num;
                 };
-            
+
                 await Task.Delay(0);
                 await this.DoALWorkL2();
 
@@ -74,7 +72,7 @@ namespace Newsgirl.Benchmarks
 
         private async Task DoNormalWork()
         {
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < this.N; i++)
             {
                 int num = 1;
 
@@ -115,7 +113,7 @@ namespace Newsgirl.Benchmarks
                 {
                     return num;
                 };
-            
+
                 await Task.Delay(0);
                 await this.DoClosureWorkL2();
 

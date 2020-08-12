@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
-using Newsgirl.Shared;
-using Xunit;
-
 namespace Newsgirl.Fetcher.Tests
 {
+    using System.Threading.Tasks;
+    using Shared;
+    using Xunit;
+
     public class FeedContentProviderTest
     {
         [Theory]
@@ -13,13 +13,13 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feed = new FeedPoco
             {
-                FeedUrl = feedUrl
+                FeedUrl = feedUrl,
             };
-            
+
             var contentProvider = new FeedContentProvider(new SystemSettingsModel
             {
                 HttpClientRequestTimeout = 60,
-                HttpClientUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36"
+                HttpClientUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
             });
 
             byte[] bytes = await contentProvider.GetFeedContent(feed);

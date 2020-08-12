@@ -18,11 +18,11 @@ namespace Newsgirl.Shared.Logging
         /// <summary>
         /// Enqueues an event providing the event stream name and a function that creates the event.
         /// If the event stream is not enabled or no destinations exists for that event stream,
-        /// the function will not be called.   
+        /// the function will not be called.
         /// </summary>
-        void Log<TEventData>(string eventStreamName, Func<TEventData> item); 
+        void Log<TEventData>(string eventStreamName, Func<TEventData> item);
     }
-    
+
     /// <summary>
     /// This is the API that we use to define all possible event streams and their destinations.
     /// </summary>
@@ -33,12 +33,12 @@ namespace Newsgirl.Shared.Logging
         /// takes the current event source configuration and returns an array of event destinations for that event source.
         /// </summary>
         private readonly Dictionary<string, Func<EventStreamConfig[], object[]>> destinationsFactoryMap
-            = new Dictionary<string, Func<EventStreamConfig[], object[]>>(); 
-        
+            = new Dictionary<string, Func<EventStreamConfig[], object[]>>();
+
         public void AddEventStream<TEventData>(string eventStreamName, Dictionary<string, Func<EventDestination<TEventData>>> factoryMap)
         {
             // TODO: check for null
-            
+
             if (this.destinationsFactoryMap.ContainsKey(eventStreamName))
             {
                 throw new DetailedLogException("There already is an event stream with this name.")
@@ -46,7 +46,7 @@ namespace Newsgirl.Shared.Logging
                     Details =
                     {
                         {"eventStreamName", eventStreamName},
-                    }
+                    },
                 };
             }
 
@@ -58,7 +58,7 @@ namespace Newsgirl.Shared.Logging
                 {
                     return null;
                 }
-                
+
                 var destinations = new List<EventDestination<TEventData>>();
 
                 foreach (var (destinationName, destinationFactory) in factoryMap)
@@ -71,9 +71,9 @@ namespace Newsgirl.Shared.Logging
                     }
 
                     var destination = destinationFactory();
-                    
+
                     destination.Start();
-                    
+
                     destinations.Add(destination);
                 }
 
@@ -81,12 +81,12 @@ namespace Newsgirl.Shared.Logging
                 {
                     return null;
                 }
-                
+
                 // ReSharper disable once CoVariantArrayConversion
                 return destinations.ToArray();
             });
         }
-        
+
         /// <summary>
         /// Creates a StructuredLogger instance with the current configuration.
         /// </summary>
@@ -96,23 +96,23 @@ namespace Newsgirl.Shared.Logging
             return new StructuredLogger(this.destinationsFactoryMap);
         }
     }
-    
+
     public class EventStreamConfig
     {
         public string Name { get; set; }
-        
+
         public bool Enabled { get; set; }
 
         public EventDestinationConfig[] Destinations { get; set; }
     }
-    
+
     public class EventDestinationConfig
     {
         public string Name { get; set; }
-        
+
         public bool Enabled { get; set; }
     }
-    
+
     /// <summary>
     /// An implementation of ILog that can hot swap EventDestinationCollection instances when the configuration changes.
     /// Dispatches all events to the current EventDestinationCollection instance.
@@ -148,22 +148,22 @@ namespace Newsgirl.Shared.Logging
             foreach (var (eventStreamName, destinationFactory) in this.destinationsFactoryMap)
             {
                 var destinations = destinationFactory(eventStreamConfigArray);
-                
+
                 if (destinations == null)
                 {
                     continue;
                 }
-                
+
                 destinationsByEventStreamName.Add(eventStreamName, destinations);
             }
-            
+
             var oldCollection = this.eventDestinationCollection;
-            
+
             this.eventDestinationCollection = EventDestinationCollection.Build(destinationsByEventStreamName);
 
             if (oldCollection != null)
             {
-                await oldCollection.DisposeAsync();    
+                await oldCollection.DisposeAsync();
             }
         }
 
@@ -183,7 +183,7 @@ namespace Newsgirl.Shared.Logging
     /// An implementation of ILog that provides a performant way of dispatching events to their destinations
     /// based on their event stream names.
     /// </summary>
-    public abstract class EventDestinationCollection : ILog, IAsyncDisposable 
+    public abstract class EventDestinationCollection : ILog, IAsyncDisposable
     {
         private Dictionary<string, object[]> destinationsByEventStreamName;
 
@@ -192,15 +192,15 @@ namespace Newsgirl.Shared.Logging
         /// Gets incremented at the start of the Log call and gets decremented at the end.
         /// </summary>
         protected int ConcurrentLogCalls = 0;
-        
+
         /// <summary>
         /// Gets implemented by the generated class.
         /// No blocking work is done here. Destinations receive the events asynchronously.
         /// </summary>
         public abstract void Log<TEventData>(string eventStreamName, Func<TEventData> item);
-        
+
         /// <summary>
-        /// Waits until all calls to Log have exited and then disposes all event destinations concurrently.  
+        /// Waits until all calls to Log have exited and then disposes all event destinations concurrently.
         /// </summary>
         public async ValueTask DisposeAsync()
         {
@@ -208,15 +208,15 @@ namespace Newsgirl.Shared.Logging
             {
                 await Task.Delay(10);
             }
-            
+
             var disposeTasks = new List<Task>();
 
             foreach (var destinationsArray in this.destinationsByEventStreamName.Values)
             {
                 for (int i = 0; i < destinationsArray.Length; i++)
                 {
-                    var destination = (EventDestination)destinationsArray[i];
-                    
+                    var destination = (EventDestination) destinationsArray[i];
+
                     disposeTasks.Add(destination.Stop());
                 }
             }
@@ -239,19 +239,19 @@ namespace Newsgirl.Shared.Logging
             var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
             var ctorIl = ctor.GetILGenerator();
             ctorIl.Emit(OpCodes.Ret);
-            
+
             EmitLog(typeBuilder, destinationsByEventStreamName);
 
             var type = typeBuilder.CreateType();
 
             var instance = (EventDestinationCollection) Activator.CreateInstance(type);
-            
+
             foreach (var (eventStreamName, destinationArray) in destinationsByEventStreamName)
             {
                 var writers = destinationArray.Cast<EventDestination>().Select(x => x.GetWriter()).ToArray();
 
                 var field = type.GetField(eventStreamName + "_writers", BindingFlags.Public | BindingFlags.Instance);
-                
+
                 field!.SetValue(instance, writers);
             }
 
@@ -265,14 +265,14 @@ namespace Newsgirl.Shared.Logging
             // Interlocked.Increment
             var incrementMethod = typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x =>
                 x.Name == nameof(Interlocked.Increment) && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
-            
+
             // Interlocked.Decrement
             var decrementMethod = typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x =>
                 x.Name == nameof(Interlocked.Decrement) && x.GetParameters().Single().ParameterType == typeof(int).MakeByRefType());
-            
+
             // EventDestinationCollection.ConcurrentLogCalls
             var callCounterField = typeof(EventDestinationCollection).GetField(nameof(ConcurrentLogCalls), BindingFlags.NonPublic | BindingFlags.Instance)!;
-            
+
             var logMethod = typeBuilder.DefineMethod(
                 nameof(Log),
                 MethodAttributes.Public |
@@ -283,7 +283,7 @@ namespace Newsgirl.Shared.Logging
             );
 
             var typeParameter = logMethod.DefineGenericParameters("TLogData")[0];
-            
+
             logMethod.SetParameters(typeof(string), typeof(Func<>).MakeGenericType(typeParameter));
             logMethod.SetReturnType(typeof(void));
 
@@ -294,7 +294,7 @@ namespace Newsgirl.Shared.Logging
 
             var exitLabel = il.DefineLabel();
             var afterWritersSelect = il.DefineLabel();
-            
+
             foreach (string eventStreamName in destinationsByEventStreamName.Keys)
             {
                 var field = typeBuilder.DefineField(eventStreamName + "_writers", typeof(object[]), FieldAttributes.Public);
@@ -314,11 +314,11 @@ namespace Newsgirl.Shared.Logging
 
                 il.MarkLabel(nextLabel);
             }
-            
+
             il.Emit(OpCodes.Br_S, exitLabel);
 
             il.MarkLabel(afterWritersSelect);
-            
+
             // Interlocked.Increment(ref this.ConcurrentLogCalls);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldflda, callCounterField!);
@@ -358,7 +358,7 @@ namespace Newsgirl.Shared.Logging
                 typeof(ChannelWriter<>).GetMethod(nameof(ChannelWriter<object>.TryWrite))!
             ));
             il.Emit(OpCodes.Pop);
-            
+
             // TODO: throw if false 
 
             // Increment step. i++
@@ -381,7 +381,7 @@ namespace Newsgirl.Shared.Logging
             il.Emit(OpCodes.Blt_S, loopBodyLabel);
 
             il.BeginFinallyBlock();
-            
+
             // Interlocked.Decrement(ref this.ConcurrentLogCalls);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldflda, callCounterField!);
@@ -416,13 +416,13 @@ namespace Newsgirl.Shared.Logging
         {
             this.errorReporter = errorReporter;
         }
-        
+
         protected TimeSpan TimeBetweenRetries { get; set; } = TimeSpan.FromSeconds(30);
 
         protected int NumberOfRetries { get; set; } = 10;
 
         protected TimeSpan TimeBetweenMainLoopRestart { get; set; } = TimeSpan.FromSeconds(1);
-        
+
         protected abstract ValueTask Flush(ArraySegment<TEventData> data);
 
         public void Start()
@@ -431,21 +431,21 @@ namespace Newsgirl.Shared.Logging
             {
                 throw new DetailedLogException("The destination is already started.");
             }
-            
+
             this.buffer = ArrayPool<TEventData>.Shared.Rent(16);
             this.channel = Channel.CreateUnbounded<TEventData>();
             this.readTask = Task.Run(this.Read);
 
             this.started = true;
         }
-        
+
         public async Task Stop()
         {
             if (!this.started)
             {
                 throw new DetailedLogException("The destination is already stopped.");
             }
-            
+
             try
             {
                 this.channel.Writer.Complete();
@@ -453,7 +453,7 @@ namespace Newsgirl.Shared.Logging
             }
             finally
             {
-                ArrayPool<TEventData>.Shared.Return(this.buffer);    
+                ArrayPool<TEventData>.Shared.Return(this.buffer);
             }
 
             this.channel = null;
@@ -478,7 +478,7 @@ namespace Newsgirl.Shared.Logging
                     {
                         TEventData item;
                         int i = 0;
-                    
+
                         for (; this.channel.Reader.TryRead(out item); i += 1)
                         {
                             if (i == this.buffer.Length)
@@ -511,7 +511,7 @@ namespace Newsgirl.Shared.Logging
                 // This should never happen if this code functions normally.
                 // Exceptions thrown in custom Flush implementations are caught earlier.
                 // The only way we get here is if the implementation of this method throws an exception.
-                catch (Exception ex)  
+                catch (Exception ex)
                 {
                     await this.errorReporter.Error(ex);
                     await Task.Delay(this.TimeBetweenMainLoopRestart);
@@ -526,21 +526,21 @@ namespace Newsgirl.Shared.Logging
             try
             {
                 newBuffer = ArrayPool<TEventData>.Shared.Rent(this.buffer.Length * 2);
-                
+
                 Array.Copy(this.buffer, newBuffer, this.buffer.Length);
             }
             catch (Exception)
             {
                 if (newBuffer != null)
                 {
-                    ArrayPool<TEventData>.Shared.Return(newBuffer);                                        
+                    ArrayPool<TEventData>.Shared.Return(newBuffer);
                 }
-                                    
+
                 throw;
             }
 
             ArrayPool<TEventData>.Shared.Return(this.buffer);
-            
+
             this.buffer = newBuffer;
         }
     }

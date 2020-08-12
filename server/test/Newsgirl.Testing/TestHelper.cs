@@ -1,22 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using ApprovalTests;
-using ApprovalTests.Core;
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
-using ApprovalUtilities.Utilities;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Npgsql;
-using NSubstitute;
-using Xunit;
-using Xunit.Sdk;
 using Newsgirl.Testing;
 
 [assembly: UseReporter(typeof(CustomReporter))]
@@ -24,9 +7,26 @@ using Newsgirl.Testing;
 
 namespace Newsgirl.Testing
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
     using System.Runtime.ExceptionServices;
+    using System.Text;
+    using System.Threading.Tasks;
+    using ApprovalTests;
+    using ApprovalTests.Core;
+    using ApprovalUtilities.Utilities;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
+    using Npgsql;
+    using NSubstitute;
     using Shared;
     using Shared.Logging;
+    using Xunit;
+    using Xunit.Sdk;
 
     public static class TestHelper
     {
@@ -78,7 +78,7 @@ namespace Newsgirl.Testing
                 return logStub;
             }
         }
-        
+
         public static ErrorReporter ErrorReporterStub
         {
             get
@@ -181,11 +181,11 @@ namespace Newsgirl.Testing
 
             Approvals.VerifyWithExtension(json, ".json");
         }
-        
+
         public static void MatchJson(string json, string[] parameters = null)
         {
             string formatJson = JsonPrettyPrint.FormatJson(json);
-            
+
             if (parameters != null)
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
@@ -262,7 +262,7 @@ namespace Newsgirl.Testing
         {
             var settings = new JsonSerializerSettings
             {
-                ContractResolver = SortedPropertiesContractResolver.Instance
+                ContractResolver = SortedPropertiesContractResolver.Instance,
             };
 
             string json = JsonConvert.SerializeObject(obj, settings);
@@ -292,15 +292,15 @@ namespace Newsgirl.Testing
 
         public static string FormatJson(string str)
         {
-            var indent = 0;
+            int indent = 0;
 
-            var quoted = false;
+            bool quoted = false;
 
             var sb = new StringBuilder();
 
-            for (var i = 0; i < str.Length; i++)
+            for (int i = 0; i < str.Length; i++)
             {
-                var ch = str[i];
+                char ch = str[i];
 
                 switch (ch)
                 {
@@ -363,8 +363,8 @@ namespace Newsgirl.Testing
                     case '"':
                     {
                         sb.Append(ch);
-                        var escaped = false;
-                        var index = i;
+                        bool escaped = false;
+                        int index = i;
                         while (index > 0 && str[--index] == '\\')
                         {
                             escaped = !escaped;
@@ -503,12 +503,10 @@ namespace Newsgirl.Testing
 
         public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
 
-        public ErrorReporterMock() : this(new ErrorReporterMockConfig())
-        {
-        }
+        public ErrorReporterMock() : this(new ErrorReporterMockConfig()) { }
 
         public Exception FirstException => this.Errors.First().Item1;
-        
+
         public Exception SingleException
         {
             get
@@ -517,7 +515,7 @@ namespace Newsgirl.Testing
                 {
                     throw new ApplicationException("SingleException is called with more that 1 error in the list.");
                 }
-                
+
                 return this.Errors.Single().Item1;
             }
         }
@@ -526,7 +524,7 @@ namespace Newsgirl.Testing
         {
             this.config = config;
         }
-        
+
         public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
             this.Errors.Add((exception, fingerprint, additionalInfo));
@@ -553,7 +551,7 @@ namespace Newsgirl.Testing
             if (this.config.ThrowFirstErrorOnDispose && this.Errors.Count > 0)
             {
                 var firstException = this.Errors.First().Item1;
-                
+
                 ExceptionDispatchInfo.Capture(firstException).Throw();
             }
 
@@ -569,19 +567,19 @@ namespace Newsgirl.Testing
     public class StructuredLogMock : ILog
     {
         public Dictionary<string, List<object>> Logs { get; } = new Dictionary<string, List<object>>();
-        
+
         public void Log<T>(string eventStreamName, Func<T> func)
         {
             if (!this.Logs.ContainsKey(eventStreamName))
             {
                 this.Logs.Add(eventStreamName, new List<object>
                 {
-                    func()
+                    func(),
                 });
             }
             else
             {
-                this.Logs[eventStreamName].Add(func());    
+                this.Logs[eventStreamName].Add(func());
             }
         }
     }

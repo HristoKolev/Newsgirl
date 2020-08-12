@@ -4,7 +4,6 @@ namespace Newsgirl.Benchmarks
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using BenchmarkDotNet.Attributes;
-    using Shared;
     using Shared.Logging;
 
     [MemoryDiagnoser]
@@ -13,13 +12,13 @@ namespace Newsgirl.Benchmarks
         private const string DebugConfig = "DebugConfig";
         private const string WarnConfig = "WarnConfig";
         private const string NoopConsumerName = "WarnConfig";
-        
+
         [Params(10_000_000)]
         public int N;
 
         private StructuredLogger smallStructLogger;
         private StructuredLogger smallClassLogger;
-        
+
         private StructuredLogger largeStructLogger;
         private StructuredLogger largeClassLogger;
 
@@ -35,28 +34,31 @@ namespace Newsgirl.Benchmarks
         private static StructuredLogger CreateLogger<T>(NoOpConsumer<T> consumer)
         {
             var builder = new StructuredLoggerBuilder();
-            
+
             builder.AddEventStream(WarnConfig, new Dictionary<string, Func<EventDestination<T>>>
             {
-                {NoopConsumerName, () => consumer}
+                {NoopConsumerName, () => consumer},
             });
-            
+
             var logger = builder.Build();
 
-            logger.Reconfigure(new[] {new EventStreamConfig
+            logger.Reconfigure(new[]
             {
-                Name = WarnConfig,
-                Enabled = true,
-                Destinations = new []
+                new EventStreamConfig
                 {
-                    new EventDestinationConfig
+                    Name = WarnConfig,
+                    Enabled = true,
+                    Destinations = new[]
                     {
-                        Name = NoopConsumerName,
-                        Enabled = true,
-                    }, 
+                        new EventDestinationConfig
+                        {
+                            Name = NoopConsumerName,
+                            Enabled = true,
+                        },
+                    },
                 }
-            }});
-            
+            });
+
             return logger;
         }
 
@@ -87,7 +89,7 @@ namespace Newsgirl.Benchmarks
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpClassData()
         {
@@ -97,63 +99,63 @@ namespace Newsgirl.Benchmarks
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpStructData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Log(DebugConfig, () => new StructLogData { Number = i });
+                this.smallStructLogger.Log(DebugConfig, () => new StructLogData {Number = i});
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpClassData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData { Number = i });
+                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData {Number = i});
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpConsumer_StructData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Log(WarnConfig, () => new StructLogData { Number = i });
+                this.smallStructLogger.Log(WarnConfig, () => new StructLogData {Number = i});
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpConsumer_ClassData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Log(WarnConfig, () => new ClassLogData { Number = i });
+                this.smallClassLogger.Log(WarnConfig, () => new ClassLogData {Number = i});
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpConsumer_LargeStructData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeStructLogger.Log(WarnConfig, () => new LargeStructLogData { Prop1 = i });
+                this.largeStructLogger.Log(WarnConfig, () => new LargeStructLogData {Prop1 = i});
                 int v = Math.Abs(i);
             }
         }
-        
+
         [Benchmark]
         public void NoOpConsumer_LargeClassData_Closure()
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeClassLogger.Log(WarnConfig, () => new LargeClassLogData { Prop1 = i });
+                this.largeClassLogger.Log(WarnConfig, () => new LargeClassLogData {Prop1 = i});
                 int v = Math.Abs(i);
             }
         }
@@ -216,8 +218,6 @@ namespace Newsgirl.Benchmarks
             return new ValueTask();
         }
 
-        public NoOpConsumer() : base(null)
-        {
-        }
+        public NoOpConsumer() : base(null) { }
     }
 }

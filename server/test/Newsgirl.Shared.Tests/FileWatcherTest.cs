@@ -1,11 +1,11 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace Newsgirl.Shared.Tests
 {
+    using System;
+    using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Xunit;
+
     public class FileWatcherTest
     {
         [Fact]
@@ -30,7 +30,7 @@ namespace Newsgirl.Shared.Tests
                 for (int i = 0; i < 10; i++)
                 {
                     await File.WriteAllTextAsync(testFilePath, i.ToString());
-                    
+
                     await Task.Delay(5);
                 }
             }

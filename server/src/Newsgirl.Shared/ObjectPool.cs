@@ -5,21 +5,21 @@ namespace Newsgirl.Shared
     using System.Threading.Tasks;
 
     /// <summary>
-    ///     A naive object pool implementation with no limitation for number of created instances
-    ///     and very basic concurrency support.
+    /// A naive object pool implementation with no limitation for number of created instances
+    /// and very basic concurrency support.
     /// </summary>
     public class ObjectPool<T> where T : class
     {
         private readonly Func<Task<T>> factory;
 
         /// <summary>
-        ///     Used for storage for available instances.
+        /// Used for storage for available instances.
         /// </summary>
         private readonly ConcurrentQueue<ObjectPoolInstanceWrapper<T>> queue
             = new ConcurrentQueue<ObjectPoolInstanceWrapper<T>>();
 
         /// <summary>
-        ///     Takes an async factory method that gets called in order to create a new instance.
+        /// Takes an async factory method that gets called in order to create a new instance.
         /// </summary>
         public ObjectPool(Func<Task<T>> factory)
         {
@@ -27,8 +27,8 @@ namespace Newsgirl.Shared
         }
 
         /// <summary>
-        ///     Creates an instance wrapper type that needs to be disposed
-        ///     for the instance to get back on the pool. Creates a new instance if there is none available.
+        /// Creates an instance wrapper type that needs to be disposed
+        /// for the instance to get back on the pool. Creates a new instance if there is none available.
         /// </summary>
         public async Task<ObjectPoolInstanceWrapper<T>> Get()
         {
@@ -44,7 +44,7 @@ namespace Newsgirl.Shared
     }
 
     /// <summary>
-    ///     Holds an instance and adds it back to the pool on disposal.
+    /// Holds an instance and adds it back to the pool on disposal.
     /// </summary>
     public class ObjectPoolInstanceWrapper<T> : IDisposable where T : class
     {

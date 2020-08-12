@@ -14,7 +14,7 @@ namespace Newsgirl.Fetcher
             this.httpClient = new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(systemSettings.HttpClientRequestTimeout),
-                DefaultRequestVersion = new Version(2, 0)
+                DefaultRequestVersion = new Version(2, 0),
             };
 
             this.httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(systemSettings.HttpClientUserAgent);

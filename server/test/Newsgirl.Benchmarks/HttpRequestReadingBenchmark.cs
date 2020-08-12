@@ -24,9 +24,9 @@ namespace Newsgirl.Benchmarks
         {
             this.byteArrayTester = HttpServerTester.Create(ByteArrayHandler).GetAwaiter().GetResult();
             this.memoryTester = HttpServerTester.Create(MemoryHandler).GetAwaiter().GetResult();
-            
-            var data = TestHelper.GetResourceBytes("../../../../../resources/large.json").GetAwaiter().GetResult();  
-            
+
+            var data = TestHelper.GetResourceBytes("../../../../../resources/large.json").GetAwaiter().GetResult();
+
             this.content = new ReadOnlyMemoryContent(data);
         }
 
@@ -45,9 +45,9 @@ namespace Newsgirl.Benchmarks
             {
                 // ReSharper disable once PossibleInvalidOperationException
                 int contentLength = (int) context.Request.ContentLength.Value;
-            
-                 var bufferHandle = new RentedByteArray(contentLength);
-            
+
+                var bufferHandle = new RentedByteArray(contentLength);
+
                 while (await context.Request.Body.ReadAsync(bufferHandle.AsMemory()) > 0) { }
             }
             catch (Exception e)
@@ -100,7 +100,7 @@ namespace Newsgirl.Benchmarks
                 throw;
             }
         }
-        
+
         [Benchmark]
         public void MemoryRead()
         {

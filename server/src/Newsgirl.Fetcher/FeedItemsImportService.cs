@@ -3,7 +3,6 @@ namespace Newsgirl.Fetcher
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-
     using LinqToDB;
     using Npgsql;
     using NpgsqlTypes;
@@ -34,7 +33,7 @@ namespace Newsgirl.Fetcher
                 "COPY public.feed_items " +
                 "(feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) " +
                 "FROM STDIN (FORMAT BINARY)";
-            
+
             await using (var importer = this.dbConnection.BeginBinaryImport(IMPORT_HEADER))
             {
                 for (int i = 0; i < updates.Length; i++)
@@ -86,10 +85,10 @@ namespace Newsgirl.Fetcher
             this.log.General(() =>
             {
                 int importedCount = updates.Select(u => u.NewItems?.Count ?? 0).Sum();
-                
+
                 return new LogData("Feed items imported.")
                 {
-                    {"importedCount", importedCount}
+                    {"importedCount", importedCount},
                 };
             });
 
@@ -107,24 +106,24 @@ namespace Newsgirl.Fetcher
                     );
                 }
             }
-            
+
             this.log.General(() => new LogData("Feed hashes updated.")
             {
-                {"updateCount", updates.Length}
+                {"updateCount", updates.Length},
             });
         }
 
         public Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes)
         {
             return this.db.ExecuteScalar<long[]>(
-                "select get_missing_feed_items(:feed_id, :hashes);", 
+                "select get_missing_feed_items(:feed_id, :hashes);",
                 this.db.CreateParameter("feed_id", feedID),
                 // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
                 this.db.CreateParameter("hashes", feedItemHashes, NpgsqlDbType.Bigint | NpgsqlDbType.Array)
             );
         }
     }
-    
+
     public interface IFeedItemsImportService
     {
         Task<List<FeedPoco>> GetFeedsForUpdate();
@@ -133,15 +132,15 @@ namespace Newsgirl.Fetcher
 
         Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes);
     }
-    
+
     public class FeedUpdateModel
     {
         public List<FeedItemPoco> NewItems { get; set; }
 
         public long? NewFeedItemsHash { get; set; }
-        
+
         public long? NewFeedContentHash { get; set; }
-        
+
         public FeedPoco Feed { get; set; }
     }
 }

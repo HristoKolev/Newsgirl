@@ -14,11 +14,11 @@ namespace Newsgirl.Shared
     public interface ErrorReporter
     {
         Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo);
-        
+
         Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo);
-        
+
         Task<string> Error(Exception exception, string fingerprint);
-        
+
         Task<string> Error(Exception exception);
     }
 
@@ -30,7 +30,7 @@ namespace Newsgirl.Shared
         private readonly ISentryClient sentryClient;
         private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
         private readonly List<AsyncLocal<Func<Dictionary<string, object>>>> syncErrorDataHooks = new List<AsyncLocal<Func<Dictionary<string, object>>>>();
-        
+
         public ErrorReporterImpl(ErrorReporterConfig config)
         {
             this.config = config;
@@ -43,13 +43,13 @@ namespace Newsgirl.Shared
                 Release = this.config.Release,
             });
         }
-        
+
         public async Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
             try
             {
                 await Console.Error.WriteLineAsync(exception.ToString());
-                
+
                 return await this.SendToSentry(exception, additionalInfo, fingerprint);
             }
             catch (Exception err)
@@ -82,7 +82,7 @@ namespace Newsgirl.Shared
         {
             var sentryEvent = new SentryEvent(exception)
             {
-                Level = SentryLevel.Error
+                Level = SentryLevel.Error,
             };
 
             if (!string.IsNullOrWhiteSpace(this.config.ServerName))
@@ -140,8 +140,8 @@ namespace Newsgirl.Shared
 
             if (!string.IsNullOrWhiteSpace(explicitlyDefinedFingerprint))
             {
-                sentryEvent.SetFingerprint(new []{explicitlyDefinedFingerprint});
-            } 
+                sentryEvent.SetFingerprint(new[] {explicitlyDefinedFingerprint});
+            }
             else if (fingerprintFromExceptionProperty != null)
             {
                 sentryEvent.SetFingerprint(fingerprintFromExceptionProperty);
@@ -171,7 +171,7 @@ namespace Newsgirl.Shared
         }
 
         /// <summary>
-        ///     Returns a flat list of all the exceptions down the .InnerException chain.
+        /// Returns a flat list of all the exceptions down the .InnerException chain.
         /// </summary>
         private static List<Exception> GetExceptionChain(Exception exception)
         {
@@ -180,7 +180,7 @@ namespace Newsgirl.Shared
             while (exception != null)
             {
                 list.Add(exception);
-                
+
                 exception = exception.InnerException;
             }
 
@@ -198,13 +198,13 @@ namespace Newsgirl.Shared
             return $"[{exception.GetType()}]\n{frames}";
         }
 
-        public void AddSyncHook(AsyncLocal<Func<Dictionary<string,object>>> hook)
+        public void AddSyncHook(AsyncLocal<Func<Dictionary<string, object>>> hook)
         {
             this.syncErrorDataHooks.Add(hook);
         }
-        
+
         /// <summary>
-        ///     Stolen from Sentry's source code.
+        /// Stolen from Sentry's source code.
         /// </summary>
         private static class SentryStackTraceFactory
         {
@@ -222,7 +222,7 @@ namespace Newsgirl.Shared
                 ("System.Runtime.ExceptionServices.ExceptionDispatchInfo", "Throw"),
 
                 ("System.Runtime.CompilerServices.ValueTaskAwaiter`1", "GetResult"),
-                ("System.Threading.Tasks.ValueTask`1", "get_Result")
+                ("System.Threading.Tasks.ValueTask`1", "get_Result"),
             };
 
             public static SentryStackTrace Create(Exception exception)
@@ -375,10 +375,10 @@ namespace Newsgirl.Shared
         public string Environment { get; set; }
 
         public string SentryDsn { get; set; }
-        
+
         public string Release { get; set; }
     }
-    
+
     public class DetailedLogException : Exception
     {
         public DetailedLogException()

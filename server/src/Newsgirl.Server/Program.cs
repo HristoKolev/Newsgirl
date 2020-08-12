@@ -19,7 +19,7 @@ namespace Newsgirl.Server
 
         private TaskCompletionSource<object> shutdownTriggered;
         private ManualResetEventSlim shutdownCompleted;
-        
+
         public string AppConfigPath { get; set; }
 
         public HttpServerAppConfig AppConfig { get; set; }
@@ -27,7 +27,7 @@ namespace Newsgirl.Server
         public SystemSettingsModel SystemSettings { get; set; }
 
         public StructuredLogger Log { get; set; }
-        
+
         public ErrorReporter ErrorReporter { get; set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
@@ -37,7 +37,7 @@ namespace Newsgirl.Server
         private CustomHttpServer Server { get; set; }
 
         public AsyncLocals AsyncLocals { get; set; }
-        
+
         public RpcEngine RpcEngine { get; set; }
 
         public bool Started { get; set; }
@@ -50,46 +50,52 @@ namespace Newsgirl.Server
             }
 
             this.AppConfigPath = EnvVariableHelper.Get("APP_CONFIG_PATH");
-            
+
             this.shutdownTriggered = new TaskCompletionSource<object>();
             this.shutdownCompleted = new ManualResetEventSlim();
-            
+
             this.AsyncLocals = new AsyncLocalsImpl();
-            
+
             await this.LoadConfig();
-            
+
             var loggerBuilder = new StructuredLoggerBuilder();
-            
+
             loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
-                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination(
-                    this.ErrorReporter,
-                    this.AppConfig.Logging.Elasticsearch,
-                    this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
-                )},
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                    )
+                },
             });
-                
+
             loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
-                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
-                    this.ErrorReporter,
-                    this.AppConfig.Logging.Elasticsearch,
-                    this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                )},
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                    )
+                },
             });
-                
+
             loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
-                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
-                    this.ErrorReporter,
-                    this.AppConfig.Logging.Elasticsearch,
-                    this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                )},
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
+                    )
+                },
             });
-            
+
             this.Log = loggerBuilder.Build();
-            
+
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
@@ -97,7 +103,7 @@ namespace Newsgirl.Server
             var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
             var rpcEngineOptions = new RpcEngineOptions
             {
-                PotentialHandlerTypes = potentialRpcTypes
+                PotentialHandlerTypes = potentialRpcTypes,
             };
             this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
@@ -108,7 +114,7 @@ namespace Newsgirl.Server
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-            
+
             async Task RequestDelegate(HttpContext context)
             {
                 await using (var requestScope = this.IoC.BeginLifetimeScope())
@@ -119,19 +125,19 @@ namespace Newsgirl.Server
             }
 
             this.Server = new CustomHttpServerImpl(RequestDelegate);
-            
+
             this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
             this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
             this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
 
             await this.Server.Start(new HttpServerConfig
             {
-                Addresses = listenOnAddresses
+                Addresses = listenOnAddresses,
             });
 
             this.Started = true;
         }
-        
+
         private async Task LoadConfig()
         {
             this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
@@ -166,24 +172,24 @@ namespace Newsgirl.Server
             {
                 throw new ApplicationException("The application is already stopped.");
             }
-            
+
             try
             {
                 this.AppConfigPath = null;
 
                 this.shutdownTriggered = null;
-                
+
                 if (this.AppConfigWatcher != null)
                 {
                     this.AppConfigWatcher.Dispose();
-                    this.AppConfigWatcher = null;    
+                    this.AppConfigWatcher = null;
                 }
 
                 if (this.Server != null)
                 {
                     await this.Server.Stop();
                     await this.Server.DisposeAsync();
-                    this.Server = null;    
+                    this.Server = null;
                 }
 
                 this.RpcEngine = null;
@@ -200,9 +206,9 @@ namespace Newsgirl.Server
                 if (this.Log != null)
                 {
                     await this.Log.DisposeAsync();
-                    this.Log = null;    
+                    this.Log = null;
                 }
-                
+
                 if (this.ErrorReporter != null)
                 {
                     // ReSharper disable once SuspiciousTypeConversion.Global
@@ -211,9 +217,9 @@ namespace Newsgirl.Server
                         await disposableErrorReporter.DisposeAsync();
                     }
 
-                    this.ErrorReporter = null;    
+                    this.ErrorReporter = null;
                 }
-                
+
                 this.AsyncLocals = null;
             }
             finally
@@ -221,7 +227,7 @@ namespace Newsgirl.Server
                 if (this.shutdownCompleted != null)
                 {
                     this.shutdownCompleted.Set();
-                    this.shutdownCompleted = null;    
+                    this.shutdownCompleted = null;
                 }
 
                 this.Started = false;
@@ -232,7 +238,7 @@ namespace Newsgirl.Server
         {
             if (this.Started)
             {
-                return this.Stop();    
+                return this.Stop();
             }
 
             return new ValueTask();
@@ -247,7 +253,7 @@ namespace Newsgirl.Server
         {
             this.shutdownTriggered.SetResult(null);
         }
-        
+
         public void WaitForShutdownToComplete()
         {
             this.shutdownCompleted.Wait();
@@ -264,15 +270,15 @@ namespace Newsgirl.Server
         public string ConnectionString { get; set; }
 
         public ErrorReporterConfig ErrorReporter { get; set; }
-        
+
         public LoggingConfig Logging { get; set; }
     }
-    
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
         public EventStreamConfig[] StructuredLogger { get; set; }
-        
+
         public ElasticsearchConfig Elasticsearch { get; set; }
 
         public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
@@ -282,7 +288,7 @@ namespace Newsgirl.Server
     public class ElasticsearchIndexConfig
     {
         public string GeneralLogIndex { get; set; }
-        
+
         public string HttpLogIndex { get; set; }
     }
 
@@ -311,7 +317,7 @@ namespace Newsgirl.Server
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
             builder.Register((c, p) => this.app.Log).ExternallyOwned().As<ILog>();
-            
+
             builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
 
@@ -323,12 +329,12 @@ namespace Newsgirl.Server
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
 
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.HandlerClass).Distinct();
-            
+
             foreach (var handlerClass in handlerClasses)
             {
                 builder.RegisterType(handlerClass);
             }
- 
+
             base.Load(builder);
         }
     }
@@ -338,7 +344,7 @@ namespace Newsgirl.Server
         private static async Task<int> Main()
         {
             var app = new HttpServerApp();
-            
+
             async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
             {
                 await app.ErrorReporter.Error(e.Exception?.InnerException);
@@ -348,7 +354,7 @@ namespace Newsgirl.Server
             {
                 await app.ErrorReporter.Error((Exception) e.ExceptionObject);
             }
-            
+
             void OnProcessExit(object sender, EventArgs args)
             {
                 if (app.Started)
@@ -374,7 +380,7 @@ namespace Newsgirl.Server
                 AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
                 AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
                 Console.CancelKeyPress += OnCancelKeyPress;
-                    
+
                 await app.Start("http://127.0.0.1:5000");
 
                 await app.AwaitShutdownTrigger();
@@ -399,7 +405,7 @@ namespace Newsgirl.Server
             finally
             {
                 await app.DisposeAsync();
-                
+
                 Console.CancelKeyPress -= OnCancelKeyPress;
                 AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
                 AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;

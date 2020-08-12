@@ -16,14 +16,10 @@ namespace Newsgirl.Benchmarks
         public int Size;
 
         [GlobalSetup]
-        public void GlobalSetup()
-        {
-        }
+        public void GlobalSetup() { }
 
         [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-        }
+        public void GlobalCleanup() { }
 
         [Benchmark]
         public void SimpleCase()
@@ -37,7 +33,7 @@ namespace Newsgirl.Benchmarks
                 ArrayPool<byte>.Shared.Return(buffer);
             }
         }
-        
+
         [Benchmark]
         public void AsyncSimpleCase()
         {
@@ -46,13 +42,13 @@ namespace Newsgirl.Benchmarks
                 this.AsyncSimpleCase_Impl().GetAwaiter().GetResult();
             }
         }
-        
+
         private async Task AsyncSimpleCase_Impl()
         {
             var buffer = ArrayPool<byte>.Shared.Rent(this.Size);
-            
+
             await Task.Delay(0);
-            
+
             ArrayPool<byte>.Shared.Return(buffer);
         }
 
@@ -66,7 +62,7 @@ namespace Newsgirl.Benchmarks
                 GC.KeepAlive(bufferHolder.GetRentedArray());
             }
         }
-        
+
         [Benchmark]
         public void AsyncArrayPoolBuffer()
         {
@@ -75,13 +71,13 @@ namespace Newsgirl.Benchmarks
                 this.AsyncArrayPoolBuffer_Impl().GetAwaiter().GetResult();
             }
         }
-        
+
         private async Task AsyncArrayPoolBuffer_Impl()
         {
             using var bufferHolder = new RentedByteArray(this.Size);
-            
+
             await Task.Delay(0);
-            
+
             GC.KeepAlive(bufferHolder.GetRentedArray());
         }
     }

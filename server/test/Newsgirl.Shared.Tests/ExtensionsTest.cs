@@ -1,7 +1,7 @@
-using Xunit;
-
 namespace Newsgirl.Shared.Tests
 {
+    using Xunit;
+
     public class ExtensionsTest
     {
         [Fact]
@@ -13,7 +13,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Null("\t ".SomethingOrNull());
             Assert.Null("\n \n ".SomethingOrNull());
             Assert.Null("\r \r ".SomethingOrNull());
-            
+
             Assert.Equal("123", "123".SomethingOrNull());
             Assert.Equal(" 123 ", " 123 ".SomethingOrNull());
         }

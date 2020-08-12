@@ -12,7 +12,7 @@ namespace Newsgirl.Server
     using Shared.Logging;
 
     /// <summary>
-    ///     Serves Rpc requests over HTTP.
+    /// Serves Rpc requests over HTTP.
     /// </summary>
     public class RpcRequestHandler
     {
@@ -21,13 +21,13 @@ namespace Newsgirl.Server
         private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
         private static Func<object, RpcRequestMessage> copyData;
         private static JsonSerializerOptions serializationOptions;
-        
+
         private readonly RpcEngine rpcEngine;
         private readonly InstanceProvider instanceProvider;
         private readonly AsyncLocals asyncLocals;
         private readonly ErrorReporter errorReporter;
         private readonly ILog log;
-        
+
         private HttpContext httpContext;
         private RentedByteArray requestBody;
         private RpcRequestMessage rpcRequest;
@@ -42,7 +42,7 @@ namespace Newsgirl.Server
             serializationOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             };
         }
 
@@ -59,25 +59,27 @@ namespace Newsgirl.Server
             this.errorReporter = errorReporter;
             this.log = log;
         }
-        
+
         public async Task HandleRequest(HttpContext ctx)
         {
             this.httpContext = ctx;
             this.requestStart = DateTime.UtcNow;
-            
+
             // Diagnostic data in case of an error.
             this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
             {
-                {"http", new HttpLogData(
-                    this.httpContext,
-                    // ReSharper disable once AccessToDisposedClosure
-                    this.requestBody,
-                    this.rpcRequest,
-                    this.rpcResponse,
-                    this.rpcResponse == null || !this.rpcResponse.IsOk,
-                    this.requestStart,
-                    this.requestType
-                )}
+                {
+                    "http", new HttpLogData(
+                        this.httpContext,
+                        // ReSharper disable once AccessToDisposedClosure
+                        this.requestBody,
+                        this.rpcRequest,
+                        this.rpcResponse,
+                        this.rpcResponse == null || !this.rpcResponse.IsOk,
+                        this.requestStart,
+                        this.requestType
+                    )
+                },
             };
 
             RpcResult<object> result;
@@ -102,7 +104,7 @@ namespace Newsgirl.Server
                     this.requestStart,
                     this.requestType
                 ));
-                
+
                 this.log.HttpDetailed(() => new HttpLogData(
                     this.httpContext,
                     // ReSharper disable once AccessToDisposedClosure
@@ -113,7 +115,7 @@ namespace Newsgirl.Server
                     this.requestStart,
                     this.requestType
                 ));
-                
+
                 this.requestBody?.Dispose();
             }
 
@@ -158,10 +160,10 @@ namespace Newsgirl.Server
                 string errorID = await this.errorReporter.Error(err);
                 return RpcResult.Error<object>($"Failed to read RPC request body: {errorID}");
             }
-            
+
             // Parse the RPC message.
             RpcResult<RpcRequestMessage> requestMessageResult;
-        
+
             try
             {
                 requestMessageResult = this.ParseRequestMessage(this.requestBody);
@@ -171,14 +173,14 @@ namespace Newsgirl.Server
                 long? bytePositionInLine = null;
                 long? lineNumber = null;
                 string jsonPath = null;
-            
+
                 if (err is JsonException jsonException)
                 {
                     bytePositionInLine = jsonException.BytePositionInLine;
                     lineNumber = jsonException.LineNumber;
                     jsonPath = jsonException.Path;
-                }   
-            
+                }
+
                 string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
                     {"bytePositionInLine", bytePositionInLine},
@@ -195,7 +197,7 @@ namespace Newsgirl.Server
             }
 
             this.rpcRequest = requestMessageResult.Payload;
-        
+
             // Execute.
             try
             {
@@ -205,7 +207,7 @@ namespace Newsgirl.Server
             {
                 string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
-                    {"rpcRequest", this.rpcRequest}
+                    {"rpcRequest", this.rpcRequest},
                 });
 
                 return RpcResult.Error<object>($"RPC execution error ({this.rpcRequest.Type}): {errorID}");
@@ -215,7 +217,7 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArray"/>.
+        /// Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArray" />.
         /// </summary>
         private RpcResult<RpcRequestMessage> ParseRequestMessage(RentedByteArray bufferHandle)
         {
@@ -247,28 +249,28 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Writes a <see cref="RpcResult" /> to the HTTP result.
+        /// Writes a <see cref="RpcResult" /> to the HTTP result.
         /// </summary>
         private async ValueTask WriteResult<T>(RpcResult<T> result)
         {
             try
             {
                 this.httpContext.Response.StatusCode = 200;
-                
+
                 await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, serializationOptions);
             }
             catch (Exception err)
             {
                 await this.errorReporter.Error(err, "RPC_SERVER_FAILED_TO_WRITE_RESPONSE", new Dictionary<string, object>
                 {
-                    {"result", result}
+                    {"result", result},
                 });
             }
         }
 
         /// <summary>
-        ///     Creates a function that copies properties from an <see cref="RpcRequestMessageDto{T}" />
-        ///     instance to an <see cref="RpcRequestMessage" /> instance.
+        /// Creates a function that copies properties from an <see cref="RpcRequestMessageDto{T}" />
+        /// instance to an <see cref="RpcRequestMessage" /> instance.
         /// </summary>
         private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
         {
@@ -282,7 +284,7 @@ namespace Newsgirl.Server
                 il.Emit(OpCodes.Dup);
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, typeof(RpcRequestMessageDto<>).MakeGenericType(typeof(object)).GetProperty(property.Name)?.GetMethod!);
-                il.Emit(OpCodes.Call, property.SetMethod!);    
+                il.Emit(OpCodes.Call, property.SetMethod!);
             }
 
             il.Emit(OpCodes.Ret);
@@ -297,7 +299,7 @@ namespace Newsgirl.Server
 
             // ReSharper disable once UnusedMember.Local
             public Dictionary<string, string> Headers { get; set; }
-            
+
             // ReSharper disable once UnusedAutoPropertyAccessor.Local
             public string Type { get; set; }
         }
@@ -308,7 +310,7 @@ namespace Newsgirl.Server
             public string Type { get; set; }
         }
     }
-    
+
     public class HttpLogData
     {
         public HttpLogData(HttpContext context,
@@ -320,7 +322,7 @@ namespace Newsgirl.Server
             string requestType)
         {
             var now = System.DateTime.UtcNow;
-            
+
             this.DateTime = now.ToString("O");
             this.RequestID = context.Connection.Id;
             this.LocalIp = context.Connection.LocalIpAddress + ":" + context.Connection.LocalPort;
@@ -343,7 +345,7 @@ namespace Newsgirl.Server
             {
                 this.RpcRequest = JsonSerializer.Serialize(rpcRequest);
             }
-            
+
             if (rpcResponse != null)
             {
                 this.RpcRequest = JsonSerializer.Serialize(rpcResponse);
@@ -370,35 +372,41 @@ namespace Newsgirl.Server
         public string RemoteIp { get; set; }
 
         public Dictionary<string, string> Cookies { get; set; }
-            
+
         public Dictionary<string, string> Headers { get; set; }
-            
+
         public string Method { get; set; }
-            
+
         public string Path { get; set; }
-            
+
         public string Query { get; set; }
-            
+
         public string Protocol { get; set; }
-            
+
         public string Scheme { get; set; }
-            
+
         public bool Aborted { get; set; }
-        
+
         public string HttpRequestBodyBase64 { get; set; }
 
         public string DateTime { get; set; }
-        
+
         public bool RequestFailed { get; }
     }
-    
+
     public static class HttpLoggingExtensions
     {
         public const string HttpKey = "HTTP_REQUESTS";
         public const string HttpDetailedKey = "HTTP_REQUESTS_DETAILED";
 
-        public static void Http(this ILog log, Func<HttpLogData> func) => log.Log(HttpKey, func);
-        
-        public static void HttpDetailed(this ILog log, Func<HttpLogData> func) => log.Log(HttpDetailedKey, func);
+        public static void Http(this ILog log, Func<HttpLogData> func)
+        {
+            log.Log(HttpKey, func);
+        }
+
+        public static void HttpDetailed(this ILog log, Func<HttpLogData> func)
+        {
+            log.Log(HttpDetailedKey, func);
+        }
     }
 }

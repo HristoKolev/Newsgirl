@@ -11,7 +11,7 @@ namespace Newsgirl.Fetcher
         {
             this.xxHash = xxHashFactory.Instance.Create(new xxHashConfig
             {
-                HashSizeInBits = 64
+                HashSizeInBits = 64,
             });
         }
 

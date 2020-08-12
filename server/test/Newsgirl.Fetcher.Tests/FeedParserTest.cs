@@ -1,11 +1,10 @@
-using System.Threading.Tasks;
-using Xunit;
-using Newsgirl.Testing;
-using NSubstitute;
-
 namespace Newsgirl.Fetcher.Tests
 {
+    using System.Threading.Tasks;
+    using NSubstitute;
     using Shared;
+    using Testing;
+    using Xunit;
 
     public class FeedParserTest
     {
@@ -19,14 +18,14 @@ namespace Newsgirl.Fetcher.Tests
 
             var dateStub = Substitute.For<DateProvider>();
             dateStub.Now().Returns(TestHelper.Date2000);
-            
+
             var parser = new FeedParser(hasher, dateStub, TestHelper.LogStub);
 
             string feedContent = await TestHelper.GetResourceText(resourceName);
-            
+
             var parsedFeed = parser.Parse(feedContent);
 
-            Snapshot.Match(parsedFeed, new []{resourceName});
+            Snapshot.Match(parsedFeed, new[] {resourceName});
         }
     }
 }

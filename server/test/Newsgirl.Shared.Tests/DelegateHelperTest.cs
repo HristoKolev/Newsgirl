@@ -11,8 +11,8 @@ namespace Newsgirl.Shared.Tests
         {
             int i = 0;
             var duration = TimeSpan.FromMilliseconds(20);
-            var delta = TimeSpan.FromMilliseconds(10);
-            
+            var delta = TimeSpan.FromMilliseconds(5);
+
             var run = DelegateHelper.Debounce(() => i++, duration);
 
             for (int j = 0; j < 10; j++)
@@ -20,15 +20,15 @@ namespace Newsgirl.Shared.Tests
                 run();
                 await Task.Delay(duration.Subtract(delta));
             }
-            
+
             await Task.Delay(duration.Add(delta));
-            
+
             for (int j = 0; j < 10; j++)
             {
                 run();
                 await Task.Delay(duration.Subtract(delta));
             }
-            
+
             Assert.Equal(3, i);
         }
     }

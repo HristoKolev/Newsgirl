@@ -1,12 +1,10 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Xunit;
-
 namespace Newsgirl.Shared.Tests
 {
+    using System;
+    using System.Linq;
     using System.Runtime.Serialization;
+    using System.Threading.Tasks;
+    using Xunit;
 
     public class AsyncLockTest
     {
@@ -14,7 +12,7 @@ namespace Newsgirl.Shared.Tests
         public async Task Does_Not_Allow_Concurrent_Access()
         {
             RaceConditionException expectedError = null;
-            
+
             try
             {
                 await RunConcurrentTest(async action =>
@@ -31,7 +29,7 @@ namespace Newsgirl.Shared.Tests
             {
                 throw new ApplicationException("Race condition did not occur when expected.");
             }
-            
+
             var asyncLock = new AsyncLock();
 
             await RunConcurrentTest(async action =>
@@ -46,7 +44,7 @@ namespace Newsgirl.Shared.Tests
         private static async Task RunConcurrentTest(Func<Func<Task>, Task> wrapperFunc)
         {
             const int THREAD_COUNT = 2;
-            
+
             bool open = false;
 
             var tasks = Enumerable.Range(0, THREAD_COUNT)
@@ -72,23 +70,15 @@ namespace Newsgirl.Shared.Tests
 
         private class RaceConditionException : Exception
         {
-            public RaceConditionException()
-            {
-            }
+            public RaceConditionException() { }
 
-            public RaceConditionException(string message) : base(message)
-            {
-            }
+            public RaceConditionException(string message) : base(message) { }
 
-            public RaceConditionException(string message, Exception inner) : base(message, inner)
-            {
-            }
+            public RaceConditionException(string message, Exception inner) : base(message, inner) { }
 
             protected RaceConditionException(
                 SerializationInfo info,
-                StreamingContext context) : base(info, context)
-            {
-            }
+                StreamingContext context) : base(info, context) { }
         }
     }
 }

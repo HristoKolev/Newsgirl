@@ -5,9 +5,9 @@ namespace Newsgirl.Shared
     using System.Threading.Tasks;
 
     /// <summary>
-    ///     Provides asynchronous locking functionality without any extras.
-    ///     Uses `SemaphoreSlim` under the hood.
-    ///     To use create a new instance and call the `await Lock()` method in a using statement.
+    /// Provides asynchronous locking functionality without any extras.
+    /// Uses `SemaphoreSlim` under the hood.
+    /// To use create a new instance and call the `await Lock()` method in a using statement.
     /// </summary>
     public class AsyncLock
     {

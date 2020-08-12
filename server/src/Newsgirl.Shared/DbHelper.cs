@@ -9,13 +9,13 @@ namespace Newsgirl.Shared
     public static class DbFactory
     {
         /// <summary>
-        ///     Creates a new `NpgsqlConnection` connection.
+        /// Creates a new `NpgsqlConnection` connection.
         /// </summary>
         public static NpgsqlConnection CreateConnection(string connectionString)
         {
             var builder = new NpgsqlConnectionStringBuilder(connectionString)
             {
-                Enlist = false // Turn this off in order to save some perf. It disables the support for `TransactionScope`.
+                Enlist = false, // Turn this off in order to save some perf. It disables the support for `TransactionScope`.
             };
 
             return new NpgsqlConnection(builder.ToString());
@@ -25,11 +25,9 @@ namespace Newsgirl.Shared
     public class DbService : DbService<DbPocos>
     {
         public DbService(NpgsqlConnection dbConnection)
-            : base(dbConnection)
-        {
-        }
+            : base(dbConnection) { }
     }
-    
+
     /// <summary>
     /// Use to control database transactions.
     /// </summary>
@@ -43,7 +41,7 @@ namespace Newsgirl.Shared
         Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default);
     }
-    
+
     public class DbTransactionServiceImpl : DbTransactionService
     {
         private readonly DbService db;

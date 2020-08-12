@@ -17,14 +17,14 @@ namespace Newsgirl.Server.Tests
             {
                 var result = RpcResult.Ok(new IncrementTestResponse
                 {
-                    Num = req.Num + 1
+                    Num = req.Num + 1,
                 });
-                
+
                 result.Headers.Add("test_key", "test_value");
-                
+
                 return Task.FromResult(result);
             }
-            
+
             [RpcBind(typeof(ThrowingTestRequest), typeof(ThrowingTestResponse))]
             public Task<RpcResult<ThrowingTestResponse>> Increment(ThrowingTestRequest req)
             {
@@ -32,13 +32,9 @@ namespace Newsgirl.Server.Tests
             }
         }
 
-        public class ThrowingTestRequest
-        {
-        }
+        public class ThrowingTestRequest { }
 
-        public class ThrowingTestResponse
-        {
-        }
+        public class ThrowingTestResponse { }
 
         public class IncrementTestResponse
         {
@@ -57,23 +53,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.GetAsync("/");
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Returns_error_on_invalid_json()
         {
@@ -81,23 +77,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("not json"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Returns_error_on_null_request_type()
         {
@@ -105,23 +101,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": null}"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Returns_error_on_unknown_request_type()
         {
@@ -129,23 +125,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"NotRegisteredRequest\"}"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Returns_error_on_execution_error()
         {
@@ -153,23 +149,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"ThrowingTestRequest\", \"payload\":{} }"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Logs_on_error()
         {
@@ -177,23 +173,23 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"ThrowingTestRequest\", \"payload\":{} }"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
 
             Snapshot.MatchJson(responseBody);
         }
-        
+
         [Fact]
         public async Task Returns_correct_result()
         {
@@ -201,20 +197,20 @@ namespace Newsgirl.Server.Tests
             {
                 PotentialHandlerTypes = new[]
                 {
-                    typeof(IncrementHandler)
+                    typeof(IncrementHandler),
                 },
             });
 
             string responseBody;
-            
+
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"IncrementTestRequest\", \"payload\":{ \"num\": 33 } }"));
                 response.EnsureSuccessStatusCode();
-                
+
                 responseBody = await response.Content.ReadAsStringAsync();
             }
-            
+
             Snapshot.MatchJson(responseBody);
         }
 
@@ -222,27 +218,37 @@ namespace Newsgirl.Server.Tests
         {
             var errorReporter = new ErrorReporterMock();
             var logMock = new StructuredLogMock();
-            
+
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
 
             var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
-            Task Handler(HttpContext context) => handler.HandleRequest(context);
+
+            Task Handler(HttpContext context)
+            {
+                return handler.HandleRequest(context);
+            }
+
             return Handler;
         }
-        
+
         private static RequestDelegate CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
         {
             var errorReporter = new ErrorReporterMock();
             var logMock = new StructuredLogMock();
-            
+
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
             var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
-            Task Handler(HttpContext context) => handler.HandleRequest(context);
+
+            Task Handler(HttpContext context)
+            {
+                return handler.HandleRequest(context);
+            }
+
             return Handler;
         }
- 
+
         private class FuncInstanceProvider : InstanceProvider
         {
             private readonly Func<Type, object> func;
@@ -251,7 +257,7 @@ namespace Newsgirl.Server.Tests
             {
                 this.func = func;
             }
-            
+
             public object Get(Type type)
             {
                 return this.func(type);

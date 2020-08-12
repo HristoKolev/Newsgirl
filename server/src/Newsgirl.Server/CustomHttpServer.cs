@@ -17,9 +17,9 @@ namespace Newsgirl.Server
     using Shared;
 
     /// <summary>
-    ///     A wrapper around ASP.NET Core's IHost.
-    ///     TODO: What happens when a request is aborted.
-    ///     TODO: What happens when a request is in process and we dispose the server.
+    /// A wrapper around ASP.NET Core's IHost.
+    /// TODO: What happens when a request is aborted.
+    /// TODO: What happens when a request is in process and we dispose the server.
     /// </summary>
     public class CustomHttpServerImpl : CustomHttpServer
     {
@@ -33,19 +33,19 @@ namespace Newsgirl.Server
         {
             this.requestDelegate = requestDelegate;
         }
-        
+
         /// <summary>
         /// Fires when the server starts with the bound addresses as an argument.
         /// </summary>
         public event Action<string[]> Started;
-        
+
         /// <summary>
         /// Fires when shutdown is triggered.
         /// </summary>
         public event Action Stopping;
-        
+
         /// <summary>
-        /// Fires when the server is properly shut down. 
+        /// Fires when the server is properly shut down.
         /// </summary>
         public event Action Stopped;
 
@@ -53,7 +53,7 @@ namespace Newsgirl.Server
         {
             this.ThrowIfDisposed();
             this.ThrowIfStarted();
-            
+
             this.host = new HostBuilder()
                 .ConfigureWebHost(builder =>
                 {
@@ -73,10 +73,10 @@ namespace Newsgirl.Server
                 .Build();
 
             await this.host.StartAsync();
-            
+
             var server = this.host.Services.GetService<IServer>();
             var addressesFeature = server.Features.Get<IServerAddressesFeature>();
-            
+
             this.boundAddresses = addressesFeature.Addresses.ToArray();
 
             this.started = true;
@@ -92,15 +92,15 @@ namespace Newsgirl.Server
         {
             this.ThrowIfDisposed();
             this.ThrowIfStopped();
-            
+
             var lifetime = this.host.Services.GetService<IHostApplicationLifetime>();
-            
+
             var stoppingFired = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
             lifetime.ApplicationStopping.Register(() => stoppingFired.TrySetResult(null));
             lifetime.StopApplication();
 
             await stoppingFired.Task;
-            
+
             await this.host.StopAsync();
 
             // ReSharper disable once SuspiciousTypeConversion.Global
@@ -109,7 +109,7 @@ namespace Newsgirl.Server
             this.host = null;
 
             this.boundAddresses = null;
-            
+
             this.started = false;
         }
 
@@ -159,7 +159,7 @@ namespace Newsgirl.Server
                 throw new NotSupportedException("The server must be stopped to perform this operation.");
             }
         }
-        
+
         private void ThrowIfStopped()
         {
             if (!this.started)
@@ -167,7 +167,7 @@ namespace Newsgirl.Server
                 throw new NotSupportedException("The server must be started to perform this operation.");
             }
         }
-        
+
         private void ThrowIfDisposed()
         {
             if (this.disposed)
@@ -198,22 +198,22 @@ namespace Newsgirl.Server
     public interface CustomHttpServer : IAsyncDisposable
     {
         string[] BoundAddresses { get; }
-        
+
         public event Action<string[]> Started;
-        
+
         public event Action Stopping;
-        
+
         public event Action Stopped;
 
         Task Start(HttpServerConfig config);
 
         Task Stop();
     }
-    
+
     public static class HttpContextExtensions
     {
         /// <summary>
-        ///     Writes a string in UTF-8 encoding and closes the stream.
+        /// Writes a string in UTF-8 encoding and closes the stream.
         /// </summary>
         public static async ValueTask WriteUtf8(this HttpResponse response, string str)
         {
@@ -228,21 +228,21 @@ namespace Newsgirl.Server
             {
                 throw new DetailedLogException("Failed to encode UTF8 response body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY"
+                    Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
                 };
             }
             catch (Exception err)
             {
                 throw new DetailedLogException("Failed to write to HTTP response body.", err)
                 {
-                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY"
+                    Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY",
                 };
             }
         }
 
         /// <summary>
-        ///     Reads the request stream to the end and decodes it into a <see cref="string" />.
-        ///     Throws on invalid UTF8.
+        /// Reads the request stream to the end and decodes it into a <see cref="string" />.
+        /// Throws on invalid UTF8.
         /// </summary>
         public static async ValueTask<string> ReadUtf8(this HttpRequest request)
         {
@@ -262,8 +262,8 @@ namespace Newsgirl.Server
                     Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
                     Details =
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestContent.AsSpan())}
-                    }
+                        {"requestBodyBytes", Convert.ToBase64String(requestContent.AsSpan())},
+                    },
                 };
             }
 
@@ -271,7 +271,7 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        ///     Reads the request stream to the end and returns <see cref="RentedByteArray" /> with the contents.
+        /// Reads the request stream to the end and returns <see cref="RentedByteArray" /> with the contents.
         /// </summary>
         public static async ValueTask<RentedByteArray> ReadToEnd(this HttpRequest request)
         {
@@ -301,16 +301,16 @@ namespace Newsgirl.Server
                         Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                         Details =
                         {
-                            {"contentLength", length}
-                        }
+                            {"contentLength", length},
+                        },
                     };
                 }
 
                 return bufferHandle;
             }
-            
+
             var memoryStream = MemoryStreamPool.Shared.GetStream();
-            
+
             try
             {
                 await request.Body.CopyToAsync(memoryStream);
@@ -326,8 +326,8 @@ namespace Newsgirl.Server
                     Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                     Details =
                     {
-                        {"contentLength", length}
-                    }
+                        {"contentLength", length},
+                    },
                 };
             }
 

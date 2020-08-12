@@ -21,7 +21,7 @@
         public SystemSettingsModel SystemSettings { get; set; }
 
         public StructuredLogger Log { get; set; }
-        
+
         public ErrorReporter ErrorReporter { get; set; }
 
         private FileWatcher AppConfigWatcher { get; set; }
@@ -34,21 +34,23 @@
             TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
 
             await this.LoadConfig();
-            
+
             var loggerBuilder = new StructuredLoggerBuilder();
-            
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string,Func<EventDestination<LogData>>>
+
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
-                {"ElasticsearchConsumer", () => new ElasticsearchEventDestination(
-                    this.ErrorReporter, 
-                    this.AppConfig.Logging.Elasticsearch,
-                    this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
-                )},
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                    )
+                },
             });
-            
+
             this.Log = loggerBuilder.Build();
-            
+
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
             this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
@@ -61,19 +63,19 @@
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
         }
-        
+
         private async Task LoadConfig()
         {
             this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
-            
+
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
             {
                 this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
             }
         }
-        
+
         private async Task ReloadStartupConfig()
         {
             try
@@ -87,7 +89,7 @@
                 await this.ErrorReporter.Error(exception);
             }
         }
-        
+
         private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
             await this.ErrorReporter.Error(e.Exception?.InnerException);
@@ -97,7 +99,7 @@
         {
             await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
-        
+
         public async ValueTask DisposeAsync()
         {
             this.AppConfigWatcher?.Dispose();
@@ -111,13 +113,13 @@
 
             this.AppConfig = null;
             this.SystemSettings = null;
-            
+
             await this.Log.DisposeAsync();
             this.Log = null;
-            
+
             AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
-            
+
             // ReSharper disable once SuspiciousTypeConversion.Global
             if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
             {
@@ -144,15 +146,15 @@
         public string ConnectionString { get; set; }
 
         public ErrorReporterConfig ErrorReporter { get; set; }
-        
+
         public LoggingConfig Logging { get; set; }
     }
-    
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
         public EventStreamConfig[] StructuredLogger { get; set; }
-        
+
         public ElasticsearchConfig Elasticsearch { get; set; }
 
         public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
@@ -188,7 +190,7 @@
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().InstancePerLifetimeScope();
-            
+
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
 

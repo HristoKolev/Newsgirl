@@ -15,13 +15,11 @@ namespace Newsgirl.Benchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.table = new ConcurrentDictionary<Type, Type>();   
+            this.table = new ConcurrentDictionary<Type, Type>();
         }
 
         [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-        }
+        public void GlobalCleanup() { }
 
         [Benchmark]
         public void AwaysCreate()
@@ -32,7 +30,7 @@ namespace Newsgirl.Benchmarks
                 GC.KeepAlive(t);
             }
         }
-        
+
         [Benchmark]
         public void CacheInConcurrentDictionary()
         {

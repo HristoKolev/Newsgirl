@@ -1,16 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-using Newsgirl.Shared;
-using Newsgirl.Testing;
-using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-
 namespace Newsgirl.Fetcher.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using NSubstitute;
+    using NSubstitute.ExceptionExtensions;
+    using Shared;
     using Shared.Logging;
+    using Testing;
+    using Xunit;
 
     public class FeedFetcherTest
     {
@@ -20,7 +19,7 @@ namespace Newsgirl.Fetcher.Tests
             var updates = await TestFeedFetcher(false);
             Snapshot.Match(updates);
         }
-        
+
         [Fact]
         public async Task Returns_Correct_Result_Parallel()
         {
@@ -32,7 +31,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 3780115545271156722, FeedContentHash = -8357694656887908712 },
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 3780115545271156722, FeedContentHash = -8357694656887908712},
                 new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 351563459839931092, FeedContentHash = 0},
                 new FeedPoco {FeedUrl = "fetcher-3.xml", FeedID = 3},
             };
@@ -60,7 +59,7 @@ namespace Newsgirl.Fetcher.Tests
                     ParallelFeedFetching = parallelFetching,
                 },
                 TestHelper.TransactionServiceStub,
-                new Hasher(), 
+                new Hasher(),
                 TestHelper.LogStub,
                 TestHelper.ErrorReporterStub
             );
@@ -69,13 +68,13 @@ namespace Newsgirl.Fetcher.Tests
 
             return updates;
         }
-        
+
         [Fact]
         public async Task Reports_When_The_Content_Provider_Throws()
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123},
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -85,7 +84,7 @@ namespace Newsgirl.Fetcher.Tests
             contentProvider.GetFeedContent(null).ThrowsForAnyArgs(new ApplicationException());
 
             Exception err = null;
-            
+
             var log = Substitute.For<ILog>();
             log.When(x => x.Log(Arg.Any<string>(), Arg.Any<Func<LogData>>())).Do(info => info.Arg<Func<LogData>>()());
 
@@ -98,7 +97,7 @@ namespace Newsgirl.Fetcher.Tests
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(), 
+                new Hasher(),
                 log,
                 errorReporter
             );
@@ -107,14 +106,13 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.MatchError(err);
         }
-        
-        
+
         [Fact]
         public async Task Reports_When_The_Parser_Throws()
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123},
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -125,14 +123,14 @@ namespace Newsgirl.Fetcher.Tests
 
             var feedParser = Substitute.For<IFeedParser>();
             feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
-            
+
             var fetcher = new FeedFetcher(
                 TestResourceContentProvider,
                 feedParser,
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(), 
+                new Hasher(),
                 log,
                 errorReporter
             );
@@ -141,19 +139,18 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.MatchError(errorReporter.SingleException);
         }
-        
-         
+
         [Fact]
         public async Task Reports_When_The_Content_Provider_Returns_Invalid_Utf8()
         {
             var feeds = new List<FeedPoco>
             {
-                new FeedPoco { FeedItemsHash = 0, FeedContentHash = 0 },
+                new FeedPoco {FeedItemsHash = 0, FeedContentHash = 0},
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
             importService.GetFeedsForUpdate().Returns(Task.FromResult(feeds));
-            
+
             var log = new StructuredLogMock();
             var errorReporter = new ErrorReporterMock();
 
@@ -161,17 +158,17 @@ namespace Newsgirl.Fetcher.Tests
             feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
 
             var invalidUtf8 = await TestHelper.GetResourceBytes("app-vnd.flatpak-icon.png");
-            
+
             var contentProvider = Substitute.For<IFeedContentProvider>();
             contentProvider.GetFeedContent(null).ReturnsForAnyArgs(invalidUtf8);
-            
+
             var fetcher = new FeedFetcher(
                 contentProvider,
                 feedParser,
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(), 
+                new Hasher(),
                 log,
                 errorReporter
             );

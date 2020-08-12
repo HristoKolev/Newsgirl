@@ -1,8 +1,8 @@
-using System.Linq;
-using Xunit;
-
 namespace Newsgirl.Fetcher.Tests
 {
+    using System.Linq;
+    using Xunit;
+
     public class HasherTest
     {
         [Fact]
@@ -10,10 +10,10 @@ namespace Newsgirl.Fetcher.Tests
         {
             var hasher = new Hasher();
 
-            var bytes = Enumerable.Range(0, 8).Select(x => (byte)x).ToArray();
+            var bytes = Enumerable.Range(0, 8).Select(x => (byte) x).ToArray();
 
             long value = hasher.ComputeHash(bytes);
-            
+
             Assert.Equal(-8626056615231480947, value);
         }
     }

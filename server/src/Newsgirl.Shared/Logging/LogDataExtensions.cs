@@ -33,10 +33,19 @@ namespace Newsgirl.Shared.Logging
         /// <summary>
         /// This is not meant to be used explicitly, but with he collection initialization syntax.
         /// </summary>
-        public void Add(string key, object val) => this.Fields.Add(key, val);
+        public void Add(string key, object val)
+        {
+            this.Fields.Add(key, val);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
 
-        public static implicit operator LogData(string x) => new LogData(x);
+        public static implicit operator LogData(string x)
+        {
+            return new LogData(x);
+        }
     }
 }
