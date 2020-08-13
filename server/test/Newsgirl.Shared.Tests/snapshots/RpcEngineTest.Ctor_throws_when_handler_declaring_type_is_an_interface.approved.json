@@ -1,0 +1,11 @@
+﻿[
+  {
+    "Details": {},
+    "Fingerprint": null,
+    "Message": "Virtual methods cannot be bound as an RPC handlers. This includes abstract methods and methods that belong to interfaces. InterfaceTypeRpcMethodHandler.RpcMethod",
+    "Data": {},
+    "HelpLink": null,
+    "Source": "Newsgirl.Shared",
+    "HResult": -2146233088
+  }
+]

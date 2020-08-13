@@ -328,7 +328,7 @@ namespace Newsgirl.Server
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
 
-            var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.HandlerClass).Distinct();
+            var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();
 
             foreach (var handlerClass in handlerClasses)
             {

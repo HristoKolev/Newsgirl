@@ -29,6 +29,7 @@ namespace Newsgirl.Shared
 
             foreach (var markedMethod in markedMethods)
             {
+                // validate method flags
                 if (markedMethod.IsStatic)
                 {
                     throw new DetailedLogException(
@@ -44,38 +45,65 @@ namespace Newsgirl.Shared
                 if (markedMethod.IsVirtual)
                 {
                     throw new DetailedLogException(
-                        $"Virtual methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                        $"Virtual methods cannot be bound as an RPC handlers. This includes abstract methods and methods that belong to interfaces. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
+                // ensure that both specified types are not null
                 var bindAttribute = markedMethod.GetCustomAttribute<RpcBindAttribute>();
+
+                if (bindAttribute!.RequestType == null)
+                {
+                    throw new DetailedLogException(
+                        $"{nameof(RpcBindAttribute)} must have not null {nameof(RpcBindAttribute.RequestType)}. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                }
+
+                if (bindAttribute.ResponseType == null)
+                {
+                    throw new DetailedLogException(
+                        $"{nameof(RpcBindAttribute)} must have not null {nameof(RpcBindAttribute.ResponseType)}. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                }
 
                 var metadata = new RpcRequestMetadata
                 {
-                    HandlerClass = markedMethod.DeclaringType,
+                    DeclaringType = markedMethod.DeclaringType,
                     HandlerMethod = markedMethod,
-                    RequestType = bindAttribute!.RequestType,
+                    RequestType = bindAttribute.RequestType,
                     ResponseType = bindAttribute.ResponseType,
                     Parameters = markedMethod.GetParameters().Select(x => x.ParameterType).ToList(),
-                    SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>()
+                    SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>(),
                 };
 
-                var allSupplementalAttributes = metadata.HandlerClass!.GetCustomAttributes()
-                    .Concat(metadata.HandlerMethod.GetCustomAttributes())
-                    .Where(x => x is RpcSupplementalAttribute)
-                    .Cast<RpcSupplementalAttribute>()
-                    .ToList();
-
-                foreach (var supplementalAttribute in allSupplementalAttributes)
+                // throw if the type is abstract
+                if (metadata.DeclaringType!.IsAbstract)
                 {
-                    var type = supplementalAttribute.GetType();
-                    metadata.SupplementalAttributes[type] = supplementalAttribute;
+                    throw new DetailedLogException(
+                        $"Methods in abstract classes cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
+                // throw if the type is a value type
+                if (metadata.DeclaringType!.IsValueType)
+                {
+                    throw new DetailedLogException(
+                        $"Methods in value types cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
+                }
+
+                // throw on multiple handlers for the same request type 
+                var duplicateMetadataEntry = handlers.FirstOrDefault(x => x.RequestType.Name == metadata.RequestType.Name);
+
+                if (duplicateMetadataEntry != null)
+                {
+                    throw new DetailedLogException(
+                        "Handler binding conflict. A request is bound to 2 or more handler methods." +
+                        $"{metadata.RequestType.Name} => {duplicateMetadataEntry.DeclaringType.Name}.{duplicateMetadataEntry.HandlerMethod.Name} AND " +
+                        $"{metadata.RequestType.Name} => {metadata.DeclaringType!.Name}.{metadata.HandlerMethod.Name}");
+                }
+
+                // validate parameter types
                 var allowedParameterTypes = new List<Type> {metadata.RequestType};
 
-                if (options.HandlerArgumentTypeWhiteList != null)
+                if (options.ParameterTypeWhitelist != null)
                 {
-                    allowedParameterTypes.AddRange(options.HandlerArgumentTypeWhiteList);
+                    allowedParameterTypes.AddRange(options.ParameterTypeWhitelist);
                 }
 
                 foreach (var parameter in metadata.Parameters)
@@ -87,6 +115,20 @@ namespace Newsgirl.Shared
                     }
                 }
 
+                // gather supplemental attributes
+                var allSupplementalAttributes = metadata.DeclaringType!.GetCustomAttributes()
+                    .Concat(metadata.HandlerMethod.GetCustomAttributes())
+                    .Where(x => x is RpcSupplementalAttribute)
+                    .Cast<RpcSupplementalAttribute>()
+                    .ToList();
+
+                foreach (var supplementalAttribute in allSupplementalAttributes)
+                {
+                    var type = supplementalAttribute.GetType();
+                    metadata.SupplementalAttributes[type] = supplementalAttribute;
+                }
+
+                // validate return type
                 var taskWrappedResponseType = typeof(Task<>).MakeGenericType(metadata.ResponseType);
 
                 var taskAndResultWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType));
@@ -102,20 +144,11 @@ namespace Newsgirl.Shared
                 else
                 {
                     throw new DetailedLogException(
-                        $"Only Task<{metadata.ResponseType}> and Task<Result<{metadata.ResponseType}>> are supported for" +
-                        $" handler method `{metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}`.");
+                        $"Only {nameof(Task)}<{metadata.ResponseType}> and {nameof(Task)}<{nameof(RpcResult)}<{metadata.ResponseType}>> are supported for" +
+                        $" handler method `{metadata.DeclaringType.Name}.{metadata.HandlerMethod.Name}`.");
                 }
 
-                var collidingMetadata = handlers.FirstOrDefault(x => x.RequestType.Name == metadata.RequestType.Name);
-
-                if (collidingMetadata != null)
-                {
-                    throw new DetailedLogException(
-                        "Handler binding conflict. A request is bound to 2 or more handler methods." +
-                        $"{metadata.RequestType.Name} => {collidingMetadata.HandlerClass.Name}.{collidingMetadata.HandlerMethod.Name} AND " +
-                        $"{metadata.RequestType.Name} => {metadata.HandlerClass.Name}.{metadata.HandlerMethod.Name}");
-                }
-
+                // validate middleware types 
                 if (options.MiddlewareTypes == null)
                 {
                     metadata.MiddlewareTypes = new List<Type>();
@@ -178,10 +211,10 @@ namespace Newsgirl.Shared
             var il = method.GetILGenerator();
 
             il.Emit(OpCodes.Ldarg_0);
-            
+
             il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>)
                 .MakeGenericType(metadata.ResponseType)).GetProperty(nameof(Task<object>.Result))?.GetMethod!);
-            
+
             il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty(nameof(RpcResult<object>.Payload))?.GetMethod!);
 
             il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods()
@@ -190,7 +223,13 @@ namespace Newsgirl.Shared
 
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType)).GetProperty(nameof(Task<object>.Result))?.GetMethod!);
+
+            il.Emit(OpCodes.Call,
+                typeof(Task<>).MakeGenericType(typeof(RpcResult<>)
+                        .MakeGenericType(metadata.ResponseType))
+                    .GetProperty(nameof(Task<object>.Result))?.GetMethod!
+            );
+
             il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty(nameof(RpcResult.Headers))?.GetMethod!);
             il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty(nameof(RpcResult.Headers))?.SetMethod!);
             il.Emit(OpCodes.Ret);
@@ -241,7 +280,7 @@ namespace Newsgirl.Shared
 
             // load the handler instance from the instanceProvider
             executeHandlerGen.Emit(OpCodes.Ldarg_1);
-            executeHandlerGen.Emit(OpCodes.Ldtoken, metadata.HandlerClass);
+            executeHandlerGen.Emit(OpCodes.Ldtoken, metadata.DeclaringType);
             executeHandlerGen.Emit(OpCodes.Callvirt, getInstance!);
 
             foreach (var parameter in metadata.Parameters)
@@ -251,6 +290,7 @@ namespace Newsgirl.Shared
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.RequestMessage))?.GetMethod!);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty(nameof(RpcRequestMessage.Payload))?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Castclass, parameter);
                 }
                 else
                 {
@@ -383,7 +423,7 @@ namespace Newsgirl.Shared
                 Items = new Dictionary<Type, object>(),
                 Metadata = metadata,
                 ReturnVariant = metadata.DefaultReturnVariant,
-                RequestMessage = requestMessage
+                RequestMessage = requestMessage,
             };
 
             await metadata.CompiledMethod(context, instanceProvider);
@@ -438,7 +478,7 @@ namespace Newsgirl.Shared
                 Items = new Dictionary<Type, object>(),
                 Metadata = metadata,
                 ReturnVariant = metadata.DefaultReturnVariant,
-                RequestMessage = requestMessage
+                RequestMessage = requestMessage,
             };
 
             await metadata.CompiledMethod(context, instanceProvider);
@@ -458,16 +498,16 @@ namespace Newsgirl.Shared
                     return new RpcResult<TResponse>
                     {
                         ErrorMessages = taskOfResult.Result.ErrorMessages,
-                        Headers = taskOfResult.Result.Headers
+                        Headers = taskOfResult.Result.Headers,
                     };
                 }
                 case null:
                 {
-                    return RpcResult.Error<TResponse>("Rpc response task is null.");
+                    throw new DetailedLogException("Rpc response task is null.");
                 }
                 default:
                 {
-                    return RpcResult.Error<TResponse>("Rpc response task type is not supported.");
+                    throw new DetailedLogException("Rpc response task type is not supported.");
                 }
             }
         }
@@ -523,12 +563,12 @@ namespace Newsgirl.Shared
         /// <summary>
         /// Types that are allowed to be injected into handler methods.
         /// </summary>
-        public Type[] HandlerArgumentTypeWhiteList { get; set; }
+        public Type[] ParameterTypeWhitelist { get; set; }
     }
 
     public class RpcRequestMetadata
     {
-        public Type HandlerClass { get; set; }
+        public Type DeclaringType { get; set; }
 
         public MethodInfo HandlerMethod { get; set; }
 
@@ -562,7 +602,7 @@ namespace Newsgirl.Shared
         TaskOfResultOfResponse = 2,
 
         // Task<RpcResult>
-        TaskOfResult = 3
+        TaskOfResult = 3,
     }
 
     /// <summary>
@@ -586,9 +626,7 @@ namespace Newsgirl.Shared
     /// This is the base type for all supplemental attributes.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public abstract class RpcSupplementalAttribute : Attribute
-    {
-    }
+    public abstract class RpcSupplementalAttribute : Attribute { }
 
     /// <summary>
     /// The input to the RPC engine.

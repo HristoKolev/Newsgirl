@@ -24,7 +24,7 @@ namespace Newsgirl.Shared
                     return;
                 }
 
-                var assemblyName = new AssemblyName("DynamicAssembly+" + Guid.NewGuid());
+                var assemblyName = new AssemblyName("DynamicAssembly+" + nameof(ReflectionEmmitHelper));
                 var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
                 moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
 

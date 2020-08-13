@@ -36,7 +36,7 @@ namespace Newsgirl.Shared.Tests
 
             var metadata = rpcEngine.Metadata.Single();
 
-            Assert.Equal(typeof(RpcMarkingTest3), metadata.HandlerClass);
+            Assert.Equal(typeof(RpcMarkingTest3), metadata.DeclaringType);
 
             var methodInfos = typeof(RpcMarkingTest3).GetMethods().Where(x => x.DeclaringType == typeof(RpcMarkingTest3)).ToArray();
 
@@ -135,6 +135,126 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
+        public void Ctor_throws_when_handler_declaring_type_is_abstract()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(AbstractRpcMethodHandler),
+                    },
+                });
+            });
+        }
+
+        public abstract class AbstractRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod()
+            {
+                return Task.FromResult(new SimpleResponse1());
+            }
+        }
+
+        [Fact]
+        public void Ctor_throws_when_handler_declaring_type_is_an_interface()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(InterfaceTypeRpcMethodHandler),
+                    },
+                });
+            });
+        }
+
+        public interface InterfaceTypeRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod()
+            {
+                return Task.FromResult(new SimpleResponse1());
+            }
+        }
+
+        [Fact]
+        public void Ctor_throws_when_handler_declaring_type_is_a_struct()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(StructTypeRpcMethodHandler),
+                    },
+                });
+            });
+        }
+
+        public struct StructTypeRpcMethodHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod()
+            {
+                return Task.FromResult(new SimpleResponse1());
+            }
+        }
+
+        [Fact]
+        public void Ctor_throws_on_null_request_type()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(NullRequestTypeHandler),
+                    },
+                });
+            });
+        }
+
+        public class NullRequestTypeHandler
+        {
+            [RpcBind(null, typeof(SimpleResponse1))]
+            public Task RpcMethod()
+            {
+                return Task.CompletedTask;
+            }
+        }
+
+        [Fact]
+        public void Ctor_throws_on_null_response_type()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(NullResponseTypeHandler),
+                    },
+                });
+            });
+        }
+
+        public class NullResponseTypeHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), null)]
+            public Task RpcMethod()
+            {
+                return Task.CompletedTask;
+            }
+        }
+
+        [Fact]
         public void Metadata_entry_has_correct_request_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
@@ -219,7 +339,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(AllowWhitelistedParameterTypeTestHandler),
                 },
-                HandlerArgumentTypeWhiteList = new[]
+                ParameterTypeWhitelist = new[]
                 {
                     typeof(StringBuilder),
                 },
@@ -457,6 +577,52 @@ namespace Newsgirl.Shared.Tests
                 };
 
                 await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
+        }
+
+        [Fact]
+        public async Task Execute_throws_when_the_request_type_does_not_match()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler),
+                },
+            });
+
+            await Snapshot.MatchError(async () =>
+            {
+                var rpcRequestMessage = new RpcRequestMessage
+                {
+                    Payload = new SimpleRequest1(),
+                    Type = nameof(ExecutorTestRequest),
+                };
+
+                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
+        }
+
+        [Fact]
+        public async Task Execute_throws_when_the_response_type_is_incorrect()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExecutorTestHandler),
+                },
+            });
+
+            await Snapshot.MatchError(async () =>
+            {
+                var rpcRequestMessage = new RpcRequestMessage
+                {
+                    Payload = new ExecutorTestRequest(),
+                    Type = nameof(ExecutorTestRequest),
+                };
+
+                await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
             });
         }
 
@@ -890,7 +1056,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(AdditionalArgumentsMiddleware),
                 },
-                HandlerArgumentTypeWhiteList = new[]
+                ParameterTypeWhitelist = new[]
                 {
                     typeof(AdditionalArgumentModel),
                 },
@@ -1061,7 +1227,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task Execute_returns_error_result_when_the_response_task_is_null()
+        public async Task Execute_throws_when_the_response_task_is_null()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1081,9 +1247,10 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(SimpleRequest1),
             };
 
-            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
-
-            Snapshot.Match(result);
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
         }
 
         public class NullResponseTaskMiddleware : RpcMiddleware
@@ -1091,42 +1258,6 @@ namespace Newsgirl.Shared.Tests
             public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
                 // do nothing, context.responseTask stays null
-                return Task.CompletedTask;
-            }
-        }
-
-        [Fact]
-        public async Task Execute_returns_error_result_when_the_response_task_has_a_value_of_unsupported_type()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ResultOfResponseTypeTestHandler),
-                },
-                MiddlewareTypes = new[]
-                {
-                    typeof(UnsupportedResponseTypeMiddleware),
-                },
-            });
-
-            var rpcRequestMessage = new RpcRequestMessage
-            {
-                Payload = new SimpleRequest1(),
-                Type = nameof(SimpleRequest1),
-            };
-
-            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
-
-            Snapshot.Match(result);
-        }
-
-        public class UnsupportedResponseTypeMiddleware : RpcMiddleware
-        {
-            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-            {
-                context.SetResponse(new StringBuilder());
-
                 return Task.CompletedTask;
             }
         }
