@@ -1015,6 +1015,38 @@ namespace Newsgirl.Shared.Tests
             }
         }
 
+        // public class ExampleErrorHandlingMiddleware : RpcMiddleware
+        // {
+        //     public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        //     {
+        //         try
+        //         {
+        //             await next(context, instanceProvider);
+        //         }
+        //         catch (Exception exception)
+        //         {
+        //             context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
+        //             context.ReturnVariant = ReturnVariant.TaskOfResult;
+        //         }
+        //     }
+        // }
+        //
+        // public class ExampleAuthenticationMiddleware : RpcMiddleware
+        // {
+        //     public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        //     {
+        //         try
+        //         {
+        //             await next(context, instanceProvider);
+        //         }
+        //         catch (Exception exception)
+        //         {
+        //             context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
+        //             context.ReturnVariant = ReturnVariant.TaskOfResult;
+        //         }
+        //     }
+        // }
+        
         public class MiddlewareOrderTestMiddleware2 : RpcMiddleware
         {
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)

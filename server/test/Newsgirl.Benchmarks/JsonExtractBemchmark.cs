@@ -28,26 +28,27 @@ namespace Newsgirl.Benchmarks
             this.data = TestHelper.GetResourceBytes("../../../../../resources/large.json").GetAwaiter().GetResult();
             this.wrapperType = typeof(WrapperObject<>).MakeGenericType(typeof(ItemModel[]));
 
-            var copyData = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new[] {typeof(object)});
+            var dynamicMethod = new DynamicMethod("copyData", typeof(ConcreteWrapperObject), new[] {typeof(object)});
 
-            var il = copyData.GetILGenerator();
+            var il = dynamicMethod.GetILGenerator();
+            
             il.Emit(OpCodes.Newobj, typeof(ConcreteWrapperObject).GetConstructors().First());
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Dup);
 
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call,
-                typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload").GetMethod);
-            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("payload").SetMethod);
+            
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("payload")!.GetMethod!);
+            
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("payload")!.SetMethod!);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call,
-                typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers").GetMethod);
-            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("headers").SetMethod);
+            
+            il.Emit(OpCodes.Call, typeof(WrapperObject<>).MakeGenericType(typeof(object)).GetProperty("headers")!.GetMethod!);
+            
+            il.Emit(OpCodes.Call, typeof(ConcreteWrapperObject).GetProperty("headers")!.SetMethod!);
             il.Emit(OpCodes.Ret);
 
-            this.copyData =
-                (Func<object, ConcreteWrapperObject>) copyData.CreateDelegate(
-                    typeof(Func<object, ConcreteWrapperObject>));
+            this.copyData = (Func<object, ConcreteWrapperObject>)dynamicMethod.CreateDelegate(typeof(Func<object, ConcreteWrapperObject>));
 
             this.requestTable = new Dictionary<string, Type>
             {

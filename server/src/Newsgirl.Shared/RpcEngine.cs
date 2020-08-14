@@ -179,6 +179,7 @@ namespace Newsgirl.Shared
             this.metadataByRequestName = handlers.ToDictionary(x => x.RequestType.Name, x => x);
         }
 
+        // ReSharper disable once UnusedParameter.Local
         private static Func<Task, RpcResult<object>> GetConvertTaskOfResult(RpcRequestMetadata metadata)
         {
             var method = new DynamicMethod("convertTaskOfResult", typeof(RpcResult<object>), new[] {typeof(Task)});
@@ -224,10 +225,8 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldarg_0);
 
-            il.Emit(OpCodes.Call,
-                typeof(Task<>).MakeGenericType(typeof(RpcResult<>)
-                        .MakeGenericType(metadata.ResponseType))
-                    .GetProperty(nameof(Task<object>.Result))?.GetMethod!
+            il.Emit(OpCodes.Call, typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType))
+                .GetProperty(nameof(Task<object>.Result))?.GetMethod!
             );
 
             il.Emit(OpCodes.Call, typeof(RpcResult<>).MakeGenericType(metadata.ResponseType).GetProperty(nameof(RpcResult.Headers))?.GetMethod!);
@@ -528,10 +527,12 @@ namespace Newsgirl.Shared
     /// </summary>
     public class RpcContext
     {
+        // ReSharper disable once CollectionNeverQueried.Global
         public Dictionary<Type, object> Items { get; set; }
 
         public Task ResponseTask { get; set; }
 
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public RpcRequestMetadata Metadata { get; set; }
 
         public ReturnVariant ReturnVariant { get; set; }
@@ -608,7 +609,7 @@ namespace Newsgirl.Shared
     /// <summary>
     /// This is used to mark methods as RPC handlers.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public class RpcBindAttribute : Attribute
     {
         public RpcBindAttribute(Type requestType, Type responseType)
@@ -625,7 +626,7 @@ namespace Newsgirl.Shared
     /// <summary>
     /// This is the base type for all supplemental attributes.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = false)]
     public abstract class RpcSupplementalAttribute : Attribute { }
 
     /// <summary>
@@ -635,6 +636,7 @@ namespace Newsgirl.Shared
     {
         public object Payload { get; set; }
 
+        // ReSharper disable once UnusedMember.Global
         public Dictionary<string, string> Headers { get; set; }
 
         public string Type { get; set; }

@@ -1,6 +1,6 @@
 
 * Introspection
-  - Static anaisys
+  - Static analysis
   - Code generation
 
 * Simple routing
@@ -57,7 +57,7 @@ In the above example, the name of the type is `MathHandler`. That name doesn't m
 
 Each time the handler is being invoked an instance of the declaring type will be acquired and used for the invocation. How that instance is obtained will be explained later.
 
-Handler methods must never return nullm wrapped in Task<> or otherwise, doing so will always cause an exception.    
+Handler methods must never return null wrapped in Task<> or otherwise, doing so will always cause an exception.    
 
 ## Processing requests
 
@@ -107,4 +107,113 @@ The handler method will be invoked along with the registered middleware and will
 
 `Execute` always returns `Task<RpcResult<ResponseType>>` if the handler method returns `Task<ResponseType>` it will be converted to `Task<RpcResult<ResponseType>>`.   
 
-## Declaring and using middleware
+The instance provider object is used to obtain an instance of the handler and middleware types (if registered).
+
+There is another non generic overload of `Execute` that returns `Task<RpcResult<object>>` and it's no aware of the return type.
+
+## Middleware
+
+The idea is very similar to ASP.NET middleware, expressjs middleware.
+
+### Defining middleware
+
+All middleware types derive from `RpcMiddleware` and as such have a `Run` method that accepts:
+
+ * `RpcContext` - Contains the state for the current request: The request object, the response object, request metadata, and instances of types to be injected into the handler method. 
+ * `InstanceProvider` - this is whatever you pass to `RpcEngine.Execute`.
+ * `RpcRequestDelegate` - the 'next' piece of the chain. Either another middleware `Run` method or a method that directly calls the handler.
+
+Here is the simplest implementation:
+
+```c#
+
+public class SimpleMiddleware : RpcMiddleware
+{
+    public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+    {
+        await next(context, instanceProvider);
+    }
+}
+
+```
+
+And here is how to register it:
+
+```c#
+
+var rpcEngine = new RpcEngine(new RpcEngineOptions
+{
+    PotentialHandlerTypes = new[]
+    {
+        ...
+    },
+    MiddlewareTypes = new[]
+    {
+        typeof(SimpleMiddleware1),
+        typeof(SimpleMiddleware2),
+        typeof(SimpleMiddleware3),
+    },
+});
+
+```
+
+### Middleware execution
+
+Middleware will be executed in the order specified in the declaration. 
+
+Here is an example of middleware that simply logs what requests are being processed:
+
+```c#
+
+public class ExampleLoggingMiddleware : RpcMiddleware
+{
+    public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+    {
+        Console.WriteLine($"Before processing: {context.RequestMessage.Type}");
+
+        await next(context, instanceProvider);
+
+        Console.WriteLine($"After processing: {context.RequestMessage.Type}");
+    }
+}
+
+```
+
+Here is an example error handling middleware:
+
+```c#
+
+public class ExampleErrorHandlingMiddleware : RpcMiddleware
+{
+    public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+    {
+        try
+        {
+            await next(context, instanceProvider);
+        }
+        catch (Exception exception)
+        {
+            context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
+            context.ReturnVariant = ReturnVariant.TaskOfResult;
+        }
+    }
+}
+
+```
+
+In an event that the next link in the chain (another middleware or the handler itself) throws an exception, we return an error `RpcResult` to the caller, instead of propagating the exception. If you want to set the response from middleware, you need to call `SetResponse` with an object of a valid type. You also need to specify the `ReturnVariant` by assigning `context.ReturnVariant` with different values depending on the type of the response object:
+
+* If the response type is `RpcResult<ResponseType>` the return variant should be `ReturnVariant.TaskOfResultOfResponse`.
+* If the response type is `RpcResult` the return variant should be `ReturnVariant.TaskOfResult`.
+* If the response type is `ResponseType` the return variant should be `ReturnVariant.TaskOfResponse`.
+
+It is the responsibility of the middleware implementation to assign the correct `ReturnVariant` if it sets the response object.
+
+### Supplemental attributes
+
+Supplemental attributes derive from `RpcSupplementalAttribute`. When a new `RpcEngine` instance is created supplemental attributes are collected from handler types and handler methods. They can be accessed by middleware using `RpcRequestMetadata.SupplementalAttributes`. One attribute specification is taken into account for each type and if attributes are specified both on the handler method and the handler type - the one from the handler method is taken into account and the one from the type is ignored.
+
+# Future considerations
+
+* Remove the need for `ReturnVariant` to be specified.
+
