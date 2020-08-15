@@ -69,7 +69,7 @@ namespace Newsgirl.Shared
                     HandlerMethod = markedMethod,
                     RequestType = bindAttribute.RequestType,
                     ResponseType = bindAttribute.ResponseType,
-                    Parameters = markedMethod.GetParameters().Select(x => x.ParameterType).ToList(),
+                    ParameterTypes = markedMethod.GetParameters().Select(x => x.ParameterType).ToList(),
                     SupplementalAttributes = new Dictionary<Type, RpcSupplementalAttribute>(),
                 };
 
@@ -106,7 +106,7 @@ namespace Newsgirl.Shared
                     allowedParameterTypes.AddRange(options.ParameterTypeWhitelist);
                 }
 
-                foreach (var parameter in metadata.Parameters)
+                foreach (var parameter in metadata.ParameterTypes)
                 {
                     if (!allowedParameterTypes.Contains(parameter))
                     {
@@ -282,7 +282,7 @@ namespace Newsgirl.Shared
             executeHandlerGen.Emit(OpCodes.Ldtoken, metadata.DeclaringType);
             executeHandlerGen.Emit(OpCodes.Callvirt, getInstance!);
 
-            foreach (var parameter in metadata.Parameters)
+            foreach (var parameter in metadata.ParameterTypes)
             {
                 if (parameter == metadata.RequestType)
                 {
@@ -294,7 +294,7 @@ namespace Newsgirl.Shared
                 else
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
-                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.Items))?.GetMethod!);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.HandlerParameters))?.GetMethod!);
                     executeHandlerGen.Emit(OpCodes.Ldtoken, parameter);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(Dictionary<Type, object>).GetMethod("get_Item")!);
                 }
@@ -419,8 +419,8 @@ namespace Newsgirl.Shared
 
             var context = new RpcContext
             {
-                Items = new Dictionary<Type, object>(),
-                Metadata = metadata,
+                HandlerParameters = new Dictionary<Type, object>(),
+                RequestMetadata = metadata,
                 ReturnVariant = metadata.DefaultReturnVariant,
                 RequestMessage = requestMessage,
             };
@@ -474,8 +474,8 @@ namespace Newsgirl.Shared
 
             var context = new RpcContext
             {
-                Items = new Dictionary<Type, object>(),
-                Metadata = metadata,
+                HandlerParameters = new Dictionary<Type, object>(),
+                RequestMetadata = metadata,
                 ReturnVariant = metadata.DefaultReturnVariant,
                 RequestMessage = requestMessage,
             };
@@ -527,21 +527,34 @@ namespace Newsgirl.Shared
     /// </summary>
     public class RpcContext
     {
+        public RpcRequestMessage RequestMessage { get; set; }
+
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        public RpcRequestMetadata RequestMetadata { get; set; }
+
         // ReSharper disable once CollectionNeverQueried.Global
-        public Dictionary<Type, object> Items { get; set; }
+        public Dictionary<Type, object> HandlerParameters { get; set; }
 
         public Task ResponseTask { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
-        public RpcRequestMetadata Metadata { get; set; }
-
         public ReturnVariant ReturnVariant { get; set; }
 
-        public RpcRequestMessage RequestMessage { get; set; }
+        public void SetResponse<TResponse>(RpcResult<TResponse> resultOfResponse)
+        {
+            this.ResponseTask = Task.FromResult(resultOfResponse);
+            this.ReturnVariant = ReturnVariant.TaskOfResultOfResponse;
+        }
 
-        public void SetResponse<T>(T result)
+        public void SetResponse(RpcResult result)
         {
             this.ResponseTask = Task.FromResult(result);
+            this.ReturnVariant = ReturnVariant.TaskOfResult;
+        }
+
+        public void SetResponse<TResponse>(TResponse response)
+        {
+            this.ResponseTask = Task.FromResult(response);
+            this.ReturnVariant = ReturnVariant.TaskOfResponse;
         }
     }
 
@@ -577,7 +590,7 @@ namespace Newsgirl.Shared
 
         public Type ResponseType { get; set; }
 
-        public List<Type> Parameters { get; set; }
+        public List<Type> ParameterTypes { get; set; }
 
         public Dictionary<Type, RpcSupplementalAttribute> SupplementalAttributes { get; set; }
 

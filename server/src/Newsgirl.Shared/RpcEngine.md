@@ -194,20 +194,13 @@ public class ExampleErrorHandlingMiddleware : RpcMiddleware
         catch (Exception exception)
         {
             context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
-            context.ReturnVariant = ReturnVariant.TaskOfResult;
         }
     }
 }
 
 ```
 
-In an event that the next link in the chain (another middleware or the handler itself) throws an exception, we return an error `RpcResult` to the caller, instead of propagating the exception. If you want to set the response from middleware, you need to call `SetResponse` with an object of a valid type. You also need to specify the `ReturnVariant` by assigning `context.ReturnVariant` with different values depending on the type of the response object:
-
-* If the response type is `RpcResult<ResponseType>` the return variant should be `ReturnVariant.TaskOfResultOfResponse`.
-* If the response type is `RpcResult` the return variant should be `ReturnVariant.TaskOfResult`.
-* If the response type is `ResponseType` the return variant should be `ReturnVariant.TaskOfResponse`.
-
-It is the responsibility of the middleware implementation to assign the correct `ReturnVariant` if it sets the response object.
+In an event that the next link in the chain (another middleware or the handler itself) throws an exception, we return an error `RpcResult` to the caller, instead of propagating the exception. If you want to set the response from middleware, you need to call `SetResponse` with an object of a valid type.
 
 ### Supplemental attributes
 
@@ -215,5 +208,5 @@ Supplemental attributes derive from `RpcSupplementalAttribute`. When a new `RpcE
 
 # Future considerations
 
-* Remove the need for `ReturnVariant` to be specified.
+* Remove the need for `ReturnVariant` to be specified or find a way to automate it.
 

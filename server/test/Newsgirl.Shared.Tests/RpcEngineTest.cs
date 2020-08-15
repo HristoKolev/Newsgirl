@@ -5,6 +5,8 @@
 // ReSharper disable UnusedParameter.Global
 // ReSharper disable ClassNeverInstantiated.Global
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+
 namespace Newsgirl.Shared.Tests
 {
     using System;
@@ -348,7 +350,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Single(rpcEngine.Metadata);
             var metadata = rpcEngine.Metadata.Single();
 
-            Assert.Equal(typeof(StringBuilder), metadata.Parameters.Single());
+            Assert.Equal(typeof(StringBuilder), metadata.ParameterTypes.Single());
         }
 
         public class AllowWhitelistedParameterTypeTestHandler
@@ -1015,38 +1017,6 @@ namespace Newsgirl.Shared.Tests
             }
         }
 
-        // public class ExampleErrorHandlingMiddleware : RpcMiddleware
-        // {
-        //     public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-        //     {
-        //         try
-        //         {
-        //             await next(context, instanceProvider);
-        //         }
-        //         catch (Exception exception)
-        //         {
-        //             context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
-        //             context.ReturnVariant = ReturnVariant.TaskOfResult;
-        //         }
-        //     }
-        // }
-        //
-        // public class ExampleAuthenticationMiddleware : RpcMiddleware
-        // {
-        //     public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-        //     {
-        //         try
-        //         {
-        //             await next(context, instanceProvider);
-        //         }
-        //         catch (Exception exception)
-        //         {
-        //             context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
-        //             context.ReturnVariant = ReturnVariant.TaskOfResult;
-        //         }
-        //     }
-        // }
-        
         public class MiddlewareOrderTestMiddleware2 : RpcMiddleware
         {
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
@@ -1076,7 +1046,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task Execute_additional_handler_arguments_are_supplied_from_the_items_dictionary()
+        public async Task Execute_additional_handler_arguments_are_supplied_from_the_parameters_dictionary()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1129,7 +1099,7 @@ namespace Newsgirl.Shared.Tests
 
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                context.Items.Add(typeof(AdditionalArgumentModel), AdditionalArg);
+                context.HandlerParameters.Add(typeof(AdditionalArgumentModel), AdditionalArg);
 
                 await next(context, instanceProvider);
             }
@@ -1413,7 +1383,6 @@ namespace Newsgirl.Shared.Tests
                 result.Headers.Add("header1", "value1");
 
                 context.SetResponse(result);
-                context.ReturnVariant = ReturnVariant.TaskOfResult;
 
                 return Task.CompletedTask;
             }
@@ -1467,6 +1436,30 @@ namespace Newsgirl.Shared.Tests
 
                 return Task.CompletedTask;
             }
+        }
+
+        [Fact]
+        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_result()
+        {
+            var context = new RpcContext();
+            context.SetResponse(RpcResult.Error("An error occured."));
+            Assert.Equal(ReturnVariant.TaskOfResult, context.ReturnVariant);
+        }
+
+        [Fact]
+        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_result_of_response()
+        {
+            var context = new RpcContext();
+            context.SetResponse(RpcResult.Ok(new SimpleRequest1()));
+            Assert.Equal(ReturnVariant.TaskOfResultOfResponse, context.ReturnVariant);
+        }
+
+        [Fact]
+        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_response()
+        {
+            var context = new RpcContext();
+            context.SetResponse(new SimpleRequest1());
+            Assert.Equal(ReturnVariant.TaskOfResponse, context.ReturnVariant);
         }
 
         [Fact]
@@ -1526,6 +1519,123 @@ namespace Newsgirl.Shared.Tests
         private static ILog GetLog()
         {
             return Substitute.For<ILog>();
+        }
+
+        [Fact]
+        public async Task AuthMiddlewareDemo()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(ExampleHandler),
+                },
+                MiddlewareTypes = new[]
+                {
+                    typeof(ExampleAuthenticationMiddleware),
+                },
+                ParameterTypeWhitelist = new []
+                {
+                    typeof(AuthResult)
+                }
+            });
+
+            var requestMessage = new RpcRequestMessage
+            {
+                Payload = new ExampleRequest(),
+                Type = nameof(ExampleRequest),
+                Headers = new Dictionary<string, string>()
+                {
+                    {"Authorization", "test123"}
+                }
+            };
+
+            var result = await rpcEngine.Execute(requestMessage, GetDefaultInstanceProvider());
+
+            Console.WriteLine(result);
+        }
+
+        [Auth(RequiresAuthentication = false)]
+        public class ExampleHandler
+        {
+            [Auth(RequiresAuthentication = true)]
+            [RpcBind(typeof(ExampleRequest), typeof(ExampleResponse))]
+            public Task<ExampleResponse> Example(ExampleRequest req, AuthResult authResult)
+            {
+                return Task.FromResult(new ExampleResponse
+                {
+                    Number = req.Number + 1,
+                });
+            }
+        }
+
+        public class ExampleRequest
+        {
+            public int Number { get; set; }
+        }
+
+        public class ExampleResponse 
+        { 
+            public int Number { get; set; }
+        }
+
+        public class AuthAttribute : RpcSupplementalAttribute
+        {
+            public bool RequiresAuthentication { get; set; }
+        }
+
+        public class AuthResult
+        {
+            public bool IsLoggedIn { get; set; }
+            
+            public int UserID { get; set; }
+        }
+
+        public class ExampleAuthenticationMiddleware : RpcMiddleware
+        {
+            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+            {
+                string token = context.RequestMessage.Headers.GetValueOrDefault("Authorization");
+
+                var authResult = await this.Authenticate(token);
+
+                var authAttr = (AuthAttribute)context.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(AuthAttribute));
+
+                if (authAttr != null // if we have such attribute 
+                    && authAttr.RequiresAuthentication // and it requires the user to be authenticated 
+                    && !authResult.IsLoggedIn // and the user is not authenticated
+                )
+                {
+                    context.SetResponse(RpcResult.Error("Unauthorized access."));
+                    return;
+                }
+
+                context.HandlerParameters[typeof(AuthResult)] = authResult; // set the auth result so that it can be injected into the handler and it can find out the userID
+
+                await next(context, instanceProvider); // next
+            }
+
+            /// <summary>
+            /// Do authentication logic. We just check if the token is test123
+            /// </summary>
+            private Task<AuthResult> Authenticate(string token)
+            {
+                if (token != "test123")
+                {
+                    return Task.FromResult(new AuthResult
+                    {
+                        IsLoggedIn = false,
+                    });
+                }
+
+                // TODO: decode the token and decide what to do
+
+                return Task.FromResult(new AuthResult
+                {
+                    UserID = 42,
+                    IsLoggedIn = true,
+                });
+            }
         }
     }
 
