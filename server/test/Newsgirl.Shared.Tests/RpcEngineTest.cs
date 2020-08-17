@@ -533,7 +533,7 @@ namespace Newsgirl.Shared.Tests
 
             await Snapshot.MatchError(async () =>
             {
-                await rpcEngine.Execute<ExecutorTestResponse>(null, GetDefaultInstanceProvider());
+                await rpcEngine.Execute(null, GetDefaultInstanceProvider());
             });
         }
 
@@ -555,7 +555,7 @@ namespace Newsgirl.Shared.Tests
                     Payload = null,
                 };
 
-                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
             });
         }
 
@@ -578,7 +578,7 @@ namespace Newsgirl.Shared.Tests
                     Type = null,
                 };
 
-                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
             });
         }
 
@@ -601,115 +601,7 @@ namespace Newsgirl.Shared.Tests
                     Type = nameof(ExecutorTestRequest),
                 };
 
-                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task Execute_throws_when_the_response_type_is_incorrect()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ExecutorTestHandler),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                var rpcRequestMessage = new RpcRequestMessage
-                {
-                    Payload = new ExecutorTestRequest(),
-                    Type = nameof(ExecutorTestRequest),
-                };
-
-                await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task ExecuteObject_throws_on_null_message()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ExecutorTestHandler),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                await rpcEngine.Execute(null, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task ExecuteObject_throws_on_null_message_payload()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ExecutorTestHandler),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                var rpcRequestMessage = new RpcRequestMessage
-                {
-                    Payload = null,
-                };
-
                 await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task ExecuteObject_throws_on_null_message_type()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ExecutorTestHandler),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                var rpcRequestMessage = new RpcRequestMessage
-                {
-                    Payload = new ExecutorTestRequest(),
-                    Type = null,
-                };
-
-                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task Execute_throws_when_no_handler_found_for_request_type()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ExecutorTestHandler),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                var rpcRequestMessage = new RpcRequestMessage
-                {
-                    Payload = new NonRegisteredRequest(),
-                    Type = nameof(NonRegisteredRequest),
-                };
-
-                await rpcEngine.Execute<NonRegisteredResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
             });
         }
 
@@ -755,7 +647,7 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(ExecutorTestRequest),
             };
 
-            await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal(1, ExecutorTestHandler.RunCount);
         }
@@ -777,7 +669,7 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(ExecutorTestRequest),
             };
 
-            await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal(rpcRequestMessage.Payload, ExecutorTestHandler.Request);
         }
@@ -802,38 +694,17 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(ExecutorTestRequest),
             };
 
-            var result = await rpcEngine.Execute<ExecutorTestResponse>(requestMessage, GetDefaultInstanceProvider());
+            var result = await rpcEngine.Execute(requestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal(result.Payload, ExecutorTestHandler.Response);
 
-            Assert.Equal(43, result.Payload.Number);
+            var payload = (ExecutorTestResponse) result.Payload;
+
+            Assert.Equal(43, payload.Number);
         }
 
         [Fact]
         public async Task Execute_throws_when_the_handler_throws()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ThrowingExecutorTestHandler),
-                },
-            });
-
-            var rpcRequestMessage = new RpcRequestMessage
-            {
-                Payload = new ExecutorTestRequest(),
-                Type = nameof(ExecutorTestRequest),
-            };
-
-            await Snapshot.MatchError(async () =>
-            {
-                await rpcEngine.Execute<ExecutorTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        [Fact]
-        public async Task ExecuteObject_throws_when_the_handler_throws()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -980,7 +851,7 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(MiddlewareTestRequest),
             };
 
-            await rpcEngine.Execute<MiddlewareTestResponse>(rpcRequestMessage, GetDefaultInstanceProvider());
+            await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Snapshot.Match(request.Trace);
         }
@@ -1073,7 +944,7 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(SimpleRequest1),
             };
 
-            await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+            await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             var outArg = AdditionalArgumentsTestHandler.AdditionalArg;
 
@@ -1124,9 +995,9 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(SimpleRequest1),
             };
 
-            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+            var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
-            Assert.Equal(ResultOfResponseTypeTestHandler.ResultValue, result);
+            Assert.Equal(ResultOfResponseTypeTestHandler.ResultValue.Payload, result.Payload);
 
             Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
         }
@@ -1146,28 +1017,6 @@ namespace Newsgirl.Shared.Tests
 
         [Fact]
         public async Task Execute_correctly_returns_headers()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ResultOfResponseTypeTestHandler),
-                },
-            });
-
-            var rpcRequestMessage = new RpcRequestMessage
-            {
-                Payload = new SimpleRequest1(),
-                Type = nameof(SimpleRequest1),
-            };
-
-            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
-
-            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
-        }
-
-        [Fact]
-        public async Task ExecuteObject_correctly_returns_headers()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1209,7 +1058,7 @@ namespace Newsgirl.Shared.Tests
                 Type = nameof(SimpleRequest1),
             };
 
-            var result = await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+            var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal("test123", result.ErrorMessages[0]);
             Assert.Equal("value1", result.Headers["header1"]);
@@ -1251,7 +1100,7 @@ namespace Newsgirl.Shared.Tests
 
             await Snapshot.MatchError(async () =>
             {
-                await rpcEngine.Execute<SimpleResponse1>(rpcRequestMessage, GetDefaultInstanceProvider());
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
             });
         }
 
@@ -1389,80 +1238,6 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task ExecuteObject_throws_when_return_variant_is_unknown()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(UnknownReturnVariantTestHandler),
-                },
-                MiddlewareTypes = new[]
-                {
-                    typeof(UnknownReturnVariantMiddleware),
-                },
-            });
-
-            await Snapshot.MatchError(async () =>
-            {
-                var rpcRequestMessage = new RpcRequestMessage
-                {
-                    Payload = new ExecutorTestRequest(),
-                    Type = nameof(ExecutorTestRequest),
-                };
-
-                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
-            });
-        }
-
-        public class UnknownReturnVariantTestHandler
-        {
-            [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
-            public Task<RpcResult<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
-            {
-                return Task.FromResult(RpcResult.Ok(new ExecutorTestResponse
-                {
-                    Number = 123,
-                }));
-            }
-        }
-
-        public class UnknownReturnVariantMiddleware : RpcMiddleware
-        {
-            public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-            {
-                context.SetResponse(RpcResult.Error("test123"));
-                context.ReturnVariant = (ReturnVariant) 100000;
-
-                return Task.CompletedTask;
-            }
-        }
-
-        [Fact]
-        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_result()
-        {
-            var context = new RpcContext();
-            context.SetResponse(RpcResult.Error("An error occured."));
-            Assert.Equal(ReturnVariant.TaskOfResult, context.ReturnVariant);
-        }
-
-        [Fact]
-        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_result_of_response()
-        {
-            var context = new RpcContext();
-            context.SetResponse(RpcResult.Ok(new SimpleRequest1()));
-            Assert.Equal(ReturnVariant.TaskOfResultOfResponse, context.ReturnVariant);
-        }
-
-        [Fact]
-        public void RpcContext_SetResponse_sets_the_correct_return_variant_for_response()
-        {
-            var context = new RpcContext();
-            context.SetResponse(new SimpleRequest1());
-            Assert.Equal(ReturnVariant.TaskOfResponse, context.ReturnVariant);
-        }
-
-        [Fact]
         public Task GetMetadataByRequestName_returns_correct_metadata()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
@@ -1534,20 +1309,20 @@ namespace Newsgirl.Shared.Tests
                 {
                     typeof(ExampleAuthenticationMiddleware),
                 },
-                ParameterTypeWhitelist = new []
+                ParameterTypeWhitelist = new[]
                 {
-                    typeof(AuthResult)
-                }
+                    typeof(AuthResult),
+                },
             });
 
             var requestMessage = new RpcRequestMessage
             {
                 Payload = new ExampleRequest(),
                 Type = nameof(ExampleRequest),
-                Headers = new Dictionary<string, string>()
+                Headers = new Dictionary<string, string>
                 {
-                    {"Authorization", "test123"}
-                }
+                    {"Authorization", "test123"},
+                },
             };
 
             var result = await rpcEngine.Execute(requestMessage, GetDefaultInstanceProvider());
@@ -1574,8 +1349,8 @@ namespace Newsgirl.Shared.Tests
             public int Number { get; set; }
         }
 
-        public class ExampleResponse 
-        { 
+        public class ExampleResponse
+        {
             public int Number { get; set; }
         }
 
@@ -1587,7 +1362,7 @@ namespace Newsgirl.Shared.Tests
         public class AuthResult
         {
             public bool IsLoggedIn { get; set; }
-            
+
             public int UserID { get; set; }
         }
 
@@ -1599,7 +1374,7 @@ namespace Newsgirl.Shared.Tests
 
                 var authResult = await this.Authenticate(token);
 
-                var authAttr = (AuthAttribute)context.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(AuthAttribute));
+                var authAttr = (AuthAttribute) context.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(AuthAttribute));
 
                 if (authAttr != null // if we have such attribute 
                     && authAttr.RequiresAuthentication // and it requires the user to be authenticated 
@@ -1610,7 +1385,8 @@ namespace Newsgirl.Shared.Tests
                     return;
                 }
 
-                context.HandlerParameters[typeof(AuthResult)] = authResult; // set the auth result so that it can be injected into the handler and it can find out the userID
+                context.HandlerParameters[typeof(AuthResult)] =
+                    authResult; // set the auth result so that it can be injected into the handler and it can find out the userID
 
                 await next(context, instanceProvider); // next
             }

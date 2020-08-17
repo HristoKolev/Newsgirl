@@ -210,3 +210,7 @@ Supplemental attributes derive from `RpcSupplementalAttribute`. When a new `RpcE
 
 * Remove the need for `ReturnVariant` to be specified or find a way to automate it.
 
+on handler return:
+ * Task<Result<T>> => Task<Result<object>>
+ * Task<Result> => Task<Result<object>>
+ * Task<T> => Task<Result<object>>

@@ -135,11 +135,9 @@ namespace Newsgirl.Shared
 
                 if (metadata.HandlerMethod.ReturnType == taskAndResultWrappedResponseType)
                 {
-                    metadata.DefaultReturnVariant = ReturnVariant.TaskOfResultOfResponse;
                 }
                 else if (metadata.HandlerMethod.ReturnType == taskWrappedResponseType)
                 {
-                    metadata.DefaultReturnVariant = ReturnVariant.TaskOfResponse;
                 }
                 else
                 {
@@ -183,6 +181,32 @@ namespace Newsgirl.Shared
         private static Func<Task, RpcResult<object>> GetConvertTaskOfResult(RpcRequestMetadata metadata)
         {
             var method = new DynamicMethod("convertTaskOfResult", typeof(RpcResult<object>), new[] {typeof(Task)});
+
+            var il = method.GetILGenerator();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty(nameof(Task<object>.Result))?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty(nameof(RpcResult.ErrorMessages))?.GetMethod!);
+
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods()
+                .First(x => x.Name == nameof(RpcResult.Error) && x.IsGenericMethod && x.GetParameters().First().ParameterType == typeof(string[]))
+                .MakeGenericMethod(typeof(object)));
+
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(Task<RpcResult>).GetProperty(nameof(Task<object>.Result))?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty(nameof(RpcResult.Headers))?.GetMethod!);
+            il.Emit(OpCodes.Call, typeof(RpcResult).GetProperty(nameof(RpcResult.Headers))?.SetMethod!);
+
+            il.Emit(OpCodes.Ret);
+
+            return method.CreateDelegate<Func<Task, RpcResult<object>>>();
+        }
+        
+        // ReSharper disable once UnusedParameter.Local
+        private static Func<Task, RpcResult<object>> GetConvertReturnValue(RpcRequestMetadata metadata)
+        {
+            var method = new DynamicMethod("convertReturnValue", typeof(RpcResult<object>), new[] {typeof(Task)});
 
             var il = method.GetILGenerator();
 
@@ -421,94 +445,22 @@ namespace Newsgirl.Shared
             {
                 HandlerParameters = new Dictionary<Type, object>(),
                 RequestMetadata = metadata,
-                ReturnVariant = metadata.DefaultReturnVariant,
                 RequestMessage = requestMessage,
             };
 
             await metadata.CompiledMethod(context, instanceProvider);
 
-            switch (context.ReturnVariant)
+            if (context.ResponseTask == null)
             {
-                case ReturnVariant.TaskOfResponse:
-                {
-                    return metadata.ConvertTaskOfResponse(context.ResponseTask);
-                }
-                case ReturnVariant.TaskOfResultOfResponse:
-                {
-                    return metadata.ConvertTaskOfResultOfResponse(context.ResponseTask);
-                }
-                case ReturnVariant.TaskOfResult:
-                {
-                    return metadata.ConvertTaskOfResult(context.ResponseTask);
-                }
-                default:
-                {
-                    throw new DetailedLogException($"unknown ReturnVariant: {(int) context.ReturnVariant}.");
-                }
-            }
-        }
-
-        public async Task<RpcResult<TResponse>> Execute<TResponse>(RpcRequestMessage requestMessage, InstanceProvider instanceProvider)
-        {
-            if (requestMessage == null)
-            {
-                throw new DetailedLogException("Request message is null.");
+                throw new DetailedLogException("Rpc response task is null.");
             }
 
-            if (requestMessage.Payload == null)
+            if (context.ResponseTask is Task<RpcResult> t)
             {
-                throw new DetailedLogException("Request payload is null.");
+                return t.Result.ToGeneralForm();
             }
-
-            if (string.IsNullOrWhiteSpace(requestMessage.Type))
-            {
-                throw new DetailedLogException("Request type is null or empty.");
-            }
-
-            RpcRequestMetadata metadata;
-
-            if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
-            {
-                throw new DetailedLogException($"No RPC handler for request `{requestMessage.Type}`.");
-            }
-
-            var context = new RpcContext
-            {
-                HandlerParameters = new Dictionary<Type, object>(),
-                RequestMetadata = metadata,
-                ReturnVariant = metadata.DefaultReturnVariant,
-                RequestMessage = requestMessage,
-            };
-
-            await metadata.CompiledMethod(context, instanceProvider);
-
-            switch (context.ResponseTask)
-            {
-                case Task<TResponse> taskOfResponse:
-                {
-                    return RpcResult.Ok(taskOfResponse.Result);
-                }
-                case Task<RpcResult<TResponse>> taskOfResultOfResponse:
-                {
-                    return taskOfResultOfResponse.Result;
-                }
-                case Task<RpcResult> taskOfResult:
-                {
-                    return new RpcResult<TResponse>
-                    {
-                        ErrorMessages = taskOfResult.Result.ErrorMessages,
-                        Headers = taskOfResult.Result.Headers,
-                    };
-                }
-                case null:
-                {
-                    throw new DetailedLogException("Rpc response task is null.");
-                }
-                default:
-                {
-                    throw new DetailedLogException("Rpc response task type is not supported.");
-                }
-            }
+            
+            return metadata.ConvertTaskOfResponse(context.ResponseTask);
         }
 
         public RpcRequestMetadata GetMetadataByRequestName(string requestName)
@@ -537,24 +489,9 @@ namespace Newsgirl.Shared
 
         public Task ResponseTask { get; set; }
 
-        public ReturnVariant ReturnVariant { get; set; }
-
-        public void SetResponse<TResponse>(RpcResult<TResponse> resultOfResponse)
-        {
-            this.ResponseTask = Task.FromResult(resultOfResponse);
-            this.ReturnVariant = ReturnVariant.TaskOfResultOfResponse;
-        }
-
         public void SetResponse(RpcResult result)
         {
             this.ResponseTask = Task.FromResult(result);
-            this.ReturnVariant = ReturnVariant.TaskOfResult;
-        }
-
-        public void SetResponse<TResponse>(TResponse response)
-        {
-            this.ResponseTask = Task.FromResult(response);
-            this.ReturnVariant = ReturnVariant.TaskOfResponse;
         }
     }
 
@@ -598,25 +535,11 @@ namespace Newsgirl.Shared
 
         public List<Type> MiddlewareTypes { get; set; }
 
-        public ReturnVariant DefaultReturnVariant { get; set; }
-
         public Func<Task, RpcResult<object>> ConvertTaskOfResponse { get; set; }
 
         public Func<Task, RpcResult<object>> ConvertTaskOfResultOfResponse { get; set; }
 
         public Func<Task, RpcResult<object>> ConvertTaskOfResult { get; set; }
-    }
-
-    public enum ReturnVariant
-    {
-        // Task<TResponse>
-        TaskOfResponse = 1,
-
-        // Task<RpcResult<TResponse>>
-        TaskOfResultOfResponse = 2,
-
-        // Task<RpcResult>
-        TaskOfResult = 3,
     }
 
     /// <summary>
@@ -701,10 +624,30 @@ namespace Newsgirl.Shared
         {
             return new RpcResult {ErrorMessages = errorMessages};
         }
+
+        public virtual RpcResult<object> ToGeneralForm()
+        {
+            return new RpcResult<object>
+            {
+                Headers = this.Headers,
+                ErrorMessages = this.ErrorMessages,
+                Payload = null,
+            };
+        }
     }
 
     public class RpcResult<T> : RpcResult
     {
         public T Payload { get; set; }
+
+        public override RpcResult<object> ToGeneralForm()
+        {
+            return new RpcResult<object>
+            {
+                Payload = this.Payload,
+                ErrorMessages = this.ErrorMessages,
+                Headers = this.Headers,
+            };
+        }
     }
 }
