@@ -4,7 +4,6 @@
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnusedParameter.Global
 // ReSharper disable ClassNeverInstantiated.Global
-
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Newsgirl.Shared.Tests
@@ -207,6 +206,58 @@ namespace Newsgirl.Shared.Tests
                 return Task.FromResult(new SimpleResponse1());
             }
         }
+
+        [Fact]
+        public void Ctor_throws_when_request_type_is_not_a_reference_type()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(StructRequestHandler),
+                    },
+                });
+            });
+        }
+
+        public class StructRequestHandler
+        {
+            [RpcBind(typeof(StructRequestTypeRequest), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod()
+            {
+                return Task.FromResult(new SimpleResponse1());
+            }
+        }
+
+        public struct StructRequestTypeRequest { }
+
+        [Fact]
+        public void Ctor_throws_when_response_type_is_not_a_reference_type()
+        {
+            Snapshot.MatchError(() =>
+            {
+                _ = new RpcEngine(new RpcEngineOptions
+                {
+                    PotentialHandlerTypes = new[]
+                    {
+                        typeof(StructResponseHandler),
+                    },
+                });
+            });
+        }
+
+        public class StructResponseHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(StructResponseTypeResponse))]
+            public Task<StructResponseTypeResponse> RpcMethod()
+            {
+                return Task.FromResult(new StructResponseTypeResponse());
+            }
+        }
+
+        public struct StructResponseTypeResponse { }
 
         [Fact]
         public void Ctor_throws_on_null_request_type()
@@ -606,7 +657,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task ExecuteObject_throws_when_no_handler_found_for_request_type()
+        public async Task Execute_throws_when_no_handler_found_for_request_type()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1114,7 +1165,39 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task ExecuteObject_can_return_task_of_response()
+        public async Task Execute_throws_when_the_response_is_a_null_wrapped_in_a_task()
+        {
+            var rpcEngine = new RpcEngine(new RpcEngineOptions
+            {
+                PotentialHandlerTypes = new[]
+                {
+                    typeof(NullWrappedInATaskTestHandler),
+                },
+            });
+
+            var rpcRequestMessage = new RpcRequestMessage
+            {
+                Payload = new SimpleRequest1(),
+                Type = nameof(SimpleRequest1),
+            };
+
+            await Snapshot.MatchError(async () =>
+            {
+                await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
+            });
+        }
+
+        public class NullWrappedInATaskTestHandler
+        {
+            [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
+            public Task<SimpleResponse1> RpcMethod(SimpleRequest1 request)
+            {
+                return Task.FromResult<SimpleResponse1>(null);
+            }
+        }
+
+        [Fact]
+        public async Task Execute_can_return_task_of_response()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1150,7 +1233,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task ExecuteObject_can_return_task_of_result_of_response()
+        public async Task Execute_can_return_task_of_result_of_response()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
@@ -1186,7 +1269,7 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public async Task ExecuteObject_can_return_task_of_result()
+        public async Task Execute_can_return_task_of_result()
         {
             var rpcEngine = new RpcEngine(new RpcEngineOptions
             {
