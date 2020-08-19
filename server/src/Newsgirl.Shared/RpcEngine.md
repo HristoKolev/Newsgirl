@@ -202,9 +202,107 @@ In an event that the next link in the chain (another middleware or the handler i
 
 ### Supplemental attributes
 
-Supplemental attributes derive from `RpcSupplementalAttribute`. When a new `RpcEngine` instance is created supplemental attributes are collected from handler types and handler methods. They can be accessed by middleware using `RpcRequestMetadata.SupplementalAttributes`. One attribute specification is taken into account for each type and if attributes are specified both on the handler method and the handler type - the one from the handler method is taken into account and the one from the type is ignored.
+Supplemental attributes are attributes that derive from `RpcSupplementalAttribute`. When a new `RpcEngine` instance is created supplemental attributes are collected from handler methods and their declaring type. They can be accessed by middleware using `context.GetSupplementalAttribute<AttributeType>`. Only one attribute specification is taken into account for each request type and if attributes are specified on both the handler method and it's declaring type - the one from the method is taken into account and the one from the type is ignored.
+
+Here is an example of supplemental attribute usage:
+
+```c#
+
+public class AuthAttribute : RpcSupplementalAttribute
+{
+    public bool RequiresAuthentication { get; set; }
+}
+
+[Auth(RequiresAuthentication = false)] // used on both type and method - this one is ignored
+public class ExampleHandler
+{
+    [Auth(RequiresAuthentication = true)] // used on both type and method - this one is used
+    [RpcBind(typeof(ExampleRequest), typeof(ExampleResponse))]
+    public Task<ExampleResponse> Example(ExampleRequest req, AuthResult authResult)
+    {
+        // use the userID somehow
+        int userID = authResult.UserID;
+
+        return Task.FromResult(new ExampleResponse
+        {
+            Number = req.Number + 1,
+        });
+    }
+}
+
+public class ExampleAuthenticationMiddleware : RpcMiddleware
+{
+    public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+    {
+        string token = context.RequestMessage.Headers.GetValueOrDefault("Authorization");
+
+        var authResult = await this.Authenticate(token);
+
+        var authAttr = context.GetSupplementalAttribute<AuthAttribute>();
+
+        if (authAttr != null // if we have such attribute 
+            && authAttr.RequiresAuthentication // and it requires the user to be authenticated 
+            && !authResult.IsLoggedIn // and the user is not authenticated
+        )
+        {
+            context.SetResponse(RpcResult.Error("Unauthorized access."));
+            return;
+        }
+
+        // set the auth result so that it can be injected into the handler and it can find out the userID
+        context.SetHandlerArgument(authResult);
+
+        await next(context, instanceProvider); // next
+    }
+
+    /// <summary>
+    /// Do authentication logic. We just check if the token is test123
+    /// </summary>
+    private Task<AuthResult> Authenticate(string token)
+    {
+        if (token != "test123")
+        {
+            return Task.FromResult(new AuthResult
+            {
+                IsLoggedIn = false,
+            });
+        }
+
+        // TODO: decode the token and decide what to do
+
+        return Task.FromResult(new AuthResult
+        {
+            UserID = 42,
+            IsLoggedIn = true,
+        });
+    }
+}
+
+public class ExampleRequest
+{
+    public int Number { get; set; }
+}
+
+public class ExampleResponse
+{
+    public int Number { get; set; }
+}
+
+public class AuthResult
+{
+    public bool IsLoggedIn { get; set; }
+
+    public int UserID { get; set; }
+}
+
+```
+
+The above example declares `AuthAttribute` that extends `RpcSupplementalAttribute` and uses that attribute to decorate both the handler type and the handler method. When that happens the method's attributes wins. If the authentication is successful the handler method will receive the `AuthResult` object that is passed in `context.SetHandlerArgument` by the middleware. In case the authentication step fails an error result is being set by calling `context.SetResponse` and the middleware method returns, without calling the next chain in the middleware list, thus skipping the execution of the handler method or any further middleware.
 
 ### Future considerations
 
-* Decide what to do with the `RpcMetadata` class. Is it an introspection thing? What part of it should be accessible from middleware calls.
-* Improve the way middleware passes arguments to handler methods.
+* The `RpcContext` abstraction exposes too much information to middleware classes. On the other hand, if we make some of the members private we will prevent dynamically emitted code to access them. One solution is to pass the context to the middleware as an interface. We can also run the dynamic assemblies in such a way that code can access private members of other assemblies.
+
+* Currently when we generate dynamic types we don't clean them up afterwards, this is only going to become a problem if we create to many instances of `RpcEngine`, but it is a problem nonetheless. Maybe we can use `AssemblyLoadContext` to solve that problem. We have to do some research in order to understand how it works exactly and if it will harm performance in any way.
+
+* Currently we create lots lots of new objects when we execute requests. We have to profile our code and determine how much work the GC does for each `Execute` call and remove some allocations by pooling objects an document the rest.  

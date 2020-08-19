@@ -180,7 +180,6 @@ namespace Newsgirl.Shared
             this.convertReturnValue = GetConvertReturnValue();
         }
 
-        // ReSharper disable once UnusedParameter.Local
         private static Func<Task, RpcResult<object>> GetConvertReturnValue()
         {
             var method = new DynamicMethod("convertReturnValue", typeof(RpcResult<object>), new[] {typeof(Task)});
@@ -427,6 +426,16 @@ namespace Newsgirl.Shared
         public void SetResponse(RpcResult result)
         {
             this.ResponseTask = Task.FromResult(result);
+        }
+
+        public void SetHandlerArgument<T>(T argument)
+        {
+            this.HandlerParameters.Add(typeof(T), argument);
+        }
+
+        public T GetSupplementalAttribute<T>() where T : RpcSupplementalAttribute
+        {
+            return (T) this.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(T));
         }
     }
 
