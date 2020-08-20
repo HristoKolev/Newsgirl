@@ -1,14 +1,3 @@
-
-* Introspection
-  - Static analysis
-  - Code generation
-
-* Simple routing
-
-* Decoupled from HTTP
-	- Internal code
-	- Simpler testing
-
 # How to use
 
 ## Defining request handlers
@@ -57,7 +46,7 @@ In the above example, the name of the type is `MathHandler`. That name doesn't m
 
 Each time the handler is being invoked an instance of the declaring type will be acquired and used for the invocation. How that instance is obtained will be explained later.
 
-Handler methods must never return null wrapped in Task<> or otherwise, doing so will always cause an exception.
+Handler methods must never return null wrapped in `Task<>` or otherwise, doing so will always cause an exception.
 
 ## Processing requests
 
@@ -218,6 +207,7 @@ public class ExampleHandler
 {
     [Auth(RequiresAuthentication = true)] // used on both type and method - this one is used
     [RpcBind(typeof(ExampleRequest), typeof(ExampleResponse))]
+    // in order to inject AuthResult you have to add it to the whitelist when creating the RpcEngine
     public Task<ExampleResponse> Example(ExampleRequest req, AuthResult authResult)
     {
         // use the userID somehow
@@ -305,4 +295,4 @@ The above example declares `AuthAttribute` that extends `RpcSupplementalAttribut
 
 * Currently when we generate dynamic types we don't clean them up afterwards, this is only going to become a problem if we create to many instances of `RpcEngine`, but it is a problem nonetheless. Maybe we can use `AssemblyLoadContext` to solve that problem. We have to do some research in order to understand how it works exactly and if it will harm performance in any way.
 
-* Currently we create lots lots of new objects when we execute requests. We have to profile our code and determine how much work the GC does for each `Execute` call and remove some allocations by pooling objects an document the rest.  
+* Currently we create lots lots of new objects when we execute requests. We have to profile our code and determine how much work the GC does for each `Execute` call and remove some allocations by pooling objects an document the rest.
