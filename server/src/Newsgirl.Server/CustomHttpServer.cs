@@ -6,7 +6,6 @@ namespace Newsgirl.Server
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Hosting.Server;
     using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -23,16 +22,11 @@ namespace Newsgirl.Server
     /// </summary>
     public class CustomHttpServerImpl : CustomHttpServer
     {
-        private readonly RequestDelegate requestDelegate;
-        private bool disposed;
-        private IHost host;
         private bool started;
-        private string[] boundAddresses;
+        private bool disposed;
 
-        public CustomHttpServerImpl(RequestDelegate requestDelegate)
-        {
-            this.requestDelegate = requestDelegate;
-        }
+        private IHost host;
+        private string[] boundAddresses;
 
         /// <summary>
         /// Fires when the server starts with the bound addresses as an argument.
@@ -49,13 +43,12 @@ namespace Newsgirl.Server
         /// </summary>
         public event Action Stopped;
 
-        public async Task Start(HttpServerConfig config)
+        public async Task Start(RequestDelegate requestDelegate, string[] listenOnAddresses)
         {
             this.ThrowIfDisposed();
             this.ThrowIfStarted();
 
-            this.host = new HostBuilder()
-                .ConfigureWebHost(builder =>
+            this.host = new HostBuilder().ConfigureWebHost(builder =>
                 {
                     builder.UseKestrel()
                         .ConfigureKestrel(options =>
@@ -63,12 +56,27 @@ namespace Newsgirl.Server
                             options.AddServerHeader = false;
                             options.AllowSynchronousIO = false;
                         })
-                        .Configure(this.Configure)
+                        .Configure(app =>
+                        {
+                            var lifetime = app.ApplicationServices.GetService<IHostApplicationLifetime>();
+
+                            var addresses = app.ServerFeatures.Get<IServerAddressesFeature>().Addresses.ToArray();
+
+                            lifetime.ApplicationStarted.Register(() => this.Started?.Invoke(addresses));
+                            lifetime.ApplicationStopping.Register(() => this.Stopping?.Invoke());
+                            lifetime.ApplicationStopped.Register(() => this.Stopped?.Invoke());
+
+                            app.Use(_ => requestDelegate);
+                        })
                         .CaptureStartupErrors(false)
                         .SuppressStatusMessages(true)
-                        .UseUrls(config.Addresses);
+                        .UseUrls(listenOnAddresses);
                 })
-                .ConfigureServices(this.ConfigureServices)
+                .ConfigureServices(serviceCollection =>
+                {
+                    serviceCollection.AddLogging(x => x.ClearProviders());
+                    serviceCollection.AddSingleton<IHostLifetime, EmptyLifetime>();
+                })
                 .UseEnvironment("production")
                 .Build();
 
@@ -80,12 +88,6 @@ namespace Newsgirl.Server
             this.boundAddresses = addressesFeature.Addresses.ToArray();
 
             this.started = true;
-        }
-
-        private void ConfigureServices(IServiceCollection serviceCollection)
-        {
-            serviceCollection.AddLogging(x => x.ClearProviders());
-            serviceCollection.AddSingleton<IHostLifetime, EmptyLifetime>();
         }
 
         public async Task Stop()
@@ -139,19 +141,6 @@ namespace Newsgirl.Server
             this.disposed = true;
         }
 
-        private void Configure(IApplicationBuilder app)
-        {
-            var lifetime = app.ApplicationServices.GetService<IHostApplicationLifetime>();
-
-            var addresses = app.ServerFeatures.Get<IServerAddressesFeature>().Addresses.ToArray();
-
-            lifetime.ApplicationStarted.Register(() => this.Started?.Invoke(addresses));
-            lifetime.ApplicationStopping.Register(() => this.Stopping?.Invoke());
-            lifetime.ApplicationStopped.Register(() => this.Stopped?.Invoke());
-
-            app.Use(_ => this.requestDelegate);
-        }
-
         private void ThrowIfStarted()
         {
             if (this.started)
@@ -190,11 +179,6 @@ namespace Newsgirl.Server
         }
     }
 
-    public class HttpServerConfig
-    {
-        public string[] Addresses { get; set; }
-    }
-
     public interface CustomHttpServer : IAsyncDisposable
     {
         string[] BoundAddresses { get; }
@@ -205,7 +189,7 @@ namespace Newsgirl.Server
 
         public event Action Stopped;
 
-        Task Start(HttpServerConfig config);
+        Task Start(RequestDelegate requestDelegate, string[] addresses);
 
         Task Stop();
     }

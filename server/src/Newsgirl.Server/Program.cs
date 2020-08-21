@@ -124,16 +124,13 @@ namespace Newsgirl.Server
                 }
             }
 
-            this.Server = new CustomHttpServerImpl(RequestDelegate);
+            this.Server = new CustomHttpServerImpl();
 
             this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
             this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
             this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
 
-            await this.Server.Start(new HttpServerConfig
-            {
-                Addresses = listenOnAddresses,
-            });
+            await this.Server.Start(RequestDelegate, listenOnAddresses);
 
             this.Started = true;
         }

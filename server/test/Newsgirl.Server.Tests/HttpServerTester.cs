@@ -54,12 +54,9 @@ namespace Newsgirl.Server.Tests
                 }
             }
 
-            var server = new CustomHttpServerImpl(Handler);
+            var server = new CustomHttpServerImpl();
 
-            await server.Start(new HttpServerConfig
-            {
-                Addresses = new[] {"http://127.0.0.1:0"},
-            });
+            await server.Start(Handler, new[] {"http://127.0.0.1:0"});
 
             var client = new HttpClient
             {

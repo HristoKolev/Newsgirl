@@ -55,14 +55,11 @@ namespace Newsgirl.Server.Tests
                 return Task.CompletedTask;
             }
 
-            var server = new CustomHttpServerImpl(Handler);
+            var server = new CustomHttpServerImpl();
 
             for (int i = 0; i < 10; i++)
             {
-                await server.Start(new HttpServerConfig
-                {
-                    Addresses = new[] {"http://127.0.0.1:0"},
-                });
+                await server.Start(Handler, new[] {"http://127.0.0.1:0"});
                 await server.Stop();
             }
         }
