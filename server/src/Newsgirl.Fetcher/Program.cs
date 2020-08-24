@@ -150,7 +150,6 @@
         public LoggingConfig Logging { get; set; }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
         public EventStreamConfig[] StructuredLogger { get; set; }
@@ -160,7 +159,6 @@
         public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class ElasticsearchIndexConfig
     {
         public string GeneralLogIndex { get; set; }

@@ -127,10 +127,7 @@ namespace Newsgirl.Server.Tests
                     requestHeaderBuilder.Append("Connection: close\r\n");
                     requestHeaderBuilder.Append("\r\n");
 
-                    socket.Send(
-                        Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString()),
-                        SocketFlags.None
-                    );
+                    socket.Send(Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString()), SocketFlags.None);
                     socket.Send(requestBody, 0, requestBody.Length / 2, SocketFlags.None);
                     socket.Close();
 
@@ -194,7 +191,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(Handler))
             {
-                var response = await tester.Client.GetAsync("/");
+                _ = await tester.Client.GetAsync("/");
 
                 Snapshot.MatchError(exception);
             }

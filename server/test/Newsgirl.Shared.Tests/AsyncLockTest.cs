@@ -2,7 +2,6 @@ namespace Newsgirl.Shared.Tests
 {
     using System;
     using System.Linq;
-    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using Xunit;
 
@@ -68,17 +67,6 @@ namespace Newsgirl.Shared.Tests
             await Task.WhenAll(tasks);
         }
 
-        private class RaceConditionException : Exception
-        {
-            public RaceConditionException() { }
-
-            public RaceConditionException(string message) : base(message) { }
-
-            public RaceConditionException(string message, Exception inner) : base(message, inner) { }
-
-            protected RaceConditionException(
-                SerializationInfo info,
-                StreamingContext context) : base(info, context) { }
-        }
+        private class RaceConditionException : Exception { }
     }
 }

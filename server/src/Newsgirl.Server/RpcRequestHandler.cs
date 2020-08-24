@@ -1,10 +1,8 @@
 namespace Newsgirl.Server
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection.Emit;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
@@ -16,11 +14,11 @@ namespace Newsgirl.Server
     /// </summary>
     public class RpcRequestHandler
     {
-        private static readonly object SyncRoot = new object();
-        private static bool initialized;
-        private static ConcurrentDictionary<Type, Type> genericRpcModelTable;
-        private static Func<object, RpcRequestMessage> copyData;
-        private static JsonSerializerOptions serializationOptions;
+        private static readonly JsonSerializerOptions SerializationOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         private readonly RpcEngine rpcEngine;
         private readonly InstanceProvider instanceProvider;
@@ -34,17 +32,6 @@ namespace Newsgirl.Server
         private RpcResult<object> rpcResponse;
         private DateTime requestStart;
         private string requestType;
-
-        private static void InitializeStaticCache()
-        {
-            genericRpcModelTable = new ConcurrentDictionary<Type, Type>();
-            copyData = CreateCopyDataMethod();
-            serializationOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
-        }
 
         public RpcRequestHandler(
             RpcEngine rpcEngine,
@@ -60,10 +47,11 @@ namespace Newsgirl.Server
             this.log = log;
         }
 
-        public async Task HandleRequest(HttpContext ctx)
+        public async Task HandleRequest(HttpContext ctx, string rpcRequestType)
         {
             this.httpContext = ctx;
             this.requestStart = DateTime.UtcNow;
+            this.requestType = rpcRequestType;
 
             // Diagnostic data in case of an error.
             this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
@@ -86,7 +74,7 @@ namespace Newsgirl.Server
 
             try
             {
-                result = await this.Process();
+                result = await this.ProcessRequest();
             }
             catch (Exception err)
             {
@@ -122,29 +110,8 @@ namespace Newsgirl.Server
             await this.WriteResult(result);
         }
 
-        private async Task<RpcResult<object>> Process()
+        private async Task<RpcResult<object>> ProcessRequest()
         {
-            // Initialize.            
-            try
-            {
-                if (!initialized)
-                {
-                    lock (SyncRoot)
-                    {
-                        if (!initialized)
-                        {
-                            InitializeStaticCache();
-                            initialized = true;
-                        }
-                    }
-                }
-            }
-            catch (Exception err)
-            {
-                string errorID = await this.errorReporter.Error(err, "RPC_SERVER_ERROR_BEFORE_READ_REQUEST");
-                return RpcResult.Error<object>($"General RPC error: {errorID}");
-            }
-
             // Read request body.
             try
             {
@@ -161,12 +128,29 @@ namespace Newsgirl.Server
                 return RpcResult.Error<object>($"Failed to read RPC request body: {errorID}");
             }
 
+            // Find request metadata
+            if (string.IsNullOrWhiteSpace(this.requestType))
+            {
+                return RpcResult.Error<object>("Request type is null or an empty string.");
+            }
+
+            var metadata = this.rpcEngine.GetMetadataByRequestName(this.requestType);
+
+            if (metadata == null)
+            {
+                return RpcResult.Error<object>($"No RPC handler for request: {this.requestType}.");
+            }
+
             // Parse the RPC message.
-            RpcResult<RpcRequestMessage> requestMessageResult;
+            object requestPayload;
 
             try
             {
-                requestMessageResult = this.ParseRequestMessage(this.requestBody);
+                requestPayload = JsonSerializer.Deserialize(
+                    this.requestBody.AsSpan(),
+                    metadata.RequestType,
+                    SerializationOptions
+                );
             }
             catch (Exception err)
             {
@@ -191,12 +175,16 @@ namespace Newsgirl.Server
                 return RpcResult.Error<object>($"Failed to parse RPC body: {errorID}");
             }
 
-            if (!requestMessageResult.IsOk)
-            {
-                return RpcResult.Error<object>(requestMessageResult.ErrorMessages);
-            }
+            var headers = this.httpContext.Request.Headers
+                .Where(x => x.Key.StartsWith("rpc-"))
+                .ToDictionary(x => x.Key, x => x.Value.ToString());
 
-            this.rpcRequest = requestMessageResult.Payload;
+            this.rpcRequest = new RpcRequestMessage
+            {
+                Payload = requestPayload,
+                Type = this.requestType,
+                Headers = headers,
+            };
 
             // Execute.
             try
@@ -217,38 +205,6 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        /// Parses an <see cref="RpcRequestMessage" /> from a <see cref="RentedByteArray" />.
-        /// </summary>
-        private RpcResult<RpcRequestMessage> ParseRequestMessage(RentedByteArray bufferHandle)
-        {
-            var typeModel = JsonSerializer.Deserialize<RpcTypeDto>(bufferHandle.AsSpan(), serializationOptions);
-
-            this.requestType = typeModel.Type;
-
-            if (string.IsNullOrWhiteSpace(this.requestType))
-            {
-                return RpcResult.Error<RpcRequestMessage>("Request type is null or an empty string.");
-            }
-
-            var metadata = this.rpcEngine.GetMetadataByRequestName(this.requestType);
-
-            if (metadata == null)
-            {
-                return RpcResult.Error<RpcRequestMessage>($"No RPC handler for request: {this.requestType}.");
-            }
-
-            var deserializeType = genericRpcModelTable.GetOrAdd(
-                metadata.RequestType, x => typeof(RpcRequestMessageDto<>).MakeGenericType(x));
-
-            var payloadAndHeaders =
-                JsonSerializer.Deserialize(bufferHandle.AsSpan(), deserializeType, serializationOptions);
-
-            var rpcRequestMessage = copyData(payloadAndHeaders);
-
-            return RpcResult.Ok(rpcRequestMessage);
-        }
-
-        /// <summary>
         /// Writes a <see cref="RpcResult" /> to the HTTP result.
         /// </summary>
         private async ValueTask WriteResult<T>(RpcResult<T> result)
@@ -257,7 +213,7 @@ namespace Newsgirl.Server
             {
                 this.httpContext.Response.StatusCode = 200;
 
-                await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, serializationOptions);
+                await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, SerializationOptions);
             }
             catch (Exception err)
             {
@@ -268,51 +224,30 @@ namespace Newsgirl.Server
             }
         }
 
-        /// <summary>
-        /// Creates a function that copies properties from an <see cref="RpcRequestMessageDto{T}" />
-        /// instance to an <see cref="RpcRequestMessage" /> instance.
-        /// </summary>
-        private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
+        public static string ParseRequestType(HttpContext context)
         {
-            var copyDataMethod = new DynamicMethod("copyData", typeof(RpcRequestMessage), new[] {typeof(object)});
+            var requestPath = context.Request.Path;
 
-            var il = copyDataMethod.GetILGenerator();
-            il.Emit(OpCodes.Newobj, typeof(RpcRequestMessage).GetConstructors().First());
+            const string RPC_ROUTE_PATH = "/rpc/";
 
-            foreach (var property in typeof(RpcRequestMessage).GetProperties())
+            if (requestPath.HasValue
+                && requestPath.Value.StartsWith(RPC_ROUTE_PATH)
+                && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
             {
-                il.Emit(OpCodes.Dup);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, typeof(RpcRequestMessageDto<>).MakeGenericType(typeof(object)).GetProperty(property.Name)?.GetMethod!);
-                il.Emit(OpCodes.Call, property.SetMethod!);
+                string requestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length);
+
+                return requestType;
             }
 
-            il.Emit(OpCodes.Ret);
-
-            return copyDataMethod.CreateDelegate<Func<object, RpcRequestMessage>>();
-        }
-
-        private class RpcRequestMessageDto<T>
-        {
-            // ReSharper disable once UnusedMember.Local
-            public T Payload { get; set; }
-
-            // ReSharper disable once UnusedMember.Local
-            public Dictionary<string, string> Headers { get; set; }
-
-            // ReSharper disable once UnusedAutoPropertyAccessor.Local
-            public string Type { get; set; }
-        }
-
-        private struct RpcTypeDto
-        {
-            // ReSharper disable once UnusedAutoPropertyAccessor.Local
-            public string Type { get; set; }
+            return null;
         }
     }
 
     public class HttpLogData
     {
+        // ReSharper disable MemberCanBePrivate.Global
+        // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+
         public HttpLogData(HttpContext context,
             RentedByteArray requestBody,
             RpcRequestMessage rpcRequest,
@@ -392,6 +327,9 @@ namespace Newsgirl.Server
         public string DateTime { get; set; }
 
         public bool RequestFailed { get; }
+
+        // ReSharper restore AutoPropertyCanBeMadeGetOnly.Global
+        // ReSharper restore MemberCanBePrivate.Global
     }
 
     public static class HttpLoggingExtensions

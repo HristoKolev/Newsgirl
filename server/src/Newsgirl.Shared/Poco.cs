@@ -1,3 +1,5 @@
+// ReSharper disable InconsistentNaming
+// ReSharper disable BitwiseOperatorOnEnumWithoutFlags
 namespace Newsgirl.Shared
 {
     using System;

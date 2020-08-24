@@ -3,8 +3,6 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnusedParameter.Global
-// ReSharper disable ClassNeverInstantiated.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Newsgirl.Shared.Tests
 {
@@ -1396,5 +1394,6 @@ namespace Newsgirl.Shared.Tests
 
     public class NonRegisteredRequest { }
 
+    // ReSharper disable once UnusedType.Global
     public class NonRegisteredResponse { }
 }

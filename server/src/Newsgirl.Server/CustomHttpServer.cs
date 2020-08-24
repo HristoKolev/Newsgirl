@@ -17,8 +17,6 @@ namespace Newsgirl.Server
 
     /// <summary>
     /// A wrapper around ASP.NET Core's IHost.
-    /// TODO: What happens when a request is aborted.
-    /// TODO: What happens when a request is in process and we dispose the server.
     /// </summary>
     public class CustomHttpServerImpl : CustomHttpServer
     {

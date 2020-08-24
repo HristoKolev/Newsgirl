@@ -1,4 +1,6 @@
 // ReSharper disable InconsistentNaming
+// ReSharper disable NotAccessedVariable
+
 namespace Newsgirl.Benchmarks
 {
     using System;

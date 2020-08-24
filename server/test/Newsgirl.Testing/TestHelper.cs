@@ -570,16 +570,15 @@ namespace Newsgirl.Testing
 
         public void Log<T>(string eventStreamName, Func<T> func)
         {
+            var item = func();
+
             if (!this.Logs.ContainsKey(eventStreamName))
             {
-                this.Logs.Add(eventStreamName, new List<object>
-                {
-                    func(),
-                });
+                this.Logs.Add(eventStreamName, new List<object> {item});
             }
             else
             {
-                this.Logs[eventStreamName].Add(func());
+                this.Logs[eventStreamName].Add(item);
             }
         }
     }

@@ -46,6 +46,21 @@ namespace Newsgirl.Server.Tests
             public int Num { get; set; }
         }
 
+        public class TestHeadersMiddleware : RpcMiddleware
+        {
+            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+            {
+                await next(context, instanceProvider);
+
+                var response = (Task<RpcResult<IncrementTestResponse>>) context.ResponseTask;
+
+                foreach (var header in context.RequestMessage.Headers)
+                {
+                    response.Result.Headers.Add(header.Key, header.Value);
+                }
+            }
+        }
+
         [Fact]
         public async Task Returns_error_on_empty_body()
         {
@@ -85,7 +100,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync("/", new StringContent("not json"));
+                var response = await tester.Client.PostAsync($"/rpc/{nameof(IncrementTestRequest)}", new StringContent("not json"));
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -109,7 +124,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": null}"));
+                var response = await tester.Client.PostAsync("/rpc/", new StringContent("{}"));
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -133,7 +148,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"NotRegisteredRequest\"}"));
+                var response = await tester.Client.PostAsync("/rpc/NotRegisteredRequest", new StringContent("{}"));
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -157,31 +172,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"ThrowingTestRequest\", \"payload\":{} }"));
-                response.EnsureSuccessStatusCode();
-
-                responseBody = await response.Content.ReadAsStringAsync();
-            }
-
-            Snapshot.MatchJson(responseBody);
-        }
-
-        [Fact]
-        public async Task Logs_on_error()
-        {
-            var handler = CreateHandlerRealLog(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(IncrementHandler),
-                },
-            });
-
-            string responseBody;
-
-            await using (var tester = await HttpServerTester.Create(handler))
-            {
-                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"ThrowingTestRequest\", \"payload\":{} }"));
+                var response = await tester.Client.PostAsync($"/rpc/{nameof(ThrowingTestRequest)}", new StringContent("{}"));
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -199,13 +190,21 @@ namespace Newsgirl.Server.Tests
                 {
                     typeof(IncrementHandler),
                 },
+                MiddlewareTypes = new[]
+                {
+                    typeof(TestHeadersMiddleware),
+                },
             });
 
             string responseBody;
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync("/", new StringContent("{\"type\": \"IncrementTestRequest\", \"payload\":{ \"num\": 33 } }"));
+                var response = await tester.Client.PostAsync($"/rpc/{nameof(IncrementTestRequest)}", new StringContent("{ \"num\": 33 }")
+                {
+                    Headers = {{"rpc-h1", "v1"}},
+                });
+
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -221,29 +220,13 @@ namespace Newsgirl.Server.Tests
 
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-
             var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
 
             Task Handler(HttpContext context)
             {
-                return handler.HandleRequest(context);
-            }
+                string requestType = RpcRequestHandler.ParseRequestType(context);
 
-            return Handler;
-        }
-
-        private static RequestDelegate CreateHandlerRealLog(RpcEngineOptions rpcEngineOptions)
-        {
-            var errorReporter = new ErrorReporterMock();
-            var logMock = new StructuredLogMock();
-
-            var rpcEngine = new RpcEngine(rpcEngineOptions);
-            var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
-
-            Task Handler(HttpContext context)
-            {
-                return handler.HandleRequest(context);
+                return handler.HandleRequest(context, requestType);
             }
 
             return Handler;

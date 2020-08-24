@@ -165,23 +165,18 @@ namespace Newsgirl.Shared.Logging
             }
         }
 
-        // ReSharper disable once ClassNeverInstantiated.Local
         private class ElasticsearchBulkResponse
         {
             public bool Errors { get; set; }
         }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class ElasticsearchConfig
     {
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string Url { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string Username { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string Password { get; set; }
     }
 }

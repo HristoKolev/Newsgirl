@@ -32,3 +32,8 @@ await using (var server = new CustomHttpServerImpl())
 }
 
 ```
+
+# Future considerations
+
+* What happens when a request is aborted.
+* What happens when a request is in process and we dispose the server.

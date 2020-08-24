@@ -1,3 +1,5 @@
+// ReSharper disable UnusedVariable
+
 namespace Newsgirl.Benchmarks
 {
     using System;
@@ -56,7 +58,7 @@ namespace Newsgirl.Benchmarks
                             Enabled = true,
                         },
                     },
-                }
+                },
             });
 
             return logger;

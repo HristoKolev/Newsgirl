@@ -367,7 +367,6 @@ namespace Newsgirl.Shared
         }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class ErrorReporterConfig
     {
         public string ServerName { get; set; }

@@ -1,3 +1,5 @@
+// ReSharper disable InconsistentNaming
+
 namespace Newsgirl.Benchmarks
 {
     using System;

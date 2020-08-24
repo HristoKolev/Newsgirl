@@ -415,7 +415,6 @@ namespace Newsgirl.Shared
     {
         public RpcRequestMessage RequestMessage { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public RpcRequestMetadata RequestMetadata { get; set; }
 
         // ReSharper disable once CollectionNeverQueried.Global
@@ -510,7 +509,6 @@ namespace Newsgirl.Shared
     {
         public object Payload { get; set; }
 
-        // ReSharper disable once UnusedMember.Global
         public Dictionary<string, string> Headers { get; set; }
 
         public string Type { get; set; }

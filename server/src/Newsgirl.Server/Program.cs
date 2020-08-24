@@ -117,10 +117,20 @@ namespace Newsgirl.Server
 
             async Task RequestDelegate(HttpContext context)
             {
-                await using (var requestScope = this.IoC.BeginLifetimeScope())
+                string requestType = RpcRequestHandler.ParseRequestType(context);
+
+                if (requestType != null)
                 {
-                    var handler = requestScope.Resolve<RpcRequestHandler>();
-                    await handler.HandleRequest(context);
+                    await using (var requestScope = this.IoC.BeginLifetimeScope())
+                    {
+                        var handler = requestScope.Resolve<RpcRequestHandler>();
+
+                        await handler.HandleRequest(context, requestType);
+                    }
+                }
+                else
+                {
+                    context.Response.StatusCode = 404;
                 }
             }
 
@@ -271,7 +281,6 @@ namespace Newsgirl.Server
         public LoggingConfig Logging { get; set; }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class LoggingConfig
     {
         public EventStreamConfig[] StructuredLogger { get; set; }
@@ -281,7 +290,6 @@ namespace Newsgirl.Server
         public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class ElasticsearchIndexConfig
     {
         public string GeneralLogIndex { get; set; }
