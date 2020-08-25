@@ -172,7 +172,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync($"/rpc/{nameof(ThrowingTestRequest)}", new StringContent("{}"));
+                var response = await tester.Client.PostAsync($"/rpc/{nameof(ThrowingTestRequest)}", new StringContent("{ \"payload\": {} }"));
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -200,10 +200,10 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.PostAsync($"/rpc/{nameof(IncrementTestRequest)}", new StringContent("{ \"num\": 33 }")
-                {
-                    Headers = {{"rpc-h1", "v1"}},
-                });
+                var response = await tester.Client.PostAsync(
+                    $"/rpc/{nameof(IncrementTestRequest)}",
+                    new StringContent("{ \"payload\": { \"num\": 33 }, \"headers\": { \"rpc-h1\": \"v1\" }  }")
+                );
 
                 response.EnsureSuccessStatusCode();
 

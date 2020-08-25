@@ -154,6 +154,7 @@ namespace Newsgirl.Testing
                 var field = typeof(EqualException)
                     .GetField("message", BindingFlags.Instance | BindingFlags.NonPublic);
 
+                // ReSharper disable once PossibleNullReferenceException
                 field.SetValue(ex, message);
 
                 throw;

@@ -1,8 +1,10 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection.Emit;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
@@ -20,6 +22,9 @@ namespace Newsgirl.Server
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
+        private static readonly Func<object, RpcRequestMessage> CopyData = CreateCopyDataMethod();
+        private static readonly ConcurrentDictionary<Type, Type> GenericRpcModelTable = new ConcurrentDictionary<Type, Type>();
+
         private readonly RpcEngine rpcEngine;
         private readonly InstanceProvider instanceProvider;
         private readonly AsyncLocals asyncLocals;
@@ -27,7 +32,7 @@ namespace Newsgirl.Server
         private readonly ILog log;
 
         private HttpContext httpContext;
-        private RentedByteArray requestBody;
+        private RentedBuffer requestBody;
         private RpcRequestMessage rpcRequest;
         private RpcResult<object> rpcResponse;
         private DateTime requestStart;
@@ -142,49 +147,18 @@ namespace Newsgirl.Server
             }
 
             // Parse the RPC message.
-            object requestPayload;
-
             try
             {
-                requestPayload = JsonSerializer.Deserialize(
-                    this.requestBody.AsSpan(),
-                    metadata.RequestType,
-                    SerializationOptions
-                );
+                var rpcRequestMessage = DeserializeRequestMessage(this.requestBody, metadata);
+                rpcRequestMessage.Type = this.requestType;
+
+                this.rpcRequest = rpcRequestMessage;
             }
             catch (Exception err)
             {
-                long? bytePositionInLine = null;
-                long? lineNumber = null;
-                string jsonPath = null;
-
-                if (err is JsonException jsonException)
-                {
-                    bytePositionInLine = jsonException.BytePositionInLine;
-                    lineNumber = jsonException.LineNumber;
-                    jsonPath = jsonException.Path;
-                }
-
-                string errorID = await this.errorReporter.Error(err, new Dictionary<string, object>
-                {
-                    {"bytePositionInLine", bytePositionInLine},
-                    {"lineNumber", lineNumber},
-                    {"jsonPath", jsonPath},
-                });
-
+                string errorID = await this.errorReporter.Error(err);
                 return RpcResult.Error<object>($"Failed to parse RPC body: {errorID}");
             }
-
-            var headers = this.httpContext.Request.Headers
-                .Where(x => x.Key.StartsWith("rpc-"))
-                .ToDictionary(x => x.Key, x => x.Value.ToString());
-
-            this.rpcRequest = new RpcRequestMessage
-            {
-                Payload = requestPayload,
-                Type = this.requestType,
-                Headers = headers,
-            };
 
             // Execute.
             try
@@ -205,7 +179,49 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        /// Writes a <see cref="RpcResult" /> to the HTTP result.
+        /// Reads RpcRequestMessage from the HTTP request body.
+        /// </summary>
+        private static RpcRequestMessage DeserializeRequestMessage(RentedBuffer requestBody, RpcRequestMetadata metadata)
+        {
+            try
+            {
+                var deserializeType = GenericRpcModelTable.GetOrAdd(metadata.RequestType, x => typeof(RpcRequestMessageDto<>).MakeGenericType(x));
+
+                var payloadAndHeaders = JsonSerializer.Deserialize(requestBody.AsSpan(), deserializeType, SerializationOptions);
+
+                var rpcRequestMessage = CopyData(payloadAndHeaders);
+
+                rpcRequestMessage.Headers ??= new Dictionary<string, string>(0);
+
+                return rpcRequestMessage;
+            }
+            catch (Exception err)
+            {
+                long? bytePositionInLine = null;
+                long? lineNumber = null;
+                string jsonPath = null;
+
+                if (err is JsonException jsonException)
+                {
+                    bytePositionInLine = jsonException.BytePositionInLine;
+                    lineNumber = jsonException.LineNumber;
+                    jsonPath = jsonException.Path;
+                }
+
+                throw new DetailedLogException("Failed to parse RPC body.")
+                {
+                    Details =
+                    {
+                        {"bytePositionInLine", bytePositionInLine},
+                        {"lineNumber", lineNumber},
+                        {"jsonPath", jsonPath},
+                    },
+                };
+            }
+        }
+
+        /// <summary>
+        /// Writes a <see cref="RpcResult" /> to the HTTP response.
         /// </summary>
         private async ValueTask WriteResult<T>(RpcResult<T> result)
         {
@@ -222,6 +238,39 @@ namespace Newsgirl.Server
                     {"result", result},
                 });
             }
+        }
+
+        /// <summary>
+        /// Creates a function that copies properties from an RpcRequestMessageDto{T}
+        /// instance to an RpcRequestMessage instance.
+        /// </summary>
+        private static Func<object, RpcRequestMessage> CreateCopyDataMethod()
+        {
+            var copyDataMethod = new DynamicMethod("copyData", typeof(RpcRequestMessage), new[] {typeof(object)});
+
+            var il = copyDataMethod.GetILGenerator();
+            il.Emit(OpCodes.Newobj, typeof(RpcRequestMessage).GetConstructors().First());
+
+            foreach (var property in typeof(RpcRequestMessageDto<object>).GetProperties())
+            {
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, property.GetMethod!);
+                il.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty(property.Name)?.SetMethod!);
+            }
+
+            il.Emit(OpCodes.Ret);
+
+            return copyDataMethod.CreateDelegate<Func<object, RpcRequestMessage>>();
+        }
+
+        private class RpcRequestMessageDto<T>
+        {
+            // ReSharper disable once UnusedMember.Local
+            public T Payload { get; set; }
+
+            // ReSharper disable once UnusedMember.Local
+            public Dictionary<string, string> Headers { get; set; }
         }
 
         public static string ParseRequestType(HttpContext context)
@@ -249,7 +298,7 @@ namespace Newsgirl.Server
         // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
         public HttpLogData(HttpContext context,
-            RentedByteArray requestBody,
+            RentedBuffer requestBody,
             RpcRequestMessage rpcRequest,
             RpcResult<object> rpcResponse,
             bool requestFailed,

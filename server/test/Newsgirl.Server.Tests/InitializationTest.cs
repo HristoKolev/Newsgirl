@@ -64,7 +64,7 @@ namespace Newsgirl.Server.Tests
                     BaseAddress = new Uri(tester.App.GetAddress()),
                 };
 
-                var response = await client.PostAsync($"/rpc/{nameof(PingRequest)}", new StringContent("{}"));
+                var response = await client.PostAsync($"/rpc/{nameof(PingRequest)}", new StringContent("{ \"payload\": {} }"));
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
 

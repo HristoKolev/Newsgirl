@@ -7,7 +7,7 @@ namespace Newsgirl.Shared
     /// <summary>
     /// Acts as a handle to borrowed memory.
     /// </summary>
-    public class RentedByteArray : IDisposable
+    public class RentedBuffer : IDisposable
     {
         public int Length { get; }
 
@@ -15,7 +15,7 @@ namespace Newsgirl.Shared
 
         private readonly MemoryStream memoryStream;
 
-        public byte[] GetRentedArray()
+        public byte[] GetBuffer()
         {
             return this.buffer;
         }
@@ -23,7 +23,7 @@ namespace Newsgirl.Shared
         /// <summary>
         /// Rents a byte[] of a given size from ArrayPool.Shared and returns it when disposed.
         /// </summary>
-        public RentedByteArray(int length)
+        public RentedBuffer(int length)
         {
             this.Length = length;
             this.buffer = ArrayPool<byte>.Shared.Rent(length);
@@ -32,7 +32,7 @@ namespace Newsgirl.Shared
         /// <summary>
         /// Takes a MemoryStream and disposes it when disposed.
         /// </summary>
-        public RentedByteArray(MemoryStream memoryStream)
+        public RentedBuffer(MemoryStream memoryStream)
         {
             this.Length = (int) memoryStream.Length;
             this.buffer = memoryStream.GetBuffer();

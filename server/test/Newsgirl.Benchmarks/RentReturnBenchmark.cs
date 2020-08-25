@@ -57,9 +57,9 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                using var bufferHolder = new RentedByteArray(this.Size);
+                using var bufferHolder = new RentedBuffer(this.Size);
 
-                GC.KeepAlive(bufferHolder.GetRentedArray());
+                GC.KeepAlive(bufferHolder.GetBuffer());
             }
         }
 
@@ -74,11 +74,11 @@ namespace Newsgirl.Benchmarks
 
         private async Task AsyncArrayPoolBuffer_Impl()
         {
-            using var bufferHolder = new RentedByteArray(this.Size);
+            using var bufferHolder = new RentedBuffer(this.Size);
 
             await Task.Delay(0);
 
-            GC.KeepAlive(bufferHolder.GetRentedArray());
+            GC.KeepAlive(bufferHolder.GetBuffer());
         }
     }
 }
