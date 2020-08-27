@@ -15,7 +15,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="PgNet" Version="1.0.12" />
     <PackageReference Include="Sentry" Version="2.1.6" />
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.5" />
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="6.1.1" />
   </ItemGroup>
 
 </Project>

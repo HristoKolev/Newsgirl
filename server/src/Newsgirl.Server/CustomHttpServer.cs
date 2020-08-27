@@ -1,6 +1,7 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Buffers;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -13,6 +14,7 @@ namespace Newsgirl.Server
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Toolkit.HighPerformance.Buffers;
     using Shared;
 
     /// <summary>
@@ -235,7 +237,7 @@ namespace Newsgirl.Server
             try
             {
                 // Decode UTF8.
-                requestBodyString = EncodingHelper.UTF8.GetString(requestContent.AsSpan());
+                requestBodyString = EncodingHelper.UTF8.GetString(requestContent.Memory.Span);
             }
             catch (Exception err)
             {
@@ -244,7 +246,7 @@ namespace Newsgirl.Server
                     Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
                     Details =
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestContent.AsSpan())},
+                        {"requestBodyBytes", Convert.ToBase64String(requestContent.Memory.Span)},
                     },
                 };
             }
@@ -253,67 +255,46 @@ namespace Newsgirl.Server
         }
 
         /// <summary>
-        /// Reads the request stream to the end and returns <see cref="RentedBuffer" /> with the contents.
+        /// Reads the request stream to the end and returns <see cref="IMemoryOwner{T}" /> with the contents.
         /// </summary>
-        public static async ValueTask<RentedBuffer> ReadToEnd(this HttpRequest request)
+        public static async ValueTask<IMemoryOwner<byte>> ReadToEnd(this HttpRequest request)
         {
             if (request.ContentLength.HasValue)
             {
-                var bufferHandle = new RentedBuffer((int) request.ContentLength.Value);
+                var memoryOwner = MemoryOwner<byte>.Allocate((int) request.ContentLength.Value);
 
                 try
                 {
-                    int read;
-                    int offset = 0;
-
-                    var buffer = bufferHandle.GetBuffer();
-
-                    while ((read = await request.Body.ReadAsync(buffer, offset, bufferHandle.Length - offset)) > 0)
-                    {
-                        offset += read;
-                    }
+                    while (await request.Body.ReadAsync(memoryOwner.Memory) > 0) { }
                 }
                 catch (Exception err)
                 {
-                    int length = bufferHandle.Length;
-                    bufferHandle.Dispose();
+                    memoryOwner.Dispose();
 
                     throw new DetailedLogException("Failed to read the HTTP request body.", err)
                     {
                         Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                         Details =
                         {
-                            {"contentLength", length},
+                            {"contentLength", request.ContentLength.Value},
                         },
                     };
                 }
 
-                return bufferHandle;
+                return memoryOwner;
             }
-
-            var memoryStream = MemoryStreamPool.Shared.GetStream();
 
             try
             {
-                await request.Body.CopyToAsync(memoryStream);
+                return await request.Body.ReadUnknownSizeStream();
             }
             catch (Exception err)
             {
-                long length = memoryStream.Length;
-                // ReSharper disable once MethodHasAsyncOverload
-                memoryStream.Dispose();
-
                 throw new DetailedLogException("Failed to read the HTTP request body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
-                    Details =
-                    {
-                        {"contentLength", length},
-                    },
                 };
             }
-
-            return new RentedBuffer(memoryStream);
         }
     }
 }

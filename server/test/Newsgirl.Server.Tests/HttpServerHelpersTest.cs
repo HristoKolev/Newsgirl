@@ -1,6 +1,7 @@
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -81,7 +82,7 @@ namespace Newsgirl.Server.Tests
             {
                 using var dataHandle = await context.Request.ReadToEnd();
                 context.Response.StatusCode = 200;
-                await context.Response.Body.WriteAsync(dataHandle.AsMemory());
+                await context.Response.Body.WriteAsync(dataHandle.Memory);
             }
 
             await using (var tester = await HttpServerTester.Create(Handler))
@@ -195,6 +196,43 @@ namespace Newsgirl.Server.Tests
 
                 Snapshot.MatchError(exception);
             }
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(100)]
+        [InlineData(1023)]
+        [InlineData(1024)]
+        [InlineData(1025)]
+        [InlineData(2047)]
+        [InlineData(2048)]
+        [InlineData(2049)]
+        [InlineData(1024 * 100)]
+        public async Task ReadUnknownSizeStream_works_with_different_sizes(int numberOfBytes)
+        {
+            static byte[] GetRandomBytes(int length)
+            {
+                var random = new Random(123);
+                var array = new byte[length];
+
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = (byte) random.Next(0, byte.MaxValue + 1);
+                }
+
+                return array;
+            }
+
+            var data = GetRandomBytes(numberOfBytes);
+
+            Stream memoryStream = new MemoryStream(data);
+
+            var read = await memoryStream.ReadUnknownSizeStream();
+
+            var actualSequence = read.Memory.ToArray();
+
+            AssertExt.SequentialEqual(data, actualSequence);
         }
     }
 }

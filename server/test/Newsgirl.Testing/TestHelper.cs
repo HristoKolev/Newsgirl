@@ -276,13 +276,16 @@ namespace Newsgirl.Testing
 
     public static class AssertExt
     {
-        public static void SequentialEqual<T>(IList<T> expected, IList<T> actual)
+        public static void SequentialEqual<T>(IList<T> expectedSequence, IList<T> actualSequence)
         {
-            Assert.Equal(expected.Count, actual.Count);
+            Assert.Equal(expectedSequence.Count, actualSequence.Count);
 
-            for (int i = 0; i < expected.Count; i++)
+            for (int i = 0; i < expectedSequence.Count; i++)
             {
-                Assert.Equal(expected[i], actual[i]);
+                T expected = expectedSequence[i];
+                T actual = actualSequence[i];
+
+                Assert.Equal(expected, actual);
             }
         }
     }

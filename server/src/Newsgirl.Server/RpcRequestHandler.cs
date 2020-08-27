@@ -1,6 +1,7 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Buffers;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
@@ -32,7 +33,7 @@ namespace Newsgirl.Server
         private readonly ILog log;
 
         private HttpContext httpContext;
-        private RentedBuffer requestBody;
+        private IMemoryOwner<byte> requestBody;
         private RpcRequestMessage rpcRequest;
         private RpcResult<object> rpcResponse;
         private DateTime requestStart;
@@ -122,7 +123,7 @@ namespace Newsgirl.Server
             {
                 this.requestBody = await this.httpContext.Request.ReadToEnd();
 
-                if (this.requestBody.Length == 0)
+                if (this.requestBody.Memory.Length == 0)
                 {
                     throw new ApplicationException("The request has an empty body.");
                 }
@@ -181,13 +182,13 @@ namespace Newsgirl.Server
         /// <summary>
         /// Reads RpcRequestMessage from the HTTP request body.
         /// </summary>
-        private static RpcRequestMessage DeserializeRequestMessage(RentedBuffer requestBody, RpcRequestMetadata metadata)
+        private static RpcRequestMessage DeserializeRequestMessage(IMemoryOwner<byte> requestBody, RpcRequestMetadata metadata)
         {
             try
             {
                 var deserializeType = GenericRpcModelTable.GetOrAdd(metadata.RequestType, x => typeof(RpcRequestMessageDto<>).MakeGenericType(x));
 
-                var payloadAndHeaders = JsonSerializer.Deserialize(requestBody.AsSpan(), deserializeType, SerializationOptions);
+                var payloadAndHeaders = JsonSerializer.Deserialize(requestBody.Memory.Span, deserializeType, SerializationOptions);
 
                 var rpcRequestMessage = CopyData(payloadAndHeaders);
 
@@ -298,7 +299,7 @@ namespace Newsgirl.Server
         // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
         public HttpLogData(HttpContext context,
-            RentedBuffer requestBody,
+            IMemoryOwner<byte> requestBody,
             RpcRequestMessage rpcRequest,
             RpcResult<object> rpcResponse,
             bool requestFailed,
@@ -322,7 +323,7 @@ namespace Newsgirl.Server
 
             if (requestBody != null)
             {
-                this.HttpRequestBodyBase64 = Convert.ToBase64String(requestBody.AsSpan());
+                this.HttpRequestBodyBase64 = Convert.ToBase64String(requestBody.Memory.Span);
             }
 
             if (rpcRequest != null)
