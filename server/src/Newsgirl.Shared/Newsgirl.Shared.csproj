@@ -16,6 +16,7 @@
     <PackageReference Include="PgNet" Version="1.0.12" />
     <PackageReference Include="Sentry" Version="2.1.6" />
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="6.1.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="3.1.7" />
   </ItemGroup>
 
 </Project>
