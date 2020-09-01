@@ -3,6 +3,7 @@ namespace Newsgirl.Server.Tests
     using System.IO;
     using System.Net.Http;
     using System.Threading.Tasks;
+    using Http;
     using Microsoft.AspNetCore.Http;
     using Shared;
     using Xunit;

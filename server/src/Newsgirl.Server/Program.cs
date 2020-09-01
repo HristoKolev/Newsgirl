@@ -7,6 +7,7 @@ namespace Newsgirl.Server
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
+    using Http;
     using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
     using Shared;
@@ -352,7 +353,7 @@ namespace Newsgirl.Server
 
             async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
             {
-                await app.ErrorReporter.Error(e.Exception?.InnerException);
+                await app.ErrorReporter.Error(e.Exception.InnerException);
             }
 
             async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

@@ -1,4 +1,4 @@
-namespace Newsgirl.Server
+namespace Newsgirl.Server.Http
 {
     using System;
     using System.Buffers;
@@ -281,7 +281,7 @@ namespace Newsgirl.Server
             const string RPC_ROUTE_PATH = "/rpc/";
 
             if (requestPath.HasValue
-                && requestPath.Value.StartsWith(RPC_ROUTE_PATH)
+                && requestPath.Value!.StartsWith(RPC_ROUTE_PATH)
                 && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
             {
                 string requestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length);

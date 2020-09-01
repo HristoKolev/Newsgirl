@@ -4,6 +4,7 @@ namespace Newsgirl.Server.Tests
     using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
+    using Http;
     using Microsoft.AspNetCore.Http;
 
     /// <summary>

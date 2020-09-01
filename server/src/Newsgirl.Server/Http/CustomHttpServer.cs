@@ -1,4 +1,4 @@
-namespace Newsgirl.Server
+namespace Newsgirl.Server.Http
 {
     using System;
     using System.Buffers;

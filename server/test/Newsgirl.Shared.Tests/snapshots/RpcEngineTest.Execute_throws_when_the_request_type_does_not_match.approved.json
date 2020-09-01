@@ -8,7 +8,7 @@
     "RemoteStackIndex": 0,
     "ExceptionMethod": null,
     "HResult": -2147467262,
-    "Source": "DynamicAssembly+ReflectionEmmitHelper",
+    "Source": "System.Private.CoreLib",
     "WatsonBuckets": null
   }
 ]
