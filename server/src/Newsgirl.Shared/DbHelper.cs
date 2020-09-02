@@ -4,7 +4,7 @@ namespace Newsgirl.Shared
     using System.Threading;
     using System.Threading.Tasks;
     using Npgsql;
-    using PgNet;
+    using Postgres;
 
     public static class DbFactory
     {

@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "generators", "generators", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpcCodeGenerator", "..\generators\RpcCodeGenerator\RpcCodeGenerator.csproj", "{50973F2A-5B65-47E7-BD16-2F62F609DFBD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PocoCodeGenerator", "generators\PocoCodeGenerator\PocoCodeGenerator.csproj", "{AE960BEE-C154-4012-8176-C6DDA1D273F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{50973F2A-5B65-47E7-BD16-2F62F609DFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50973F2A-5B65-47E7-BD16-2F62F609DFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50973F2A-5B65-47E7-BD16-2F62F609DFBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE960BEE-C154-4012-8176-C6DDA1D273F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE960BEE-C154-4012-8176-C6DDA1D273F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE960BEE-C154-4012-8176-C6DDA1D273F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE960BEE-C154-4012-8176-C6DDA1D273F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,5 +94,6 @@ Global
 		{90818C21-8E03-4D11-B05C-0A26B6D841EF} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
 		{3B9328D8-D132-49FC-976C-81F24C160277} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
 		{50973F2A-5B65-47E7-BD16-2F62F609DFBD} = {A85B23BC-64B2-4955-B6E6-B672F0C0C516}
+		{AE960BEE-C154-4012-8176-C6DDA1D273F1} = {A85B23BC-64B2-4955-B6E6-B672F0C0C516}
 	EndGlobalSection
 EndGlobal

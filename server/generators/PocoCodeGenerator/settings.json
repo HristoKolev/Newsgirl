@@ -1,0 +1,5 @@
+{
+  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
+  "OutputPath": "../../../../../../server/src/Newsgirl.Shared/Poco.cs",
+  "Namespace": "Newsgirl.Shared"
+}

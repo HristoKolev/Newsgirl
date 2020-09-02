@@ -10,7 +10,7 @@ namespace Newsgirl.Shared
 
     using NpgsqlTypes;
 
-    using PgNet;
+    using Postgres;
 
     /// <summary>
     /// <para>Table name: 'feed_items'.</para>

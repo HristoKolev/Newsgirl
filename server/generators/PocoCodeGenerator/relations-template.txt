@@ -1,0 +1,254 @@
+@inherits TemplateBase<PocoTemplateContext>
+// ReSharper disable InconsistentNaming
+// ReSharper disable BitwiseOperatorOnEnumWithoutFlags
+@using System.Linq;
+namespace @Model.Namespace
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using LinqToDB;
+    using LinqToDB.Mapping;
+
+    using NpgsqlTypes;
+
+    using Postgres;
+
+@foreach (var table in Model.Tables)
+{
+    @:/// <summary>
+    @:/// <para>Table name: '@table.TableName'.</para>
+    @:/// <para>Table schema: '@table.TableSchema'.</para>
+    @:/// </summary>
+    @:[Table(Schema="@table.TableSchema", Name = "@table.TableName")]
+    @:public class @(table.ClassName)Poco : @(table.IsView ? $"IReadOnlyPoco<{table.ClassName}Poco>" : $"IPoco<{table.ClassName}Poco>")
+    @:{
+    @foreach(var column in table.Columns)
+    {
+        @:/// <summary>
+        @foreach(var commentLine in column.Comments)
+        {
+        @:/// <para>@commentLine</para>
+        }
+        @:/// <para>Column name: '@column.ColumnName'.</para>
+        @:/// <para>Table name: '@column.TableName'.</para>
+        @if (column.IsPrimaryKey) {
+        @:/// <para>Primary key of table: '@column.TableName'.</para>
+        @:/// <para>Primary key constraint name: '@column.PrimaryKeyConstraintName'.</para>
+        }
+        @if (column.IsForeignKey) {
+        @:/// <para>Foreign key column [@(column.TableSchema).@(column.TableName).@(column.ColumnName) -> @(column.ForeignKeyReferenceSchemaName).@(column.ForeignKeyReferenceTableName).@(column.ForeignKeyReferenceColumnName)].</para>
+        @:/// <para>Foreign key constraint name: '@(column.ForeignKeyConstraintName)'.</para>
+        }
+        @:/// <para>This column is @(!column.PropertyType.IsNullable ? "not " : "")nullable.</para>
+        @:/// <para>PostgreSQL data type: '@(column.PropertyType.DbDataType)'.</para>
+        @:/// <para>NpgsqlDbType: '@(column.PropertyType.NpgsqlDbTypeName)'.</para>
+        @:/// <para>CLR type: '@(column.PropertyType.ClrTypeName)'.</para>
+        @:/// <para>linq2db data type: '@(column.PropertyType.Linq2DbDataTypeName)'.</para>
+        @:/// </summary>
+        @:@(column.IsPrimaryKey ? "[PrimaryKey, Identity]" : (column.PropertyType.IsNullable ? "[Nullable]" : "[NotNull]"))
+        @:[Column(Name = "@column.ColumnName", DataType = @column.PropertyType.Linq2DbDataTypeName)]
+        @:public @column.PropertyType.ClrTypeName @column.PropertyName { get; set; }
+@:
+    }
+        @:public static TableMetadataModel<@(table.ClassName)Poco> Metadata => @(Model.MetadataClassName).@(table.ClassName)PocoMetadata;
+    @:}
+@:
+}
+    public class @(Model.PocoClassName) : IDbPocos<@(Model.PocoClassName)>
+    {
+    @foreach (var table in Model.Tables)
+    {
+        @:/// <summary>
+        @:/// <para>Database table '@(table.TableName)'.</para>
+        @:/// </summary>
+        @:public IQueryable<@(table.ClassName)Poco> @(table.PluralClassName) => this.LinqProvider.GetTable<@(table.ClassName)Poco>();
+@:
+    }
+
+    @foreach (var function in Model.Functions)
+    {
+        @:/// <summary>
+        @:/// <para>Database function '@(function.FunctionName)'.</para>
+        @foreach(var commentLine in function.Comments)
+        {
+        @:/// <para>@commentLine</para>
+        }
+        @:/// </summary>
+        @:[Sql.Function(ServerSideOnly = true, Name = "@(function.FunctionName)")]
+        @:public static @(function.FunctionReturnType.ClrNullableTypeName) @(function.MethodName)(@(string.Join(", ", function.FunctionArguments.Select(x => $"{x.Value.ClrNullableTypeName} {x.Key}")))) => throw new NotImplementedException();        
+@:
+    }
+        public ILinqProvider LinqProvider { private get; set; }
+    }
+
+    public class @(Model.MetadataClassName) : IDbMetadata
+    {
+    @foreach (var table in Model.Tables)
+    {
+        @:internal static TableMetadataModel<@(table.ClassName)Poco> @(table.ClassName)PocoMetadata;
+@:
+    }
+        internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>(); 
+            
+        private static readonly object InitLock = new object();
+
+        private static bool Initialized;
+
+        // ReSharper disable once FunctionComplexityOverflow
+        // ReSharper disable once CyclomaticComplexity
+        private static void InitializeInternal()
+        {
+            @foreach (var table in Model.Tables)
+            {
+            @:@(table.ClassName)PocoMetadata = new TableMetadataModel<@(table.ClassName)Poco>
+            @:{
+                @:ClassName = "@(table.ClassName)",
+                @:PluralClassName = "@(table.PluralClassName)",
+                @:TableName = "@(table.TableName)",
+                @:TableSchema = "@(table.TableSchema)",
+                @if(!table.IsView)
+                {
+                @:PrimaryKeyColumnName = "@(table.PrimaryKeyColumnName)",
+                @:PrimaryKeyPropertyName = "@(table.PrimaryKeyPropertyName)",
+                @:GetPrimaryKey = (instance) => instance.@(table.PrimaryKeyPropertyName),
+                @:SetPrimaryKey = (instance, val) => instance.@(table.PrimaryKeyPropertyName) = val,
+                @:IsNew = (instance) => instance.@(table.PrimaryKeyPropertyName) == default,
+                }
+                @:Columns = new List<ColumnMetadataModel>
+                @:{
+                    @foreach(var column in table.Columns)
+                    {
+                    @:new ColumnMetadataModel
+                    @:{
+                        @:ColumnComment = "@(column.ColumnComment)" == string.Empty ? null : "@(column.ColumnComment)",
+                        @:Comments = "@(column.ColumnComment)".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        @:ColumnName = "@(column.ColumnName)",
+                        @:DbDataType = "@(column.PropertyType.DbDataType)",
+                        @:IsNullable = bool.Parse("@(column.PropertyType.IsNullable)"),
+                        @:IsPrimaryKey = bool.Parse("@(column.IsPrimaryKey)"),
+                        @:PrimaryKeyConstraintName = "@(column.PrimaryKeyConstraintName)" == string.Empty ? null : "@(column.PrimaryKeyConstraintName)",
+                        @:IsForeignKey = bool.Parse("@(column.IsForeignKey)"),
+                        @:ForeignKeyConstraintName = "@(column.ForeignKeyConstraintName)" == string.Empty ? null : "@(column.ForeignKeyConstraintName)",
+                        @:ForeignKeyReferenceColumnName = "@(column.ForeignKeyReferenceColumnName)" == string.Empty ? null : "@(column.ForeignKeyReferenceColumnName)",
+                        @:ForeignKeyReferenceSchemaName = "@(column.ForeignKeyReferenceSchemaName)" == string.Empty ? null : "@(column.ForeignKeyReferenceSchemaName)",
+                        @:ForeignKeyReferenceTableName = "@(column.ForeignKeyReferenceTableName)" == string.Empty ? null : "@(column.ForeignKeyReferenceTableName)",
+                        @:PropertyName = "@(column.PropertyName)",
+                        @:TableName = "@(column.TableName)",
+                        @:TableSchema = "@(column.TableSchema)",
+                        @:PropertyType = new SimpleType
+                        @:{
+                            @:ClrTypeName = "@(column.PropertyType.ClrTypeName)",
+                            @:ClrType = typeof(@(column.PropertyType.ClrTypeName)),
+                            @:ClrNonNullableTypeName = "@(column.PropertyType.ClrNonNullableTypeName)",
+                            @:ClrNonNullableType = typeof(@(column.PropertyType.ClrNonNullableTypeName)),
+                            @:ClrNullableTypeName = "@(column.PropertyType.ClrNullableTypeName)",
+                            @:ClrNullableType = typeof(@(column.PropertyType.ClrNullableTypeName)),
+                            @:DbDataType = "@(column.PropertyType.DbDataType)",
+                            @:IsNullable = bool.Parse("@(column.PropertyType.IsNullable)"),
+                            @:IsClrValueType = bool.Parse("@(column.PropertyType.IsClrValueType)"),
+                            @:IsClrNullableType = bool.Parse("@(column.PropertyType.IsClrNullableType)"),
+                            @:IsClrReferenceType = bool.Parse("@(column.PropertyType.IsClrReferenceType)"),
+                            @:Linq2DbDataTypeName = "@(column.PropertyType.Linq2DbDataTypeName)",
+                            @:Linq2DbDataType = @(column.PropertyType.Linq2DbDataTypeName),
+                            @:NpgsqlDbTypeName = "@(column.PropertyType.NpgsqlDbTypeName)",
+                            @:NpgsqlDbType = @(column.PropertyType.NpgsqlDbTypeName),
+                        @:}
+                    @:},
+                    }
+                @:}
+            @:};
+@:
+            @:@(table.ClassName)PocoMetadata.Clone = DbCodeGenerator.GetClone<@(table.ClassName)Poco>();
+            @if(!table.IsView)
+            {
+            @:@(table.ClassName)PocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(@(table.ClassName)PocoMetadata);
+            @:@(table.ClassName)PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(@(table.ClassName)PocoMetadata);
+            @:@(table.ClassName)PocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(@(table.ClassName)PocoMetadata);
+            @:@(table.ClassName)PocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(@(table.ClassName)PocoMetadata);
+            }
+@:
+            }
+
+            @foreach (var function in Model.Functions)
+            {
+            @:Functions.Add(new FunctionMetadataModel
+            @:{
+                @:SchemaName = "@(function.SchemaName)" == string.Empty ? null : "@(function.SchemaName)",
+                @:FunctionName = "@(function.FunctionName)" == string.Empty ? null : "@(function.FunctionName)",
+                @:MethodName = "@(function.MethodName)" == string.Empty ? null : "@(function.MethodName)",
+                @:FunctionReturnTypeName = "@(function.FunctionReturnTypeName)" == string.Empty ? null : "@(function.FunctionReturnTypeName)",
+                @:FunctionComment = "@(function.FunctionComment)" == string.Empty ? null : "@(function.FunctionComment)",
+                @:FunctionArgumentsAsString = "@(function.FunctionArgumentsAsString)" == string.Empty ? null : "@(function.FunctionArgumentsAsString)",
+                @:FunctionReturnType = new SimpleType
+                @:{
+                    @:ClrTypeName = "@(function.FunctionReturnType.ClrTypeName)",
+                    @:ClrType = typeof(@(function.FunctionReturnType.ClrTypeName)),
+                    @:ClrNonNullableTypeName = "@(function.FunctionReturnType.ClrNonNullableTypeName)",
+                    @:ClrNonNullableType = typeof(@(function.FunctionReturnType.ClrNonNullableTypeName)),
+                    @:ClrNullableTypeName = "@(function.FunctionReturnType.ClrNullableTypeName)",
+                    @:ClrNullableType = typeof(@(function.FunctionReturnType.ClrNullableTypeName)),
+                    @:DbDataType = "@(function.FunctionReturnType.DbDataType)",
+                    @:IsNullable = bool.Parse("@(function.FunctionReturnType.IsNullable)"),
+                    @:IsClrValueType = bool.Parse("@(function.FunctionReturnType.IsClrValueType)"),
+                    @:IsClrNullableType = bool.Parse("@(function.FunctionReturnType.IsClrNullableType)"),
+                    @:IsClrReferenceType = bool.Parse("@(function.FunctionReturnType.IsClrReferenceType)"),
+                    @:Linq2DbDataTypeName = "@(function.FunctionReturnType.Linq2DbDataTypeName)",
+                    @:Linq2DbDataType = @(function.FunctionReturnType.Linq2DbDataTypeName),
+                    @:NpgsqlDbTypeName = "@(function.FunctionReturnType.NpgsqlDbTypeName)",
+                    @:NpgsqlDbType = @(function.FunctionReturnType.NpgsqlDbTypeName),
+                @:},
+                @:FunctionArguments = new Dictionary<string, SimpleType>
+                @:{
+                    @foreach(var pair in function.FunctionArguments)
+                    {
+                    @:{ "@pair.Key", new SimpleType 
+                    @:{
+                        @:ClrTypeName = "@(pair.Value.ClrTypeName)",
+                        @:ClrType = typeof(@(pair.Value.ClrTypeName)),
+                        @:ClrNonNullableTypeName = "@(pair.Value.ClrNonNullableTypeName)",
+                        @:ClrNonNullableType = typeof(@(pair.Value.ClrNonNullableTypeName)),
+                        @:ClrNullableTypeName = "@(pair.Value.ClrNullableTypeName)",
+                        @:ClrNullableType = typeof(@(pair.Value.ClrNullableTypeName)),
+                        @:DbDataType = "@(pair.Value.DbDataType)",
+                        @:IsNullable = bool.Parse("@(pair.Value.IsNullable)"),
+                        @:IsClrValueType = bool.Parse("@(pair.Value.IsClrValueType)"),
+                        @:IsClrNullableType = bool.Parse("@(pair.Value.IsClrNullableType)"),
+                        @:IsClrReferenceType = bool.Parse("@(pair.Value.IsClrReferenceType)"),
+                        @:Linq2DbDataTypeName = "@(pair.Value.Linq2DbDataTypeName)",
+                        @:Linq2DbDataType = @(pair.Value.Linq2DbDataTypeName),
+                        @:NpgsqlDbTypeName = "@(pair.Value.NpgsqlDbTypeName)",
+                        @:NpgsqlDbType = @(pair.Value.NpgsqlDbTypeName),
+                    @:}},
+                    }
+                @:},
+            @:});
+            }
+        }
+
+        public static void Initialize()
+        {
+            if(Initialized)
+            {
+                return;
+            }
+
+            lock(InitLock)
+            {
+                if(Initialized)
+                {
+                    return;
+                }
+
+                InitializeInternal();
+
+                Initialized = true;
+            }
+        }
+
+        static @(Model.MetadataClassName)()
+        {
+            Initialize();
+        }
+    }
+}
