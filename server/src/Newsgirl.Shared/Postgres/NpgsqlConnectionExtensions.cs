@@ -8,12 +8,11 @@ namespace Newsgirl.Shared.Postgres
     using Npgsql;
     using NpgsqlTypes;
 
-    public static class ConnectionExtensions
+    public static class NpgsqlConnectionExtensions
     {
         /// <summary>
         /// The default parameter type map that is used when creating parameters without specifying the NpgsqlDbType explicitly.
         /// </summary>
-        // ReSharper disable once StaticMemberInGenericType
         private static readonly Dictionary<Type, NpgsqlDbType> DefaultNpgsqlDbTypeMap = new Dictionary<Type, NpgsqlDbType>
         {
             {typeof(int), NpgsqlDbType.Integer},
@@ -34,11 +33,9 @@ namespace Newsgirl.Shared.Postgres
             {typeof(short?), NpgsqlDbType.Smallint},
             {typeof(decimal?), NpgsqlDbType.Numeric},
             {typeof(DateTime?), NpgsqlDbType.Timestamp},
-            // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
             {typeof(string[]), NpgsqlDbType.Array | NpgsqlDbType.Text},
             {typeof(int[]), NpgsqlDbType.Array | NpgsqlDbType.Integer},
             {typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp},
-            // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
         };
 
         public static async Task<int> ExecuteNonQuery(
@@ -64,7 +61,7 @@ namespace Newsgirl.Shared.Postgres
 
             await VerifyConnectionState(connection, cancellationToken);
 
-            using (var command = CreateCommand(connection, sql, parameters))
+            await using (var command = CreateCommand(connection, sql, parameters))
             {
                 await command.PrepareAsync(cancellationToken);
 
@@ -95,7 +92,7 @@ namespace Newsgirl.Shared.Postgres
 
             await VerifyConnectionState(connection, cancellationToken);
 
-            using (var command = CreateCommand(connection, sql, parameters))
+            await using (var command = CreateCommand(connection, sql, parameters))
             {
                 await command.PrepareAsync(cancellationToken);
 
@@ -170,7 +167,7 @@ namespace Newsgirl.Shared.Postgres
 
             var result = new List<T>();
 
-            using (var command = CreateCommand(connection, sql, parameters))
+            await using (var command = CreateCommand(connection, sql, parameters))
             {
                 await command.PrepareAsync(cancellationToken);
 
@@ -179,12 +176,10 @@ namespace Newsgirl.Shared.Postgres
                     var setters = DbCodeGenerator.GenerateSetters<T>();
 
                     // cached field count - I know it pointless, but I feel better by having it cached here.
-                    int fieldCount = reader.FieldCount;
 
-                    // cached setters for the result type
-                    var settersByColumnOrder = new Action<T, object>[fieldCount];
+                    var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
 
-                    for (int i = 0; i < fieldCount; i++)
+                    for (int i = 0; i < reader.FieldCount; i++)
                     {
                         settersByColumnOrder[i] = setters[reader.GetName(i)];
                     }
@@ -193,10 +188,9 @@ namespace Newsgirl.Shared.Postgres
                     {
                         var instance = new T();
 
-                        for (int i = 0; i < fieldCount; i++)
+                        for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            // ReSharper disable once AsyncConverter.CanBeUseAsyncMethodHighlighting
-                            if (reader.IsDBNull(i))
+                            if (await reader.IsDBNullAsync(i, cancellationToken))
                             {
                                 settersByColumnOrder[i](instance, null);
                             }
@@ -238,7 +232,7 @@ namespace Newsgirl.Shared.Postgres
 
             await VerifyConnectionState(connection, cancellationToken);
 
-            using (var command = CreateCommand(connection, sql, parameters))
+            await using (var command = CreateCommand(connection, sql, parameters))
             {
                 await command.PrepareAsync(cancellationToken);
 
@@ -259,8 +253,7 @@ namespace Newsgirl.Shared.Postgres
                     {
                         var setter = setters[reader.GetName(i)];
 
-                        // ReSharper disable once AsyncConverter.CanBeUseAsyncMethodHighlighting
-                        if (reader.IsDBNull(i))
+                        if (await reader.IsDBNullAsync(i, cancellationToken))
                         {
                             setter(instance, null);
                         }
@@ -289,7 +282,7 @@ namespace Newsgirl.Shared.Postgres
         {
             await VerifyConnectionState(connection, cancellationToken);
 
-            await using (var transaction = connection.BeginTransaction())
+            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
                 if (cancellationToken == default)
                 {
@@ -327,7 +320,7 @@ namespace Newsgirl.Shared.Postgres
         {
             await VerifyConnectionState(connection, cancellationToken);
 
-            await using (var transaction = connection.BeginTransaction())
+            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
                 if (cancellationToken == default)
                 {
@@ -355,10 +348,7 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        public static NpgsqlParameter CreateParameter<T>(
-            this NpgsqlConnection connection,
-            string parameterName,
-            T value)
+        public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)
         {
             NpgsqlDbType dbType;
 
@@ -393,6 +383,16 @@ namespace Newsgirl.Shared.Postgres
         public static NpgsqlParameter CreateParameter(this NpgsqlConnection connection, string parameterName, object value)
         {
             return new NpgsqlParameter(parameterName, value);
+        }
+
+        /// <summary>
+        /// Returns a task that will complete when the <see cref="CancellationToken" /> is cancelled.
+        /// </summary>
+        public static Task AsTask(this CancellationToken cancellationToken)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            cancellationToken.Register(() => tcs.TrySetCanceled(), false);
+            return tcs.Task;
         }
 
         /// <summary>

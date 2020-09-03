@@ -1,6 +1,5 @@
 @inherits TemplateBase<PocoTemplateContext>
 // ReSharper disable InconsistentNaming
-// ReSharper disable BitwiseOperatorOnEnumWithoutFlags
 @using System.Linq;
 namespace @Model.Namespace
 {
@@ -82,7 +81,7 @@ namespace @Model.Namespace
         public ILinqProvider LinqProvider { private get; set; }
     }
 
-    public class @(Model.MetadataClassName) : IDbMetadata
+    public class @(Model.MetadataClassName)
     {
     @foreach (var table in Model.Tables)
     {
@@ -91,13 +90,9 @@ namespace @Model.Namespace
     }
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>(); 
             
-        private static readonly object InitLock = new object();
-
-        private static bool Initialized;
-
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
-        private static void InitializeInternal()
+        static @(Model.MetadataClassName)()
         {
             @foreach (var table in Model.Tables)
             {
@@ -224,31 +219,6 @@ namespace @Model.Namespace
                 @:},
             @:});
             }
-        }
-
-        public static void Initialize()
-        {
-            if(Initialized)
-            {
-                return;
-            }
-
-            lock(InitLock)
-            {
-                if(Initialized)
-                {
-                    return;
-                }
-
-                InitializeInternal();
-
-                Initialized = true;
-            }
-        }
-
-        static @(Model.MetadataClassName)()
-        {
-            Initialize();
         }
     }
 }

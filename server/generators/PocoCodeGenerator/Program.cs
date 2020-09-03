@@ -1,6 +1,4 @@
-﻿// ReSharper disable BitwiseOperatorOnEnumWithoutFlags
-
-namespace PocoCodeGenerator
+﻿namespace PocoCodeGenerator
 {
     using System;
     using System.Collections.Concurrent;

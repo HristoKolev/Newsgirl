@@ -1,5 +1,4 @@
 // ReSharper disable InconsistentNaming
-// ReSharper disable BitwiseOperatorOnEnumWithoutFlags
 namespace Newsgirl.Shared
 {
     using System;
@@ -272,7 +271,7 @@ namespace Newsgirl.Shared
         public ILinqProvider LinqProvider { private get; set; }
     }
 
-    public class DbMetadata : IDbMetadata
+    public class DbMetadata
     {
         internal static TableMetadataModel<FeedItemPoco> FeedItemPocoMetadata;
 
@@ -282,13 +281,9 @@ namespace Newsgirl.Shared
 
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>(); 
             
-        private static readonly object InitLock = new object();
-
-        private static bool Initialized;
-
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
-        private static void InitializeInternal()
+        static DbMetadata()
         {
             FeedItemPocoMetadata = new TableMetadataModel<FeedItemPoco>
             {
@@ -963,31 +958,6 @@ namespace Newsgirl.Shared
                     }},
                 },
             });
-        }
-
-        public static void Initialize()
-        {
-            if(Initialized)
-            {
-                return;
-            }
-
-            lock(InitLock)
-            {
-                if(Initialized)
-                {
-                    return;
-                }
-
-                InitializeInternal();
-
-                Initialized = true;
-            }
-        }
-
-        static DbMetadata()
-        {
-            Initialize();
         }
     }
 }
