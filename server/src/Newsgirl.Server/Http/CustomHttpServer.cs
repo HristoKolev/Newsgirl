@@ -62,7 +62,7 @@ namespace Newsgirl.Server.Http
 
                             var addresses = app.ServerFeatures.Get<IServerAddressesFeature>().Addresses.ToArray();
 
-                            lifetime.ApplicationStarted.Register(() => this.Started?.Invoke(addresses));
+                            lifetime!.ApplicationStarted.Register(() => this.Started?.Invoke(addresses));
                             lifetime.ApplicationStopping.Register(() => this.Stopping?.Invoke());
                             lifetime.ApplicationStopped.Register(() => this.Stopped?.Invoke());
 
@@ -83,7 +83,7 @@ namespace Newsgirl.Server.Http
             await this.host.StartAsync();
 
             var server = this.host.Services.GetService<IServer>();
-            var addressesFeature = server.Features.Get<IServerAddressesFeature>();
+            var addressesFeature = server!.Features.Get<IServerAddressesFeature>();
 
             this.boundAddresses = addressesFeature.Addresses.ToArray();
 
@@ -98,7 +98,7 @@ namespace Newsgirl.Server.Http
             var lifetime = this.host.Services.GetService<IHostApplicationLifetime>();
 
             var stoppingFired = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-            lifetime.ApplicationStopping.Register(() => stoppingFired.TrySetResult(null));
+            lifetime!.ApplicationStopping.Register(() => stoppingFired.TrySetResult(null));
             lifetime.StopApplication();
 
             await stoppingFired.Task;

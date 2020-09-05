@@ -15,8 +15,7 @@
     using Npgsql;
     using NpgsqlTypes;
 
-    public class DbService<TPocos> : IDbService<TPocos>
-        where TPocos : IDbPocos<TPocos>, new()
+    public class DbService<TPocos> : IDbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
     {
         private readonly NpgsqlConnection connection;
 
@@ -34,8 +33,7 @@
             };
         }
 
-        public IQueryable<T> GetTable<T>()
-            where T : class, IReadOnlyPoco<T>
+        public IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>
         {
             return this.linqProvider.GetTable<T>();
         }
@@ -100,8 +98,7 @@
             return this.connection.QueryOne<T>(sql, parameters);
         }
 
-        public Task<int> BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public Task<int> BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
             var columns = metadata.Columns;
@@ -187,8 +184,7 @@
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
         }
 
-        public Task<int> Delete<T>(T model, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public Task<int> Delete<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -197,8 +193,7 @@
             return this.Delete<T>(pk, cancellationToken);
         }
 
-        public Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             if (ids.Length == 0)
             {
@@ -221,8 +216,7 @@
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public Task<int> Delete<T>(int id, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public Task<int> Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -240,8 +234,7 @@
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Insert<T>(T model, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public async Task<int> Insert<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -252,8 +245,7 @@
             return pk;
         }
 
-        public Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default)
-            where T : IPoco<T>
+        public Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -305,8 +297,7 @@
             return this.connection.ExecuteScalar<int>(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Save<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>
+        public async Task<int> Save<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -320,8 +311,7 @@
             return metadata.GetPrimaryKey(model);
         }
 
-        public Task<int> Update<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>
+        public Task<int> Update<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -381,8 +371,7 @@
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
         }
 
-        public async Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>, new()
+        public async Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -454,8 +443,7 @@
             return await this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>, new()
+        public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -473,8 +461,7 @@
             return this.connection.QueryOne<T>(sql, parameters, cancellationToken);
         }
 
-        public async Task Copy<T>(IEnumerable<T> pocos)
-            where T : IPoco<T>
+        public async Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
             var columns = metadata.Columns;
@@ -553,14 +540,7 @@
 
         public IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>
         {
-            if (this.linq2Db == null)
-            {
-                this.linq2Db = new DataConnection(
-                    new PostgreSQLDataProvider(),
-                    this.connection,
-                    false
-                );
-            }
+            this.linq2Db ??= new DataConnection(new PostgreSQLDataProvider(), this.connection, false);
 
             return this.linq2Db.GetTable<T>();
         }
@@ -599,7 +579,7 @@
 
             var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
-            return arg => property.GetMethod.Invoke(arg, Array.Empty<object>());
+            return arg => property!.GetMethod!.Invoke(arg, Array.Empty<object>());
         }
 
         private static Action<T, object> GetSetter<T>(string propertyName)
@@ -608,7 +588,7 @@
 
             var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
-            return (obj, value) => property.SetMethod.Invoke(obj, new[] {value});
+            return (obj, value) => property!.SetMethod!.Invoke(obj, new[] {value});
         }
 
         public static Func<T, T> GetClone<T>() where T : new()
@@ -619,8 +599,7 @@
             {
                 var instance = new T();
 
-                foreach (var fieldInfo in instanceType.GetFields(
-                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
+                foreach (var fieldInfo in instanceType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
                 {
                     fieldInfo.SetValue(instance, fieldInfo.GetValue(obj));
                 }
@@ -646,7 +625,7 @@
 
                     list.Add(new NpgsqlParameter
                     {
-                        Value = property.GetValue(poco) ?? DBNull.Value,
+                        Value = property!.GetValue(poco) ?? DBNull.Value,
                         NpgsqlDbType = column.PropertyType.NpgsqlDbType,
                     });
                 }
@@ -673,7 +652,7 @@
                 {
                     var property = pocoType.GetProperty(column.PropertyName);
 
-                    var value = property.GetValue(poco);
+                    var value = property!.GetValue(poco);
 
                     if (value == null)
                     {
@@ -685,18 +664,17 @@
                             ? Nullable.GetUnderlyingType(property.PropertyType)
                             : property.PropertyType;
 
-                        genericWrite.MakeGenericMethod(type)
-                            .Invoke(importer, new[]
-                            {
-                                value, column.PropertyType.NpgsqlDbType,
-                            });
+                        genericWrite.MakeGenericMethod(type!).Invoke(importer, new[]
+                        {
+                            value, column.PropertyType.NpgsqlDbType,
+                        });
                     }
                 }
             };
         }
 
-        public static Func<TPoco, ValueTuple<string[], NpgsqlParameter[]>> GetGetAllColumns<TPoco>(TableMetadataModel<TPoco> metadata)
-            where TPoco : IPoco<TPoco>
+        public static Func<TPoco, ValueTuple<string[], NpgsqlParameter[]>> GetGetAllColumns<TPoco>(
+            TableMetadataModel<TPoco> metadata) where TPoco : IPoco<TPoco>
         {
             var pocoType = typeof(TPoco);
 
@@ -715,7 +693,7 @@
 
                     list.Add(new NpgsqlParameter
                     {
-                        Value = property.GetValue(poco) ?? DBNull.Value,
+                        Value = property!.GetValue(poco) ?? DBNull.Value,
                         NpgsqlDbType = column.PropertyType.NpgsqlDbType,
                     });
                 }
@@ -724,8 +702,8 @@
             };
         }
 
-        public static Func<TPoco, TPoco, ValueTuple<List<string>, List<NpgsqlParameter>>> GetGetColumnChanges<TPoco>(TableMetadataModel<TPoco> metadata)
-            where TPoco : IPoco<TPoco>
+        public static Func<TPoco, TPoco, ValueTuple<List<string>, List<NpgsqlParameter>>> GetGetColumnChanges<TPoco>(
+            TableMetadataModel<TPoco> metadata) where TPoco : IPoco<TPoco>
         {
             var pocoType = typeof(TPoco);
 
@@ -740,8 +718,8 @@
                 {
                     var property = pocoType.GetProperty(column.PropertyName);
 
-                    var value1 = property.GetValue(obj1);
-                    var value2 = property.GetValue(obj2);
+                    var value1 = property!.GetValue(obj1);
+                    var value2 = property!.GetValue(obj2);
 
                     if (!StupidEquals(value1, value2))
                     {
@@ -961,14 +939,12 @@
         /// <summary>
         /// Inserts a record and attaches it's ID to the poco object.
         /// </summary>
-        Task<int> Insert<T>(T model, CancellationToken cancellationToken = default)
-            where T : IPoco<T>;
+        Task<int> Insert<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
         /// Inserts a record and returns its ID.
         /// </summary>
-        Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default)
-            where T : IPoco<T>;
+        Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
         /// Creates a parameter of type T with NpgsqlDbType from the default type map 'defaultNpgsqlDbTypeMap'.
@@ -983,16 +959,14 @@
         /// <summary>
         /// Executes a query and returns objects
         /// </summary>
-        Task<List<T>> Query<T>(string sql, params NpgsqlParameter[] parameters)
-            where T : new();
+        Task<List<T>> Query<T>(string sql, params NpgsqlParameter[] parameters) where T : new();
 
         /// <summary>
         /// Returns one object of type T.
         /// If there are no rows then returns 'null';
         /// If there is more that one row then throws.
         /// </summary>
-        Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters)
-            where T : class, new();
+        Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters) where T : class, new();
 
         /// <summary>
         /// Saves a record to the database.
@@ -1000,27 +974,23 @@
         /// If the primary key value is 0 it inserts the record.
         /// Returns the record's primary key value.
         /// </summary>
-        Task<int> Save<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>;
+        Task<int> Save<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
         /// Updates a record by its ID.
         /// </summary>
-        Task<int> Update<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>;
+        Task<int> Update<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
         /// Updates a record by its ID.
         /// Only updates the changed rows.
         /// </summary>
-        Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>, new();
+        Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new();
 
         /// <summary>
         /// Returns a record by its ID.
         /// </summary>
-        Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default)
-            where T : class, IPoco<T>, new();
+        Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new();
 
         /// <summary>
         /// The database specific API.

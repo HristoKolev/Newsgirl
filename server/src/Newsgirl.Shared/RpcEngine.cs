@@ -163,7 +163,7 @@ namespace Newsgirl.Shared
                     {
                         if (!typeof(RpcMiddleware).IsAssignableFrom(middlewareType))
                         {
-                            throw new DetailedLogException($"Middleware type {middlewareType.Name} does not implement {nameof(RpcMiddleware)}.");
+                            throw new DetailedLogException($"Middleware type {middlewareType!.Name} does not implement {nameof(RpcMiddleware)}.");
                         }
                     }
 
@@ -345,10 +345,10 @@ namespace Newsgirl.Shared
 
             var methodInfo = dynamicType.GetMethod(lastMethod.Name, BindingFlags.NonPublic | BindingFlags.Static);
 
-            var run = methodInfo.CreateDelegate<RpcRequestDelegate>();
+            var run = methodInfo!.CreateDelegate<RpcRequestDelegate>();
 
             var initializeDelegateFields = dynamicType
-                .GetMethod(initializeDelegateFieldsMethod.Name, BindingFlags.NonPublic | BindingFlags.Static)
+                .GetMethod(initializeDelegateFieldsMethod.Name, BindingFlags.NonPublic | BindingFlags.Static)!
                 .CreateDelegate<Action>();
 
             initializeDelegateFields();
@@ -509,6 +509,7 @@ namespace Newsgirl.Shared
     {
         public object Payload { get; set; }
 
+        // ReSharper disable once CollectionNeverUpdated.Global
         public Dictionary<string, string> Headers { get; set; }
 
         public string Type { get; set; }

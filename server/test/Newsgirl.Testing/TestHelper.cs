@@ -282,8 +282,8 @@ namespace Newsgirl.Testing
 
             for (int i = 0; i < expectedSequence.Count; i++)
             {
-                T expected = expectedSequence[i];
-                T actual = actualSequence[i];
+                var expected = expectedSequence[i];
+                var actual = actualSequence[i];
 
                 Assert.Equal(expected, actual);
             }
@@ -416,6 +416,13 @@ namespace Newsgirl.Testing
 
     public abstract class DatabaseTest : IAsyncLifetime
     {
+        private readonly string beforeTestsSqlFileName;
+
+        protected DatabaseTest(string beforeTestsSqlFileName)
+        {
+            this.beforeTestsSqlFileName = beforeTestsSqlFileName;
+        }
+        
         /// <summary>
         /// Called immediately after the class has been created, before it is used.
         /// </summary>
@@ -424,16 +431,16 @@ namespace Newsgirl.Testing
             var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.ConnectionString)
             {
                 Enlist = false,
+                Pooling = false,
             };
 
             this.DbConnection = new NpgsqlConnection(builder.ToString());
             this.Db = new DbService(this.DbConnection);
             this.Tx = await this.Db.BeginTransaction();
 
-            string content = await TestHelper.GetSql("before-tests.sql");
+            string content = await TestHelper.GetSql(this.beforeTestsSqlFileName);
 
-            var parts = content.Split(new[] {"--================================"},
-                StringSplitOptions.RemoveEmptyEntries);
+            var parts = content.Split("--SPLIT_HERE", StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string sql in parts)
             {
@@ -476,6 +483,7 @@ namespace Newsgirl.Testing
         {
             var properties = base.CreateProperties(type, memberSerialization);
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (properties != null)
             {
                 return properties.OrderBy(p => p.UnderlyingName).ToList();
@@ -493,7 +501,7 @@ namespace Newsgirl.Testing
 
             var resourceStream = assembly.GetManifestResourceStream($"{typeof(ResourceHelper).Namespace}.{resourceName}");
 
-            using (var reader = new StreamReader(resourceStream, EncodingHelper.UTF8))
+            using (var reader = new StreamReader(resourceStream!, EncodingHelper.UTF8))
             {
                 return await reader.ReadToEndAsync();
             }

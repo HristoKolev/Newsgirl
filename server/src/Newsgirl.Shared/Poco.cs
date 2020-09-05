@@ -301,7 +301,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -337,7 +337,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_added_time",
                         DbDataType = "timestamp without time zone",
                         IsNullable = bool.Parse("False"),
@@ -373,7 +373,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_description",
                         DbDataType = "text",
                         IsNullable = bool.Parse("True"),
@@ -409,7 +409,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_hash",
                         DbDataType = "bigint",
                         IsNullable = bool.Parse("False"),
@@ -445,7 +445,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -481,7 +481,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_title",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),
@@ -517,7 +517,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_url",
                         DbDataType = "text",
                         IsNullable = bool.Parse("True"),
@@ -575,7 +575,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_content_hash",
                         DbDataType = "bigint",
                         IsNullable = bool.Parse("True"),
@@ -611,7 +611,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -647,7 +647,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_items_hash",
                         DbDataType = "bigint",
                         IsNullable = bool.Parse("True"),
@@ -683,7 +683,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_name",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),
@@ -719,7 +719,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_url",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),
@@ -777,7 +777,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "setting_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -813,7 +813,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "setting_name",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),
@@ -849,7 +849,7 @@ namespace Newsgirl.Shared
                     new ColumnMetadataModel
                     {
                         ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "setting_value",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),

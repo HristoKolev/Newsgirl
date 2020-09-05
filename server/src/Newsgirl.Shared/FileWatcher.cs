@@ -20,7 +20,7 @@ namespace Newsgirl.Shared
 
             var watcher = new FileSystemWatcher
             {
-                Path = Path.GetDirectoryName(filePath),
+                Path = Path.GetDirectoryName(filePath)!,
                 NotifyFilter = NotifyFilters.LastWrite
                                | NotifyFilters.FileName
                                | NotifyFilters.Size

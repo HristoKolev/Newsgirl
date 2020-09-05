@@ -117,7 +117,7 @@ namespace @Model.Namespace
                     @:new ColumnMetadataModel
                     @:{
                         @:ColumnComment = "@(column.ColumnComment)" == string.Empty ? null : "@(column.ColumnComment)",
-                        @:Comments = "@(column.ColumnComment)".Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries),
+                        @:Comments = "@(column.ColumnComment)".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         @:ColumnName = "@(column.ColumnName)",
                         @:DbDataType = "@(column.PropertyType.DbDataType)",
                         @:IsNullable = bool.Parse("@(column.PropertyType.IsNullable)"),

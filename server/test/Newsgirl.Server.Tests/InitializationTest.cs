@@ -1,3 +1,5 @@
+// ReSharper disable AccessToDisposedClosure
+
 namespace Newsgirl.Server.Tests
 {
     using System;
@@ -121,7 +123,7 @@ namespace Newsgirl.Server.Tests
 
         private async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            await this.App.ErrorReporter.Error(e.Exception?.InnerException);
+            await this.App.ErrorReporter.Error(e.Exception.InnerException);
         }
 
         private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

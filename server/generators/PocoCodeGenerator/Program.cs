@@ -122,7 +122,6 @@
                 {"numeric", "decimal"},
                 {"timestamp with time zone", "DateTimeOffset"},
                 {"timestamp without time zone", "DateTime"},
-
                 {"_int8", "long[]"},
                 {"bigint[]", "long[]"},
             };
@@ -163,7 +162,6 @@
                 {"hstore", "DataType.Dictionary"},
                 {"json", "DataType.Json"},
                 {"jsonb", "DataType.BinaryJson"},
-
                 {"_int8", "DataType.Undefined"},
                 {"bigint[]", "DataType.Undefined"},
             };
@@ -218,7 +216,6 @@
                 {"int2vector", NpgsqlDbType.Int2Vector},
                 {"tid", NpgsqlDbType.Tid},
                 {"macaddr8", NpgsqlDbType.MacAddr8},
-
                 {"_int8", NpgsqlDbType.Bigint | NpgsqlDbType.Array},
                 {"bigint[]", NpgsqlDbType.Bigint | NpgsqlDbType.Array},
             };
@@ -229,13 +226,10 @@
                 "int",
                 "long",
                 "char",
-
                 "bool",
-
                 "double",
                 "float",
                 "decimal",
-
                 "DateTime",
                 "DateTimeOffset",
             };
@@ -406,7 +400,7 @@
                     column.IsPrimaryKey = column.PrimaryKeyConstraintName != null;
                     column.IsForeignKey = column.ForeignKeyConstraintName != null;
                     column.Comments = (column.ColumnComment ?? string.Empty)
-                        .Split(new[] {"\r\n"}, StringSplitOptions.RemoveEmptyEntries);
+                        .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
                 }
 
                 if (!table.IsView)
@@ -430,7 +424,7 @@
                 function.FunctionReturnType = new SimpleType(function.FunctionReturnTypeName, true);
                 function.MethodName = CodeGeneratorHelper.GetPropertyName(function.FunctionName);
                 function.Comments = (function.FunctionComment ?? string.Empty)
-                    .Split(new[] {"\r\n"}, StringSplitOptions.RemoveEmptyEntries);
+                    .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
             }
 
             return functions;

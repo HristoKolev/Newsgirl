@@ -170,5 +170,7 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.Match(missingFeedItems);
         }
+
+        public FeedItemsImportServiceTest() : base("before-app-tests.sql") { }
     }
 }

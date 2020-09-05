@@ -15,5 +15,7 @@ namespace Newsgirl.Shared.Tests
 
             Snapshot.Match(settings);
         }
+
+        public SystemSettingsServiceTest() : base("before-app-tests.sql") { }
     }
 }

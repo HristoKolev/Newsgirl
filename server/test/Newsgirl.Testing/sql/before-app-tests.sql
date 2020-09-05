@@ -50,7 +50,7 @@ CREATE FUNCTION get_missing_feed_items(p_feed_id int, p_new_item_hashes bigint[]
 $$
 language SQL stable;
 
---================================
+--SPLIT_HERE
 
 INSERT into public.system_settings(setting_name, setting_value) VALUES
   ('HttpClientUserAgent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36'),

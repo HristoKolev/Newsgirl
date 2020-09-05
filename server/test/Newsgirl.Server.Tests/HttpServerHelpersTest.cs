@@ -133,6 +133,7 @@ namespace Newsgirl.Server.Tests
                     socket.Send(requestBody, 0, requestBody.Length / 2, SocketFlags.None);
                     socket.Close();
 
+                    // ReSharper disable once RedundantAssignment
                     socket = null;
 
                     GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);

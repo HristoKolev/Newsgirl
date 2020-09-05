@@ -92,7 +92,7 @@
 
         private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            await this.ErrorReporter.Error(e.Exception?.InnerException);
+            await this.ErrorReporter.Error(e.Exception.InnerException);
         }
 
         private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)

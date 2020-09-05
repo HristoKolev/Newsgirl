@@ -1,4 +1,11 @@
+// ReSharper disable InconsistentNaming
 // ReSharper disable UnusedVariable
+// ReSharper disable UnusedMember.Global
+// ReSharper disable AccessToModifiedClosure
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnassignedField.Global
+// ReSharper disable NotAccessedVariable
+// ReSharper disable RedundantAssignment
 
 namespace Newsgirl.Benchmarks
 {

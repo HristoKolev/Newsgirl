@@ -219,8 +219,6 @@ banners/
 
 logs/
 
-*.DotSettings
-
 feeds\.sql
 
 *\.received\.json
