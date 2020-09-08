@@ -1,3 +1,7 @@
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedParameter.Global
+
 namespace Newsgirl.Server.Tests
 {
     using System;
@@ -78,6 +82,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.GetAsync("/");
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -102,6 +107,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync($"/rpc/{nameof(IncrementTestRequest)}", new StringContent("not json"));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -126,6 +132,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/rpc/", new StringContent("{}"));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -150,6 +157,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync("/rpc/NotRegisteredRequest", new StringContent("{}"));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -174,6 +182,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(handler))
             {
                 var response = await tester.Client.PostAsync($"/rpc/{nameof(ThrowingTestRequest)}", new StringContent("{ \"payload\": {} }"));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();
@@ -206,6 +215,7 @@ namespace Newsgirl.Server.Tests
                     new StringContent("{ \"payload\": { \"num\": 33 }, \"headers\": { \"rpc-h1\": \"v1\" }  }")
                 );
 
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 responseBody = await response.Content.ReadAsStringAsync();

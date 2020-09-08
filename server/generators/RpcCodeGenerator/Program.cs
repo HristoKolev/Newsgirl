@@ -39,15 +39,15 @@
                 }
 
                 return $"        public Task<RpcResult<{metadata.ResponseType.Name}>> " +
-                       $"{methodName}({metadata.RequestType.Name} request) =>\n" +
-                       $"            this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);";
+                       $"{methodName}({metadata.RequestType.Name} request)\n        {{\n    " +
+                       $"        return this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);\n        }}";
             });
 
             string outputContents = FILE_TEMPLATE.Replace("{methods}", string.Join("\n\n", methods));
 
             string outputFilePath = Path.Combine(
                 Path.GetDirectoryName(typeof(Program).Assembly.Location)!,
-                "../../../../../server/src/Newsgirl.Server/RpcClient.cs"
+                "../../../../../../server/src/Newsgirl.Server/RpcClient.cs"
             );
 
             File.WriteAllText(outputFilePath, outputContents);

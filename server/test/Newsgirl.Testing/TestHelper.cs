@@ -416,13 +416,13 @@ namespace Newsgirl.Testing
 
     public abstract class DatabaseTest : IAsyncLifetime
     {
-        private readonly string beforeTestsSqlFileName;
+        private readonly string stageSqlFileName;
 
-        protected DatabaseTest(string beforeTestsSqlFileName)
+        protected DatabaseTest(string stageSqlFileName)
         {
-            this.beforeTestsSqlFileName = beforeTestsSqlFileName;
+            this.stageSqlFileName = stageSqlFileName;
         }
-        
+
         /// <summary>
         /// Called immediately after the class has been created, before it is used.
         /// </summary>
@@ -438,8 +438,15 @@ namespace Newsgirl.Testing
             this.Db = new DbService(this.DbConnection);
             this.Tx = await this.Db.BeginTransaction();
 
-            string content = await TestHelper.GetSql(this.beforeTestsSqlFileName);
+            await this.ExecuteStageSql();
+        }
 
+        private async Task ExecuteStageSql()
+        {
+            string content = await TestHelper.GetSql(this.stageSqlFileName);
+
+            // This splitting is done to fix a problem (possibly in postgres or npgsql) where if you use a table
+            // immediately after declaring it, it would appear to not be there.
             var parts = content.Split("--SPLIT_HERE", StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string sql in parts)
@@ -461,6 +468,8 @@ namespace Newsgirl.Testing
         public async Task DisposeAsync()
         {
             await this.Tx.RollbackAsync();
+
+            await this.ExecuteStageSql();
 
             await this.DbConnection.DisposeAsync();
 

@@ -175,8 +175,6 @@ namespace Newsgirl.Shared.Postgres
                 {
                     var setters = DbCodeGenerator.GenerateSetters<T>();
 
-                    // cached field count - I know it pointless, but I feel better by having it cached here.
-
                     var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
 
                     for (int i = 0; i < reader.FieldCount; i++)
@@ -206,6 +204,15 @@ namespace Newsgirl.Shared.Postgres
             }
 
             return result;
+        }
+
+        public static Task<List<T>> Query<T>(
+            this NpgsqlConnection connection,
+            string sql,
+            CancellationToken cancellationToken = default)
+            where T : new()
+        {
+            return connection.Query<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
         public static async Task<T> QueryOne<T>(

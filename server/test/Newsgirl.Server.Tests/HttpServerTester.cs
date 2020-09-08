@@ -3,6 +3,7 @@ namespace Newsgirl.Server.Tests
     using System;
     using System.Linq;
     using System.Net.Http;
+    using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
     using Http;
     using Microsoft.AspNetCore.Http;
@@ -68,6 +69,14 @@ namespace Newsgirl.Server.Tests
             tester.Client = client;
 
             return tester;
+        }
+
+        public void EnsureHandlerSuccess()
+        {
+            if (this.Exception != null)
+            {
+                ExceptionDispatchInfo.Capture(this.Exception).Throw();
+            }
         }
     }
 }

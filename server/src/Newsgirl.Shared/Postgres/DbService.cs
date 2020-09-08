@@ -740,9 +740,15 @@
         {
             Dictionary<string, Action<T, object>> ValueFactory(Type type)
             {
-                return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(x => x.SetMethod != null)
-                    .ToDictionary(x => propertyNameToColumnName(x.Name), x => GetSetter<T>(x.Name));
+                var dict = new Dictionary<string, Action<T, object>>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var x in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.SetMethod != null))
+                {
+                    dict.Add(propertyNameToColumnName(x.Name), GetSetter<T>(x.Name));
+                }
+
+                return dict;
+
             }
 
             return (Dictionary<string, Action<T, object>>) GenerateGettersCache.GetOrAdd(typeof(T), ValueFactory);

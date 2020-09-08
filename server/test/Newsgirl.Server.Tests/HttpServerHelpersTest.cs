@@ -33,6 +33,8 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(Handler))
             {
                 var response = await tester.Client.GetAsync("/");
+
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 var responseBodyBytes = await response.Content.ReadAsByteArrayAsync();
@@ -66,6 +68,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(Handler))
             {
                 var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 Assert.Equal(resourceString, str);
@@ -89,6 +92,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(Handler))
             {
                 var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 var responseBody = await response.Content.ReadAsByteArrayAsync();
@@ -167,6 +171,7 @@ namespace Newsgirl.Server.Tests
             await using (var tester = await HttpServerTester.Create(Handler))
             {
                 var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(invalidUtf8));
+                tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 
                 Snapshot.MatchError(exception);

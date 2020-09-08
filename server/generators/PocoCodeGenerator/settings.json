@@ -1,5 +1,10 @@
-{
-  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
-  "OutputPath": "../../../../../../server/src/Newsgirl.Shared/Poco.cs",
-  "Namespace": "Newsgirl.Shared"
-}
+[
+  {
+    "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
+    "OutputPath": "../../../../../../server/src/Newsgirl.Shared/Poco.cs",
+    "Namespace": "Newsgirl.Shared",
+    "PocoClassName": "DbPocos",
+    "MetadataClassName": "DbMetadata",
+    "TemplatePath": "poco-template.txt"
+  }
+]

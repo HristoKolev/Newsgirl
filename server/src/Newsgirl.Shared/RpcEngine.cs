@@ -348,7 +348,7 @@ namespace Newsgirl.Shared
             var run = methodInfo!.CreateDelegate<RpcRequestDelegate>();
 
             var initializeDelegateFields = dynamicType
-                .GetMethod(initializeDelegateFieldsMethod.Name, BindingFlags.NonPublic | BindingFlags.Static)!
+                    .GetMethod(initializeDelegateFieldsMethod.Name, BindingFlags.NonPublic | BindingFlags.Static)!
                 .CreateDelegate<Action>();
 
             initializeDelegateFields();
