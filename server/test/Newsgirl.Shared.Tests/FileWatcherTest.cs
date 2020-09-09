@@ -31,11 +31,11 @@ namespace Newsgirl.Shared.Tests
                 {
                     await File.WriteAllTextAsync(testFilePath, i.ToString());
 
-                    await Task.Delay(5);
+                    await Task.Delay(1);
                 }
             }
 
-            Assert.InRange(changeCount, 1, 3);
+            Assert.InRange(changeCount, 1, 5);
         }
     }
 }

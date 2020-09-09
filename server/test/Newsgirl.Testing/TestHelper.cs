@@ -25,6 +25,7 @@ namespace Newsgirl.Testing
     using NSubstitute;
     using Shared;
     using Shared.Logging;
+    using Shared.Postgres;
     using Xunit;
     using Xunit.Sdk;
 
@@ -128,7 +129,9 @@ namespace Newsgirl.Testing
 
     public class TestConfig
     {
-        public string ConnectionString { get; set; }
+        public string AppTestConnectionString { get; set; }
+
+        public string DbTestConnectionString { get; set; }
     }
 
     public class CustomReporter : IApprovalFailureReporter
@@ -414,13 +417,18 @@ namespace Newsgirl.Testing
         }
     }
 
-    public abstract class DatabaseTest : IAsyncLifetime
+    public abstract class DatabaseTest<TDb, TPocos> : IAsyncLifetime
+        where TDb : DbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
     {
         private readonly string stageSqlFileName;
+        private readonly string connectionString;
+        private readonly Func<NpgsqlConnection, TDb> createDbService;
 
-        protected DatabaseTest(string stageSqlFileName)
+        protected DatabaseTest(string stageSqlFileName, string connectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
             this.stageSqlFileName = stageSqlFileName;
+            this.connectionString = connectionString;
+            this.createDbService = createDbService;
         }
 
         /// <summary>
@@ -428,14 +436,14 @@ namespace Newsgirl.Testing
         /// </summary>
         public async Task InitializeAsync()
         {
-            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.ConnectionString)
+            var builder = new NpgsqlConnectionStringBuilder(this.connectionString)
             {
                 Enlist = false,
                 Pooling = false,
             };
 
             this.DbConnection = new NpgsqlConnection(builder.ToString());
-            this.Db = new DbService(this.DbConnection);
+            this.Db = this.createDbService(this.DbConnection);
             this.Tx = await this.Db.BeginTransaction();
 
             await this.ExecuteStageSql();
@@ -459,7 +467,7 @@ namespace Newsgirl.Testing
 
         protected NpgsqlConnection DbConnection { get; private set; }
 
-        protected DbService Db { get; private set; }
+        protected TDb Db { get; private set; }
 
         /// <summary>
         /// Called when an object is no longer needed. Called just before <see cref="M:System.IDisposable.Dispose" />
@@ -469,12 +477,26 @@ namespace Newsgirl.Testing
         {
             await this.Tx.RollbackAsync();
 
-            await this.ExecuteStageSql();
+            await using (var tx = await this.Db.BeginTransaction())
+            {
+                await this.ExecuteStageSql();
+
+                await tx.CommitAsync();
+            }
 
             await this.DbConnection.DisposeAsync();
 
             this.Db.Dispose();
         }
+    }
+
+    public abstract class AppDatabaseTest : DatabaseTest<DbService, DbPocos>
+    {
+        protected AppDatabaseTest() : base(
+            "before-app-tests.sql",
+            TestHelper.TestConfig.AppTestConnectionString,
+            x => new DbService(x)
+        ) { }
     }
 
     public class SortedPropertiesContractResolver : DefaultContractResolver

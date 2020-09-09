@@ -6,5 +6,21 @@
     "PocoClassName": "DbPocos",
     "MetadataClassName": "DbMetadata",
     "TemplatePath": "poco-template.txt"
+  },
+  {
+    "ConnectionString": "Server=dev-host.lan;Port=4202;Database=test;Uid=test;Pwd=test123",
+    "OutputPath": "../../../../../../server/test/Newsgirl.Shared.Tests/DbTests.cs",
+    "Namespace": "Newsgirl.Shared.Tests",
+    "PocoClassName": "TestDbPocos",
+    "MetadataClassName": "DbMetadata",
+    "TemplatePath": "tests-template.txt"
+  },
+  {
+    "ConnectionString": "Server=dev-host.lan;Port=4202;Database=test;Uid=test;Pwd=test123",
+    "OutputPath": "../../../../../../server/test/Newsgirl.Shared.Tests/TestPocos.cs",
+    "Namespace": "Newsgirl.Shared.Tests",
+    "PocoClassName": "TestDbPocos",
+    "MetadataClassName": "DbMetadata",
+    "TemplatePath": "poco-template.txt"
   }
 ]

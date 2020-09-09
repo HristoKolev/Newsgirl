@@ -1,0 +1,200 @@
+﻿@inherits TemplateBase<PocoTemplateContext>
+@using System.Linq;
+namespace @Model.Namespace
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Postgres;
+    using Xunit;
+
+@foreach(var table in Model.Tables)
+{
+    @:public class @(table.ClassName)Test : TestPocosDatabaseTest
+    @:{
+    if(!table.IsView)
+    {
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:public async Task Crud(@(table.ClassName)Poco poco)
+        @:{
+            @:int id = await this.Db.Insert(poco);
+@:
+            @:var readFromDb = await this.Db.FindByID<@(table.ClassName)Poco>(id);
+@:
+        @foreach(var column in table.Columns)
+        {
+            @:Assert.Equal(poco.@(column.PropertyName), readFromDb.@(column.PropertyName));
+        }
+@:
+            @:int updatedId = await this.Db.Update(poco);
+@:
+            @:Assert.Equal(id, updatedId);
+@:
+            @:await this.Db.Delete(poco);
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
+        @:public async Task BulkInsert(List<@(table.ClassName)Poco> poco)
+        @:{
+            @:await this.Db.BulkInsert(poco);
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
+        @:public void GetColumnChanges(List<@(table.ClassName)Poco> pocos)
+        @:{
+            @:var getColumnChanges = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GetColumnChanges;
+@:
+            @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+@:
+            @:var allColumnNames = new HashSet<string>(columns.Select(x => x.ColumnName));
+@:
+            @:foreach (var (instance1, instance2) in pocos.Zip(Enumerable.Reverse(pocos), (x, y) => (x, y)))
+            @:{
+                @:var (columnNames, parameters) = getColumnChanges(instance1, instance2);
+@:
+                @:Assert.Equal(parameters.Count, columnNames.Count);
+                @:Assert.True(columnNames.Count <= columns.Length);
+@:
+                @:foreach (string columnName in columnNames)
+                @:{
+                    @:Assert.Contains(columnName, allColumnNames);
+                @:}
+@:
+                @:foreach (var column in columns)
+                @:{
+                    @:var getter = getters[column.ColumnName];
+@:
+                    @:var value1 = getter(instance1);
+                    @:var value2 = getter(instance2);
+@:
+                    @:if (DbCodeGenerator.StupidEquals(value1, value2))
+                    @:{
+                        @:Assert.DoesNotContain(column.ColumnName, columnNames);
+                    @:}
+                    @:else
+                    @:{
+                        @:Assert.Contains(column.ColumnName, columnNames);
+                        @:int index = columnNames.IndexOf(column.ColumnName);
+                        @:var parameter = parameters[index];
+@:
+                        @:Assert.Equal(column.PropertyType.NpgsqlDbType, parameter.NpgsqlDbType);
+@:
+                        @:Assert.Equal(value2 ?? DBNull.Value, parameter.Value);
+                    @:}
+                @:}
+            @:}
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:// ReSharper disable once CyclomaticComplexity
+        @:public void GenerateParameters(@(table.ClassName)Poco poco)
+        @:{
+            @:var getParameters = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GenerateParameters;
+@:
+            @:var parameters = getParameters(poco);
+@:
+            @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+@:
+            @:for (int i = 0; i < columns.Length; i++)
+            @:{
+                @:var column = columns[i];
+                @:var getter = getters[column.ColumnName];
+@:
+                @:var parameter = parameters[i];
+@:
+                @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+            @:}
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:// ReSharper disable once CyclomaticComplexity
+        @:public void GetAllColumns(@(table.ClassName)Poco poco)
+        @:{
+            @:var getAllColumns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GetAllColumns;
+@:
+            @:var (columnNames, parameters) = getAllColumns(poco);
+@:
+            @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+@:
+            @:for (int i = 0; i < columns.Length; i++)
+            @:{
+                @:var column = columns[i];
+                @:var getter = getters[column.ColumnName];
+                @:var parameter = parameters[i];
+@:
+                @:Assert.Equal(columnNames[i], column.ColumnName);
+@:
+                @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+            @:}
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
+        @:public Task Copy(List<@(table.ClassName)Poco> pocos)
+        @:{
+            @:return this.Db.Copy(pocos);
+        @:}
+@:
+    }
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:public void Getters(@(table.ClassName)Poco poco)
+        @:{
+            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+@:
+        @foreach(var column in table.Columns)
+        {
+            @:Assert.Equal(poco.@(column.PropertyName), getters["@(column.ColumnName)"](poco));
+        }
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:public void Setters(@(table.ClassName)Poco poco)
+        @:{
+            @:var setters = DbCodeGenerator.GenerateSetters<@(table.ClassName)Poco>();
+@:
+            @:var newObj = new @(table.ClassName)Poco();
+@:
+        @foreach(var column in table.Columns)
+        {
+            @:setters["@(column.ColumnName)"](newObj, poco.@(column.PropertyName));
+            @:Assert.Equal(poco.@(column.PropertyName), newObj.@(column.PropertyName));
+@if(column != table.Columns.Last())
+{
+@:
+}
+        }
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
+        @:public void Clone(@(table.ClassName)Poco poco)
+        @:{
+            @:var clone = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Clone;
+@:
+            @:var newObj = clone(poco);
+@:
+            @:Assert.NotEqual(poco, newObj);
+@:
+        @foreach(var column in table.Columns)
+        {
+            @:Assert.Equal(poco.@(column.PropertyName), newObj.@(column.PropertyName));
+        }
+        @:}
+    @:}
+@if(table != Model.Tables.Last())
+{
+@:
+}
+}
+}

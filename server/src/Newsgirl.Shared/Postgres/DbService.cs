@@ -748,7 +748,6 @@
                 }
 
                 return dict;
-
             }
 
             return (Dictionary<string, Action<T, object>>) GenerateGettersCache.GetOrAdd(typeof(T), ValueFactory);
@@ -860,7 +859,7 @@
             return (TableMetadataModel<TPoco>) GetMetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
         }
 
-        private static bool StupidEquals(object a, object b)
+        public static bool StupidEquals(object a, object b)
         {
             return a != null && (a.GetType().IsValueType || a is string) ? Equals(a, b) : ReferenceEquals(a, b);
         }

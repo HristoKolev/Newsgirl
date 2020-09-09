@@ -1,5 +1,7 @@
 @inherits TemplateBase<PocoTemplateContext>
 // ReSharper disable InconsistentNaming
+// ReSharper disable HeuristicUnreachableCode
+
 @using System.Linq;
 namespace @Model.Namespace
 {
@@ -8,9 +10,7 @@ namespace @Model.Namespace
     using System.Linq;
     using LinqToDB;
     using LinqToDB.Mapping;
-
     using NpgsqlTypes;
-
     using Postgres;
 
 @foreach (var table in Model.Tables)
@@ -19,7 +19,7 @@ namespace @Model.Namespace
     @:/// <para>Table name: '@table.TableName'.</para>
     @:/// <para>Table schema: '@table.TableSchema'.</para>
     @:/// </summary>
-    @:[Table(Schema="@table.TableSchema", Name = "@table.TableName")]
+    @:[Table(Schema = "@table.TableSchema", Name = "@table.TableName")]
     @:public class @(table.ClassName)Poco : @(table.IsView ? $"IReadOnlyPoco<{table.ClassName}Poco>" : $"IPoco<{table.ClassName}Poco>")
     @:{
     @foreach(var column in table.Columns)
@@ -45,7 +45,15 @@ namespace @Model.Namespace
         @:/// <para>CLR type: '@(column.PropertyType.ClrTypeName)'.</para>
         @:/// <para>linq2db data type: '@(column.PropertyType.Linq2DbDataTypeName)'.</para>
         @:/// </summary>
-        @:@(column.IsPrimaryKey ? "[PrimaryKey, Identity]" : (column.PropertyType.IsNullable ? "[Nullable]" : "[NotNull]"))
+@if(column.IsPrimaryKey)
+{
+        @:[PrimaryKey]
+        @:[Identity]
+}
+else
+{
+        @:@(column.PropertyType.IsNullable ? "[Nullable]" : "[NotNull]")
+}        
         @:[Column(Name = "@column.ColumnName", DataType = @column.PropertyType.Linq2DbDataTypeName)]
         @:public @column.PropertyType.ClrTypeName @column.PropertyName { get; set; }
 @:
@@ -62,7 +70,10 @@ namespace @Model.Namespace
         @:/// <para>Database table '@(table.TableName)'.</para>
         @:/// </summary>
         @:public IQueryable<@(table.ClassName)Poco> @(table.PluralClassName) => this.LinqProvider.GetTable<@(table.ClassName)Poco>();
+    @if(table != Model.Tables.Last())
+    {
 @:
+    }
     }
 
     @foreach (var function in Model.Functions)
@@ -74,8 +85,11 @@ namespace @Model.Namespace
         @:/// <para>@commentLine</para>
         }
         @:/// </summary>
-        @:[Sql.Function(ServerSideOnly = true, Name = "@(function.FunctionName)")]
-        @:public static @(function.FunctionReturnType.ClrNullableTypeName) @(function.MethodName)(@(string.Join(", ", function.FunctionArguments.Select(x => $"{x.Value.ClrNullableTypeName} {x.Key}")))) => throw new NotImplementedException();        
+        @:[Sql.FunctionAttribute(ServerSideOnly = true, Name = "@(function.FunctionName)")]
+        @:public static @(function.FunctionReturnType.ClrNullableTypeName) @(function.MethodName)(@(string.Join(", ", function.FunctionArguments.Select(x => $"{x.Value.ClrNullableTypeName} {x.Key}"))))
+        @:{
+            @:throw new NotImplementedException();
+        @:}
 @:
     }
         public ILinqProvider LinqProvider { private get; set; }
@@ -85,11 +99,11 @@ namespace @Model.Namespace
     {
     @foreach (var table in Model.Tables)
     {
-        @:internal static TableMetadataModel<@(table.ClassName)Poco> @(table.ClassName)PocoMetadata;
+        @:internal static readonly TableMetadataModel<@(table.ClassName)Poco> @(table.ClassName)PocoMetadata;
 @:
     }
-        internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>(); 
-            
+        internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
+
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
         static @(Model.MetadataClassName)()
@@ -106,9 +120,9 @@ namespace @Model.Namespace
                 {
                 @:PrimaryKeyColumnName = "@(table.PrimaryKeyColumnName)",
                 @:PrimaryKeyPropertyName = "@(table.PrimaryKeyPropertyName)",
-                @:GetPrimaryKey = (instance) => instance.@(table.PrimaryKeyPropertyName),
+                @:GetPrimaryKey = instance => instance.@(table.PrimaryKeyPropertyName),
                 @:SetPrimaryKey = (instance, val) => instance.@(table.PrimaryKeyPropertyName) = val,
-                @:IsNew = (instance) => instance.@(table.PrimaryKeyPropertyName) == default,
+                @:IsNew = instance => instance.@(table.PrimaryKeyPropertyName) == default,
                 }
                 @:Columns = new List<ColumnMetadataModel>
                 @:{
@@ -148,10 +162,10 @@ namespace @Model.Namespace
                             @:Linq2DbDataType = @(column.PropertyType.Linq2DbDataTypeName),
                             @:NpgsqlDbTypeName = "@(column.PropertyType.NpgsqlDbTypeName)",
                             @:NpgsqlDbType = @(column.PropertyType.NpgsqlDbTypeName),
-                        @:}
+                        @:},
                     @:},
                     }
-                @:}
+                @:},
             @:};
 @:
             @:@(table.ClassName)PocoMetadata.Clone = DbCodeGenerator.GetClone<@(table.ClassName)Poco>();
@@ -162,7 +176,10 @@ namespace @Model.Namespace
             @:@(table.ClassName)PocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(@(table.ClassName)PocoMetadata);
             @:@(table.ClassName)PocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(@(table.ClassName)PocoMetadata);
             }
+    @if(table != Model.Tables.Last())
+    {
 @:
+    }
             }
 
             @foreach (var function in Model.Functions)
@@ -174,7 +191,11 @@ namespace @Model.Namespace
                 @:MethodName = "@(function.MethodName)" == string.Empty ? null : "@(function.MethodName)",
                 @:FunctionReturnTypeName = "@(function.FunctionReturnTypeName)" == string.Empty ? null : "@(function.FunctionReturnTypeName)",
                 @:FunctionComment = "@(function.FunctionComment)" == string.Empty ? null : "@(function.FunctionComment)",
-                @:FunctionArgumentsAsString = "@(function.FunctionArgumentsAsString)" == string.Empty ? null : "@(function.FunctionArgumentsAsString)",
+                @:FunctionArgumentsAsString = "@(function.FunctionArgumentsAsString)" switch
+                @:{
+                    @:"" => null,
+                    @:_ => "@(function.FunctionArgumentsAsString)",
+                @:},
                 @:FunctionReturnType = new SimpleType
                 @:{
                     @:ClrTypeName = "@(function.FunctionReturnType.ClrTypeName)",
@@ -197,24 +218,26 @@ namespace @Model.Namespace
                 @:{
                     @foreach(var pair in function.FunctionArguments)
                     {
-                    @:{ "@pair.Key", new SimpleType 
                     @:{
-                        @:ClrTypeName = "@(pair.Value.ClrTypeName)",
-                        @:ClrType = typeof(@(pair.Value.ClrTypeName)),
-                        @:ClrNonNullableTypeName = "@(pair.Value.ClrNonNullableTypeName)",
-                        @:ClrNonNullableType = typeof(@(pair.Value.ClrNonNullableTypeName)),
-                        @:ClrNullableTypeName = "@(pair.Value.ClrNullableTypeName)",
-                        @:ClrNullableType = typeof(@(pair.Value.ClrNullableTypeName)),
-                        @:DbDataType = "@(pair.Value.DbDataType)",
-                        @:IsNullable = bool.Parse("@(pair.Value.IsNullable)"),
-                        @:IsClrValueType = bool.Parse("@(pair.Value.IsClrValueType)"),
-                        @:IsClrNullableType = bool.Parse("@(pair.Value.IsClrNullableType)"),
-                        @:IsClrReferenceType = bool.Parse("@(pair.Value.IsClrReferenceType)"),
-                        @:Linq2DbDataTypeName = "@(pair.Value.Linq2DbDataTypeName)",
-                        @:Linq2DbDataType = @(pair.Value.Linq2DbDataTypeName),
-                        @:NpgsqlDbTypeName = "@(pair.Value.NpgsqlDbTypeName)",
-                        @:NpgsqlDbType = @(pair.Value.NpgsqlDbTypeName),
-                    @:}},
+                        @:"@pair.Key", new SimpleType
+                        @:{
+                            @:ClrTypeName = "@(pair.Value.ClrTypeName)",
+                            @:ClrType = typeof(@(pair.Value.ClrTypeName)),
+                            @:ClrNonNullableTypeName = "@(pair.Value.ClrNonNullableTypeName)",
+                            @:ClrNonNullableType = typeof(@(pair.Value.ClrNonNullableTypeName)),
+                            @:ClrNullableTypeName = "@(pair.Value.ClrNullableTypeName)",
+                            @:ClrNullableType = typeof(@(pair.Value.ClrNullableTypeName)),
+                            @:DbDataType = "@(pair.Value.DbDataType)",
+                            @:IsNullable = bool.Parse("@(pair.Value.IsNullable)"),
+                            @:IsClrValueType = bool.Parse("@(pair.Value.IsClrValueType)"),
+                            @:IsClrNullableType = bool.Parse("@(pair.Value.IsClrNullableType)"),
+                            @:IsClrReferenceType = bool.Parse("@(pair.Value.IsClrReferenceType)"),
+                            @:Linq2DbDataTypeName = "@(pair.Value.Linq2DbDataTypeName)",
+                            @:Linq2DbDataType = @(pair.Value.Linq2DbDataTypeName),
+                            @:NpgsqlDbTypeName = "@(pair.Value.NpgsqlDbTypeName)",
+                            @:NpgsqlDbType = @(pair.Value.NpgsqlDbTypeName),
+                        @:}
+                    @:},
                     }
                 @:},
             @:});

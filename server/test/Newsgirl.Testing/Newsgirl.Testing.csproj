@@ -25,5 +25,7 @@
     <EmbeddedResource Include="test-config.json" />
     <None Remove="sql\before-app-tests.sql" />
     <EmbeddedResource Include="sql\before-app-tests.sql" />
+    <None Remove="sql\before-db-tests.sql" />
+    <EmbeddedResource Include="sql\before-db-tests.sql" />
   </ItemGroup>
 </Project>

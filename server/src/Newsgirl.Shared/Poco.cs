@@ -1,4 +1,6 @@
 // ReSharper disable InconsistentNaming
+// ReSharper disable HeuristicUnreachableCode
+
 namespace Newsgirl.Shared
 {
     using System;
@@ -6,16 +8,14 @@ namespace Newsgirl.Shared
     using System.Linq;
     using LinqToDB;
     using LinqToDB.Mapping;
-
     using NpgsqlTypes;
-
     using Postgres;
 
     /// <summary>
     /// <para>Table name: 'feed_items'.</para>
     /// <para>Table schema: 'public'.</para>
     /// </summary>
-    [Table(Schema="public", Name = "feed_items")]
+    [Table(Schema = "public", Name = "feed_items")]
     public class FeedItemPoco : IPoco<FeedItemPoco>
     {
         /// <summary>
@@ -83,7 +83,8 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [PrimaryKey, Identity]
+        [PrimaryKey]
+        [Identity]
         [Column(Name = "feed_item_id", DataType = DataType.Int32)]
         public int FeedItemID { get; set; }
 
@@ -120,7 +121,7 @@ namespace Newsgirl.Shared
     /// <para>Table name: 'feeds'.</para>
     /// <para>Table schema: 'public'.</para>
     /// </summary>
-    [Table(Schema="public", Name = "feeds")]
+    [Table(Schema = "public", Name = "feeds")]
     public class FeedPoco : IPoco<FeedPoco>
     {
         /// <summary>
@@ -147,7 +148,8 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [PrimaryKey, Identity]
+        [PrimaryKey]
+        [Identity]
         [Column(Name = "feed_id", DataType = DataType.Int32)]
         public int FeedID { get; set; }
 
@@ -197,7 +199,7 @@ namespace Newsgirl.Shared
     /// <para>Table name: 'system_settings'.</para>
     /// <para>Table schema: 'public'.</para>
     /// </summary>
-    [Table(Schema="public", Name = "system_settings")]
+    [Table(Schema = "public", Name = "system_settings")]
     public class SystemSettingPoco : IPoco<SystemSettingPoco>
     {
         /// <summary>
@@ -211,7 +213,8 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [PrimaryKey, Identity]
+        [PrimaryKey]
+        [Identity]
         [Column(Name = "setting_id", DataType = DataType.Int32)]
         public int SettingID { get; set; }
 
@@ -261,26 +264,28 @@ namespace Newsgirl.Shared
         /// </summary>
         public IQueryable<SystemSettingPoco> SystemSettings => this.LinqProvider.GetTable<SystemSettingPoco>();
 
-
         /// <summary>
         /// <para>Database function 'get_missing_feed_items'.</para>
         /// </summary>
-        [Sql.Function(ServerSideOnly = true, Name = "get_missing_feed_items")]
-        public static long[] GetMissingFeedItems(int? p_feed_id, long[] p_new_item_hashes) => throw new NotImplementedException();        
+        [Sql.FunctionAttribute(ServerSideOnly = true, Name = "get_missing_feed_items")]
+        public static long[] GetMissingFeedItems(int? p_feed_id, long[] p_new_item_hashes)
+        {
+            throw new NotImplementedException();
+        }
 
         public ILinqProvider LinqProvider { private get; set; }
     }
 
     public class DbMetadata
     {
-        internal static TableMetadataModel<FeedItemPoco> FeedItemPocoMetadata;
+        internal static readonly TableMetadataModel<FeedItemPoco> FeedItemPocoMetadata;
 
-        internal static TableMetadataModel<FeedPoco> FeedPocoMetadata;
+        internal static readonly TableMetadataModel<FeedPoco> FeedPocoMetadata;
 
-        internal static TableMetadataModel<SystemSettingPoco> SystemSettingPocoMetadata;
+        internal static readonly TableMetadataModel<SystemSettingPoco> SystemSettingPocoMetadata;
 
-        internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>(); 
-            
+        internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
+
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
         static DbMetadata()
@@ -293,9 +298,9 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "feed_item_id",
                 PrimaryKeyPropertyName = "FeedItemID",
-                GetPrimaryKey = (instance) => instance.FeedItemID,
+                GetPrimaryKey = instance => instance.FeedItemID,
                 SetPrimaryKey = (instance, val) => instance.FeedItemID = val,
-                IsNew = (instance) => instance.FeedItemID == default,
+                IsNew = instance => instance.FeedItemID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -332,7 +337,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int32,
                             NpgsqlDbTypeName = "NpgsqlDbType.Integer",
                             NpgsqlDbType = NpgsqlDbType.Integer,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -368,7 +373,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.DateTime2,
                             NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
                             NpgsqlDbType = NpgsqlDbType.Timestamp,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -404,7 +409,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -440,7 +445,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int64,
                             NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
                             NpgsqlDbType = NpgsqlDbType.Bigint,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -476,7 +481,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int32,
                             NpgsqlDbTypeName = "NpgsqlDbType.Integer",
                             NpgsqlDbType = NpgsqlDbType.Integer,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -512,7 +517,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -548,9 +553,9 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
-                }
+                },
             };
 
             FeedItemPocoMetadata.Clone = DbCodeGenerator.GetClone<FeedItemPoco>();
@@ -567,9 +572,9 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "feed_id",
                 PrimaryKeyPropertyName = "FeedID",
-                GetPrimaryKey = (instance) => instance.FeedID,
+                GetPrimaryKey = instance => instance.FeedID,
                 SetPrimaryKey = (instance, val) => instance.FeedID = val,
-                IsNew = (instance) => instance.FeedID == default,
+                IsNew = instance => instance.FeedID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -606,7 +611,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int64,
                             NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
                             NpgsqlDbType = NpgsqlDbType.Bigint,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -642,7 +647,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int32,
                             NpgsqlDbTypeName = "NpgsqlDbType.Integer",
                             NpgsqlDbType = NpgsqlDbType.Integer,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -678,7 +683,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int64,
                             NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
                             NpgsqlDbType = NpgsqlDbType.Bigint,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -714,7 +719,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -750,9 +755,9 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
-                }
+                },
             };
 
             FeedPocoMetadata.Clone = DbCodeGenerator.GetClone<FeedPoco>();
@@ -769,9 +774,9 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "setting_id",
                 PrimaryKeyPropertyName = "SettingID",
-                GetPrimaryKey = (instance) => instance.SettingID,
+                GetPrimaryKey = instance => instance.SettingID,
                 SetPrimaryKey = (instance, val) => instance.SettingID = val,
-                IsNew = (instance) => instance.SettingID == default,
+                IsNew = instance => instance.SettingID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -808,7 +813,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int32,
                             NpgsqlDbTypeName = "NpgsqlDbType.Integer",
                             NpgsqlDbType = NpgsqlDbType.Integer,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -844,7 +849,7 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
                     new ColumnMetadataModel
                     {
@@ -880,9 +885,9 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        }
+                        },
                     },
-                }
+                },
             };
 
             SystemSettingPocoMetadata.Clone = DbCodeGenerator.GetClone<SystemSettingPoco>();
@@ -891,7 +896,6 @@ namespace Newsgirl.Shared
             SystemSettingPocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(SystemSettingPocoMetadata);
             SystemSettingPocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(SystemSettingPocoMetadata);
 
-
             Functions.Add(new FunctionMetadataModel
             {
                 SchemaName = "public" == string.Empty ? null : "public",
@@ -899,7 +903,11 @@ namespace Newsgirl.Shared
                 MethodName = "GetMissingFeedItems" == string.Empty ? null : "GetMissingFeedItems",
                 FunctionReturnTypeName = "_int8" == string.Empty ? null : "_int8",
                 FunctionComment = "" == string.Empty ? null : "",
-                FunctionArgumentsAsString = "p_feed_id integer, p_new_item_hashes bigint[]" == string.Empty ? null : "p_feed_id integer, p_new_item_hashes bigint[]",
+                FunctionArgumentsAsString = "p_feed_id integer, p_new_item_hashes bigint[]" switch
+                {
+                    "" => null,
+                    _ => "p_feed_id integer, p_new_item_hashes bigint[]",
+                },
                 FunctionReturnType = new SimpleType
                 {
                     ClrTypeName = "long[]",
@@ -920,42 +928,46 @@ namespace Newsgirl.Shared
                 },
                 FunctionArguments = new Dictionary<string, SimpleType>
                 {
-                    { "p_feed_id", new SimpleType 
                     {
-                        ClrTypeName = "int?",
-                        ClrType = typeof(int?),
-                        ClrNonNullableTypeName = "int",
-                        ClrNonNullableType = typeof(int),
-                        ClrNullableTypeName = "int?",
-                        ClrNullableType = typeof(int?),
-                        DbDataType = "integer",
-                        IsNullable = bool.Parse("True"),
-                        IsClrValueType = bool.Parse("True"),
-                        IsClrNullableType = bool.Parse("True"),
-                        IsClrReferenceType = bool.Parse("True"),
-                        Linq2DbDataTypeName = "DataType.Int32",
-                        Linq2DbDataType = DataType.Int32,
-                        NpgsqlDbTypeName = "NpgsqlDbType.Integer",
-                        NpgsqlDbType = NpgsqlDbType.Integer,
-                    }},
-                    { "p_new_item_hashes", new SimpleType 
+                        "p_feed_id", new SimpleType
+                        {
+                            ClrTypeName = "int?",
+                            ClrType = typeof(int?),
+                            ClrNonNullableTypeName = "int",
+                            ClrNonNullableType = typeof(int),
+                            ClrNullableTypeName = "int?",
+                            ClrNullableType = typeof(int?),
+                            DbDataType = "integer",
+                            IsNullable = bool.Parse("True"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("True"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Int32",
+                            Linq2DbDataType = DataType.Int32,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                            NpgsqlDbType = NpgsqlDbType.Integer,
+                        }
+                    },
                     {
-                        ClrTypeName = "long[]",
-                        ClrType = typeof(long[]),
-                        ClrNonNullableTypeName = "long[]",
-                        ClrNonNullableType = typeof(long[]),
-                        ClrNullableTypeName = "long[]",
-                        ClrNullableType = typeof(long[]),
-                        DbDataType = "bigint[]",
-                        IsNullable = bool.Parse("True"),
-                        IsClrValueType = bool.Parse("True"),
-                        IsClrNullableType = bool.Parse("True"),
-                        IsClrReferenceType = bool.Parse("True"),
-                        Linq2DbDataTypeName = "DataType.Undefined",
-                        Linq2DbDataType = DataType.Undefined,
-                        NpgsqlDbTypeName = "NpgsqlDbType.Bigint | NpgsqlDbType.Array",
-                        NpgsqlDbType = NpgsqlDbType.Bigint | NpgsqlDbType.Array,
-                    }},
+                        "p_new_item_hashes", new SimpleType
+                        {
+                            ClrTypeName = "long[]",
+                            ClrType = typeof(long[]),
+                            ClrNonNullableTypeName = "long[]",
+                            ClrNonNullableType = typeof(long[]),
+                            ClrNullableTypeName = "long[]",
+                            ClrNullableType = typeof(long[]),
+                            DbDataType = "bigint[]",
+                            IsNullable = bool.Parse("True"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("True"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Undefined",
+                            Linq2DbDataType = DataType.Undefined,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Bigint | NpgsqlDbType.Array",
+                            NpgsqlDbType = NpgsqlDbType.Bigint | NpgsqlDbType.Array,
+                        }
+                    },
                 },
             });
         }

@@ -8,7 +8,7 @@ namespace Newsgirl.Fetcher.Tests
     using Testing;
     using Xunit;
 
-    public class FeedItemsImportServiceTest : DatabaseTest
+    public class FeedItemsImportServiceTest : AppDatabaseTest
     {
         [Fact]
         public async Task GetFeedsForUpdate_Returns_All_Feeds()
@@ -170,7 +170,5 @@ namespace Newsgirl.Fetcher.Tests
 
             Snapshot.Match(missingFeedItems);
         }
-
-        public FeedItemsImportServiceTest() : base("before-app-tests.sql") { }
     }
 }

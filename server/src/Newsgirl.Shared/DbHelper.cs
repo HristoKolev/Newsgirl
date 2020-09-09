@@ -24,8 +24,7 @@ namespace Newsgirl.Shared
 
     public class DbService : DbService<DbPocos>
     {
-        public DbService(NpgsqlConnection dbConnection)
-            : base(dbConnection) { }
+        public DbService(NpgsqlConnection dbConnection) : base(dbConnection) { }
     }
 
     /// <summary>
@@ -33,13 +32,11 @@ namespace Newsgirl.Shared
     /// </summary>
     public interface DbTransactionService
     {
-        Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default);
+        Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
         Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
 
-        Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default);
+        Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
     }
 
     public class DbTransactionServiceImpl : DbTransactionService
@@ -51,8 +48,7 @@ namespace Newsgirl.Shared
             this.db = db;
         }
 
-        public Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default)
+        public Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.db.ExecuteInTransaction(body, cancellationToken);
         }
@@ -62,8 +58,7 @@ namespace Newsgirl.Shared
             return this.db.ExecuteInTransactionAndCommit(body, cancellationToken);
         }
 
-        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default)
+        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.db.ExecuteInTransactionAndCommit(body, cancellationToken);
         }

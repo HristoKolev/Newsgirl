@@ -4,7 +4,7 @@ namespace Newsgirl.Shared.Tests
     using Testing;
     using Xunit;
 
-    public class SystemSettingsServiceTest : DatabaseTest
+    public class SystemSettingsServiceTest : AppDatabaseTest
     {
         [Fact]
         public async Task ReadSettings_Returns_Correct_Result()
@@ -15,7 +15,5 @@ namespace Newsgirl.Shared.Tests
 
             Snapshot.Match(settings);
         }
-
-        public SystemSettingsServiceTest() : base("before-app-tests.sql") { }
     }
 }
