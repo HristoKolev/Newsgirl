@@ -38,10 +38,7 @@ namespace Newsgirl.Shared.Postgres
             {typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp},
         };
 
-        public static async Task<int> ExecuteNonQuery(
-            this NpgsqlConnection connection,
-            string sql,
-            IEnumerable<NpgsqlParameter> parameters,
+        public static async Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default)
         {
             if (connection == null)
@@ -69,10 +66,12 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        public static async Task<T> ExecuteScalar<T>(
-            this NpgsqlConnection connection,
-            string sql,
-            IEnumerable<NpgsqlParameter> parameters,
+        public static Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default)
+        {
+            return connection.ExecuteNonQuery(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
+        }
+
+        public static async Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default)
         {
             if (connection == null)
@@ -91,62 +90,67 @@ namespace Newsgirl.Shared.Postgres
             }
 
             await VerifyConnectionState(connection, cancellationToken);
-
             await using (var command = CreateCommand(connection, sql, parameters))
+            await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                await command.PrepareAsync(cancellationToken);
-
-                await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                if (reader.FieldCount == 0)
                 {
-                    if (reader.FieldCount == 0)
-                    {
-                        throw new ApplicationException("No columns returned for query that expected exactly one column.");
-                    }
-
-                    if (reader.FieldCount > 1)
-                    {
-                        throw new ApplicationException("More than one column returned for query that expected exactly one column.");
-                    }
-
-                    bool hasRow = await reader.ReadAsync(cancellationToken);
-
-                    if (!hasRow)
-                    {
-                        throw new ApplicationException("No rows returned for query that expected exactly one row.");
-                    }
-
-                    var value = reader.GetValue(0);
-
-                    bool hasMoreRows = await reader.ReadAsync(cancellationToken);
-
-                    if (hasMoreRows)
-                    {
-                        throw new ApplicationException("More than one row returned for query that expected exactly one row.");
-                    }
-
-                    if (value is DBNull)
-                    {
-                        if (default(T) == null)
-                        {
-                            value = null;
-                        }
-                        else
-                        {
-                            throw new ApplicationException("Cannot cast DBNull value to a value type parameter.");
-                        }
-                    }
-
-                    return (T) value;
+                    throw new ApplicationException("No columns returned for query that expected exactly one column.");
                 }
+
+                if (reader.FieldCount > 1)
+                {
+                    throw new ApplicationException("More than one column returned for query that expected exactly one column.");
+                }
+
+                bool hasRow = await reader.ReadAsync(cancellationToken);
+
+                if (!hasRow)
+                {
+                    throw new ApplicationException("No rows returned for query that expected exactly one row.");
+                }
+
+                var value = reader.GetValue(0);
+
+                bool hasMoreRows = await reader.ReadAsync(cancellationToken);
+
+                if (hasMoreRows)
+                {
+                    throw new ApplicationException("More than one row returned for query that expected exactly one row.");
+                }
+
+                if (value is DBNull)
+                {
+                    if (default(T) == null)
+                    {
+                        value = null;
+                    }
+                    else
+                    {
+                        throw new ApplicationException("Cannot cast DBNull value to a value type parameter.");
+                    }
+                }
+
+                return (T) value;
             }
         }
 
-        public static async Task<List<T>> Query<T>(
-            this NpgsqlConnection connection,
-            string sql,
-            IEnumerable<NpgsqlParameter> parameters,
-            CancellationToken cancellationToken = default)
-            where T : new()
+        public static Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default)
+        {
+            return connection.ExecuteScalar<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
+        }
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        public static async Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+            CancellationToken cancellationToken = default) where T : new()
         {
             if (connection == null)
             {
@@ -168,59 +172,55 @@ namespace Newsgirl.Shared.Postgres
             var result = new List<T>();
 
             await using (var command = CreateCommand(connection, sql, parameters))
+            await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                await command.PrepareAsync(cancellationToken);
+                var setters = DbCodeGenerator.GenerateSetters<T>();
 
-                await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
+
+                for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    var setters = DbCodeGenerator.GenerateSetters<T>();
+                    settersByColumnOrder[i] = setters[reader.GetName(i)];
+                }
 
-                    var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var instance = new T();
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        settersByColumnOrder[i] = setters[reader.GetName(i)];
-                    }
-
-                    while (await reader.ReadAsync(cancellationToken))
-                    {
-                        var instance = new T();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        if (await reader.IsDBNullAsync(i, cancellationToken))
                         {
-                            if (await reader.IsDBNullAsync(i, cancellationToken))
-                            {
-                                settersByColumnOrder[i](instance, null);
-                            }
-                            else
-                            {
-                                settersByColumnOrder[i](instance, reader.GetValue(i));
-                            }
+                            settersByColumnOrder[i](instance, null);
                         }
-
-                        result.Add(instance);
+                        else
+                        {
+                            settersByColumnOrder[i](instance, reader.GetValue(i));
+                        }
                     }
+
+                    result.Add(instance);
                 }
             }
 
             return result;
         }
 
-        public static Task<List<T>> Query<T>(
-            this NpgsqlConnection connection,
-            string sql,
-            CancellationToken cancellationToken = default)
-            where T : new()
+        public static Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default) where T : new()
         {
             return connection.Query<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
-        public static async Task<T> QueryOne<T>(
-            this NpgsqlConnection connection,
-            string sql,
-            IEnumerable<NpgsqlParameter> parameters,
-            CancellationToken cancellationToken = default)
-            where T : class, new()
+        
+        
+        
+        
+        
+        
+        
+        
+        public static async Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+            CancellationToken cancellationToken = default) where T : class, new()
         {
             if (connection == null)
             {
@@ -240,48 +240,71 @@ namespace Newsgirl.Shared.Postgres
             await VerifyConnectionState(connection, cancellationToken);
 
             await using (var command = CreateCommand(connection, sql, parameters))
+            await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                await command.PrepareAsync(cancellationToken);
+                var instance = new T();
 
-                await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                var setters = DbCodeGenerator.GenerateSetters<T>();
+
+                bool hasRow = await reader.ReadAsync(cancellationToken);
+
+                if (!hasRow)
                 {
-                    var instance = new T();
-
-                    var setters = DbCodeGenerator.GenerateSetters<T>();
-
-                    bool hasRow = await reader.ReadAsync(cancellationToken);
-
-                    if (!hasRow)
-                    {
-                        return null;
-                    }
-
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        var setter = setters[reader.GetName(i)];
-
-                        if (await reader.IsDBNullAsync(i, cancellationToken))
-                        {
-                            setter(instance, null);
-                        }
-                        else
-                        {
-                            setter(instance, reader.GetValue(i));
-                        }
-                    }
-
-                    bool hasMoreRows = await reader.ReadAsync(cancellationToken);
-
-                    if (hasMoreRows)
-                    {
-                        throw new ApplicationException("More than one row returned for query that expected only one row.");
-                    }
-
-                    return instance;
+                    return null;
                 }
+
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    var setter = setters[reader.GetName(i)];
+
+                    if (await reader.IsDBNullAsync(i, cancellationToken))
+                    {
+                        setter(instance, null);
+                    }
+                    else
+                    {
+                        setter(instance, reader.GetValue(i));
+                    }
+                }
+
+                bool hasMoreRows = await reader.ReadAsync(cancellationToken);
+
+                if (hasMoreRows)
+                {
+                    throw new ApplicationException("More than one row returned for query that expected only one row.");
+                }
+
+                return instance;
             }
         }
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         public static async Task ExecuteInTransaction(
             this NpgsqlConnection connection,
             Func<NpgsqlTransaction, Task> body,
@@ -355,6 +378,31 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)
         {
             NpgsqlDbType dbType;
@@ -392,6 +440,23 @@ namespace Newsgirl.Shared.Postgres
             return new NpgsqlParameter(parameterName, value);
         }
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         /// <summary>
         /// Returns a task that will complete when the <see cref="CancellationToken" /> is cancelled.
         /// </summary>
@@ -407,9 +472,21 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         private static Task VerifyConnectionState(NpgsqlConnection connection, CancellationToken cancellationToken = default)
         {
-            if (connection.State == ConnectionState.Closed)
+            switch (connection.State)
             {
-                return connection.OpenAsync(cancellationToken);
+                case ConnectionState.Open:
+                {
+                    break;
+                }
+                case ConnectionState.Closed:
+                case ConnectionState.Broken:
+                {
+                    return connection.OpenAsync(cancellationToken);
+                }
+                default:
+                {
+                    throw new DetailedLogException($"Unexpected connection state: {connection.State.ToString()}. Possibly a race condition.");
+                }
             }
 
             return Task.CompletedTask;

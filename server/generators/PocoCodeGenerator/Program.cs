@@ -10,6 +10,7 @@
     using System.Text.Json;
     using System.Threading.Tasks;
     using Humanizer;
+    using Newsgirl.Shared.Postgres;
     using Npgsql;
     using NpgsqlTypes;
     using RenderRazor;
@@ -505,6 +506,8 @@
 
         private static async Task<List<T>> Execute<T>(NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : new()
         {
+            return await connection.Query<T>(sql, parameters);
+            
             if (connection.State == ConnectionState.Closed)
             {
                 await connection.OpenAsync();
