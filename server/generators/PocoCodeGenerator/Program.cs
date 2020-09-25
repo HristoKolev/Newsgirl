@@ -507,48 +507,6 @@
         private static async Task<List<T>> Execute<T>(NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : new()
         {
             return await connection.Query<T>(sql, parameters);
-            
-            if (connection.State == ConnectionState.Closed)
-            {
-                await connection.OpenAsync();
-            }
-
-            await using (var command = connection.CreateCommand())
-            {
-                command.Parameters.AddRange(parameters);
-                command.CommandText = sql;
-
-                var properties = PropertiesCache.GetOrAdd(typeof(T), t => t.GetProperties().ToDictionary(x => x.Name.ToLower(), x => x)
-                );
-
-                await using (var reader = await command.ExecuteReaderAsync())
-                {
-                    var list = new List<T>();
-
-                    while (await reader.ReadAsync())
-                    {
-                        var instance = new T();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            var property = properties[reader.GetName(i)];
-
-                            if (await reader.IsDBNullAsync(i))
-                            {
-                                property.SetValue(instance, null);
-                            }
-                            else
-                            {
-                                property.SetValue(instance, reader.GetValue(i));
-                            }
-                        }
-
-                        list.Add(instance);
-                    }
-
-                    return list;
-                }
-            }
         }
     }
 

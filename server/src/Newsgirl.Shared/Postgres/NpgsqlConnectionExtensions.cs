@@ -38,7 +38,9 @@ namespace Newsgirl.Shared.Postgres
             {typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp},
         };
 
-        public static async Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+        public static async Task<int> ExecuteNonQuery(this NpgsqlConnection connection,
+            string sql,
+            IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default)
         {
             if (connection == null)
@@ -60,8 +62,6 @@ namespace Newsgirl.Shared.Postgres
 
             await using (var command = CreateCommand(connection, sql, parameters))
             {
-                await command.PrepareAsync(cancellationToken);
-
                 return await command.ExecuteNonQueryAsync(cancellationToken);
             }
         }
@@ -71,7 +71,14 @@ namespace Newsgirl.Shared.Postgres
             return connection.ExecuteNonQuery(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
-        public static async Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+        public static Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters)
+        {
+            return connection.ExecuteNonQuery(sql, parameters, CancellationToken.None);
+        }
+
+        public static async Task<T> ExecuteScalar<T>(this NpgsqlConnection connection,
+            string sql,
+            IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default)
         {
             if (connection == null)
@@ -140,16 +147,14 @@ namespace Newsgirl.Shared.Postgres
             return connection.ExecuteScalar<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        public static async Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+        public static Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters)
+        {
+            return connection.ExecuteScalar<T>(sql, parameters, CancellationToken.None);
+        }
+
+        public static async Task<List<T>> Query<T>(this NpgsqlConnection connection,
+            string sql,
+            IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default) where T : new()
         {
             if (connection == null)
@@ -211,15 +216,14 @@ namespace Newsgirl.Shared.Postgres
             return connection.Query<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        public static async Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, IEnumerable<NpgsqlParameter> parameters,
+        public static Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : new()
+        {
+            return connection.Query<T>(sql, parameters, CancellationToken.None);
+        }
+
+        public static async Task<T> QueryOne<T>(this NpgsqlConnection connection,
+            string sql,
+            IEnumerable<NpgsqlParameter> parameters,
             CancellationToken cancellationToken = default) where T : class, new()
         {
             if (connection == null)
@@ -278,35 +282,17 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        public static async Task ExecuteInTransaction(
-            this NpgsqlConnection connection,
+        public static Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default) where T : class, new()
+        {
+            return connection.QueryOne<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
+        }
+
+        public static Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : class, new()
+        {
+            return connection.QueryOne<T>(sql, parameters, CancellationToken.None);
+        }
+
+        public static async Task ExecuteInTransaction(this NpgsqlConnection connection,
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
         {
@@ -335,16 +321,12 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        public static Task ExecuteInTransactionAndCommit(
-            this NpgsqlConnection connection,
-            Func<Task> body,
-            CancellationToken cancellationToken = default)
+        public static Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
         {
             return ExecuteInTransactionAndCommit(connection, tr => body(), cancellationToken);
         }
 
-        public static async Task ExecuteInTransactionAndCommit(
-            this NpgsqlConnection connection,
+        public static async Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection,
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
         {
@@ -378,31 +360,6 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)
         {
             NpgsqlDbType dbType;
@@ -440,27 +397,10 @@ namespace Newsgirl.Shared.Postgres
             return new NpgsqlParameter(parameterName, value);
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         /// <summary>
         /// Returns a task that will complete when the <see cref="CancellationToken" /> is cancelled.
         /// </summary>
-        public static Task AsTask(this CancellationToken cancellationToken)
+        private static Task AsTask(this CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<object>();
             cancellationToken.Register(() => tcs.TrySetCanceled(), false);
