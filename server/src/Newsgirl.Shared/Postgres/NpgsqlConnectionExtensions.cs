@@ -58,7 +58,7 @@ namespace Newsgirl.Shared.Postgres
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
 
             await using (var command = CreateCommand(connection, sql, parameters))
             {
@@ -96,7 +96,7 @@ namespace Newsgirl.Shared.Postgres
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
@@ -172,7 +172,7 @@ namespace Newsgirl.Shared.Postgres
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
 
             var result = new List<T>();
 
@@ -241,7 +241,7 @@ namespace Newsgirl.Shared.Postgres
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
 
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
@@ -296,7 +296,7 @@ namespace Newsgirl.Shared.Postgres
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
         {
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
 
             await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
@@ -330,7 +330,7 @@ namespace Newsgirl.Shared.Postgres
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
         {
-            await VerifyConnectionState(connection, cancellationToken);
+            await EnsureOpenState(connection, cancellationToken);
 
             await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
@@ -410,7 +410,7 @@ namespace Newsgirl.Shared.Postgres
         /// <summary>
         /// Opens the connection if it's closed.
         /// </summary>
-        private static Task VerifyConnectionState(NpgsqlConnection connection, CancellationToken cancellationToken = default)
+        public static Task EnsureOpenState(this NpgsqlConnection connection, CancellationToken cancellationToken = default)
         {
             switch (connection.State)
             {

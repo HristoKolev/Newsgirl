@@ -9,6 +9,7 @@ namespace Newsgirl.Shared.Tests
     using LinqToDB;
     using LinqToDB.Mapping;
     using NpgsqlTypes;
+    using Npgsql;
     using Postgres;
 
     /// <summary>
@@ -320,6 +321,122 @@ namespace Newsgirl.Shared.Tests
         [Column(Name = "test_timestamp2", DataType = DataType.DateTime2)]
         public DateTime? TestTimestamp2 { get; set; }
 
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            return new NpgsqlParameter[]
+            {
+                this.TestBigint1.HasValue
+                    ? new NpgsqlParameter<long> {TypedValue = this.TestBigint1.Value, NpgsqlDbType = NpgsqlDbType.Bigint}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<long>
+                {
+                    TypedValue = this.TestBigint2,
+                    NpgsqlDbType = NpgsqlDbType.Bigint,
+                },
+                new NpgsqlParameter<bool>
+                {
+                    TypedValue = this.TestBoolean1,
+                    NpgsqlDbType = NpgsqlDbType.Boolean,
+                },
+                this.TestBoolean2.HasValue
+                    ? new NpgsqlParameter<bool> {TypedValue = this.TestBoolean2.Value, NpgsqlDbType = NpgsqlDbType.Boolean}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestChar1,
+                    NpgsqlDbType = NpgsqlDbType.Char,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestChar2,
+                    NpgsqlDbType = NpgsqlDbType.Char,
+                },
+                new NpgsqlParameter<DateTime>
+                {
+                    TypedValue = this.TestDate1,
+                    NpgsqlDbType = NpgsqlDbType.Date,
+                },
+                this.TestDate2.HasValue
+                    ? new NpgsqlParameter<DateTime> {TypedValue = this.TestDate2.Value, NpgsqlDbType = NpgsqlDbType.Date}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                this.TestDecimal1.HasValue
+                    ? new NpgsqlParameter<decimal> {TypedValue = this.TestDecimal1.Value, NpgsqlDbType = NpgsqlDbType.Numeric}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<decimal>
+                {
+                    TypedValue = this.TestDecimal2,
+                    NpgsqlDbType = NpgsqlDbType.Numeric,
+                },
+                this.TestDouble1.HasValue
+                    ? new NpgsqlParameter<double> {TypedValue = this.TestDouble1.Value, NpgsqlDbType = NpgsqlDbType.Double}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<double>
+                {
+                    TypedValue = this.TestDouble2,
+                    NpgsqlDbType = NpgsqlDbType.Double,
+                },
+                this.TestInteger1.HasValue
+                    ? new NpgsqlParameter<int> {TypedValue = this.TestInteger1.Value, NpgsqlDbType = NpgsqlDbType.Integer}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<int>
+                {
+                    TypedValue = this.TestInteger2,
+                    NpgsqlDbType = NpgsqlDbType.Integer,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestName1,
+                    NpgsqlDbType = NpgsqlDbType.Varchar,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestName2,
+                    NpgsqlDbType = NpgsqlDbType.Varchar,
+                },
+                this.TestReal1.HasValue
+                    ? new NpgsqlParameter<float> {TypedValue = this.TestReal1.Value, NpgsqlDbType = NpgsqlDbType.Real}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<float>
+                {
+                    TypedValue = this.TestReal2,
+                    NpgsqlDbType = NpgsqlDbType.Real,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestText1,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestText2,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<DateTime>
+                {
+                    TypedValue = this.TestTimestamp1,
+                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                },
+                this.TestTimestamp2.HasValue
+                    ? new NpgsqlParameter<DateTime> {TypedValue = this.TestTimestamp2.Value, NpgsqlDbType = NpgsqlDbType.Timestamp}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.TestID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.TestID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.TestID == default;
+        }
+
         public static TableMetadataModel<Test1Poco> Metadata => DbMetadata.Test1PocoMetadata;
     }
 
@@ -371,6 +488,38 @@ namespace Newsgirl.Shared.Tests
         [NotNull]
         [Column(Name = "test_name", DataType = DataType.Text)]
         public string TestName { get; set; }
+
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            return new NpgsqlParameter[]
+            {
+                new NpgsqlParameter<DateTime>
+                {
+                    TypedValue = this.TestDate,
+                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.TestName,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.TestID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.TestID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.TestID == default;
+        }
 
         public static TableMetadataModel<Test2Poco> Metadata => DbMetadata.Test2PocoMetadata;
     }
@@ -804,9 +953,6 @@ namespace Newsgirl.Shared.Tests
                 TableSchema = "public",
                 PrimaryKeyColumnName = "test_id",
                 PrimaryKeyPropertyName = "TestID",
-                GetPrimaryKey = instance => instance.TestID,
-                SetPrimaryKey = (instance, val) => instance.TestID = val,
-                IsNew = instance => instance.TestID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -1638,13 +1784,34 @@ namespace Newsgirl.Shared.Tests
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "test_bigint1",                
+                    "test_bigint2",                
+                    "test_boolean1",                
+                    "test_boolean2",                
+                    "test_char1",                
+                    "test_char2",                
+                    "test_date1",                
+                    "test_date2",                
+                    "test_decimal1",                
+                    "test_decimal2",                
+                    "test_double1",                
+                    "test_double2",                
+                    "test_integer1",                
+                    "test_integer2",                
+                    "test_name1",                
+                    "test_name2",                
+                    "test_real1",                
+                    "test_real2",                
+                    "test_text1",                
+                    "test_text2",                
+                    "test_timestamp1",                
+                    "test_timestamp2",                
+                },
             };
 
-            Test1PocoMetadata.Clone = DbCodeGenerator.GetClone<Test1Poco>();
-            Test1PocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(Test1PocoMetadata);
             Test1PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(Test1PocoMetadata);
-            Test1PocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(Test1PocoMetadata);
-            Test1PocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(Test1PocoMetadata);
 
             Test2PocoMetadata = new TableMetadataModel<Test2Poco>
             {
@@ -1654,9 +1821,6 @@ namespace Newsgirl.Shared.Tests
                 TableSchema = "public",
                 PrimaryKeyColumnName = "test_id",
                 PrimaryKeyPropertyName = "TestID",
-                GetPrimaryKey = instance => instance.TestID,
-                SetPrimaryKey = (instance, val) => instance.TestID = val,
-                IsNew = instance => instance.TestID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -1768,13 +1932,14 @@ namespace Newsgirl.Shared.Tests
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "test_date",                
+                    "test_name",                
+                },
             };
 
-            Test2PocoMetadata.Clone = DbCodeGenerator.GetClone<Test2Poco>();
-            Test2PocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(Test2PocoMetadata);
             Test2PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(Test2PocoMetadata);
-            Test2PocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(Test2PocoMetadata);
-            Test2PocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(Test2PocoMetadata);
 
             VGenerateSeriesPocoMetadata = new TableMetadataModel<VGenerateSeriesPoco>
             {
@@ -1821,9 +1986,12 @@ namespace Newsgirl.Shared.Tests
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "num",                
+                },
             };
 
-            VGenerateSeriesPocoMetadata.Clone = DbCodeGenerator.GetClone<VGenerateSeriesPoco>();
 
             View1PocoMetadata = new TableMetadataModel<View1Poco>
             {
@@ -2770,9 +2938,37 @@ namespace Newsgirl.Shared.Tests
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "test1_test_id",                
+                    "test2_test_id",                
+                    "test_bigint1",                
+                    "test_bigint2",                
+                    "test_boolean1",                
+                    "test_boolean2",                
+                    "test_char1",                
+                    "test_char2",                
+                    "test_date",                
+                    "test_date1",                
+                    "test_date2",                
+                    "test_decimal1",                
+                    "test_decimal2",                
+                    "test_double1",                
+                    "test_double2",                
+                    "test_integer1",                
+                    "test_integer2",                
+                    "test_name",                
+                    "test_name1",                
+                    "test_name2",                
+                    "test_real1",                
+                    "test_real2",                
+                    "test_text1",                
+                    "test_text2",                
+                    "test_timestamp1",                
+                    "test_timestamp2",                
+                },
             };
 
-            View1PocoMetadata.Clone = DbCodeGenerator.GetClone<View1Poco>();
 
             Functions.Add(new FunctionMetadataModel
             {

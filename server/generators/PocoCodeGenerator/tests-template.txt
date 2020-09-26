@@ -43,61 +43,10 @@ namespace @Model.Namespace
         @:}
 @:
         @:[Theory]
-        @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
-        @:public void GetColumnChanges(List<@(table.ClassName)Poco> pocos)
-        @:{
-            @:var getColumnChanges = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GetColumnChanges;
-@:
-            @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
-@:
-            @:var allColumnNames = new HashSet<string>(columns.Select(x => x.ColumnName));
-@:
-            @:foreach (var (instance1, instance2) in pocos.Zip(Enumerable.Reverse(pocos), (x, y) => (x, y)))
-            @:{
-                @:var (columnNames, parameters) = getColumnChanges(instance1, instance2);
-@:
-                @:Assert.Equal(parameters.Count, columnNames.Count);
-                @:Assert.True(columnNames.Count <= columns.Length);
-@:
-                @:foreach (string columnName in columnNames)
-                @:{
-                    @:Assert.Contains(columnName, allColumnNames);
-                @:}
-@:
-                @:foreach (var column in columns)
-                @:{
-                    @:var getter = getters[column.ColumnName];
-@:
-                    @:var value1 = getter(instance1);
-                    @:var value2 = getter(instance2);
-@:
-                    @:if (DbCodeGenerator.StupidEquals(value1, value2))
-                    @:{
-                        @:Assert.DoesNotContain(column.ColumnName, columnNames);
-                    @:}
-                    @:else
-                    @:{
-                        @:Assert.Contains(column.ColumnName, columnNames);
-                        @:int index = columnNames.IndexOf(column.ColumnName);
-                        @:var parameter = parameters[index];
-@:
-                        @:Assert.Equal(column.PropertyType.NpgsqlDbType, parameter.NpgsqlDbType);
-@:
-                        @:Assert.Equal(value2 ?? DBNull.Value, parameter.Value);
-                    @:}
-                @:}
-            @:}
-        @:}
-@:
-        @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
-        @:// ReSharper disable once CyclomaticComplexity
-        @:public void GenerateParameters(@(table.ClassName)Poco poco)
+        @:public void GetNonPkParameters(@(table.ClassName)Poco poco)
         @:{
-            @:var getParameters = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GenerateParameters;
-@:
-            @:var parameters = getParameters(poco);
+            @:var parameters = poco.GetNonPkParameters();
 @:
             @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
@@ -109,20 +58,27 @@ namespace @Model.Namespace
 @:
                 @:var parameter = parameters[i];
 @:
-                @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                @:if (column.PropertyType.IsClrNullableType)
+                @:{
+                    @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                @:}
+                @:else
+                @:{
+                    @:Assert.Equal(getter(poco), parameter.Value);
+                @:}
             @:}
         @:}
 @:
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
-        @:// ReSharper disable once CyclomaticComplexity
         @:public void GetAllColumns(@(table.ClassName)Poco poco)
         @:{
-            @:var getAllColumns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.GetAllColumns;
+            @:var metadata = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata;
 @:
-            @:var (columnNames, parameters) = getAllColumns(poco);
+            @:var columnNames = metadata.NonPkColumnNames;
+            @:var parameters = poco.GetNonPkParameters();
 @:
-            @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            @:var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
 @:
             @:for (int i = 0; i < columns.Length; i++)
@@ -133,7 +89,14 @@ namespace @Model.Namespace
 @:
                 @:Assert.Equal(columnNames[i], column.ColumnName);
 @:
-                @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                @:if (column.PropertyType.IsClrNullableType)
+                @:{
+                    @:Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                @:}
+                @:else
+                @:{
+                    @:Assert.Equal(getter(poco), parameter.Value);
+                @:}
             @:}
         @:}
 @:
@@ -173,22 +136,6 @@ namespace @Model.Namespace
 {
 @:
 }
-        }
-        @:}
-@:
-        @:[Theory]
-        @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
-        @:public void Clone(@(table.ClassName)Poco poco)
-        @:{
-            @:var clone = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Clone;
-@:
-            @:var newObj = clone(poco);
-@:
-            @:Assert.NotEqual(poco, newObj);
-@:
-        @foreach(var column in table.Columns)
-        {
-            @:Assert.Equal(poco.@(column.PropertyName), newObj.@(column.PropertyName));
         }
         @:}
     @:}

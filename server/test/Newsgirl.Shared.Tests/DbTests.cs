@@ -56,61 +56,10 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Theory]
-        [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
-        public void GetColumnChanges(List<Test1Poco> pocos)
-        {
-            var getColumnChanges = DbMetadata.Test1PocoMetadata.GetColumnChanges;
-
-            var columns = DbMetadata.Test1PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GenerateGetters<Test1Poco>();
-
-            var allColumnNames = new HashSet<string>(columns.Select(x => x.ColumnName));
-
-            foreach (var (instance1, instance2) in pocos.Zip(Enumerable.Reverse(pocos), (x, y) => (x, y)))
-            {
-                var (columnNames, parameters) = getColumnChanges(instance1, instance2);
-
-                Assert.Equal(parameters.Count, columnNames.Count);
-                Assert.True(columnNames.Count <= columns.Length);
-
-                foreach (string columnName in columnNames)
-                {
-                    Assert.Contains(columnName, allColumnNames);
-                }
-
-                foreach (var column in columns)
-                {
-                    var getter = getters[column.ColumnName];
-
-                    var value1 = getter(instance1);
-                    var value2 = getter(instance2);
-
-                    if (DbCodeGenerator.StupidEquals(value1, value2))
-                    {
-                        Assert.DoesNotContain(column.ColumnName, columnNames);
-                    }
-                    else
-                    {
-                        Assert.Contains(column.ColumnName, columnNames);
-                        int index = columnNames.IndexOf(column.ColumnName);
-                        var parameter = parameters[index];
-
-                        Assert.Equal(column.PropertyType.NpgsqlDbType, parameter.NpgsqlDbType);
-
-                        Assert.Equal(value2 ?? DBNull.Value, parameter.Value);
-                    }
-                }
-            }
-        }
-
-        [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
-        // ReSharper disable once CyclomaticComplexity
-        public void GenerateParameters(Test1Poco poco)
+        public void GetNonPkParameters(Test1Poco poco)
         {
-            var getParameters = DbMetadata.Test1PocoMetadata.GenerateParameters;
-
-            var parameters = getParameters(poco);
+            var parameters = poco.GetNonPkParameters();
 
             var columns = DbMetadata.Test1PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             var getters = DbCodeGenerator.GenerateGetters<Test1Poco>();
@@ -122,20 +71,27 @@ namespace Newsgirl.Shared.Tests
 
                 var parameter = parameters[i];
 
-                Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                if (column.PropertyType.IsClrNullableType)
+                {
+                    Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                }
+                else
+                {
+                    Assert.Equal(getter(poco), parameter.Value);
+                }
             }
         }
 
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
-        // ReSharper disable once CyclomaticComplexity
         public void GetAllColumns(Test1Poco poco)
         {
-            var getAllColumns = DbMetadata.Test1PocoMetadata.GetAllColumns;
+            var metadata = DbMetadata.Test1PocoMetadata;
 
-            var (columnNames, parameters) = getAllColumns(poco);
+            var columnNames = metadata.NonPkColumnNames;
+            var parameters = poco.GetNonPkParameters();
 
-            var columns = DbMetadata.Test1PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             var getters = DbCodeGenerator.GenerateGetters<Test1Poco>();
 
             for (int i = 0; i < columns.Length; i++)
@@ -146,7 +102,14 @@ namespace Newsgirl.Shared.Tests
 
                 Assert.Equal(columnNames[i], column.ColumnName);
 
-                Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                if (column.PropertyType.IsClrNullableType)
+                {
+                    Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                }
+                else
+                {
+                    Assert.Equal(getter(poco), parameter.Value);
+                }
             }
         }
 
@@ -265,41 +228,6 @@ namespace Newsgirl.Shared.Tests
             setters["test_timestamp2"](newObj, poco.TestTimestamp2);
             Assert.Equal(poco.TestTimestamp2, newObj.TestTimestamp2);
         }
-
-        [Theory]
-        [ClassData(typeof(GeneratedData<Test1Poco>))]
-        public void Clone(Test1Poco poco)
-        {
-            var clone = DbMetadata.Test1PocoMetadata.Clone;
-
-            var newObj = clone(poco);
-
-            Assert.NotEqual(poco, newObj);
-
-            Assert.Equal(poco.TestBigint1, newObj.TestBigint1);
-            Assert.Equal(poco.TestBigint2, newObj.TestBigint2);
-            Assert.Equal(poco.TestBoolean1, newObj.TestBoolean1);
-            Assert.Equal(poco.TestBoolean2, newObj.TestBoolean2);
-            Assert.Equal(poco.TestChar1, newObj.TestChar1);
-            Assert.Equal(poco.TestChar2, newObj.TestChar2);
-            Assert.Equal(poco.TestDate1, newObj.TestDate1);
-            Assert.Equal(poco.TestDate2, newObj.TestDate2);
-            Assert.Equal(poco.TestDecimal1, newObj.TestDecimal1);
-            Assert.Equal(poco.TestDecimal2, newObj.TestDecimal2);
-            Assert.Equal(poco.TestDouble1, newObj.TestDouble1);
-            Assert.Equal(poco.TestDouble2, newObj.TestDouble2);
-            Assert.Equal(poco.TestID, newObj.TestID);
-            Assert.Equal(poco.TestInteger1, newObj.TestInteger1);
-            Assert.Equal(poco.TestInteger2, newObj.TestInteger2);
-            Assert.Equal(poco.TestName1, newObj.TestName1);
-            Assert.Equal(poco.TestName2, newObj.TestName2);
-            Assert.Equal(poco.TestReal1, newObj.TestReal1);
-            Assert.Equal(poco.TestReal2, newObj.TestReal2);
-            Assert.Equal(poco.TestText1, newObj.TestText1);
-            Assert.Equal(poco.TestText2, newObj.TestText2);
-            Assert.Equal(poco.TestTimestamp1, newObj.TestTimestamp1);
-            Assert.Equal(poco.TestTimestamp2, newObj.TestTimestamp2);
-        }
     }
 
     public class Test2Test : TestPocosDatabaseTest
@@ -331,61 +259,10 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Theory]
-        [ClassData(typeof(GeneratedBulkData<Test2Poco>))]
-        public void GetColumnChanges(List<Test2Poco> pocos)
-        {
-            var getColumnChanges = DbMetadata.Test2PocoMetadata.GetColumnChanges;
-
-            var columns = DbMetadata.Test2PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GenerateGetters<Test2Poco>();
-
-            var allColumnNames = new HashSet<string>(columns.Select(x => x.ColumnName));
-
-            foreach (var (instance1, instance2) in pocos.Zip(Enumerable.Reverse(pocos), (x, y) => (x, y)))
-            {
-                var (columnNames, parameters) = getColumnChanges(instance1, instance2);
-
-                Assert.Equal(parameters.Count, columnNames.Count);
-                Assert.True(columnNames.Count <= columns.Length);
-
-                foreach (string columnName in columnNames)
-                {
-                    Assert.Contains(columnName, allColumnNames);
-                }
-
-                foreach (var column in columns)
-                {
-                    var getter = getters[column.ColumnName];
-
-                    var value1 = getter(instance1);
-                    var value2 = getter(instance2);
-
-                    if (DbCodeGenerator.StupidEquals(value1, value2))
-                    {
-                        Assert.DoesNotContain(column.ColumnName, columnNames);
-                    }
-                    else
-                    {
-                        Assert.Contains(column.ColumnName, columnNames);
-                        int index = columnNames.IndexOf(column.ColumnName);
-                        var parameter = parameters[index];
-
-                        Assert.Equal(column.PropertyType.NpgsqlDbType, parameter.NpgsqlDbType);
-
-                        Assert.Equal(value2 ?? DBNull.Value, parameter.Value);
-                    }
-                }
-            }
-        }
-
-        [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
-        // ReSharper disable once CyclomaticComplexity
-        public void GenerateParameters(Test2Poco poco)
+        public void GetNonPkParameters(Test2Poco poco)
         {
-            var getParameters = DbMetadata.Test2PocoMetadata.GenerateParameters;
-
-            var parameters = getParameters(poco);
+            var parameters = poco.GetNonPkParameters();
 
             var columns = DbMetadata.Test2PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             var getters = DbCodeGenerator.GenerateGetters<Test2Poco>();
@@ -397,20 +274,27 @@ namespace Newsgirl.Shared.Tests
 
                 var parameter = parameters[i];
 
-                Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                if (column.PropertyType.IsClrNullableType)
+                {
+                    Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                }
+                else
+                {
+                    Assert.Equal(getter(poco), parameter.Value);
+                }
             }
         }
 
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
-        // ReSharper disable once CyclomaticComplexity
         public void GetAllColumns(Test2Poco poco)
         {
-            var getAllColumns = DbMetadata.Test2PocoMetadata.GetAllColumns;
+            var metadata = DbMetadata.Test2PocoMetadata;
 
-            var (columnNames, parameters) = getAllColumns(poco);
+            var columnNames = metadata.NonPkColumnNames;
+            var parameters = poco.GetNonPkParameters();
 
-            var columns = DbMetadata.Test2PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
+            var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
             var getters = DbCodeGenerator.GenerateGetters<Test2Poco>();
 
             for (int i = 0; i < columns.Length; i++)
@@ -421,7 +305,14 @@ namespace Newsgirl.Shared.Tests
 
                 Assert.Equal(columnNames[i], column.ColumnName);
 
-                Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                if (column.PropertyType.IsClrNullableType)
+                {
+                    Assert.Equal(getter(poco) ?? DBNull.Value, parameter.Value);
+                }
+                else
+                {
+                    Assert.Equal(getter(poco), parameter.Value);
+                }
             }
         }
 
@@ -460,21 +351,6 @@ namespace Newsgirl.Shared.Tests
             setters["test_name"](newObj, poco.TestName);
             Assert.Equal(poco.TestName, newObj.TestName);
         }
-
-        [Theory]
-        [ClassData(typeof(GeneratedData<Test2Poco>))]
-        public void Clone(Test2Poco poco)
-        {
-            var clone = DbMetadata.Test2PocoMetadata.Clone;
-
-            var newObj = clone(poco);
-
-            Assert.NotEqual(poco, newObj);
-
-            Assert.Equal(poco.TestDate, newObj.TestDate);
-            Assert.Equal(poco.TestID, newObj.TestID);
-            Assert.Equal(poco.TestName, newObj.TestName);
-        }
     }
 
     public class VGenerateSeriesTest : TestPocosDatabaseTest
@@ -497,19 +373,6 @@ namespace Newsgirl.Shared.Tests
             var newObj = new VGenerateSeriesPoco();
 
             setters["num"](newObj, poco.Num);
-            Assert.Equal(poco.Num, newObj.Num);
-        }
-
-        [Theory]
-        [ClassData(typeof(GeneratedData<VGenerateSeriesPoco>))]
-        public void Clone(VGenerateSeriesPoco poco)
-        {
-            var clone = DbMetadata.VGenerateSeriesPocoMetadata.Clone;
-
-            var newObj = clone(poco);
-
-            Assert.NotEqual(poco, newObj);
-
             Assert.Equal(poco.Num, newObj.Num);
         }
     }
@@ -634,44 +497,6 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestTimestamp1, newObj.TestTimestamp1);
 
             setters["test_timestamp2"](newObj, poco.TestTimestamp2);
-            Assert.Equal(poco.TestTimestamp2, newObj.TestTimestamp2);
-        }
-
-        [Theory]
-        [ClassData(typeof(GeneratedData<View1Poco>))]
-        public void Clone(View1Poco poco)
-        {
-            var clone = DbMetadata.View1PocoMetadata.Clone;
-
-            var newObj = clone(poco);
-
-            Assert.NotEqual(poco, newObj);
-
-            Assert.Equal(poco.Test1TestID, newObj.Test1TestID);
-            Assert.Equal(poco.Test2TestID, newObj.Test2TestID);
-            Assert.Equal(poco.TestBigint1, newObj.TestBigint1);
-            Assert.Equal(poco.TestBigint2, newObj.TestBigint2);
-            Assert.Equal(poco.TestBoolean1, newObj.TestBoolean1);
-            Assert.Equal(poco.TestBoolean2, newObj.TestBoolean2);
-            Assert.Equal(poco.TestChar1, newObj.TestChar1);
-            Assert.Equal(poco.TestChar2, newObj.TestChar2);
-            Assert.Equal(poco.TestDate, newObj.TestDate);
-            Assert.Equal(poco.TestDate1, newObj.TestDate1);
-            Assert.Equal(poco.TestDate2, newObj.TestDate2);
-            Assert.Equal(poco.TestDecimal1, newObj.TestDecimal1);
-            Assert.Equal(poco.TestDecimal2, newObj.TestDecimal2);
-            Assert.Equal(poco.TestDouble1, newObj.TestDouble1);
-            Assert.Equal(poco.TestDouble2, newObj.TestDouble2);
-            Assert.Equal(poco.TestInteger1, newObj.TestInteger1);
-            Assert.Equal(poco.TestInteger2, newObj.TestInteger2);
-            Assert.Equal(poco.TestName, newObj.TestName);
-            Assert.Equal(poco.TestName1, newObj.TestName1);
-            Assert.Equal(poco.TestName2, newObj.TestName2);
-            Assert.Equal(poco.TestReal1, newObj.TestReal1);
-            Assert.Equal(poco.TestReal2, newObj.TestReal2);
-            Assert.Equal(poco.TestText1, newObj.TestText1);
-            Assert.Equal(poco.TestText2, newObj.TestText2);
-            Assert.Equal(poco.TestTimestamp1, newObj.TestTimestamp1);
             Assert.Equal(poco.TestTimestamp2, newObj.TestTimestamp2);
         }
     }

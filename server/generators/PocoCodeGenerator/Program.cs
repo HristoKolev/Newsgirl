@@ -1,12 +1,9 @@
 ﻿namespace PocoCodeGenerator
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Data;
     using System.IO;
     using System.Linq;
-    using System.Reflection;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Humanizer;
@@ -375,7 +372,7 @@
 
         public async Task<List<TableMetadataModel>> GetTables()
         {
-            var columns = await Execute<ColumnMetadataModel>(this.Connection, @"
+            var columns = await this.Connection.Query<ColumnMetadataModel>(@"
               ((SELECT
                   t.tablename as TableName,
                   n.nspname AS TableSchema,
@@ -471,7 +468,7 @@
 
         public async Task<List<FunctionMetadataModel>> GetFunctions()
         {
-            var functions = await Execute<FunctionMetadataModel>(this.Connection, @"
+            var functions = await this.Connection.Query<FunctionMetadataModel>(@"
                  SELECT
                     n.nspname as SchemaName,
                     f.proname as FunctionName,
@@ -499,14 +496,6 @@
             }
 
             return functions;
-        }
-
-        private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertiesCache =
-            new ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>>();
-
-        private static async Task<List<T>> Execute<T>(NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : new()
-        {
-            return await connection.Query<T>(sql, parameters);
         }
     }
 

@@ -1,11 +1,8 @@
-﻿namespace Newsgirl.Shared.Postgres
+namespace Newsgirl.Shared.Postgres
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
-    using System.Reflection;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -33,11 +30,6 @@
             };
         }
 
-        public IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>
-        {
-            return this.linqProvider.GetTable<T>();
-        }
-
         public void Dispose()
         {
             this.linqProvider.Dispose();
@@ -45,11 +37,7 @@
 
         public async Task<NpgsqlTransaction> BeginTransaction()
         {
-            if (this.connection.State == ConnectionState.Closed)
-            {
-                await this.connection.OpenAsync();
-            }
-
+            await this.connection.EnsureOpenState();
             return await this.connection.BeginTransactionAsync();
         }
 
@@ -155,7 +143,7 @@
                 sqlBuilder.Append("\n(");
                 recordsFirstRun = false;
 
-                var parameters = metadata.GenerateParameters(record);
+                var parameters = record.GetNonPkParameters();
 
                 allParameters.AddRange(parameters);
 
@@ -184,12 +172,9 @@
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
         }
 
-        public Task<int> Delete<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public Task<int> Delete<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
-
-            int pk = metadata.GetPrimaryKey(model);
-
+            int pk = poco.GetPrimaryKey();
             return this.Delete<T>(pk, cancellationToken);
         }
 
@@ -234,23 +219,19 @@
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Insert<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public async Task<int> Insert<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
-
-            int pk = await this.InsertWithoutMutating(model, cancellationToken);
-
-            metadata.SetPrimaryKey(model, pk);
-
+            int pk = await this.InsertWithoutMutating(poco, cancellationToken);
+            poco.SetPrimaryKey(pk);
             return pk;
         }
 
-        public Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
-
-            var (columnNames, parameters) = metadata.GetAllColumns(model);
-
+            var columnNames = metadata.NonPkColumnNames;
+            var parameters = poco.GetNonPkParameters();
+            
             var sqlBuilder = new StringBuilder(128);
 
             // STATEMENT HEADER
@@ -299,30 +280,29 @@
 
         public async Task<int> Save<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
-
-            if (metadata.IsNew(model))
+            if (model.IsNew())
             {
                 return await this.Insert(model, cancellationToken);
             }
 
             await this.Update(model, cancellationToken);
 
-            return metadata.GetPrimaryKey(model);
+            return model.GetPrimaryKey();
         }
 
-        public Task<int> Update<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        public Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
-            int pk = metadata.GetPrimaryKey(model);
+            int pk = poco.GetPrimaryKey();
 
             if (pk == default)
             {
                 throw new ApplicationException("Cannot update a model with primary key of 0.");
             }
 
-            var (columnNames, parameters) = metadata.GetAllColumns(model);
+            var columnNames = metadata.NonPkColumnNames;
+            var parameters = poco.GetNonPkParameters();
 
             if (columnNames.Length == 0)
             {
@@ -369,78 +349,6 @@
             });
 
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
-        }
-
-        public async Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
-        {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
-
-            int pk = metadata.GetPrimaryKey(model);
-
-            if (pk == default)
-            {
-                throw new ApplicationException("Cannot update a model with primary key of 0.");
-            }
-
-            string selectSql =
-                $"select * from \"{metadata.TableSchema}\".\"{metadata.TableName}\" where \"{metadata.PrimaryKeyColumnName}\" = @pk FOR UPDATE;";
-
-            var selectParameters = new[]
-            {
-                this.CreateParameter("pk", pk),
-            };
-
-            var currentInstance = await this.connection.QueryOne<T>(selectSql, selectParameters, cancellationToken);
-
-            if (currentInstance == null)
-            {
-                throw new ApplicationException("Cannot update record: record does not exists."); // no record to update?
-            }
-
-            var (names, parameters) = metadata.GetColumnChanges(currentInstance, model);
-
-            if (names.Count == 0)
-            {
-                return 0; // nothing to update?
-            }
-
-            var sqlBuilder = new StringBuilder();
-
-            sqlBuilder.Append("UPDATE \"");
-            sqlBuilder.Append(metadata.TableSchema);
-            sqlBuilder.Append("\".\"");
-            sqlBuilder.Append(metadata.TableName);
-            sqlBuilder.Append("\" SET ");
-
-            for (int i = 0; i < names.Count; i++)
-            {
-                string name = names[i];
-                var parameter = parameters[i];
-
-                string paramName = "@p" + i;
-
-                sqlBuilder.Append('\n');
-                sqlBuilder.Append(name);
-                sqlBuilder.Append(" = ");
-                sqlBuilder.Append(paramName);
-
-                if (i != names.Count - 1)
-                {
-                    sqlBuilder.Append(',');
-                }
-
-                parameter.ParameterName = paramName;
-            }
-
-            sqlBuilder.Append("\nWHERE ");
-            sqlBuilder.Append(metadata.PrimaryKeyColumnName);
-            sqlBuilder.Append(" = @pk;");
-
-            parameters.Add(this.CreateParameter("pk", pk));
-
-            string sql = sqlBuilder.ToString();
-
-            return await this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
         public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
@@ -551,320 +459,6 @@
         }
     }
 
-    public static class DbCodeGenerator
-    {
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GenerateSetters` method.
-        /// </summary>
-        private static readonly ConcurrentDictionary<Type, object> GenerateSettersCache = new ConcurrentDictionary<Type, object>();
-
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GenerateGetters` method.
-        /// </summary>
-        private static readonly ConcurrentDictionary<Type, object> GenerateGettersCache = new ConcurrentDictionary<Type, object>();
-
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GetMetadata` method.
-        /// </summary>
-        private static readonly ConcurrentDictionary<Type, object> GetMetadataCache = new ConcurrentDictionary<Type, object>();
-
-        private static bool IsNullableType(Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
-        }
-
-        private static Func<T, object> GetGetter<T>(string propertyName)
-        {
-            var instanceType = typeof(T);
-
-            var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-
-            return arg => property!.GetMethod!.Invoke(arg, Array.Empty<object>());
-        }
-
-        private static Action<T, object> GetSetter<T>(string propertyName)
-        {
-            var instanceType = typeof(T);
-
-            var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-
-            return (obj, value) => property!.SetMethod!.Invoke(obj, new[] {value});
-        }
-
-        public static Func<T, T> GetClone<T>() where T : new()
-        {
-            var instanceType = typeof(T);
-
-            return obj =>
-            {
-                var instance = new T();
-
-                foreach (var fieldInfo in instanceType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
-                {
-                    fieldInfo.SetValue(instance, fieldInfo.GetValue(obj));
-                }
-
-                return instance;
-            };
-        }
-
-        public static Func<TPoco, NpgsqlParameter[]> GetGenerateParameters<TPoco>(TableMetadataModel<TPoco> metadata)
-            where TPoco : IPoco<TPoco>
-        {
-            var pocoType = typeof(TPoco);
-
-            var nonPrimaryKeyColumns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-
-            return poco =>
-            {
-                var list = new List<NpgsqlParameter>();
-
-                foreach (var column in nonPrimaryKeyColumns)
-                {
-                    var property = pocoType.GetProperty(column.PropertyName);
-
-                    list.Add(new NpgsqlParameter
-                    {
-                        Value = property!.GetValue(poco) ?? DBNull.Value,
-                        NpgsqlDbType = column.PropertyType.NpgsqlDbType,
-                    });
-                }
-
-                return list.ToArray();
-            };
-        }
-
-        public static Action<NpgsqlBinaryImporter, TPoco> GetWriteToImporter<TPoco>(TableMetadataModel<TPoco> metadata)
-            where TPoco : IPoco<TPoco>
-        {
-            var pocoType = typeof(TPoco);
-
-            var genericWrite = typeof(NpgsqlBinaryImporter)
-                .GetMethods()
-                .Where((info, i) => info.GetParameters().Length == 2 && info.GetParameters()[1].ParameterType == typeof(NpgsqlDbType))
-                .First();
-
-            var nonPrimaryKeyColumns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-
-            return (importer, poco) =>
-            {
-                foreach (var column in nonPrimaryKeyColumns)
-                {
-                    var property = pocoType.GetProperty(column.PropertyName);
-
-                    var value = property!.GetValue(poco);
-
-                    if (value == null)
-                    {
-                        importer.WriteNull();
-                    }
-                    else
-                    {
-                        var type = IsNullableType(property.PropertyType)
-                            ? Nullable.GetUnderlyingType(property.PropertyType)
-                            : property.PropertyType;
-
-                        genericWrite.MakeGenericMethod(type!).Invoke(importer, new[]
-                        {
-                            value, column.PropertyType.NpgsqlDbType,
-                        });
-                    }
-                }
-            };
-        }
-
-        public static Func<TPoco, ValueTuple<string[], NpgsqlParameter[]>> GetGetAllColumns<TPoco>(
-            TableMetadataModel<TPoco> metadata) where TPoco : IPoco<TPoco>
-        {
-            var pocoType = typeof(TPoco);
-
-            var nonPrimaryKeyColumns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-
-            return poco =>
-            {
-                var names = new List<string>();
-                var list = new List<NpgsqlParameter>();
-
-                foreach (var column in nonPrimaryKeyColumns)
-                {
-                    var property = pocoType.GetProperty(column.PropertyName);
-
-                    names.Add(column.ColumnName);
-
-                    list.Add(new NpgsqlParameter
-                    {
-                        Value = property!.GetValue(poco) ?? DBNull.Value,
-                        NpgsqlDbType = column.PropertyType.NpgsqlDbType,
-                    });
-                }
-
-                return (names.ToArray(), list.ToArray());
-            };
-        }
-
-        public static Func<TPoco, TPoco, ValueTuple<List<string>, List<NpgsqlParameter>>> GetGetColumnChanges<TPoco>(
-            TableMetadataModel<TPoco> metadata) where TPoco : IPoco<TPoco>
-        {
-            var pocoType = typeof(TPoco);
-
-            var nonPrimaryKeyColumns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-
-            return (obj1, obj2) =>
-            {
-                var names = new List<string>();
-                var parameters = new List<NpgsqlParameter>();
-
-                foreach (var column in nonPrimaryKeyColumns)
-                {
-                    var property = pocoType.GetProperty(column.PropertyName);
-
-                    var value1 = property!.GetValue(obj1);
-                    var value2 = property!.GetValue(obj2);
-
-                    if (!StupidEquals(value1, value2))
-                    {
-                        names.Add(column.ColumnName);
-                        parameters.Add(new NpgsqlParameter
-                        {
-                            Value = property.GetValue(obj2) ?? DBNull.Value,
-                            NpgsqlDbType = column.PropertyType.NpgsqlDbType,
-                        });
-                    }
-                }
-
-                return (names, parameters);
-            };
-        }
-
-        public static Dictionary<string, Action<T, object>> GenerateSetters<T>(Func<string, string> propertyNameToColumnName)
-        {
-            Dictionary<string, Action<T, object>> ValueFactory(Type type)
-            {
-                var dict = new Dictionary<string, Action<T, object>>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var x in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.SetMethod != null))
-                {
-                    dict.Add(propertyNameToColumnName(x.Name), GetSetter<T>(x.Name));
-                }
-
-                return dict;
-            }
-
-            return (Dictionary<string, Action<T, object>>) GenerateGettersCache.GetOrAdd(typeof(T), ValueFactory);
-        }
-
-        public static Dictionary<string, Func<T, object>> GenerateGetters<T>(Func<string, string> propertyNameToColumnName)
-        {
-            Dictionary<string, Func<T, object>> ValueFactory(Type type)
-            {
-                return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .ToDictionary(x => propertyNameToColumnName(x.Name), x => GetGetter<T>(x.Name));
-            }
-
-            return (Dictionary<string, Func<T, object>>) GenerateSettersCache.GetOrAdd(typeof(T), ValueFactory);
-        }
-
-        public static Dictionary<string, Action<T, object>> GenerateSetters<T>()
-        {
-            return GenerateSetters<T>(DefaultPropertyNameToColumnName);
-        }
-
-        public static Dictionary<string, Func<T, object>> GenerateGetters<T>()
-        {
-            return GenerateGetters<T>(DefaultPropertyNameToColumnName);
-        }
-
-        /// <summary>
-        /// Converts `PascalCase` property names into `snake_case` column names.
-        /// The conversion happens on Uppercase letter or the string `ID`.
-        /// Examples:
-        /// SystemSettingName => system_setting_name
-        /// SystemSettingID => system_setting_id
-        /// System_Setting_ID => system_setting_id
-        /// system_setting_id => system_setting_id
-        /// FK_Reference_Schema_Name => fk_reference_schema_name
-        /// </summary>
-        private static string DefaultPropertyNameToColumnName(string propertyName)
-        {
-            var sb = new StringBuilder();
-
-            sb.Append(char.ToLower(propertyName[0]));
-
-            for (int i = 1; i < propertyName.Length; i++)
-            {
-                bool NextIs(Func<char, bool> func)
-                {
-                    if (i + 1 >= propertyName.Length)
-                    {
-                        return false;
-                    }
-
-                    char nextChar = propertyName[i + 1];
-
-                    return func(nextChar);
-                }
-
-                bool PrevIs(Func<char, bool> func)
-                {
-                    if (i - 1 < 0)
-                    {
-                        return false;
-                    }
-
-                    char prevChar = propertyName[i - 1];
-
-                    return func(prevChar);
-                }
-
-                char c = propertyName[i];
-
-                if (c == 'I' && NextIs(x => x == 'D'))
-                {
-                    sb.Append(PrevIs(x => x == '_') ? "id" : "_id");
-                    i++;
-                }
-                else if (c == '_')
-                {
-                    sb.Append('_');
-                }
-                else if (char.IsUpper(c))
-                {
-                    if (!PrevIs(char.IsUpper) && !PrevIs(x => x == '_'))
-                    {
-                        sb.Append('_');
-                    }
-
-                    sb.Append(char.ToLower(c));
-                }
-
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        public static TableMetadataModel<TPoco> GetMetadata<TPoco>() where TPoco : IReadOnlyPoco<TPoco>
-        {
-            object ValueFactory(Type type)
-            {
-                var metadataProperty = type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static);
-
-                // ReSharper disable once PossibleNullReferenceException
-                return metadataProperty.GetValue(null);
-            }
-
-            return (TableMetadataModel<TPoco>) GetMetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
-        }
-
-        public static bool StupidEquals(object a, object b)
-        {
-            return a != null && (a.GetType().IsValueType || a is string) ? Equals(a, b) : ReferenceEquals(a, b);
-        }
-    }
-
     /// <summary>
     /// All Poco types implement this interface, either directly or through the <see cref="IPoco{T}" /> Interface.
     /// </summary>
@@ -875,7 +469,16 @@
     /// <summary>
     /// Interface for all Poco types generated from database Tables, omitting types generated from Views.
     /// </summary>
-    public interface IPoco<T> : IReadOnlyPoco<T> { }
+    public interface IPoco<T> : IReadOnlyPoco<T>
+    {
+        NpgsqlParameter[] GetNonPkParameters();
+
+        int GetPrimaryKey();
+
+        void SetPrimaryKey(int value);
+
+        bool IsNew();
+    }
 
     /// <summary>
     /// The main API for the database access interface.
@@ -897,7 +500,7 @@
         /// <summary>
         /// Deletes a record by its PrimaryKey.
         /// </summary>
-        Task<int> Delete<T>(T model, CancellationToken cancellationToken = default)
+        Task<int> Delete<T>(T poco, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
@@ -944,12 +547,12 @@
         /// <summary>
         /// Inserts a record and attaches it's ID to the poco object.
         /// </summary>
-        Task<int> Insert<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>;
+        Task<int> Insert<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
         /// Inserts a record and returns its ID.
         /// </summary>
-        Task<int> InsertWithoutMutating<T>(T model, CancellationToken cancellationToken = default) where T : IPoco<T>;
+        Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
         /// Creates a parameter of type T with NpgsqlDbType from the default type map 'defaultNpgsqlDbTypeMap'.
@@ -984,13 +587,7 @@
         /// <summary>
         /// Updates a record by its ID.
         /// </summary>
-        Task<int> Update<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
-
-        /// <summary>
-        /// Updates a record by its ID.
-        /// Only updates the changed rows.
-        /// </summary>
-        Task<int> UpdateChangesOnly<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new();
+        Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
         /// Returns a record by its ID.
@@ -1006,43 +603,6 @@
     public class TableMetadataModel<T> : TableMetadataModel
     {
         /// <summary>
-        /// Clones the current object and returns the clone.
-        /// </summary>
-        // ReSharper disable once NotAccessedField.Global
-        public Func<T, T> Clone;
-
-        /// <summary>
-        /// Returns the primary key for the table.
-        /// </summary>
-        public Func<T, int> GetPrimaryKey;
-
-        /// <summary>
-        /// Returns true if the record hasn't been inserted to the database yet.
-        /// </summary>
-        public Func<T, bool> IsNew;
-
-        /// <summary>
-        /// Sets the primary key for the table.
-        /// </summary>
-        public Action<T, int> SetPrimaryKey;
-
-        /// <summary>
-        /// Generates a parameter for every non Primary Key column in the table.
-        /// </summary>
-        public Func<T, NpgsqlParameter[]> GenerateParameters { get; set; }
-
-        /// <summary>
-        /// Generates a parameter for every column in the table.
-        /// </summary>
-        public Func<T, ValueTuple<string[], NpgsqlParameter[]>> GetAllColumns { get; set; }
-
-        /// <summary>
-        /// Generates the changes between 2 instances of the poco class.
-        /// Returns the names of the changed columns and parameters for every column value.
-        /// </summary>
-        public Func<T, T, ValueTuple<List<string>, List<NpgsqlParameter>>> GetColumnChanges { get; set; }
-
-        /// <summary>
         /// Writes the poco object to the binary importer.
         /// </summary>
         public Action<NpgsqlBinaryImporter, T> WriteToImporter { get; set; }
@@ -1056,6 +616,8 @@
         public string ClassName { get; set; }
 
         public List<ColumnMetadataModel> Columns { get; set; }
+
+        public string[] NonPkColumnNames { get; set; }
 
         public string PluralClassName { get; set; }
 

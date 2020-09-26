@@ -11,6 +11,7 @@ namespace @Model.Namespace
     using LinqToDB;
     using LinqToDB.Mapping;
     using NpgsqlTypes;
+    using Npgsql;
     using Postgres;
 
 @foreach (var table in Model.Tables)
@@ -58,6 +59,48 @@ else
         @:public @column.PropertyType.ClrTypeName @column.PropertyName { get; set; }
 @:
     }
+@if(!table.IsView)
+{
+        @:public NpgsqlParameter[] GetNonPkParameters()
+        @:{
+            @:return new NpgsqlParameter[]
+            @:{
+            @foreach(var column in table.Columns.Where(x => !x.IsPrimaryKey))
+            {
+                @if(column.PropertyType.IsClrNullableType)
+                {
+                @:this.@(column.PropertyName).HasValue
+                    @:? new NpgsqlParameter<@(column.PropertyType.ClrNonNullableTypeName)> {TypedValue = this.@(column.PropertyName).Value, NpgsqlDbType = @(column.PropertyType.NpgsqlDbTypeName)}
+                    @:: new NpgsqlParameter {Value = DBNull.Value},
+                }
+                else
+                {
+                @:new NpgsqlParameter<@column.PropertyType.ClrTypeName>
+                @:{
+                    @:TypedValue = this.@(column.PropertyName),
+                    @:NpgsqlDbType = @(column.PropertyType.NpgsqlDbTypeName),
+                @:},
+                }                
+            }
+            @:};
+        @:}
+@:
+        @:public int GetPrimaryKey()
+        @:{
+            @:return this.@(table.PrimaryKeyPropertyName);
+        @:}
+@:
+        @:public void SetPrimaryKey(int value)
+        @:{
+            @:this.@(table.PrimaryKeyPropertyName) = value;
+        @:}
+@:
+        @:public bool IsNew()
+        @:{
+            @:return this.@(table.PrimaryKeyPropertyName) == default;
+        @:}
+@:
+}
         @:public static TableMetadataModel<@(table.ClassName)Poco> Metadata => @(Model.MetadataClassName).@(table.ClassName)PocoMetadata;
     @:}
 @:
@@ -120,9 +163,6 @@ else
                 {
                 @:PrimaryKeyColumnName = "@(table.PrimaryKeyColumnName)",
                 @:PrimaryKeyPropertyName = "@(table.PrimaryKeyPropertyName)",
-                @:GetPrimaryKey = instance => instance.@(table.PrimaryKeyPropertyName),
-                @:SetPrimaryKey = (instance, val) => instance.@(table.PrimaryKeyPropertyName) = val,
-                @:IsNew = instance => instance.@(table.PrimaryKeyPropertyName) == default,
                 }
                 @:Columns = new List<ColumnMetadataModel>
                 @:{
@@ -166,15 +206,18 @@ else
                     @:},
                     }
                 @:},
+                @:NonPkColumnNames = new[]
+                @:{
+                @foreach(var column in table.Columns.Where(x => !x.IsPrimaryKey))
+                {
+                    @:"@(column.ColumnName)",                
+                }
+                @:},
             @:};
 @:
-            @:@(table.ClassName)PocoMetadata.Clone = DbCodeGenerator.GetClone<@(table.ClassName)Poco>();
             @if(!table.IsView)
             {
-            @:@(table.ClassName)PocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(@(table.ClassName)PocoMetadata);
             @:@(table.ClassName)PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(@(table.ClassName)PocoMetadata);
-            @:@(table.ClassName)PocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(@(table.ClassName)PocoMetadata);
-            @:@(table.ClassName)PocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(@(table.ClassName)PocoMetadata);
             }
     @if(table != Model.Tables.Last())
     {

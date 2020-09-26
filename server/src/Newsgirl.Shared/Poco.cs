@@ -9,6 +9,7 @@ namespace Newsgirl.Shared
     using LinqToDB;
     using LinqToDB.Mapping;
     using NpgsqlTypes;
+    using Npgsql;
     using Postgres;
 
     /// <summary>
@@ -114,6 +115,58 @@ namespace Newsgirl.Shared
         [Column(Name = "feed_item_url", DataType = DataType.Text)]
         public string FeedItemUrl { get; set; }
 
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            return new NpgsqlParameter[]
+            {
+                new NpgsqlParameter<int>
+                {
+                    TypedValue = this.FeedID,
+                    NpgsqlDbType = NpgsqlDbType.Integer,
+                },
+                new NpgsqlParameter<DateTime>
+                {
+                    TypedValue = this.FeedItemAddedTime,
+                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedItemDescription,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<long>
+                {
+                    TypedValue = this.FeedItemHash,
+                    NpgsqlDbType = NpgsqlDbType.Bigint,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedItemTitle,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedItemUrl,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.FeedItemID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.FeedItemID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.FeedItemID == default;
+        }
+
         public static TableMetadataModel<FeedItemPoco> Metadata => DbMetadata.FeedItemPocoMetadata;
     }
 
@@ -192,6 +245,44 @@ namespace Newsgirl.Shared
         [Column(Name = "feed_url", DataType = DataType.Text)]
         public string FeedUrl { get; set; }
 
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            return new NpgsqlParameter[]
+            {
+                this.FeedContentHash.HasValue
+                    ? new NpgsqlParameter<long> {TypedValue = this.FeedContentHash.Value, NpgsqlDbType = NpgsqlDbType.Bigint}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                this.FeedItemsHash.HasValue
+                    ? new NpgsqlParameter<long> {TypedValue = this.FeedItemsHash.Value, NpgsqlDbType = NpgsqlDbType.Bigint}
+                    : new NpgsqlParameter {Value = DBNull.Value},
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedName,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedUrl,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.FeedID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.FeedID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.FeedID == default;
+        }
+
         public static TableMetadataModel<FeedPoco> Metadata => DbMetadata.FeedPocoMetadata;
     }
 
@@ -243,6 +334,38 @@ namespace Newsgirl.Shared
         [NotNull]
         [Column(Name = "setting_value", DataType = DataType.Text)]
         public string SettingValue { get; set; }
+
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            return new NpgsqlParameter[]
+            {
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.SettingName,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.SettingValue,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.SettingID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.SettingID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.SettingID == default;
+        }
 
         public static TableMetadataModel<SystemSettingPoco> Metadata => DbMetadata.SystemSettingPocoMetadata;
     }
@@ -298,9 +421,6 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "feed_item_id",
                 PrimaryKeyPropertyName = "FeedItemID",
-                GetPrimaryKey = instance => instance.FeedItemID,
-                SetPrimaryKey = (instance, val) => instance.FeedItemID = val,
-                IsNew = instance => instance.FeedItemID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -556,13 +676,18 @@ namespace Newsgirl.Shared
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "feed_id",                
+                    "feed_item_added_time",                
+                    "feed_item_description",                
+                    "feed_item_hash",                
+                    "feed_item_title",                
+                    "feed_item_url",                
+                },
             };
 
-            FeedItemPocoMetadata.Clone = DbCodeGenerator.GetClone<FeedItemPoco>();
-            FeedItemPocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(FeedItemPocoMetadata);
             FeedItemPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(FeedItemPocoMetadata);
-            FeedItemPocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(FeedItemPocoMetadata);
-            FeedItemPocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(FeedItemPocoMetadata);
 
             FeedPocoMetadata = new TableMetadataModel<FeedPoco>
             {
@@ -572,9 +697,6 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "feed_id",
                 PrimaryKeyPropertyName = "FeedID",
-                GetPrimaryKey = instance => instance.FeedID,
-                SetPrimaryKey = (instance, val) => instance.FeedID = val,
-                IsNew = instance => instance.FeedID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -758,13 +880,16 @@ namespace Newsgirl.Shared
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "feed_content_hash",                
+                    "feed_items_hash",                
+                    "feed_name",                
+                    "feed_url",                
+                },
             };
 
-            FeedPocoMetadata.Clone = DbCodeGenerator.GetClone<FeedPoco>();
-            FeedPocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(FeedPocoMetadata);
             FeedPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(FeedPocoMetadata);
-            FeedPocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(FeedPocoMetadata);
-            FeedPocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(FeedPocoMetadata);
 
             SystemSettingPocoMetadata = new TableMetadataModel<SystemSettingPoco>
             {
@@ -774,9 +899,6 @@ namespace Newsgirl.Shared
                 TableSchema = "public",
                 PrimaryKeyColumnName = "setting_id",
                 PrimaryKeyPropertyName = "SettingID",
-                GetPrimaryKey = instance => instance.SettingID,
-                SetPrimaryKey = (instance, val) => instance.SettingID = val,
-                IsNew = instance => instance.SettingID == default,
                 Columns = new List<ColumnMetadataModel>
                 {
                     new ColumnMetadataModel
@@ -888,13 +1010,14 @@ namespace Newsgirl.Shared
                         },
                     },
                 },
+                NonPkColumnNames = new[]
+                {
+                    "setting_name",                
+                    "setting_value",                
+                },
             };
 
-            SystemSettingPocoMetadata.Clone = DbCodeGenerator.GetClone<SystemSettingPoco>();
-            SystemSettingPocoMetadata.GenerateParameters = DbCodeGenerator.GetGenerateParameters(SystemSettingPocoMetadata);
             SystemSettingPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(SystemSettingPocoMetadata);
-            SystemSettingPocoMetadata.GetColumnChanges = DbCodeGenerator.GetGetColumnChanges(SystemSettingPocoMetadata);
-            SystemSettingPocoMetadata.GetAllColumns = DbCodeGenerator.GetGetAllColumns(SystemSettingPocoMetadata);
 
             Functions.Add(new FunctionMetadataModel
             {
