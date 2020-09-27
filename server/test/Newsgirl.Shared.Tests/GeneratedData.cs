@@ -54,7 +54,7 @@
 
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
-            var setters = DbCodeGenerator.GenerateSetters<T>();
+            var setters = DbCodeGenerator.GetSetters<T>();
 
             var valuesArray = metadata.Columns.Select(x => GetValuesByType(x.PropertyType.NpgsqlDbType)).ToArray();
 

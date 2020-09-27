@@ -6,10 +6,11 @@ namespace Newsgirl.Shared.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using LinqToDB;
     using LinqToDB.Mapping;
-    using NpgsqlTypes;
     using Npgsql;
+    using NpgsqlTypes;
     using Postgres;
 
     /// <summary>
@@ -323,6 +324,7 @@ namespace Newsgirl.Shared.Tests
 
         public NpgsqlParameter[] GetNonPkParameters()
         {
+            // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
                 this.TestBigint1.HasValue
@@ -437,7 +439,152 @@ namespace Newsgirl.Shared.Tests
             return this.TestID == default;
         }
 
-        public static TableMetadataModel<Test1Poco> Metadata => DbMetadata.Test1PocoMetadata;
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            if (!this.TestBigint1.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestBigint1.Value, NpgsqlDbType.Bigint);
+            }
+
+            await importer.WriteAsync(this.TestBigint2, NpgsqlDbType.Bigint);
+
+            await importer.WriteAsync(this.TestBoolean1, NpgsqlDbType.Boolean);
+
+            if (!this.TestBoolean2.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestBoolean2.Value, NpgsqlDbType.Boolean);
+            }
+
+            if (this.TestChar1 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestChar1, NpgsqlDbType.Char);
+            }
+
+            if (this.TestChar2 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestChar2, NpgsqlDbType.Char);
+            }
+
+            await importer.WriteAsync(this.TestDate1, NpgsqlDbType.Date);
+
+            if (!this.TestDate2.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestDate2.Value, NpgsqlDbType.Date);
+            }
+
+            if (!this.TestDecimal1.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestDecimal1.Value, NpgsqlDbType.Numeric);
+            }
+
+            await importer.WriteAsync(this.TestDecimal2, NpgsqlDbType.Numeric);
+
+            if (!this.TestDouble1.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestDouble1.Value, NpgsqlDbType.Double);
+            }
+
+            await importer.WriteAsync(this.TestDouble2, NpgsqlDbType.Double);
+
+            if (!this.TestInteger1.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestInteger1.Value, NpgsqlDbType.Integer);
+            }
+
+            await importer.WriteAsync(this.TestInteger2, NpgsqlDbType.Integer);
+
+            if (this.TestName1 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestName1, NpgsqlDbType.Varchar);
+            }
+
+            if (this.TestName2 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestName2, NpgsqlDbType.Varchar);
+            }
+
+            if (!this.TestReal1.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestReal1.Value, NpgsqlDbType.Real);
+            }
+
+            await importer.WriteAsync(this.TestReal2, NpgsqlDbType.Real);
+
+            if (this.TestText1 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestText1, NpgsqlDbType.Text);
+            }
+
+            if (this.TestText2 == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestText2, NpgsqlDbType.Text);
+            }
+
+            await importer.WriteAsync(this.TestTimestamp1, NpgsqlDbType.Timestamp);
+
+            if (!this.TestTimestamp2.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestTimestamp2.Value, NpgsqlDbType.Timestamp);
+            }
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.Test1PocoMetadata;
     }
 
     /// <summary>
@@ -491,6 +638,7 @@ namespace Newsgirl.Shared.Tests
 
         public NpgsqlParameter[] GetNonPkParameters()
         {
+            // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
                 new NpgsqlParameter<DateTime>
@@ -521,7 +669,21 @@ namespace Newsgirl.Shared.Tests
             return this.TestID == default;
         }
 
-        public static TableMetadataModel<Test2Poco> Metadata => DbMetadata.Test2PocoMetadata;
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            await importer.WriteAsync(this.TestDate, NpgsqlDbType.Timestamp);
+
+            if (this.TestName == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.TestName, NpgsqlDbType.Text);
+            }
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.Test2PocoMetadata;
     }
 
     /// <summary>
@@ -544,7 +706,7 @@ namespace Newsgirl.Shared.Tests
         [Column(Name = "num", DataType = DataType.Int32)]
         public int? Num { get; set; }
 
-        public static TableMetadataModel<VGenerateSeriesPoco> Metadata => DbMetadata.VGenerateSeriesPocoMetadata;
+        public static TableMetadataModel Metadata => DbMetadata.VGenerateSeriesPocoMetadata;
     }
 
     /// <summary>
@@ -892,7 +1054,7 @@ namespace Newsgirl.Shared.Tests
         [Column(Name = "test_timestamp2", DataType = DataType.DateTime2)]
         public DateTime? TestTimestamp2 { get; set; }
 
-        public static TableMetadataModel<View1Poco> Metadata => DbMetadata.View1PocoMetadata;
+        public static TableMetadataModel Metadata => DbMetadata.View1PocoMetadata;
     }
 
     public class TestDbPocos : IDbPocos<TestDbPocos>
@@ -931,13 +1093,13 @@ namespace Newsgirl.Shared.Tests
 
     public class DbMetadata
     {
-        internal static readonly TableMetadataModel<Test1Poco> Test1PocoMetadata;
+        internal static readonly TableMetadataModel Test1PocoMetadata;
 
-        internal static readonly TableMetadataModel<Test2Poco> Test2PocoMetadata;
+        internal static readonly TableMetadataModel Test2PocoMetadata;
 
-        internal static readonly TableMetadataModel<VGenerateSeriesPoco> VGenerateSeriesPocoMetadata;
+        internal static readonly TableMetadataModel VGenerateSeriesPocoMetadata;
 
-        internal static readonly TableMetadataModel<View1Poco> View1PocoMetadata;
+        internal static readonly TableMetadataModel View1PocoMetadata;
 
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
 
@@ -945,7 +1107,7 @@ namespace Newsgirl.Shared.Tests
         // ReSharper disable once CyclomaticComplexity
         static DbMetadata()
         {
-            Test1PocoMetadata = new TableMetadataModel<Test1Poco>
+            Test1PocoMetadata = new TableMetadataModel
             {
                 ClassName = "Test1",
                 PluralClassName = "Test1",
@@ -1786,34 +1948,32 @@ namespace Newsgirl.Shared.Tests
                 },
                 NonPkColumnNames = new[]
                 {
-                    "test_bigint1",                
-                    "test_bigint2",                
-                    "test_boolean1",                
-                    "test_boolean2",                
-                    "test_char1",                
-                    "test_char2",                
-                    "test_date1",                
-                    "test_date2",                
-                    "test_decimal1",                
-                    "test_decimal2",                
-                    "test_double1",                
-                    "test_double2",                
-                    "test_integer1",                
-                    "test_integer2",                
-                    "test_name1",                
-                    "test_name2",                
-                    "test_real1",                
-                    "test_real2",                
-                    "test_text1",                
-                    "test_text2",                
-                    "test_timestamp1",                
-                    "test_timestamp2",                
+                    "test_bigint1",
+                    "test_bigint2",
+                    "test_boolean1",
+                    "test_boolean2",
+                    "test_char1",
+                    "test_char2",
+                    "test_date1",
+                    "test_date2",
+                    "test_decimal1",
+                    "test_decimal2",
+                    "test_double1",
+                    "test_double2",
+                    "test_integer1",
+                    "test_integer2",
+                    "test_name1",
+                    "test_name2",
+                    "test_real1",
+                    "test_real2",
+                    "test_text1",
+                    "test_text2",
+                    "test_timestamp1",
+                    "test_timestamp2",
                 },
             };
 
-            Test1PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(Test1PocoMetadata);
-
-            Test2PocoMetadata = new TableMetadataModel<Test2Poco>
+            Test2PocoMetadata = new TableMetadataModel
             {
                 ClassName = "Test2",
                 PluralClassName = "Test2",
@@ -1934,14 +2094,12 @@ namespace Newsgirl.Shared.Tests
                 },
                 NonPkColumnNames = new[]
                 {
-                    "test_date",                
-                    "test_name",                
+                    "test_date",
+                    "test_name",
                 },
             };
 
-            Test2PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(Test2PocoMetadata);
-
-            VGenerateSeriesPocoMetadata = new TableMetadataModel<VGenerateSeriesPoco>
+            VGenerateSeriesPocoMetadata = new TableMetadataModel
             {
                 ClassName = "VGenerateSeries",
                 PluralClassName = "VGenerateSeries",
@@ -1988,12 +2146,11 @@ namespace Newsgirl.Shared.Tests
                 },
                 NonPkColumnNames = new[]
                 {
-                    "num",                
+                    "num",
                 },
             };
 
-
-            View1PocoMetadata = new TableMetadataModel<View1Poco>
+            View1PocoMetadata = new TableMetadataModel
             {
                 ClassName = "View1",
                 PluralClassName = "View1",
@@ -2940,35 +3097,34 @@ namespace Newsgirl.Shared.Tests
                 },
                 NonPkColumnNames = new[]
                 {
-                    "test1_test_id",                
-                    "test2_test_id",                
-                    "test_bigint1",                
-                    "test_bigint2",                
-                    "test_boolean1",                
-                    "test_boolean2",                
-                    "test_char1",                
-                    "test_char2",                
-                    "test_date",                
-                    "test_date1",                
-                    "test_date2",                
-                    "test_decimal1",                
-                    "test_decimal2",                
-                    "test_double1",                
-                    "test_double2",                
-                    "test_integer1",                
-                    "test_integer2",                
-                    "test_name",                
-                    "test_name1",                
-                    "test_name2",                
-                    "test_real1",                
-                    "test_real2",                
-                    "test_text1",                
-                    "test_text2",                
-                    "test_timestamp1",                
-                    "test_timestamp2",                
+                    "test1_test_id",
+                    "test2_test_id",
+                    "test_bigint1",
+                    "test_bigint2",
+                    "test_boolean1",
+                    "test_boolean2",
+                    "test_char1",
+                    "test_char2",
+                    "test_date",
+                    "test_date1",
+                    "test_date2",
+                    "test_decimal1",
+                    "test_decimal2",
+                    "test_double1",
+                    "test_double2",
+                    "test_integer1",
+                    "test_integer2",
+                    "test_name",
+                    "test_name1",
+                    "test_name2",
+                    "test_real1",
+                    "test_real2",
+                    "test_text1",
+                    "test_text2",
+                    "test_timestamp1",
+                    "test_timestamp2",
                 },
             };
-
 
             Functions.Add(new FunctionMetadataModel
             {

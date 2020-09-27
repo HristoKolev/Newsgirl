@@ -231,7 +231,7 @@ namespace Newsgirl.Shared.Postgres
             var metadata = DbCodeGenerator.GetMetadata<T>();
             var columnNames = metadata.NonPkColumnNames;
             var parameters = poco.GetNonPkParameters();
-            
+
             var sqlBuilder = new StringBuilder(128);
 
             // STATEMENT HEADER
@@ -278,16 +278,16 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteScalar<int>(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Save<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        public async Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
-            if (model.IsNew())
+            if (poco.IsNew())
             {
-                return await this.Insert(model, cancellationToken);
+                return await this.Insert(poco, cancellationToken);
             }
 
-            await this.Update(model, cancellationToken);
+            await this.Update(poco, cancellationToken);
 
-            return model.GetPrimaryKey();
+            return poco.GetPrimaryKey();
         }
 
         public Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
@@ -414,7 +414,7 @@ namespace Newsgirl.Shared.Postgres
                 {
                     await importer.StartRowAsync();
 
-                    metadata.WriteToImporter(importer, poco);
+                    await poco.WriteToImporter(importer);
                 }
 
                 await importer.CompleteAsync();
@@ -478,6 +478,8 @@ namespace Newsgirl.Shared.Postgres
         void SetPrimaryKey(int value);
 
         bool IsNew();
+
+        Task WriteToImporter(NpgsqlBinaryImporter importer);
     }
 
     /// <summary>
@@ -582,7 +584,7 @@ namespace Newsgirl.Shared.Postgres
         /// If the primary key value is 0 it inserts the record.
         /// Returns the record's primary key value.
         /// </summary>
-        Task<int> Save<T>(T model, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
+        Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
         /// Updates a record by its ID.
@@ -598,14 +600,6 @@ namespace Newsgirl.Shared.Postgres
         /// The database specific API.
         /// </summary>
         TPocos Poco { get; }
-    }
-
-    public class TableMetadataModel<T> : TableMetadataModel
-    {
-        /// <summary>
-        /// Writes the poco object to the binary importer.
-        /// </summary>
-        public Action<NpgsqlBinaryImporter, T> WriteToImporter { get; set; }
     }
 
     /// <summary>

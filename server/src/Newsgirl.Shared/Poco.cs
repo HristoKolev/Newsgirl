@@ -6,10 +6,11 @@ namespace Newsgirl.Shared
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using LinqToDB;
     using LinqToDB.Mapping;
-    using NpgsqlTypes;
     using Npgsql;
+    using NpgsqlTypes;
     using Postgres;
 
     /// <summary>
@@ -117,6 +118,7 @@ namespace Newsgirl.Shared
 
         public NpgsqlParameter[] GetNonPkParameters()
         {
+            // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
                 new NpgsqlParameter<int>
@@ -167,7 +169,43 @@ namespace Newsgirl.Shared
             return this.FeedItemID == default;
         }
 
-        public static TableMetadataModel<FeedItemPoco> Metadata => DbMetadata.FeedItemPocoMetadata;
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            await importer.WriteAsync(this.FeedID, NpgsqlDbType.Integer);
+
+            await importer.WriteAsync(this.FeedItemAddedTime, NpgsqlDbType.Timestamp);
+
+            if (this.FeedItemDescription == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedItemDescription, NpgsqlDbType.Text);
+            }
+
+            await importer.WriteAsync(this.FeedItemHash, NpgsqlDbType.Bigint);
+
+            if (this.FeedItemTitle == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedItemTitle, NpgsqlDbType.Text);
+            }
+
+            if (this.FeedItemUrl == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedItemUrl, NpgsqlDbType.Text);
+            }
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.FeedItemPocoMetadata;
     }
 
     /// <summary>
@@ -247,6 +285,7 @@ namespace Newsgirl.Shared
 
         public NpgsqlParameter[] GetNonPkParameters()
         {
+            // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
                 this.FeedContentHash.HasValue
@@ -283,7 +322,46 @@ namespace Newsgirl.Shared
             return this.FeedID == default;
         }
 
-        public static TableMetadataModel<FeedPoco> Metadata => DbMetadata.FeedPocoMetadata;
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            if (!this.FeedContentHash.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedContentHash.Value, NpgsqlDbType.Bigint);
+            }
+
+            if (!this.FeedItemsHash.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedItemsHash.Value, NpgsqlDbType.Bigint);
+            }
+
+            if (this.FeedName == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedName, NpgsqlDbType.Text);
+            }
+
+            if (this.FeedUrl == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedUrl, NpgsqlDbType.Text);
+            }
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.FeedPocoMetadata;
     }
 
     /// <summary>
@@ -337,6 +415,7 @@ namespace Newsgirl.Shared
 
         public NpgsqlParameter[] GetNonPkParameters()
         {
+            // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
                 new NpgsqlParameter<string>
@@ -367,7 +446,28 @@ namespace Newsgirl.Shared
             return this.SettingID == default;
         }
 
-        public static TableMetadataModel<SystemSettingPoco> Metadata => DbMetadata.SystemSettingPocoMetadata;
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            if (this.SettingName == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.SettingName, NpgsqlDbType.Text);
+            }
+
+            if (this.SettingValue == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.SettingValue, NpgsqlDbType.Text);
+            }
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.SystemSettingPocoMetadata;
     }
 
     public class DbPocos : IDbPocos<DbPocos>
@@ -401,11 +501,11 @@ namespace Newsgirl.Shared
 
     public class DbMetadata
     {
-        internal static readonly TableMetadataModel<FeedItemPoco> FeedItemPocoMetadata;
+        internal static readonly TableMetadataModel FeedItemPocoMetadata;
 
-        internal static readonly TableMetadataModel<FeedPoco> FeedPocoMetadata;
+        internal static readonly TableMetadataModel FeedPocoMetadata;
 
-        internal static readonly TableMetadataModel<SystemSettingPoco> SystemSettingPocoMetadata;
+        internal static readonly TableMetadataModel SystemSettingPocoMetadata;
 
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
 
@@ -413,7 +513,7 @@ namespace Newsgirl.Shared
         // ReSharper disable once CyclomaticComplexity
         static DbMetadata()
         {
-            FeedItemPocoMetadata = new TableMetadataModel<FeedItemPoco>
+            FeedItemPocoMetadata = new TableMetadataModel
             {
                 ClassName = "FeedItem",
                 PluralClassName = "FeedItems",
@@ -678,18 +778,16 @@ namespace Newsgirl.Shared
                 },
                 NonPkColumnNames = new[]
                 {
-                    "feed_id",                
-                    "feed_item_added_time",                
-                    "feed_item_description",                
-                    "feed_item_hash",                
-                    "feed_item_title",                
-                    "feed_item_url",                
+                    "feed_id",
+                    "feed_item_added_time",
+                    "feed_item_description",
+                    "feed_item_hash",
+                    "feed_item_title",
+                    "feed_item_url",
                 },
             };
 
-            FeedItemPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(FeedItemPocoMetadata);
-
-            FeedPocoMetadata = new TableMetadataModel<FeedPoco>
+            FeedPocoMetadata = new TableMetadataModel
             {
                 ClassName = "Feed",
                 PluralClassName = "Feeds",
@@ -882,16 +980,14 @@ namespace Newsgirl.Shared
                 },
                 NonPkColumnNames = new[]
                 {
-                    "feed_content_hash",                
-                    "feed_items_hash",                
-                    "feed_name",                
-                    "feed_url",                
+                    "feed_content_hash",
+                    "feed_items_hash",
+                    "feed_name",
+                    "feed_url",
                 },
             };
 
-            FeedPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(FeedPocoMetadata);
-
-            SystemSettingPocoMetadata = new TableMetadataModel<SystemSettingPoco>
+            SystemSettingPocoMetadata = new TableMetadataModel
             {
                 ClassName = "SystemSetting",
                 PluralClassName = "SystemSettings",
@@ -1012,12 +1108,10 @@ namespace Newsgirl.Shared
                 },
                 NonPkColumnNames = new[]
                 {
-                    "setting_name",                
-                    "setting_value",                
+                    "setting_name",
+                    "setting_value",
                 },
             };
-
-            SystemSettingPocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(SystemSettingPocoMetadata);
 
             Functions.Add(new FunctionMetadataModel
             {

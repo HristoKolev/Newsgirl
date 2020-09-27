@@ -54,24 +54,27 @@ namespace Newsgirl.Server.Tests
         [InlineData("unicode_test_page.html")]
         public async Task ReadUtf8_works_for_valid_utf8(string resourceName)
         {
-            var resourceBytes = await TestHelper.GetResourceBytes(resourceName);
-            string resourceString = EncodingHelper.UTF8.GetString(resourceBytes);
-
-            string str = null;
-
-            async Task Handler(HttpContext context)
+            for (int i = 0; i < 1000; i++)
             {
-                str = await context.Request.ReadUtf8();
-                context.Response.StatusCode = 200;
-            }
+                var resourceBytes = await TestHelper.GetResourceBytes(resourceName);
+                string resourceString = EncodingHelper.UTF8.GetString(resourceBytes);
 
-            await using (var tester = await HttpServerTester.Create(Handler))
-            {
-                var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
-                tester.EnsureHandlerSuccess();
-                response.EnsureSuccessStatusCode();
+                string str = null;
 
-                Assert.Equal(resourceString, str);
+                async Task Handler(HttpContext context)
+                {
+                    str = await context.Request.ReadUtf8();
+                    context.Response.StatusCode = 200;
+                }
+
+                await using (var tester = await HttpServerTester.Create(Handler))
+                {
+                    var response = await tester.Client.PostAsync("/", new ReadOnlyMemoryContent(resourceBytes));
+                    tester.EnsureHandlerSuccess();
+                    response.EnsureSuccessStatusCode();
+
+                    Assert.Equal(resourceString, str);
+                }
             }
         }
 

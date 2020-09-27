@@ -49,7 +49,7 @@ namespace @Model.Namespace
             @:var parameters = poco.GetNonPkParameters();
 @:
             @:var columns = @(Model.MetadataClassName).@(table.ClassName)PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+            @:var getters = DbCodeGenerator.GetGetters<@(table.ClassName)Poco>();
 @:
             @:for (int i = 0; i < columns.Length; i++)
             @:{
@@ -79,7 +79,7 @@ namespace @Model.Namespace
             @:var parameters = poco.GetNonPkParameters();
 @:
             @:var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+            @:var getters = DbCodeGenerator.GetGetters<@(table.ClassName)Poco>();
 @:
             @:for (int i = 0; i < columns.Length; i++)
             @:{
@@ -112,7 +112,7 @@ namespace @Model.Namespace
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void Getters(@(table.ClassName)Poco poco)
         @:{
-            @:var getters = DbCodeGenerator.GenerateGetters<@(table.ClassName)Poco>();
+            @:var getters = DbCodeGenerator.GetGetters<@(table.ClassName)Poco>();
 @:
         @foreach(var column in table.Columns)
         {
@@ -124,7 +124,7 @@ namespace @Model.Namespace
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void Setters(@(table.ClassName)Poco poco)
         @:{
-            @:var setters = DbCodeGenerator.GenerateSetters<@(table.ClassName)Poco>();
+            @:var setters = DbCodeGenerator.GetSetters<@(table.ClassName)Poco>();
 @:
             @:var newObj = new @(table.ClassName)Poco();
 @:

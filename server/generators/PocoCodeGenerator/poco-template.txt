@@ -8,10 +8,11 @@ namespace @Model.Namespace
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using LinqToDB;
     using LinqToDB.Mapping;
-    using NpgsqlTypes;
     using Npgsql;
+    using NpgsqlTypes;
     using Postgres;
 
 @foreach (var table in Model.Tables)
@@ -63,6 +64,7 @@ else
 {
         @:public NpgsqlParameter[] GetNonPkParameters()
         @:{
+            @:// ReSharper disable once RedundantExplicitArrayCreation
             @:return new NpgsqlParameter[]
             @:{
             @foreach(var column in table.Columns.Where(x => !x.IsPrimaryKey))
@@ -100,8 +102,53 @@ else
             @:return this.@(table.PrimaryKeyPropertyName) == default;
         @:}
 @:
+        @:public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        @:{
+            @foreach(var column in table.Columns.Where(x => !x.IsPrimaryKey))
+            {
+            @if(column.PropertyType.IsClrNullableType)
+            {
+    @if(column != table.Columns.Where(x => !x.IsPrimaryKey).First())
+    {
+@:
+    }
+            @:if (!this.@(column.PropertyName).HasValue)
+            @:{
+                @:await importer.WriteNullAsync();
+            @:}
+            @:else
+            @:{
+                @:await importer.WriteAsync(this.@(column.PropertyName).Value, @(column.PropertyType.NpgsqlDbTypeName));
+            @:}
+            }
+            else if(column.PropertyType.IsClrValueType)
+            {
+    @if(column != table.Columns.Where(x => !x.IsPrimaryKey).First())
+    {
+@:
+    }
+            @:await importer.WriteAsync(this.@(column.PropertyName), @(column.PropertyType.NpgsqlDbTypeName));
+            }
+            else
+            {
+    @if(column != table.Columns.Where(x => !x.IsPrimaryKey).First())
+    {
+@:
+    }
+            @:if (this.@(column.PropertyName) == null)
+            @:{
+                @:await importer.WriteNullAsync();
+            @:}
+            @:else
+            @:{
+                @:await importer.WriteAsync(this.@(column.PropertyName), @(column.PropertyType.NpgsqlDbTypeName));
+            @:}
+            }
+            }
+        @:}
+@:
 }
-        @:public static TableMetadataModel<@(table.ClassName)Poco> Metadata => @(Model.MetadataClassName).@(table.ClassName)PocoMetadata;
+        @:public static TableMetadataModel Metadata => @(Model.MetadataClassName).@(table.ClassName)PocoMetadata;
     @:}
 @:
 }
@@ -142,7 +189,7 @@ else
     {
     @foreach (var table in Model.Tables)
     {
-        @:internal static readonly TableMetadataModel<@(table.ClassName)Poco> @(table.ClassName)PocoMetadata;
+        @:internal static readonly TableMetadataModel @(table.ClassName)PocoMetadata;
 @:
     }
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
@@ -153,7 +200,7 @@ else
         {
             @foreach (var table in Model.Tables)
             {
-            @:@(table.ClassName)PocoMetadata = new TableMetadataModel<@(table.ClassName)Poco>
+            @:@(table.ClassName)PocoMetadata = new TableMetadataModel
             @:{
                 @:ClassName = "@(table.ClassName)",
                 @:PluralClassName = "@(table.PluralClassName)",
@@ -210,15 +257,10 @@ else
                 @:{
                 @foreach(var column in table.Columns.Where(x => !x.IsPrimaryKey))
                 {
-                    @:"@(column.ColumnName)",                
+                    @:"@(column.ColumnName)",
                 }
                 @:},
             @:};
-@:
-            @if(!table.IsView)
-            {
-            @:@(table.ClassName)PocoMetadata.WriteToImporter = DbCodeGenerator.GetWriteToImporter(@(table.ClassName)PocoMetadata);
-            }
     @if(table != Model.Tables.Last())
     {
 @:

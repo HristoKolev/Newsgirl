@@ -5,62 +5,18 @@ namespace Newsgirl.Shared.Postgres
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using System.Reflection.Emit;
     using System.Text;
-    using Npgsql;
-    using NpgsqlTypes;
 
     public static class DbCodeGenerator
     {
-        public static Action<NpgsqlBinaryImporter, TPoco> GetWriteToImporter<TPoco>(TableMetadataModel<TPoco> metadata)
-            where TPoco : IPoco<TPoco>
-        {
-            var pocoType = typeof(TPoco);
-
-            var genericWrite = typeof(NpgsqlBinaryImporter)
-                .GetMethods()
-                .Where((info, i) => info.GetParameters().Length == 2 && info.GetParameters()[1].ParameterType == typeof(NpgsqlDbType))
-                .First();
-
-            var nonPrimaryKeyColumns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-
-            return (importer, poco) =>
-            {
-                foreach (var column in nonPrimaryKeyColumns)
-                {
-                    var property = pocoType.GetProperty(column.PropertyName);
-
-                    var value = property!.GetValue(poco);
-
-                    if (value == null)
-                    {
-                        importer.WriteNull();
-                    }
-                    else
-                    {
-                        var type = property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
-                            ? Nullable.GetUnderlyingType(property.PropertyType)
-                            : property.PropertyType;
-
-                        genericWrite.MakeGenericMethod(type!).Invoke(importer, new[]
-                        {
-                            value, column.PropertyType.NpgsqlDbType,
-                        });
-                    }
-                }
-            };
-        }
-
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GenerateSetters` method.
-        /// </summary>
         private static readonly ConcurrentDictionary<Type, object> SettersCache = new ConcurrentDictionary<Type, object>();
 
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GenerateGetters` method.
-        /// </summary>
         private static readonly ConcurrentDictionary<Type, object> GettersCache = new ConcurrentDictionary<Type, object>();
 
-        public static Dictionary<string, Action<T, object>> GenerateSetters<T>()
+        private static readonly ConcurrentDictionary<Type, TableMetadataModel> MetadataCache = new ConcurrentDictionary<Type, TableMetadataModel>();
+
+        public static Dictionary<string, Action<T, object>> GetSetters<T>()
         {
             static Dictionary<string, Action<T, object>> ValueFactory(Type type)
             {
@@ -68,7 +24,19 @@ namespace Newsgirl.Shared.Postgres
 
                 foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.SetMethod != null))
                 {
-                    Action<T, object> setter = (obj, value) => property!.SetMethod!.Invoke(obj, new[] {value});
+                    var builder = new DynamicMethod($"{property.Name}_setter", typeof(void), new[] {typeof(T), typeof(object)});
+                    var il = builder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldarg_1);
+                    if (property.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, property.PropertyType);
+                    }
+
+                    il.Emit(OpCodes.Call, property!.SetMethod!);
+                    il.Emit(OpCodes.Ret);
+
+                    var setter = builder.CreateDelegate<Action<T, object>>();
 
                     result.TryAdd(property.Name, setter);
                     result.TryAdd(property.Name.Replace("_", ""), setter);
@@ -81,7 +49,7 @@ namespace Newsgirl.Shared.Postgres
             return (Dictionary<string, Action<T, object>>) GettersCache.GetOrAdd(typeof(T), ValueFactory);
         }
 
-        public static Dictionary<string, Func<T, object>> GenerateGetters<T>()
+        public static Dictionary<string, Func<T, object>> GetGetters<T>()
         {
             static Dictionary<string, Func<T, object>> ValueFactory(Type type)
             {
@@ -89,7 +57,19 @@ namespace Newsgirl.Shared.Postgres
 
                 foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.GetMethod != null))
                 {
-                    Func<T, object> getter = arg => property!.GetMethod!.Invoke(arg, Array.Empty<object>());
+                    var builder = new DynamicMethod($"{property.Name}_getter", typeof(object), new[] {typeof(T)});
+                    var il = builder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, property!.GetMethod!);
+
+                    if (property.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, property.PropertyType);
+                    }
+
+                    il.Emit(OpCodes.Ret);
+
+                    var getter = builder.CreateDelegate<Func<T, object>>();
 
                     result.TryAdd(property.Name, getter);
                     result.TryAdd(property.Name.Replace("_", ""), getter);
@@ -174,20 +154,15 @@ namespace Newsgirl.Shared.Postgres
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Cache dictionary for objects generated with the `GetMetadata` method.
-        /// </summary>
-        private static readonly ConcurrentDictionary<Type, object> MetadataCache = new ConcurrentDictionary<Type, object>();
-
-        public static TableMetadataModel<TPoco> GetMetadata<TPoco>() where TPoco : IReadOnlyPoco<TPoco>
+        public static TableMetadataModel GetMetadata<TPoco>() where TPoco : IReadOnlyPoco<TPoco>
         {
-            static object ValueFactory(Type type)
+            static TableMetadataModel ValueFactory(Type type)
             {
-                return type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static)!
+                return (TableMetadataModel) type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static)!
                     .GetValue(null);
             }
 
-            return (TableMetadataModel<TPoco>) MetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
+            return MetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
         }
     }
 }

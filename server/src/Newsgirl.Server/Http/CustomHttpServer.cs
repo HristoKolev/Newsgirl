@@ -265,7 +265,14 @@ namespace Newsgirl.Server.Http
 
                 try
                 {
-                    while (await request.Body.ReadAsync(memoryOwner.Memory) > 0) { }
+                    var memory = memoryOwner.Memory;
+                    int read;
+                    int offset = 0;
+
+                    while ((read = await request.Body.ReadAsync(memory.Slice(offset, memory.Length - offset))) > 0)
+                    {
+                        offset += read;
+                    }
                 }
                 catch (Exception err)
                 {

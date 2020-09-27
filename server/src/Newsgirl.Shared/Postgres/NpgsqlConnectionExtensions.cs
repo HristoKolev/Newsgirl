@@ -179,7 +179,7 @@ namespace Newsgirl.Shared.Postgres
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                var setters = DbCodeGenerator.GenerateSetters<T>();
+                var setters = DbCodeGenerator.GetSetters<T>();
 
                 var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
 
@@ -248,7 +248,7 @@ namespace Newsgirl.Shared.Postgres
             {
                 var instance = new T();
 
-                var setters = DbCodeGenerator.GenerateSetters<T>();
+                var setters = DbCodeGenerator.GetSetters<T>();
 
                 bool hasRow = await reader.ReadAsync(cancellationToken);
 
