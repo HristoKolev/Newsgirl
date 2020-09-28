@@ -417,7 +417,7 @@ namespace Newsgirl.Testing
     }
 
     public abstract class DatabaseTest<TDb, TPocos> : IAsyncLifetime
-        where TDb : DbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
+        where TDb : IDbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
     {
         private readonly string stageSqlFileName;
         private readonly string connectionString;
@@ -489,7 +489,7 @@ namespace Newsgirl.Testing
         }
     }
 
-    public abstract class AppDatabaseTest : DatabaseTest<DbService, DbPocos>
+    public abstract class AppDatabaseTest : DatabaseTest<IDbService, DbPocos>
     {
         protected AppDatabaseTest() : base(
             "before-app-tests.sql",

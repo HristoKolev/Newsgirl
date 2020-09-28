@@ -7,9 +7,9 @@ namespace Newsgirl.Shared
 
     public class SystemSettingsService
     {
-        private readonly DbService db;
+        private readonly IDbService db;
 
-        public SystemSettingsService(DbService db)
+        public SystemSettingsService(IDbService db)
         {
             this.db = db;
         }

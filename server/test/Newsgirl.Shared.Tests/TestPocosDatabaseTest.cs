@@ -3,7 +3,7 @@ namespace Newsgirl.Shared.Tests
     using Postgres;
     using Testing;
 
-    public abstract class TestPocosDatabaseTest : DatabaseTest<DbService<TestDbPocos>, TestDbPocos>
+    public abstract class TestPocosDatabaseTest : DatabaseTest<IDbService<TestDbPocos>, TestDbPocos>
     {
         protected TestPocosDatabaseTest() : base(
             "before-db-tests.sql",

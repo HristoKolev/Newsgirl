@@ -48,7 +48,8 @@ namespace Newsgirl.Server.Http
             this.ThrowIfDisposed();
             this.ThrowIfStarted();
 
-            this.host = new HostBuilder().ConfigureWebHost(builder =>
+            this.host = new HostBuilder()
+                .ConfigureWebHost(builder =>
                 {
                     builder.UseKestrel()
                         .ConfigureKestrel(options =>

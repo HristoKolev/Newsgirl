@@ -329,7 +329,7 @@ namespace Newsgirl.Server
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
-            builder.RegisterType<DbService>().InstancePerLifetimeScope();
+            builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
 
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();

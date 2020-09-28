@@ -22,10 +22,12 @@ namespace Newsgirl.Shared
         }
     }
 
-    public class DbService : DbService<DbPocos>
+    public class DbService : DbService<DbPocos>, IDbService
     {
         public DbService(NpgsqlConnection dbConnection) : base(dbConnection) { }
     }
+
+    public interface IDbService : IDbService<DbPocos> {}
 
     /// <summary>
     /// Use to control database transactions.
@@ -41,9 +43,9 @@ namespace Newsgirl.Shared
 
     public class DbTransactionServiceImpl : DbTransactionService
     {
-        private readonly DbService db;
+        private readonly IDbService db;
 
-        public DbTransactionServiceImpl(DbService db)
+        public DbTransactionServiceImpl(IDbService db)
         {
             this.db = db;
         }

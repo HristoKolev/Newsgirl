@@ -11,11 +11,11 @@ namespace Newsgirl.Fetcher
 
     public class FeedItemsImportService : IFeedItemsImportService
     {
-        private readonly DbService db;
+        private readonly IDbService db;
         private readonly NpgsqlConnection dbConnection;
         private readonly ILog log;
 
-        public FeedItemsImportService(DbService db, NpgsqlConnection dbConnection, ILog log)
+        public FeedItemsImportService(IDbService db, NpgsqlConnection dbConnection, ILog log)
         {
             this.db = db;
             this.dbConnection = dbConnection;

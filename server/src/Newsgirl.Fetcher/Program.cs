@@ -92,7 +92,7 @@
 
         private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            await this.ErrorReporter.Error(e.Exception.InnerException);
+            await this.ErrorReporter.Error(e.Exception!.InnerException);
         }
 
         private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -187,7 +187,7 @@
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
-            builder.RegisterType<DbService>().InstancePerLifetimeScope();
+            builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
 
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
