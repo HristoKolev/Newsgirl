@@ -64,7 +64,7 @@ namespace Newsgirl.Shared.Postgres
 
         public Task<int> ExecuteNonQuery(string sql, params NpgsqlParameter[] parameters)
         {
-            return this.connection.ExecuteNonQuery(sql, parameters, CancellationToken.None);
+            return this.connection.ExecuteNonQuery(sql, parameters);
         }
 
         public Task<int> ExecuteNonQuery(string sql, CancellationToken cancellationToken = default)
@@ -213,7 +213,7 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteScalar<int>(sql, parameters, cancellationToken);
         }
 
-        public Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        public async Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -226,12 +226,7 @@ namespace Newsgirl.Shared.Postgres
 
             var columnNames = metadata.NonPkColumnNames;
             var parameters = poco.GetNonPkParameters();
-
-            if (columnNames.Length == 0)
-            {
-                return Task.FromResult(0); // nothing to update?
-            }
-
+            
             var sqlBuilder = new StringBuilder();
 
             sqlBuilder.Append("UPDATE \"");
@@ -271,10 +266,12 @@ namespace Newsgirl.Shared.Postgres
                 this.CreateParameter("pk", pk),
             });
 
-            return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
+            await this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
+
+            return poco.GetPrimaryKey();
         }
 
-        public Task<int> Delete<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public Task Delete<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             int pk = poco.GetPrimaryKey();
             return this.Delete<T>(pk, cancellationToken);
@@ -303,7 +300,7 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public Task<int> Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public Task Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -321,19 +318,17 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        public Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             if (poco.IsNew())
             {
-                return await this.Insert(poco, cancellationToken);
+                return this.Insert(poco, cancellationToken);
             }
 
-            await this.Update(poco, cancellationToken);
-
-            return poco.GetPrimaryKey();
+            return this.Update(poco, cancellationToken);
         }
 
-        public Task<int> BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
+        public Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
             var columns = metadata.Columns;
@@ -633,7 +628,7 @@ namespace Newsgirl.Shared.Postgres
         /// <summary>
         /// Deletes a record by its PrimaryKey.
         /// </summary>
-        Task<int> Delete<T>(T poco, CancellationToken cancellationToken = default)
+        Task Delete<T>(T poco, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
@@ -645,7 +640,7 @@ namespace Newsgirl.Shared.Postgres
         /// <summary>
         /// Deletes a record by ID.
         /// </summary>
-        Task<int> Delete<T>(int id, CancellationToken cancellationToken = default)
+        Task Delete<T>(int id, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
@@ -659,7 +654,7 @@ namespace Newsgirl.Shared.Postgres
         /// <summary>
         /// Inserts several records in single query.
         /// </summary>
-        Task<int> BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default)
+        Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>

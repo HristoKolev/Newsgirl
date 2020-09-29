@@ -636,6 +636,19 @@ namespace Newsgirl.Shared.Tests
         [Column(Name = "test_name", DataType = DataType.Text)]
         public string TestName { get; set; }
 
+        /// <summary>
+        /// <para>Column name: 'test_number'.</para>
+        /// <para>Table name: 'test2'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'integer'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
+        /// <para>CLR type: 'int'.</para>
+        /// <para>linq2db data type: 'DataType.Int32'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "test_number", DataType = DataType.Int32)]
+        public int TestNumber { get; set; }
+
         public NpgsqlParameter[] GetNonPkParameters()
         {
             // ReSharper disable once RedundantExplicitArrayCreation
@@ -650,6 +663,11 @@ namespace Newsgirl.Shared.Tests
                 {
                     TypedValue = this.TestName,
                     NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<int>
+                {
+                    TypedValue = this.TestNumber,
+                    NpgsqlDbType = NpgsqlDbType.Integer,
                 },
             };
         }
@@ -681,6 +699,8 @@ namespace Newsgirl.Shared.Tests
             {
                 await importer.WriteAsync(this.TestName, NpgsqlDbType.Text);
             }
+
+            await importer.WriteAsync(this.TestNumber, NpgsqlDbType.Integer);
         }
 
         public static TableMetadataModel Metadata => DbMetadata.Test2PocoMetadata;
@@ -2091,11 +2111,48 @@ namespace Newsgirl.Shared.Tests
                             NpgsqlDbType = NpgsqlDbType.Text,
                         },
                     },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "test_number",
+                        DbDataType = "integer",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "TestNumber",
+                        TableName = "test2",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "int",
+                            ClrType = typeof(int),
+                            ClrNonNullableTypeName = "int",
+                            ClrNonNullableType = typeof(int),
+                            ClrNullableTypeName = "int?",
+                            ClrNullableType = typeof(int?),
+                            DbDataType = "integer",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int32",
+                            Linq2DbDataType = DataType.Int32,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                            NpgsqlDbType = NpgsqlDbType.Integer,
+                        },
+                    },
                 },
                 NonPkColumnNames = new[]
                 {
                     "test_date",
                     "test_name",
+                    "test_number",
                 },
             };
 

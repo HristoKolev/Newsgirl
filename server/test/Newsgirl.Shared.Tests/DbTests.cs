@@ -243,6 +243,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestDate, readFromDb.TestDate);
             Assert.Equal(poco.TestID, readFromDb.TestID);
             Assert.Equal(poco.TestName, readFromDb.TestName);
+            Assert.Equal(poco.TestNumber, readFromDb.TestNumber);
 
             int updatedId = await this.Db.Update(poco);
 
@@ -332,6 +333,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestDate, getters["test_date"](poco));
             Assert.Equal(poco.TestID, getters["test_id"](poco));
             Assert.Equal(poco.TestName, getters["test_name"](poco));
+            Assert.Equal(poco.TestNumber, getters["test_number"](poco));
         }
 
         [Theory]
@@ -350,6 +352,9 @@ namespace Newsgirl.Shared.Tests
 
             setters["test_name"](newObj, poco.TestName);
             Assert.Equal(poco.TestName, newObj.TestName);
+
+            setters["test_number"](newObj, poco.TestNumber);
+            Assert.Equal(poco.TestNumber, newObj.TestNumber);
         }
     }
 

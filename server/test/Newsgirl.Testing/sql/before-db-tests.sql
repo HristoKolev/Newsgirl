@@ -35,6 +35,7 @@ CREATE TABLE "public"."test2" (
   test_id serial,
   test_name text NOT NULL,
   test_date timestamp NOT NULL,
+  test_number integer not null,
   PRIMARY KEY (test_id)
 );
 
@@ -75,3 +76,16 @@ create view "public"."v_generate_series" as select generate_series num from gene
  CREATE OR REPLACE FUNCTION "public".increment_by_one(num INTEGER) RETURNS INTEGER AS $$
    SELECT num + 1;
  $$ LANGUAGE 'sql';
+
+
+INSERT into public.test2 (test_name, test_date, test_number) values 
+('test 1', now(), 1),
+('test 2', now(), 2),
+('test 3', now(), 3),
+('test 4', now(), 4),
+('test 5', now(), 5),
+('test 6', now(), 6),
+('test 7', now(), 7),
+('test 8', now(), 8),
+('test 9', now(), 9)
+;
