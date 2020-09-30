@@ -28,9 +28,7 @@ namespace @Model.Namespace
             @:Assert.Equal(poco.@(column.PropertyName), readFromDb.@(column.PropertyName));
         }
 @:
-            @:int updatedId = await this.Db.Update(poco);
-@:
-            @:Assert.Equal(id, updatedId);
+            @:await this.Db.Update(poco);
 @:
             @:await this.Db.Delete(poco);
         @:}

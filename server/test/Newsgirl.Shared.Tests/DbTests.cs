@@ -41,9 +41,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestTimestamp1, readFromDb.TestTimestamp1);
             Assert.Equal(poco.TestTimestamp2, readFromDb.TestTimestamp2);
 
-            int updatedId = await this.Db.Update(poco);
-
-            Assert.Equal(id, updatedId);
+            await this.Db.Update(poco);
 
             await this.Db.Delete(poco);
         }
@@ -245,9 +243,7 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestName, readFromDb.TestName);
             Assert.Equal(poco.TestNumber, readFromDb.TestNumber);
 
-            int updatedId = await this.Db.Update(poco);
-
-            Assert.Equal(id, updatedId);
+            await this.Db.Update(poco);
 
             await this.Db.Delete(poco);
         }

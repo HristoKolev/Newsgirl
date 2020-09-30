@@ -3,6 +3,7 @@ namespace Newsgirl.Shared.Tests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Npgsql;
     using Postgres;
     using Testing;
     using Xunit;
@@ -179,6 +180,69 @@ namespace Newsgirl.Shared.Tests
             );
 
             Snapshot.Match(result);
+        }
+
+        [Fact]
+        public async Task ExecuteNonQuery_throws_on_null_connection()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await NpgsqlConnectionExtensions.ExecuteNonQuery(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteNonQuery_throws_on_null_sql()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.ExecuteNonQuery(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteNonQuery_throws_on_null_parameters()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.ExecuteNonQuery("select 1;", null, CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteScalar_throws_on_null_connection()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await NpgsqlConnectionExtensions.ExecuteScalar<int>(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteScalar_throws_on_null_sql()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.ExecuteScalar<int>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteScalar_throws_on_null_parameters()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.ExecuteScalar<int>("select 1;", null, CancellationToken.None);
+            });
+        }
+        
+        [Fact]
+        public async Task ExecuteScalar_throws_on_empty_result_set()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.ExecuteScalar<int>("select 1 where false;",  Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
         }
     }
 

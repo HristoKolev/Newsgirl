@@ -1,0 +1,15 @@
+﻿[
+  {
+    "ClassName": "System.ArgumentNullException",
+    "Message": "Value cannot be null.",
+    "Data": null,
+    "HelpURL": null,
+    "RemoteStackTraceString": null,
+    "RemoteStackIndex": 0,
+    "ExceptionMethod": null,
+    "HResult": -2147467261,
+    "Source": "Newsgirl.Shared",
+    "WatsonBuckets": null,
+    "ParamName": "sql"
+  }
+]

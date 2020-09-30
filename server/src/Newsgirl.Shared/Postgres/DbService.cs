@@ -213,7 +213,7 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteScalar<int>(sql, parameters, cancellationToken);
         }
 
-        public async Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        public Task Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             var metadata = DbCodeGenerator.GetMetadata<T>();
 
@@ -226,7 +226,7 @@ namespace Newsgirl.Shared.Postgres
 
             var columnNames = metadata.NonPkColumnNames;
             var parameters = poco.GetNonPkParameters();
-            
+
             var sqlBuilder = new StringBuilder();
 
             sqlBuilder.Append("UPDATE \"");
@@ -266,7 +266,17 @@ namespace Newsgirl.Shared.Postgres
                 this.CreateParameter("pk", pk),
             });
 
-            await this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
+            return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
+        }
+
+        public async Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        {
+            if (poco.IsNew())
+            {
+                return await this.Insert(poco, cancellationToken);
+            }
+
+            await this.Update(poco, cancellationToken);
 
             return poco.GetPrimaryKey();
         }
@@ -316,16 +326,6 @@ namespace Newsgirl.Shared.Postgres
             string sql = $"DELETE FROM \"{tableSchema}\".\"{tableName}\" WHERE \"{primaryKeyName}\" = @pk;";
 
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
-        }
-
-        public Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
-        {
-            if (poco.IsNew())
-            {
-                return this.Insert(poco, cancellationToken);
-            }
-
-            return this.Update(poco, cancellationToken);
         }
 
         public Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
@@ -621,18 +621,27 @@ namespace Newsgirl.Shared.Postgres
         Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
-        /// Updates a record by its ID.
+        /// Updates a record by it's primary key.
         /// </summary>
-        Task<int> Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
+        Task Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
-        /// Deletes a record by its PrimaryKey.
+        /// Saves a record to the database.
+        /// If the poco object has a positive primary key it updates it.
+        /// If the primary key value is 0 it inserts the record.
+        /// Returns the record's primary key value.
+        /// </summary>
+        Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
+
+        /// <summary>
+        /// Deletes a record by it's PrimaryKey.
         /// </summary>
         Task Delete<T>(T poco, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
         /// Deletes records from a table by their IDs.
+        /// Returns number of deleted records.
         /// </summary>
         Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
@@ -644,21 +653,13 @@ namespace Newsgirl.Shared.Postgres
             where T : IPoco<T>;
 
         /// <summary>
-        /// Saves a record to the database.
-        /// If the poco object has a positive primary key it updates it.
-        /// If the primary key value is 0 it inserts the record.
-        /// Returns the record's primary key value.
-        /// </summary>
-        Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
-
-        /// <summary>
-        /// Inserts several records in single query.
+        /// Inserts several records in single SQL query.
         /// </summary>
         Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
-        /// Inserts several records using the postgresql binary COPY API.
+        /// Inserts several records using postgresql binary COPY API.
         /// </summary>
         Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>;
 
