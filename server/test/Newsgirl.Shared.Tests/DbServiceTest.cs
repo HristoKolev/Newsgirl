@@ -1,6 +1,7 @@
 namespace Newsgirl.Shared.Tests
 {
     using System;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Npgsql;
@@ -190,7 +191,7 @@ namespace Newsgirl.Shared.Tests
                 await NpgsqlConnectionExtensions.ExecuteNonQuery(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteNonQuery_throws_on_null_sql()
         {
@@ -199,7 +200,7 @@ namespace Newsgirl.Shared.Tests
                 await this.DbConnection.ExecuteNonQuery(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteNonQuery_throws_on_null_parameters()
         {
@@ -208,7 +209,7 @@ namespace Newsgirl.Shared.Tests
                 await this.DbConnection.ExecuteNonQuery("select 1;", null, CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteScalar_throws_on_null_connection()
         {
@@ -217,7 +218,7 @@ namespace Newsgirl.Shared.Tests
                 await NpgsqlConnectionExtensions.ExecuteScalar<int>(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteScalar_throws_on_null_sql()
         {
@@ -226,7 +227,7 @@ namespace Newsgirl.Shared.Tests
                 await this.DbConnection.ExecuteScalar<int>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteScalar_throws_on_null_parameters()
         {
@@ -235,14 +236,188 @@ namespace Newsgirl.Shared.Tests
                 await this.DbConnection.ExecuteScalar<int>("select 1;", null, CancellationToken.None);
             });
         }
-        
+
         [Fact]
         public async Task ExecuteScalar_throws_on_empty_result_set()
         {
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.ExecuteScalar<int>("select 1 where false;");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteScalar_throws_on_no_columns()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.ExecuteScalar<int>("create table test22 (); select * from test22;");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteScalar_throws_on_more_that_one_column()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.ExecuteScalar<int>("select 1,1;");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteScalar_throws_on_more_that_one_row()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.ExecuteScalar<int>("select * from (values (1), (2)) as x;");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteScalar_throws_when_null_is_selected_for_value_type()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.ExecuteScalar<int>("select null;");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteScalar_can_return_null()
+        {
+            string x = await this.DbConnection.ExecuteScalar<string>("select null;");
+
+            Assert.Null(x);
+        }
+
+        [Fact]
+        public async Task Query_throws_on_null_connection()
+        {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1 where false;",  Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+                await NpgsqlConnectionExtensions.Query<TestRow>(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
+        }
+
+        [Fact]
+        public async Task Query_throws_on_null_sql()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.Query<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+
+        [Fact]
+        public async Task Query_throws_on_null_parameters()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.Query<TestRow>("select 1;", null, CancellationToken.None);
+            });
+        }
+
+        [Fact]
+        public async Task Query_handles_null_values()
+        {
+            var rows = await this.DbConnection.Query<TestRow>("select null as col1, null as col2;");
+            var row = rows.First();
+
+            Assert.Null(row.Col1);
+            Assert.Null(row.Col2);
+        }
+
+        [Fact]
+        public async Task QueryOne_throws_on_null_connection()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await NpgsqlConnectionExtensions.QueryOne<TestRow>(null, "select 1;", Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+
+        [Fact]
+        public async Task QueryOne_throws_on_null_sql()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.QueryOne<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+            });
+        }
+
+        [Fact]
+        public async Task QueryOne_throws_on_null_parameters()
+        {
+            await Snapshot.MatchError(async () =>
+            {
+                await this.DbConnection.QueryOne<TestRow>("select 1;", null, CancellationToken.None);
+            });
+        }
+
+        [Fact]
+        public async Task QueryOne_returns_null_on_no_rows()
+        {
+            var row = await this.DbConnection.QueryOne<TestRow>("select 1 where false;");
+
+            Assert.Null(row);
+        }
+        
+        [Fact]
+        public async Task QueryOne_throws_on_more_than_one_row()
+        {
+            
+            Exception exception = null;
+
+            try
+            {
+                await this.DbConnection.QueryOne<TestRow>("select * from (values (1, 2), (3, 4)) as x(col1, col2);");
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
         }
     }
 
@@ -430,5 +605,12 @@ namespace Newsgirl.Shared.Tests
         public string TestName { get; set; }
 
         public int TestNumber { get; set; }
+    }
+
+    public class TestRow
+    {
+        public string Col1 { get; set; }
+
+        public string Col2 { get; set; }
     }
 }

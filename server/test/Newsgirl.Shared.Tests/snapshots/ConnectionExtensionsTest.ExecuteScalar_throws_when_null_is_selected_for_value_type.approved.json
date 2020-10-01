@@ -1,7 +1,7 @@
 ﻿[
   {
     "ClassName": "System.ApplicationException",
-    "Message": "No rows returned for query that expected exactly one row.",
+    "Message": "Cannot cast DBNull value to a value type parameter.",
     "Data": null,
     "HelpURL": null,
     "RemoteStackTraceString": null,

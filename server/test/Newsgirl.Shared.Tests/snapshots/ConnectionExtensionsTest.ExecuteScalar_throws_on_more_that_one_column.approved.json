@@ -1,7 +1,7 @@
 ﻿[
   {
     "ClassName": "System.ApplicationException",
-    "Message": "No rows returned for query that expected exactly one row.",
+    "Message": "More than one column returned for query that expected exactly one column.",
     "Data": null,
     "HelpURL": null,
     "RemoteStackTraceString": null,
