@@ -403,7 +403,7 @@ namespace Newsgirl.Shared.Postgres
         private static Task AsTask(this CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<object>();
-            cancellationToken.Register(() => tcs.TrySetCanceled(), false);
+            cancellationToken.Register(() => tcs.SetResult(null), false);
             return tcs.Task;
         }
 

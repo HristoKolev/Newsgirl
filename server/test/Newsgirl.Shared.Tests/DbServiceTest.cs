@@ -421,6 +421,34 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
+    public class TransactionConnectionExtensionsTest
+    {
+        [Fact]
+        public async Task ExecuteInTransactionAndCommit_works_with_non_default_CT()
+        {
+            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.DbTestConnectionString)
+            {
+                Enlist = false,
+                Pooling = false,
+            };
+            
+            await using (var db = new NpgsqlConnection(builder.ToString()))
+            {
+                //await db.ExecuteNonQuery("select pg_sleep(1);");
+
+                await db.OpenAsync();
+                
+                var cts = new CancellationTokenSource();
+                cts.CancelAfter(6000);
+                
+                await db.ExecuteInTransactionAndCommit(async () =>
+                {
+                    await db.ExecuteNonQuery("select pg_sleep(5);");
+                }, cts.Token);
+            }
+        }
+    }
+
     public class DbServiceTest : TestPocosDatabaseTest
     {
         [Fact]
