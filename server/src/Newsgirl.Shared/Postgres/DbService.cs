@@ -43,12 +43,17 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteInTransaction(body, cancellationToken);
         }
 
-        public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
+        public Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default)
+        {
+            return this.connection.ExecuteInTransaction(body, cancellationToken);
+        }
+
+        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
         }
 
-        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
+        public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
         }
@@ -499,16 +504,21 @@ namespace Newsgirl.Shared.Postgres
         Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Starts a transaction, runs the `body` function
-        /// and if it does not manually rollback throw an exception - commits the transaction.
+        /// Starts a transaction and runs the `body` function.
         /// </summary>
-        Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
+        Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Starts a transaction, runs the `body` function passing the native <see cref="NpgsqlTransaction" /> object
         /// and if it does not manually rollback throw an exception - commits the transaction.
         /// </summary>
         Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Starts a transaction, runs the `body` function
+        /// and if it does not manually rollback throw an exception - commits the transaction.
+        /// </summary>
+        Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
 
         #endregion
 

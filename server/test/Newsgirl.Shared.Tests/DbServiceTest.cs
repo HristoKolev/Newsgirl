@@ -5,6 +5,7 @@ namespace Newsgirl.Shared.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using Npgsql;
+    using NpgsqlTypes;
     using Postgres;
     using Testing;
     using Xunit;
@@ -401,11 +402,10 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Null(row);
         }
-        
+
         [Fact]
         public async Task QueryOne_throws_on_more_than_one_row()
         {
-            
             Exception exception = null;
 
             try
@@ -419,33 +419,234 @@ namespace Newsgirl.Shared.Tests
 
             Snapshot.MatchError(exception);
         }
+
+        [Fact]
+        public void CreateParameter_with_npgsql_type()
+        {
+            var parameter1 = this.DbConnection.CreateParameter("p1", 1, NpgsqlDbType.Integer);
+            Assert.Equal(1, (int) parameter1.Value);
+            var parameter2 = this.DbConnection.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
+            Assert.Equal(DBNull.Value, parameter2.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_boxed()
+        {
+            var parameter1 = this.DbConnection.CreateParameter("p1", (object) 1);
+            Assert.Equal(1, (int) parameter1.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_with_inferred_npgsql_type()
+        {
+            var parameter = this.DbConnection.CreateParameter("p1", 1);
+            Assert.Equal(1, (int) parameter.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_with_inferred_npgsql_type_throws_the_type_cannot_be_inferred()
+        {
+            Snapshot.MatchError(() =>
+            {
+                this.DbConnection.CreateParameter("p1", new TestRow());
+            });
+        }
     }
 
     public class TransactionConnectionExtensionsTest
     {
-        [Fact]
-        public async Task ExecuteInTransactionAndCommit_works_with_non_default_CT()
+        private static NpgsqlConnection CreateConnection()
         {
             var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.DbTestConnectionString)
             {
                 Enlist = false,
                 Pooling = false,
             };
-            
-            await using (var db = new NpgsqlConnection(builder.ToString()))
-            {
-                //await db.ExecuteNonQuery("select pg_sleep(1);");
 
+            return new NpgsqlConnection(builder.ToString());
+        }
+
+        [Fact]
+        public async Task ExecuteInTransactionAndCommit_works_with_default_CT()
+        {
+            await using (var db = CreateConnection())
+            {
                 await db.OpenAsync();
-                
-                var cts = new CancellationTokenSource();
-                cts.CancelAfter(6000);
-                
                 await db.ExecuteInTransactionAndCommit(async () =>
                 {
-                    await db.ExecuteNonQuery("select pg_sleep(5);");
-                }, cts.Token);
+                    await db.ExecuteScalar<int>("select 1;");
+                });
             }
+        }
+
+        [Fact]
+        public async Task ExecuteInTransactionAndCommit_works_with_non_default_CT()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await using (var db = CreateConnection())
+                {
+                    await db.OpenAsync();
+                    var cts = new CancellationTokenSource();
+
+                    await db.ExecuteInTransactionAndCommit(async () =>
+                    {
+                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                        cts.CancelAfter(10);
+                        await t;
+                    }, cts.Token);
+                }
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteInTransaction_works_with_default_CT()
+        {
+            await using (var db = CreateConnection())
+            {
+                await db.OpenAsync();
+                await db.ExecuteInTransaction(async () =>
+                {
+                    await db.ExecuteScalar<int>("select 1;");
+                });
+            }
+        }
+
+        [Fact]
+        public async Task ExecuteInTransaction_works_with_non_default_CT()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await using (var db = CreateConnection())
+                {
+                    await db.OpenAsync();
+                    var cts = new CancellationTokenSource();
+
+                    await db.ExecuteInTransaction(async () =>
+                    {
+                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                        cts.CancelAfter(10);
+                        await t;
+                    }, cts.Token);
+                }
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+    }
+
+    public class TransactionDbServiceTest
+    {
+        private static NpgsqlConnection CreateConnection()
+        {
+            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.DbTestConnectionString)
+            {
+                Enlist = false,
+                Pooling = false,
+            };
+
+            return new NpgsqlConnection(builder.ToString());
+        }
+
+        private static DbService<TestDbPocos> CreateDbService(NpgsqlConnection connection)
+        {
+            return new DbService<TestDbPocos>(connection);
+        }
+
+        [Fact]
+        public async Task ExecuteInTransactionAndCommit_works_with_default_CT()
+        {
+            await using (var connection = CreateConnection())
+            using (var db = CreateDbService(connection))
+            {
+                await db.ExecuteInTransactionAndCommit(async () =>
+                {
+                    await db.ExecuteScalar<int>("select 1;");
+                });
+            }
+        }
+
+        [Fact]
+        public async Task ExecuteInTransactionAndCommit_works_with_non_default_CT()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await using (var connection = CreateConnection())
+                using (var db = CreateDbService(connection))
+                {
+                    var cts = new CancellationTokenSource();
+
+                    await db.ExecuteInTransactionAndCommit(async () =>
+                    {
+                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                        cts.CancelAfter(10);
+                        await t;
+                    }, cts.Token);
+                }
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
+        }
+
+        [Fact]
+        public async Task ExecuteInTransaction_works_with_default_CT()
+        {
+            await using (var connection = CreateConnection())
+            using (var db = CreateDbService(connection))
+            {
+                await db.ExecuteInTransaction(async () =>
+                {
+                    await db.ExecuteScalar<int>("select 1;");
+                });
+            }
+        }
+
+        [Fact]
+        public async Task ExecuteInTransaction_works_with_non_default_CT()
+        {
+            Exception exception = null;
+
+            try
+            {
+                await using (var connection = CreateConnection())
+                using (var db = CreateDbService(connection))
+                {
+                    var cts = new CancellationTokenSource();
+
+                    await db.ExecuteInTransaction(async () =>
+                    {
+                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                        cts.CancelAfter(10);
+                        await t;
+                    }, cts.Token);
+                }
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            Snapshot.MatchError(exception);
         }
     }
 
@@ -621,6 +822,83 @@ namespace Newsgirl.Shared.Tests
             );
 
             Snapshot.Match(result);
+        }
+
+        [Fact]
+        public void CreateParameter_with_npgsql_type()
+        {
+            var parameter1 = this.Db.CreateParameter("p1", 1, NpgsqlDbType.Integer);
+            Assert.Equal(1, (int) parameter1.Value);
+            var parameter2 = this.Db.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
+            Assert.Equal(DBNull.Value, parameter2.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_boxed()
+        {
+            var parameter1 = this.Db.CreateParameter("p1", (object) 1);
+            Assert.Equal(1, (int) parameter1.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_with_inferred_npgsql_type()
+        {
+            var parameter = this.Db.CreateParameter("p1", 1);
+            Assert.Equal(1, (int) parameter.Value);
+        }
+
+        [Fact]
+        public void CreateParameter_with_inferred_npgsql_type_throws_the_type_cannot_be_inferred()
+        {
+            Snapshot.MatchError(() =>
+            {
+                this.Db.CreateParameter("p1", new TestRow());
+            });
+        }
+
+        [Fact]
+        public async Task Delete_by_ids_does_nothing_if_the_ids_array_is_empty()
+        {
+            int deletedCount = await this.Db.Delete<Test1Poco>(Array.Empty<int>());
+            Assert.Equal(0, deletedCount);
+        }
+
+        [Fact]
+        public async Task Update_throws_when_the_poco_is_new()
+        {
+            var poco = new Test1Poco();
+
+            await Snapshot.MatchError(async () =>
+            {
+                await this.Db.Update(poco);
+            });
+        }
+
+        [Fact]
+        public async Task Save_works_when_the_poco_is_new()
+        {
+            var poco = new Test1Poco
+            {
+                TestName1 = "test",
+                TestText2 = "test",
+                TestChar2 = "c",
+            };
+
+            await this.Db.Save(poco);
+        }
+
+        [Fact]
+        public async Task Save_works_when_the_poco_is_old()
+        {
+            var poco = new Test1Poco
+            {
+                TestName1 = "test",
+                TestText2 = "test",
+                TestChar2 = "c",
+            };
+
+            await this.Db.Insert(poco);
+            await this.Db.Save(poco);
         }
     }
 

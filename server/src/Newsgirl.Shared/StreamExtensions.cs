@@ -30,15 +30,4 @@ namespace Newsgirl.Shared
             }
         }
     }
-
-    public class MemoryOwnerHelper
-    {
-        public static void Resize<T>(ref MemoryOwner<T> oldMemoryOwner, int size)
-        {
-            var newMemoryOwner = MemoryOwner<T>.Allocate(size);
-            oldMemoryOwner.Span.Slice(0, Math.Min(oldMemoryOwner.Length, size)).CopyTo(newMemoryOwner.Span);
-            oldMemoryOwner.Dispose();
-            oldMemoryOwner = newMemoryOwner;
-        }
-    }
 }

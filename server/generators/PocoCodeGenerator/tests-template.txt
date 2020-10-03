@@ -35,6 +35,19 @@ namespace @Model.Namespace
 @:
         @:[Theory]
         @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
+        @:public async Task Delete_by_id_array(List<@(table.ClassName)Poco> poco)
+        @:{
+            @:foreach (var x in poco)
+            @:{
+                @:await this.Db.Insert(x);
+            @:}
+@:
+            @:int deletedCount = await this.Db.Delete<@(table.ClassName)Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
+            @:Assert.Equal(poco.Count, deletedCount);
+        @:}
+@:
+        @:[Theory]
+        @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
         @:public async Task BulkInsert(List<@(table.ClassName)Poco> poco)
         @:{
             @:await this.Db.BulkInsert(poco);

@@ -27,7 +27,7 @@ namespace Newsgirl.Shared
         public DbService(NpgsqlConnection dbConnection) : base(dbConnection) { }
     }
 
-    public interface IDbService : IDbService<DbPocos> {}
+    public interface IDbService : IDbService<DbPocos> { }
 
     /// <summary>
     /// Use to control database transactions.
@@ -36,9 +36,11 @@ namespace Newsgirl.Shared
     {
         Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
-        Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
+        Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default);
 
         Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
+
+        Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
     }
 
     public class DbTransactionServiceImpl : DbTransactionService
@@ -55,12 +57,17 @@ namespace Newsgirl.Shared
             return this.db.ExecuteInTransaction(body, cancellationToken);
         }
 
-        public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
+        public Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default)
+        {
+            return this.db.ExecuteInTransaction(body, cancellationToken);
+        }
+
+        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.db.ExecuteInTransactionAndCommit(body, cancellationToken);
         }
 
-        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
+        public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
         {
             return this.db.ExecuteInTransactionAndCommit(body, cancellationToken);
         }

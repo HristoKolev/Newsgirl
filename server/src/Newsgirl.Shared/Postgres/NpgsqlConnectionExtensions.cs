@@ -300,30 +300,13 @@ namespace Newsgirl.Shared.Postgres
 
             await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
-                if (cancellationToken == default)
-                {
-                    await body(transaction);
-                }
-                else
-                {
-                    var canceledTask = cancellationToken.AsTask();
-                    var transactionTask = body(transaction);
-
-                    var completedTask = await Task.WhenAny(transactionTask, canceledTask);
-
-                    if (completedTask == canceledTask)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    await transactionTask;
-                }
+                await body(transaction);
             }
         }
 
-        public static Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
+        public static Task ExecuteInTransaction(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
         {
-            return ExecuteInTransactionAndCommit(connection, tr => body(), cancellationToken);
+            return connection.ExecuteInTransaction(tr => body(), cancellationToken);
         }
 
         public static async Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection,
@@ -334,30 +317,18 @@ namespace Newsgirl.Shared.Postgres
 
             await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
-                if (cancellationToken == default)
-                {
-                    await body(transaction);
-                }
-                else
-                {
-                    var canceledTask = cancellationToken.AsTask();
-                    var transactionTask = body(transaction);
-
-                    var completedTask = await Task.WhenAny(transactionTask, canceledTask);
-
-                    if (completedTask == canceledTask)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    await transactionTask;
-                }
+                await body(transaction);
 
                 if (!transaction.IsCompleted)
                 {
                     await transaction.CommitAsync(cancellationToken);
                 }
             }
+        }
+
+        public static Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
+        {
+            return connection.ExecuteInTransactionAndCommit(tr => body(), cancellationToken);
         }
 
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)
@@ -395,16 +366,6 @@ namespace Newsgirl.Shared.Postgres
         public static NpgsqlParameter CreateParameter(this NpgsqlConnection connection, string parameterName, object value)
         {
             return new NpgsqlParameter(parameterName, value);
-        }
-
-        /// <summary>
-        /// Returns a task that will complete when the <see cref="CancellationToken" /> is cancelled.
-        /// </summary>
-        private static Task AsTask(this CancellationToken cancellationToken)
-        {
-            var tcs = new TaskCompletionSource<object>();
-            cancellationToken.Register(() => tcs.SetResult(null), false);
-            return tcs.Task;
         }
 
         /// <summary>

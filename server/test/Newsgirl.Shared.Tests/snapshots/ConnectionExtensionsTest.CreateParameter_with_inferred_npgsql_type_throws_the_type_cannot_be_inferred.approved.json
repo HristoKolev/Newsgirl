@@ -1,0 +1,14 @@
+﻿[
+  {
+    "ClassName": "System.ApplicationException",
+    "Message": "Parameter type is not mapped to any 'NpgsqlDbType'. Please specify a 'NpgsqlDbType' explicitly.",
+    "Data": null,
+    "HelpURL": null,
+    "RemoteStackTraceString": null,
+    "RemoteStackIndex": 0,
+    "ExceptionMethod": null,
+    "HResult": -2146232832,
+    "Source": "Newsgirl.Shared",
+    "WatsonBuckets": null
+  }
+]

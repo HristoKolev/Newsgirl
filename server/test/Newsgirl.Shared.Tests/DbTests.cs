@@ -48,6 +48,19 @@ namespace Newsgirl.Shared.Tests
 
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
+        public async Task Delete_by_id_array(List<Test1Poco> poco)
+        {
+            foreach (var x in poco)
+            {
+                await this.Db.Insert(x);
+            }
+
+            int deletedCount = await this.Db.Delete<Test1Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
+            Assert.Equal(poco.Count, deletedCount);
+        }
+
+        [Theory]
+        [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
         public async Task BulkInsert(List<Test1Poco> poco)
         {
             await this.Db.BulkInsert(poco);
@@ -246,6 +259,19 @@ namespace Newsgirl.Shared.Tests
             await this.Db.Update(poco);
 
             await this.Db.Delete(poco);
+        }
+
+        [Theory]
+        [ClassData(typeof(GeneratedBulkData<Test2Poco>))]
+        public async Task Delete_by_id_array(List<Test2Poco> poco)
+        {
+            foreach (var x in poco)
+            {
+                await this.Db.Insert(x);
+            }
+
+            int deletedCount = await this.Db.Delete<Test2Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
+            Assert.Equal(poco.Count, deletedCount);
         }
 
         [Theory]
