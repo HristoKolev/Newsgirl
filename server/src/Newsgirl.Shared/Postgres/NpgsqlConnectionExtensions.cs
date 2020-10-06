@@ -97,6 +97,7 @@ namespace Newsgirl.Shared.Postgres
             }
 
             await EnsureOpenState(connection, cancellationToken);
+
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
@@ -194,13 +195,17 @@ namespace Newsgirl.Shared.Postgres
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        if (await reader.IsDBNullAsync(i, cancellationToken))
+                        var setter = settersByColumnOrder[i];
+
+                        object value = reader.GetValue(i);
+
+                        if (value is DBNull)
                         {
-                            settersByColumnOrder[i](instance, null);
+                            setter(instance, null);
                         }
                         else
                         {
-                            settersByColumnOrder[i](instance, reader.GetValue(i));
+                            setter(instance, value);
                         }
                     }
 
@@ -261,13 +266,15 @@ namespace Newsgirl.Shared.Postgres
                 {
                     var setter = setters[reader.GetName(i)];
 
-                    if (await reader.IsDBNullAsync(i, cancellationToken))
+                    object value = reader.GetValue(i);
+
+                    if (value is DBNull)
                     {
                         setter(instance, null);
                     }
                     else
                     {
-                        setter(instance, reader.GetValue(i));
+                        setter(instance, value);
                     }
                 }
 
