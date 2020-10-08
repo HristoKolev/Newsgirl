@@ -244,7 +244,7 @@ namespace Newsgirl.Shared.Logging
 
             var type = typeBuilder.CreateType();
 
-            var instance = (EventDestinationCollection) Activator.CreateInstance(type);
+            var instance = (EventDestinationCollection) Activator.CreateInstance(type!);
 
             foreach (var (eventStreamName, destinationArray) in destinationsByEventStreamName)
             {

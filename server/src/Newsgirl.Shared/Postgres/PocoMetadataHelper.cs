@@ -8,7 +8,7 @@ namespace Newsgirl.Shared.Postgres
     using System.Reflection.Emit;
     using System.Text;
 
-    public static class DbCodeGenerator
+    public static class PocoMetadataHelper
     {
         private static readonly ConcurrentDictionary<Type, object> SettersCache = new ConcurrentDictionary<Type, object>();
 

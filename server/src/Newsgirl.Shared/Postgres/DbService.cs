@@ -38,21 +38,25 @@ namespace Newsgirl.Shared.Postgres
             return await this.connection.BeginTransactionAsync();
         }
 
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
+        /// </summary>
         public Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteInTransaction(body, cancellationToken);
         }
 
-        public Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default)
-        {
-            return this.connection.ExecuteInTransaction(body, cancellationToken);
-        }
-
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
         }
 
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
@@ -62,69 +66,114 @@ namespace Newsgirl.Shared.Postgres
 
         #region Query
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public Task<int> ExecuteNonQuery(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public Task<int> ExecuteNonQuery(string sql, params NpgsqlParameter[] parameters)
         {
             return this.connection.ExecuteNonQuery(sql, parameters);
         }
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public Task<int> ExecuteNonQuery(string sql, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteNonQuery(sql, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public Task<T> ExecuteScalar<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteScalar<T>(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public Task<T> ExecuteScalar<T>(string sql, params NpgsqlParameter[] parameters)
         {
             return this.connection.ExecuteScalar<T>(sql, parameters);
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public Task<T> ExecuteScalar<T>(string sql, CancellationToken cancellationToken = default)
         {
             return this.connection.ExecuteScalar<T>(sql, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public Task<List<T>> Query<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : new()
         {
             return this.connection.Query<T>(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public Task<List<T>> Query<T>(string sql, params NpgsqlParameter[] parameters) where T : new()
         {
             return this.connection.Query<T>(sql, parameters);
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public Task<List<T>> Query<T>(string sql, CancellationToken cancellationToken = default) where T : new()
         {
             return this.connection.Query<T>(sql, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public Task<T> QueryOne<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : class, new()
         {
             return this.connection.QueryOne<T>(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public Task<T> QueryOne<T>(string sql, CancellationToken cancellationToken = default) where T : class, new()
         {
             return this.connection.QueryOne<T>(sql, cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters) where T : class, new()
         {
             return this.connection.QueryOne<T>(sql, parameters);
         }
 
+        /// <summary>
+        /// Reads a single record by it's ID.
+        /// </summary>
         public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -140,16 +189,25 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.QueryOne<T>(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Creates a parameter of type T with NpgsqlDbType from the default type map 'defaultNpgsqlDbTypeMap'.
+        /// </summary>
         public NpgsqlParameter CreateParameter<T>(string parameterName, T value)
         {
             return this.connection.CreateParameter(parameterName, value);
         }
 
+        /// <summary>
+        /// Creates a parameter of type T by explicitly specifying NpgsqlDbType.
+        /// </summary>
         public NpgsqlParameter CreateParameter<T>(string parameterName, T value, NpgsqlDbType dbType)
         {
             return this.connection.CreateParameter(parameterName, value, dbType);
         }
 
+        /// <summary>
+        /// Creates a generic parameter.
+        /// </summary>
         public NpgsqlParameter CreateParameter(string parameterName, object value)
         {
             return this.connection.CreateParameter(parameterName, value);
@@ -159,6 +217,9 @@ namespace Newsgirl.Shared.Postgres
 
         #region Update
 
+        /// <summary>
+        /// Inserts a record and sets it's primary key to the poco object.
+        /// </summary>
         public async Task<int> Insert<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             int pk = await this.InsertWithoutMutating(poco, cancellationToken);
@@ -166,9 +227,12 @@ namespace Newsgirl.Shared.Postgres
             return pk;
         }
 
+        /// <summary>
+        /// Inserts a record and returns its primary key.
+        /// </summary>
         public Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
             var columnNames = metadata.NonPkColumnNames;
             var parameters = poco.GetNonPkParameters();
 
@@ -218,9 +282,12 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteScalar<int>(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Updates a record by it's primary key.
+        /// </summary>
         public Task Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
 
             int pk = poco.GetPrimaryKey();
 
@@ -274,6 +341,12 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Saves a record to the database.
+        /// If the poco object has a positive primary key value - it updates the record.
+        /// If the primary key value is 0 it inserts the record.
+        /// Returns the record's primary key value.
+        /// </summary>
         public async Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
             if (poco.IsNew())
@@ -286,12 +359,19 @@ namespace Newsgirl.Shared.Postgres
             return poco.GetPrimaryKey();
         }
 
+        /// <summary>
+        /// Deletes a record.
+        /// </summary>
         public Task Delete<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             int pk = poco.GetPrimaryKey();
             return this.Delete<T>(pk, cancellationToken);
         }
 
+        /// <summary>
+        /// Deletes multiple records from a table by their primary key values.
+        /// Returns number of deleted records.
+        /// </summary>
         public Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
             if (ids.Length == 0)
@@ -299,7 +379,7 @@ namespace Newsgirl.Shared.Postgres
                 return Task.FromResult(0);
             }
 
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -315,9 +395,12 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Deletes a record by it's primary key value.
+        /// </summary>
         public Task Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -333,9 +416,12 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, parameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Inserts several records in single query.
+        /// </summary>
         public Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
             var columns = metadata.Columns;
 
             var sqlBuilder = new StringBuilder(128);
@@ -419,9 +505,12 @@ namespace Newsgirl.Shared.Postgres
             return this.connection.ExecuteNonQuery(sql, allParameters, cancellationToken);
         }
 
+        /// <summary>
+        /// Inserts several records using the postgresql binary COPY API.
+        /// </summary>
         public async Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>
         {
-            var metadata = DbCodeGenerator.GetMetadata<T>();
+            var metadata = PocoMetadataHelper.GetMetadata<T>();
             var columns = metadata.Columns;
 
             var copyHeaderBuilder = new StringBuilder(128);
@@ -499,24 +588,17 @@ namespace Newsgirl.Shared.Postgres
         Task<NpgsqlTransaction> BeginTransaction();
 
         /// <summary>
-        /// Starts a transaction and runs the `body` function passing the native <see cref="NpgsqlTransaction" /> object.
+        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
         /// </summary>
         Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Starts a transaction and runs the `body` function.
-        /// </summary>
-        Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Starts a transaction, runs the `body` function passing the native <see cref="NpgsqlTransaction" /> object
-        /// and if it does not manually rollback throw an exception - commits the transaction.
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
         /// </summary>
         Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Starts a transaction, runs the `body` function
-        /// and if it does not manually rollback throw an exception - commits the transaction.
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
         /// </summary>
         Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
 
@@ -561,43 +643,37 @@ namespace Newsgirl.Shared.Postgres
         Task<T> ExecuteScalar<T>(string sql, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Executes a query and returns objects.
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
         /// </summary>
         Task<List<T>> Query<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : new();
 
         /// <summary>
-        /// Executes a query and returns objects.
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
         /// </summary>
         Task<List<T>> Query<T>(string sql, params NpgsqlParameter[] parameters) where T : new();
 
         /// <summary>
-        /// Executes a query and returns objects.
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
         /// </summary>
         Task<List<T>> Query<T>(string sql, CancellationToken cancellationToken = default) where T : new();
 
         /// <summary>
-        /// Returns one object of type T.
-        /// If there are no rows then returns 'null';
-        /// If there is more that one row then throws.
+        /// Executes a query and returns a single row read into an object of type `T`.
         /// </summary>
         Task<T> QueryOne<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : class, new();
 
         /// <summary>
-        /// Returns one object of type T.
-        /// If there are no rows then returns 'null';
-        /// If there is more that one row then throws.
+        /// Executes a query and returns a single row read into an object of type `T`.
         /// </summary>
         Task<T> QueryOne<T>(string sql, CancellationToken cancellationToken = default) where T : class, new();
 
         /// <summary>
-        /// Returns one object of type T.
-        /// If there are no rows then returns 'null';
-        /// If there is more that one row then throws.
+        /// Executes a query and returns a single row read into an object of type `T`.
         /// </summary>
         Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters) where T : class, new();
 
         /// <summary>
-        /// Returns a record by its ID.
+        /// Reads a single record by it's ID.
         /// </summary>
         Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new();
 
@@ -621,12 +697,12 @@ namespace Newsgirl.Shared.Postgres
         #region Update
 
         /// <summary>
-        /// Inserts a record and attaches it's ID to the poco object.
+        /// Inserts a record and sets it's primary key to the poco object.
         /// </summary>
         Task<int> Insert<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
         /// <summary>
-        /// Inserts a record and returns its ID.
+        /// Inserts a record and returns its primary key.
         /// </summary>
         Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>;
 
@@ -637,43 +713,48 @@ namespace Newsgirl.Shared.Postgres
 
         /// <summary>
         /// Saves a record to the database.
-        /// If the poco object has a positive primary key it updates it.
+        /// If the poco object has a positive primary key value - it updates the record.
         /// If the primary key value is 0 it inserts the record.
         /// Returns the record's primary key value.
         /// </summary>
         Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>;
 
         /// <summary>
-        /// Deletes a record by it's PrimaryKey.
+        /// Deletes a record.
         /// </summary>
         Task Delete<T>(T poco, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
-        /// Deletes records from a table by their IDs.
+        /// Deletes multiple records from a table by their primary key values.
         /// Returns number of deleted records.
         /// </summary>
         Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
-        /// Deletes a record by ID.
+        /// Deletes a record by it's primary key value.
         /// </summary>
         Task Delete<T>(int id, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
-        /// Inserts several records in single SQL query.
+        /// Inserts several records in single query.
         /// </summary>
         Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default)
             where T : IPoco<T>;
 
         /// <summary>
-        /// Inserts several records using postgresql binary COPY API.
+        /// Inserts several records using the postgresql binary COPY API.
         /// </summary>
         Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>;
 
         #endregion
+    }
+
+    public interface ILinqProvider
+    {
+        IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>;
     }
 
     public class Linq2DbWrapper : IDisposable, ILinqProvider
@@ -698,11 +779,6 @@ namespace Newsgirl.Shared.Postgres
         {
             this.linq2Db?.Dispose();
         }
-    }
-
-    public interface ILinqProvider
-    {
-        IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>;
     }
 
     /// <summary>

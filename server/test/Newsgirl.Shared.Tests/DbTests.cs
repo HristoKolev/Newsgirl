@@ -73,7 +73,7 @@ namespace Newsgirl.Shared.Tests
             var parameters = poco.GetNonPkParameters();
 
             var columns = DbMetadata.Test1PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GetGetters<Test1Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test1Poco>();
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -103,7 +103,7 @@ namespace Newsgirl.Shared.Tests
             var parameters = poco.GetNonPkParameters();
 
             var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GetGetters<Test1Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test1Poco>();
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -135,7 +135,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void Getters(Test1Poco poco)
         {
-            var getters = DbCodeGenerator.GetGetters<Test1Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test1Poco>();
 
             Assert.Equal(poco.TestBigint1, getters["test_bigint1"](poco));
             Assert.Equal(poco.TestBigint2, getters["test_bigint2"](poco));
@@ -166,7 +166,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void Setters(Test1Poco poco)
         {
-            var setters = DbCodeGenerator.GetSetters<Test1Poco>();
+            var setters = PocoMetadataHelper.GetSetters<Test1Poco>();
 
             var newObj = new Test1Poco();
 
@@ -288,7 +288,7 @@ namespace Newsgirl.Shared.Tests
             var parameters = poco.GetNonPkParameters();
 
             var columns = DbMetadata.Test2PocoMetadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GetGetters<Test2Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test2Poco>();
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -318,7 +318,7 @@ namespace Newsgirl.Shared.Tests
             var parameters = poco.GetNonPkParameters();
 
             var columns = metadata.Columns.Where(x => !x.IsPrimaryKey).ToArray();
-            var getters = DbCodeGenerator.GetGetters<Test2Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test2Poco>();
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -350,7 +350,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void Getters(Test2Poco poco)
         {
-            var getters = DbCodeGenerator.GetGetters<Test2Poco>();
+            var getters = PocoMetadataHelper.GetGetters<Test2Poco>();
 
             Assert.Equal(poco.TestDate, getters["test_date"](poco));
             Assert.Equal(poco.TestID, getters["test_id"](poco));
@@ -362,7 +362,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void Setters(Test2Poco poco)
         {
-            var setters = DbCodeGenerator.GetSetters<Test2Poco>();
+            var setters = PocoMetadataHelper.GetSetters<Test2Poco>();
 
             var newObj = new Test2Poco();
 
@@ -386,7 +386,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<VGenerateSeriesPoco>))]
         public void Getters(VGenerateSeriesPoco poco)
         {
-            var getters = DbCodeGenerator.GetGetters<VGenerateSeriesPoco>();
+            var getters = PocoMetadataHelper.GetGetters<VGenerateSeriesPoco>();
 
             Assert.Equal(poco.Num, getters["num"](poco));
         }
@@ -395,7 +395,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<VGenerateSeriesPoco>))]
         public void Setters(VGenerateSeriesPoco poco)
         {
-            var setters = DbCodeGenerator.GetSetters<VGenerateSeriesPoco>();
+            var setters = PocoMetadataHelper.GetSetters<VGenerateSeriesPoco>();
 
             var newObj = new VGenerateSeriesPoco();
 
@@ -410,7 +410,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<View1Poco>))]
         public void Getters(View1Poco poco)
         {
-            var getters = DbCodeGenerator.GetGetters<View1Poco>();
+            var getters = PocoMetadataHelper.GetGetters<View1Poco>();
 
             Assert.Equal(poco.Test1TestID, getters["test1_test_id"](poco));
             Assert.Equal(poco.Test2TestID, getters["test2_test_id"](poco));
@@ -444,7 +444,7 @@ namespace Newsgirl.Shared.Tests
         [ClassData(typeof(GeneratedData<View1Poco>))]
         public void Setters(View1Poco poco)
         {
-            var setters = DbCodeGenerator.GetSetters<View1Poco>();
+            var setters = PocoMetadataHelper.GetSetters<View1Poco>();
 
             var newObj = new View1Poco();
 

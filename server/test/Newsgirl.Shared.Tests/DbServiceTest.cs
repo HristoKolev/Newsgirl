@@ -513,7 +513,7 @@ namespace Newsgirl.Shared.Tests
             await using (var db = CreateConnection())
             {
                 await db.OpenAsync();
-                await db.ExecuteInTransaction(async () =>
+                await db.ExecuteInTransaction(async tx =>
                 {
                     await db.ExecuteScalar<int>("select 1;");
                 });
@@ -532,7 +532,7 @@ namespace Newsgirl.Shared.Tests
                     await db.OpenAsync();
                     var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransaction(async () =>
+                    await db.ExecuteInTransaction(async tx =>
                     {
                         var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
                         cts.CancelAfter(10);
@@ -614,7 +614,7 @@ namespace Newsgirl.Shared.Tests
             await using (var connection = CreateConnection())
             using (var db = CreateDbService(connection))
             {
-                await db.ExecuteInTransaction(async () =>
+                await db.ExecuteInTransaction(async tx =>
                 {
                     await db.ExecuteScalar<int>("select 1;");
                 });
@@ -633,7 +633,7 @@ namespace Newsgirl.Shared.Tests
                 {
                     var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransaction(async () =>
+                    await db.ExecuteInTransaction(async tx =>
                     {
                         var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
                         cts.CancelAfter(10);

@@ -8,6 +8,10 @@ namespace Newsgirl.Shared.Postgres
     using Npgsql;
     using NpgsqlTypes;
 
+    /// <summary>
+    /// Provides extension methods for `NpgsqlConnection` objects that perform high level database operations that don't require information about the specific
+    /// database schema.
+    /// </summary>
     public static class NpgsqlConnectionExtensions
     {
         /// <summary>
@@ -38,6 +42,9 @@ namespace Newsgirl.Shared.Postgres
             {typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp},
         };
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public static async Task<int> ExecuteNonQuery(this NpgsqlConnection connection,
             string sql,
             IEnumerable<NpgsqlParameter> parameters,
@@ -66,16 +73,27 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public static Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default)
         {
             return connection.ExecuteNonQuery(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns the rows affected.
+        /// </summary>
         public static Task<int> ExecuteNonQuery(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters)
         {
             return connection.ExecuteNonQuery(sql, parameters, CancellationToken.None);
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public static async Task<T> ExecuteScalar<T>(this NpgsqlConnection connection,
             string sql,
             IEnumerable<NpgsqlParameter> parameters,
@@ -143,16 +161,29 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public static Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default)
         {
             return connection.ExecuteScalar<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a scalar value of type T.
+        /// It throws if the result set does not have exactly one column and one row.
+        /// It throws if the return value is 'null' and the type T is a value type.
+        /// </summary>
         public static Task<T> ExecuteScalar<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters)
         {
             return connection.ExecuteScalar<T>(sql, parameters, CancellationToken.None);
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public static async Task<List<T>> Query<T>(this NpgsqlConnection connection,
             string sql,
             IEnumerable<NpgsqlParameter> parameters,
@@ -180,7 +211,7 @@ namespace Newsgirl.Shared.Postgres
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                var setters = DbCodeGenerator.GetSetters<T>();
+                var setters = PocoMetadataHelper.GetSetters<T>();
 
                 var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
 
@@ -216,16 +247,25 @@ namespace Newsgirl.Shared.Postgres
             return result;
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public static Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default) where T : new()
         {
             return connection.Query<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a list of all rows read into objects of type `T`.
+        /// </summary>
         public static Task<List<T>> Query<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : new()
         {
             return connection.Query<T>(sql, parameters, CancellationToken.None);
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public static async Task<T> QueryOne<T>(this NpgsqlConnection connection,
             string sql,
             IEnumerable<NpgsqlParameter> parameters,
@@ -253,7 +293,7 @@ namespace Newsgirl.Shared.Postgres
             {
                 var instance = new T();
 
-                var setters = DbCodeGenerator.GetSetters<T>();
+                var setters = PocoMetadataHelper.GetSetters<T>();
 
                 bool hasRow = await reader.ReadAsync(cancellationToken);
 
@@ -289,16 +329,25 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public static Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, CancellationToken cancellationToken = default) where T : class, new()
         {
             return connection.QueryOne<T>(sql, Array.Empty<NpgsqlParameter>(), cancellationToken);
         }
 
+        /// <summary>
+        /// Executes a query and returns a single row read into an object of type `T`.
+        /// </summary>
         public static Task<T> QueryOne<T>(this NpgsqlConnection connection, string sql, params NpgsqlParameter[] parameters) where T : class, new()
         {
             return connection.QueryOne<T>(sql, parameters, CancellationToken.None);
         }
 
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
+        /// </summary>
         public static async Task ExecuteInTransaction(this NpgsqlConnection connection,
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
@@ -311,11 +360,9 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
-        public static Task ExecuteInTransaction(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
-        {
-            return connection.ExecuteInTransaction(tr => body(), cancellationToken);
-        }
-
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         public static async Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection,
             Func<NpgsqlTransaction, Task> body,
             CancellationToken cancellationToken = default)
@@ -333,11 +380,17 @@ namespace Newsgirl.Shared.Postgres
             }
         }
 
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         public static Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
         {
             return connection.ExecuteInTransactionAndCommit(tr => body(), cancellationToken);
         }
 
+        /// <summary>
+        /// Creates a parameter of type T with NpgsqlDbType from the default type map 'defaultNpgsqlDbTypeMap'.
+        /// </summary>
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)
         {
             NpgsqlDbType dbType;
@@ -357,6 +410,9 @@ namespace Newsgirl.Shared.Postgres
             return connection.CreateParameter(parameterName, value, dbType);
         }
 
+        /// <summary>
+        /// Creates a parameter of type T by explicitly specifying NpgsqlDbType.
+        /// </summary>
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value, NpgsqlDbType dbType)
         {
             if (value == null)
@@ -370,13 +426,16 @@ namespace Newsgirl.Shared.Postgres
             };
         }
 
+        /// <summary>
+        /// Creates a generic parameter.
+        /// </summary>
         public static NpgsqlParameter CreateParameter(this NpgsqlConnection connection, string parameterName, object value)
         {
             return new NpgsqlParameter(parameterName, value);
         }
 
         /// <summary>
-        /// Opens the connection if it's closed.
+        /// Opens the connection if it's not in an opened state.
         /// </summary>
         public static Task EnsureOpenState(this NpgsqlConnection connection, CancellationToken cancellationToken = default)
         {

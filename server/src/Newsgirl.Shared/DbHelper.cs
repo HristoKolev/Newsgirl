@@ -34,12 +34,19 @@ namespace Newsgirl.Shared
     /// </summary>
     public interface DbTransactionService
     {
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
+        /// </summary>
         Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
-        Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default);
-
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Invokes the given delegate instance in a transaction and commits it automatically.
+        /// </summary>
         Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
     }
 
@@ -53,11 +60,6 @@ namespace Newsgirl.Shared
         }
 
         public Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
-        {
-            return this.db.ExecuteInTransaction(body, cancellationToken);
-        }
-
-        public Task ExecuteInTransaction(Func<Task> body, CancellationToken cancellationToken = default)
         {
             return this.db.ExecuteInTransaction(body, cancellationToken);
         }
