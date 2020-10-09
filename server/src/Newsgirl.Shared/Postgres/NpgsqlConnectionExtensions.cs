@@ -1,8 +1,13 @@
 namespace Newsgirl.Shared.Postgres
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
+    using System.Reflection;
+    using System.Reflection.Emit;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Npgsql;
@@ -14,6 +19,10 @@ namespace Newsgirl.Shared.Postgres
     /// </summary>
     public static class NpgsqlConnectionExtensions
     {
+        private static readonly ConcurrentDictionary<Type, object> SettersCache = new ConcurrentDictionary<Type, object>();
+
+        private static readonly ConcurrentDictionary<Type, object> GettersCache = new ConcurrentDictionary<Type, object>();
+
         /// <summary>
         /// The default parameter type map that is used when creating parameters without specifying the NpgsqlDbType explicitly.
         /// </summary>
@@ -211,7 +220,7 @@ namespace Newsgirl.Shared.Postgres
             await using (var command = CreateCommand(connection, sql, parameters))
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
-                var setters = PocoMetadataHelper.GetSetters<T>();
+                var setters = GetSetters<T>();
 
                 var settersByColumnOrder = new Action<T, object>[reader.FieldCount];
 
@@ -293,7 +302,7 @@ namespace Newsgirl.Shared.Postgres
             {
                 var instance = new T();
 
-                var setters = PocoMetadataHelper.GetSetters<T>();
+                var setters = GetSetters<T>();
 
                 bool hasRow = await reader.ReadAsync(cancellationToken);
 
@@ -474,6 +483,154 @@ namespace Newsgirl.Shared.Postgres
             }
 
             return command;
+        }
+
+        /// <summary>
+        /// Returns a dictionary where the key is a name of a database column and the
+        /// value is a 'setter' - a delegate instance that takes one object instance and a value
+        /// and assigns the value to a mapped property of the object instance.
+        /// </summary>
+        public static Dictionary<string, Action<T, object>> GetSetters<T>()
+        {
+            static Dictionary<string, Action<T, object>> ValueFactory(Type type)
+            {
+                var result = new Dictionary<string, Action<T, object>>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.SetMethod != null))
+                {
+                    var builder = new DynamicMethod($"{property.Name}_setter", typeof(void), new[] {typeof(T), typeof(object)});
+                    var il = builder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldarg_1);
+                    if (property.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, property.PropertyType);
+                    }
+
+                    il.Emit(OpCodes.Call, property!.SetMethod!);
+                    il.Emit(OpCodes.Ret);
+
+                    var setter = builder.CreateDelegate<Action<T, object>>();
+
+                    result.TryAdd(property.Name, setter);
+                    result.TryAdd(property.Name.Replace("_", ""), setter);
+                    result.TryAdd(ConvertToSnakeCase(property.Name), setter);
+                }
+
+                return result;
+            }
+
+            return (Dictionary<string, Action<T, object>>) SettersCache.GetOrAdd(typeof(T), ValueFactory);
+        }
+
+        /// <summary>
+        /// Returns a dictionary where the key is a name of a database column and the
+        /// value is a 'getter' - a delegate instance that takes one object instance and
+        /// returns the value of a mapped property.
+        /// </summary>
+        public static Dictionary<string, Func<T, object>> GetGetters<T>()
+        {
+            static Dictionary<string, Func<T, object>> ValueFactory(Type type)
+            {
+                var result = new Dictionary<string, Func<T, object>>();
+
+                foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.GetMethod != null))
+                {
+                    var builder = new DynamicMethod($"{property.Name}_getter", typeof(object), new[] {typeof(T)});
+                    var il = builder.GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, property!.GetMethod!);
+
+                    if (property.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, property.PropertyType);
+                    }
+
+                    il.Emit(OpCodes.Ret);
+
+                    var getter = builder.CreateDelegate<Func<T, object>>();
+
+                    result.TryAdd(property.Name, getter);
+                    result.TryAdd(property.Name.Replace("_", ""), getter);
+                    result.TryAdd(ConvertToSnakeCase(property.Name), getter);
+                }
+
+                return result;
+            }
+
+            return (Dictionary<string, Func<T, object>>) GettersCache.GetOrAdd(typeof(T), ValueFactory);
+        }
+
+        /// <summary>
+        /// Converts `PascalCase` property names into `snake_case` column names.
+        /// The conversion happens on Uppercase letter or the string `ID`.
+        /// Examples:
+        /// SystemSettingName => system_setting_name
+        /// SystemSettingID => system_setting_id
+        /// System_Setting_ID => system_setting_id
+        /// system_setting_id => system_setting_id
+        /// FK_Reference_Schema_Name => fk_reference_schema_name
+        /// </summary>
+        private static string ConvertToSnakeCase(string propertyName)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append(char.ToLower(propertyName[0]));
+
+            for (int i = 1; i < propertyName.Length; i++)
+            {
+                bool NextIs(Func<char, bool> func)
+                {
+                    if (i + 1 >= propertyName.Length)
+                    {
+                        return false;
+                    }
+
+                    char nextChar = propertyName[i + 1];
+
+                    return func(nextChar);
+                }
+
+                bool PrevIs(Func<char, bool> func)
+                {
+                    if (i - 1 < 0)
+                    {
+                        return false;
+                    }
+
+                    char prevChar = propertyName[i - 1];
+
+                    return func(prevChar);
+                }
+
+                char c = propertyName[i];
+
+                if (c == 'I' && NextIs(x => x == 'D'))
+                {
+                    sb.Append(PrevIs(x => x == '_') ? "id" : "_id");
+                    i++;
+                }
+                else if (c == '_')
+                {
+                    sb.Append('_');
+                }
+                else if (char.IsUpper(c))
+                {
+                    if (!PrevIs(char.IsUpper) && !PrevIs(x => x == '_'))
+                    {
+                        sb.Append('_');
+                    }
+
+                    sb.Append(char.ToLower(c));
+                }
+
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

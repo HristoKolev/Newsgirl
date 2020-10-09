@@ -1,8 +1,10 @@
 namespace Newsgirl.Shared.Postgres
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -12,6 +14,10 @@ namespace Newsgirl.Shared.Postgres
     using Npgsql;
     using NpgsqlTypes;
 
+    /// <summary>
+    /// The main API for the database access interface.
+    /// </summary>
+    /// <typeparam name="TPocos">The type for the database specific generated APIs.</typeparam>
     public class DbService<TPocos> : IDbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
     {
         private readonly NpgsqlConnection connection;
@@ -173,7 +179,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -232,7 +238,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
             var columnNames = metadata.NonPkColumnNames;
             var parameters = poco.GetNonPkParameters();
 
@@ -287,7 +293,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public Task Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
 
             int pk = poco.GetPrimaryKey();
 
@@ -379,7 +385,7 @@ namespace Newsgirl.Shared.Postgres
                 return Task.FromResult(0);
             }
 
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -400,7 +406,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public Task Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
 
             string tableSchema = metadata.TableSchema;
             string tableName = metadata.TableName;
@@ -421,7 +427,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
             var columns = metadata.Columns;
 
             var sqlBuilder = new StringBuilder(128);
@@ -510,7 +516,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public async Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>
         {
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
             var columns = metadata.Columns;
 
             var copyHeaderBuilder = new StringBuilder(128);
@@ -757,6 +763,9 @@ namespace Newsgirl.Shared.Postgres
         IQueryable<T> GetTable<T>() where T : class, IReadOnlyPoco<T>;
     }
 
+    /// <summary>
+    /// Wraps linq2db's DataConnection.
+    /// </summary>
     public class Linq2DbWrapper : IDisposable, ILinqProvider
     {
         private readonly NpgsqlConnection connection;
@@ -810,6 +819,22 @@ namespace Newsgirl.Shared.Postgres
     public interface IDbPocos<TDbPocos> where TDbPocos : IDbPocos<TDbPocos>, new()
     {
         ILinqProvider LinqProvider { set; }
+    }
+
+    public static class DbMetadataHelpers
+    {
+        public static TableMetadataModel GetMetadata<TPoco>() where TPoco : IReadOnlyPoco<TPoco>
+        {
+            static TableMetadataModel ValueFactory(Type type)
+            {
+                return (TableMetadataModel) type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static)!
+                    .GetValue(null);
+            }
+
+            return MetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
+        }
+
+        private static readonly ConcurrentDictionary<Type, TableMetadataModel> MetadataCache = new ConcurrentDictionary<Type, TableMetadataModel>();
     }
 
     /// <summary>

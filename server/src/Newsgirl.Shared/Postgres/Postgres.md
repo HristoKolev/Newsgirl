@@ -60,7 +60,7 @@
 
 The `NpgsqlConnectionExtensions` class provides extension methods for `NpgsqlConnection` objects that perform high level database operations that don't require information about the specific database schema.
 
-Extension methods can be divided in several categories: 
+Extension methods can be divided in several categories:
 
 * `NpgsqlCommand` method equivalents:
   * `ExecuteNonQuery`: Runs a parameterized query and returns the number of affected rows.  
@@ -81,3 +81,7 @@ Extension methods can be divided in several categories:
 
 
 * `EnsureOpenState`: Opens the connection if it's not in an opened state.
+
+* Helper methods:
+  * `GetSetters<T>`: 
+  * `GetGetters<T>`: 

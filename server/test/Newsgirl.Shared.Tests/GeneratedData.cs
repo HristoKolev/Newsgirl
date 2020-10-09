@@ -52,9 +52,9 @@
         {
             var list = new List<T>();
 
-            var metadata = PocoMetadataHelper.GetMetadata<T>();
+            var metadata = DbMetadataHelpers.GetMetadata<T>();
 
-            var setters = PocoMetadataHelper.GetSetters<T>();
+            var setters = NpgsqlConnectionExtensions.GetSetters<T>();
 
             var valuesArray = metadata.Columns.Select(x => GetValuesByType(x.PropertyType.NpgsqlDbType)).ToArray();
 
