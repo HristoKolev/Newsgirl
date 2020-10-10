@@ -920,7 +920,7 @@ namespace Newsgirl.Shared.Postgres
         public string FunctionArgumentsAsString { get; set; }
 
         public Dictionary<string, SimpleType> FunctionArguments { get; set; }
-        
+
         public string[] Comments { get; set; }
     }
 
