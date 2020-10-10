@@ -3190,6 +3190,7 @@ namespace Newsgirl.Shared.Tests
                 MethodName = "IncrementByOne" == string.Empty ? null : "IncrementByOne",
                 FunctionReturnTypeName = "int4" == string.Empty ? null : "int4",
                 FunctionComment = "" == string.Empty ? null : "",
+                Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                 FunctionArgumentsAsString = "num integer" switch
                 {
                     "" => null,

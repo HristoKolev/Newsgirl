@@ -276,6 +276,7 @@ else
                 @:MethodName = "@(function.MethodName)" == string.Empty ? null : "@(function.MethodName)",
                 @:FunctionReturnTypeName = "@(function.FunctionReturnTypeName)" == string.Empty ? null : "@(function.FunctionReturnTypeName)",
                 @:FunctionComment = "@(function.FunctionComment)" == string.Empty ? null : "@(function.FunctionComment)",
+                @:Comments = "@(function.FunctionComment)".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                 @:FunctionArgumentsAsString = "@(function.FunctionArgumentsAsString)" switch
                 @:{
                     @:"" => null,

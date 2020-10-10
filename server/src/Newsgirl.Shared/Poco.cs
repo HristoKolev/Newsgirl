@@ -1120,6 +1120,7 @@ namespace Newsgirl.Shared
                 MethodName = "GetMissingFeedItems" == string.Empty ? null : "GetMissingFeedItems",
                 FunctionReturnTypeName = "_int8" == string.Empty ? null : "_int8",
                 FunctionComment = "" == string.Empty ? null : "",
+                Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                 FunctionArgumentsAsString = "p_feed_id integer, p_new_item_hashes bigint[]" switch
                 {
                     "" => null,

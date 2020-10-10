@@ -175,7 +175,7 @@ namespace Newsgirl.Shared.Postgres
         }
 
         /// <summary>
-        /// Reads a single record by it's ID.
+        /// Reads a single record by it's primary key value.
         /// </summary>
         public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
         {
@@ -679,7 +679,7 @@ namespace Newsgirl.Shared.Postgres
         Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters) where T : class, new();
 
         /// <summary>
-        /// Reads a single record by it's ID.
+        /// Reads a single record by it's primary key value.
         /// </summary>
         Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new();
 
@@ -920,6 +920,8 @@ namespace Newsgirl.Shared.Postgres
         public string FunctionArgumentsAsString { get; set; }
 
         public Dictionary<string, SimpleType> FunctionArguments { get; set; }
+        
+        public string[] Comments { get; set; }
     }
 
     public class SimpleType
