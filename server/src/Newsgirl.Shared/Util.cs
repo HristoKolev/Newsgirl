@@ -32,7 +32,10 @@ namespace Newsgirl.Shared
 
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new DetailedLogException($"No ENV variable found for `{name}`.");
+                throw new DetailedLogException($"No ENV variable found for `{name}`.")
+                {
+                    Fingerprint = "ENV_VARIABLE_NOT_FOUND",
+                };
             }
 
             return value;
@@ -117,6 +120,7 @@ namespace Newsgirl.Shared
             catch (Exception)
             {
                 buffer.Dispose();
+
                 throw;
             }
         }
@@ -166,6 +170,7 @@ namespace Newsgirl.Shared
             get
             {
                 Initialize();
+
                 return moduleBuilder;
             }
         }

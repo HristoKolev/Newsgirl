@@ -4,6 +4,7 @@ namespace Newsgirl.Shared
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
+    using Postgres;
 
     public class SystemSettingsService
     {

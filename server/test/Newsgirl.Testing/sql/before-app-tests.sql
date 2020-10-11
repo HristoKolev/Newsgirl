@@ -48,7 +48,18 @@ CREATE FUNCTION get_missing_feed_items(p_feed_id int, p_new_item_hashes bigint[]
     SELECT fi.feed_item_hash from feed_items fi where fi.feed_id = p_feed_id
   )
 $$
-language SQL stable;
+language sql stable;
+
+create table public.logins (
+    login_id serial,
+
+    email_address text not null,
+    password text not null,
+    verification_code text,
+    verified bool not null,
+
+    primary key (login_id)
+);
 
 --SPLIT_HERE
 
