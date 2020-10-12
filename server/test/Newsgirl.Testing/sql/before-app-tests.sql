@@ -50,15 +50,38 @@ CREATE FUNCTION get_missing_feed_items(p_feed_id int, p_new_item_hashes bigint[]
 $$
 language sql stable;
 
+create table public.user_profiles (
+    user_profile_id serial,
+
+    email_address text not null,
+    registration_date timestamp(0)    not null,
+
+    primary key (user_profile_id)
+);
+
 create table public.logins (
     login_id serial,
 
-    email_address text not null,
+    username text not null,
     password text not null,
+
     verification_code text,
     verified bool not null,
 
+    user_profile_id int not null references user_profiles,
+
     primary key (login_id)
+);
+
+create table user_sessions (
+  session_id serial,
+
+  user_profile_id int not null references user_profiles,
+  login_id int not null references logins,
+
+  login_date timestamp(0) not null,
+
+  primary key (session_id)
 );
 
 --SPLIT_HERE
@@ -68,28 +91,13 @@ INSERT into public.system_settings(setting_name, setting_value) VALUES
   ('FetcherCyclePause', '0'),
   ('HttpClientRequestTimeout', '120'),
   ('ParallelFeedFetching', 'true')
-  ;
-
--- create table users (
---   user_id           serial,
---
---   username          text not null unique,
---   password          text not null,
---   registration_date timestamp(0)    not null,
---
---   primary key (user_id)
--- );
---
--- create table user_sessions (
---   session_id serial,
---
---   user_id    int       not null references users,
---   login_date timestamp(0) not null,
---
---   primary key (session_id)
--- );
+;
 
 -- Insert Data
---
--- INSERT INTO users (username, password, registration_date)
--- VALUES ('hristo', 'test123', current_timestamp);
+
+INSERT INTO user_profiles (email_address, registration_date)
+values ('test@test.com', current_timestamp);
+
+insert into logins(username, password, verification_code, verified, user_profile_id)
+VALUES ('test@test.com', '$2a$12$qmfDrN5aAa99f7rlaqmLQ.K4zHWnrDq1ciKxgkuwccZE5bPlfMjvC', null, true, 1);
+
