@@ -4,6 +4,7 @@ namespace Newsgirl.Server.Tests
     using System.Net.Http;
     using System.Threading.Tasks;
     using Http;
+    using Infrastructure;
     using Microsoft.AspNetCore.Http;
     using Shared;
     using Xunit;
@@ -36,8 +37,7 @@ namespace Newsgirl.Server.Tests
             {
                 int num = 42;
 
-                var response =
-                    await tester.Client.PostAsync("/", new StringContent(num.ToString(), EncodingHelper.UTF8));
+                var response = await tester.Client.PostAsync("/", new StringContent(num.ToString(), EncodingHelper.UTF8));
                 var responseBytes = await response.Content.ReadAsByteArrayAsync();
                 string responseString = EncodingHelper.UTF8.GetString(responseBytes);
 

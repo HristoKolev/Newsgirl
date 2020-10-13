@@ -1,4 +1,4 @@
-namespace Newsgirl.Server.Tests
+namespace Newsgirl.Server.Tests.Infrastructure
 {
     using System;
     using System.Linq;
