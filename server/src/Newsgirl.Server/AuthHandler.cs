@@ -1,6 +1,7 @@
 namespace Newsgirl.Server
 {
     using System.Threading.Tasks;
+    using LinqToDB;
     using Shared;
     using Shared.Postgres;
 
@@ -12,21 +13,28 @@ namespace Newsgirl.Server
         {
             this.db = db;
         }
-        
+
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
-        public async Task<RegisterResponse> Register(RegisterRequest req)
+        public async Task<RpcResult<RegisterResponse>> Register(RegisterRequest req)
         {
-            await Task.Delay(1000);
-            return new RegisterResponse();
+            var existingLogin = await this.db.Poco.Logins
+                .FirstOrDefaultAsync(x => x.Username.ToLowerInvariant() == req.Email.ToLowerInvariant());
+
+            if (existingLogin == null)
+            {
+                return RpcResult.Error<RegisterResponse>("Username is already taken.");
+            }
+
+            return RpcResult.Ok(new RegisterResponse());
         }
-
-        public class RegisterRequest
-        {
-            public string Email { get; set; }
-
-            public string Password { get; set; }
-        }
-
-        public class RegisterResponse { }
     }
+
+    public class RegisterRequest
+    {
+        public string Email { get; set; }
+
+        public string Password { get; set; }
+    }
+
+    public class RegisterResponse { }
 }

@@ -11,5 +11,10 @@ namespace Newsgirl.Server
         {
             return this.RpcExecute<PingRequest, PingResponse>(request);
         }
+
+        public Task<RpcResult<RegisterResponse>> Register(RegisterRequest request)
+        {
+            return this.RpcExecute<RegisterRequest, RegisterResponse>(request);
+        }
     }
 }
