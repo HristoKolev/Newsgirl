@@ -1,4 +1,5 @@
 {
-  "AppTestConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;",
+  "AppTestConnectionString": "Server=dev-host.lan;Port=4203;Database=test_master;Uid=test_master;Pwd=test_master;",
+
   "DbTestConnectionString": "Server=dev-host.lan;Port=4202;Database=test;Uid=test;Pwd=test123;"
 }

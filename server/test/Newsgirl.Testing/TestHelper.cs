@@ -624,4 +624,37 @@ namespace Newsgirl.Testing
             }
         }
     }
+    
+    // string testMasterConnectionString = "Server=dev-host.lan;Port=4203;Database=test_master;Uid=test_master;Pwd=test_master;";
+    //
+    // await using (var testMasterConnection = new NpgsqlConnection(testMasterConnectionString))
+    // {
+    //     await testMasterConnection.OpenAsync();
+    //
+    //     string testDatabase = Guid.NewGuid().ToString().Replace("-", string.Empty);
+    //     await testMasterConnection.ExecuteNonQuery($"create database \"{testDatabase}\";");
+    //
+    //     try
+    //     {
+    //         var testConnectionString = new NpgsqlConnectionStringBuilder(testMasterConnectionString)
+    //         {
+    //             Database = testDatabase,
+    //             Pooling = false,
+    //             Enlist = false,
+    //         };
+    //
+    //         await using (var testConnection = new NpgsqlConnection(testConnectionString.ToString()))
+    //         {
+    //             await testConnection.OpenAsync();
+    //
+    //             // int i = await testConnection.ExecuteScalar<int>("select 1;");
+    //             //
+    //             // Console.WriteLine(i);
+    //         }
+    //     }
+    //     finally
+    //     {
+    //         await testMasterConnection.ExecuteNonQuery($"drop database \"{testDatabase}\";");
+    //     }
+    // }
 }
