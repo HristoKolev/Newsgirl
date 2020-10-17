@@ -129,9 +129,7 @@ namespace Newsgirl.Testing
 
     public class TestConfig
     {
-        public string AppTestConnectionString { get; set; }
-
-        public string DbTestConnectionString { get; set; }
+        public string TestMasterConnectionString { get; set; }
     }
 
     public class CustomReporter : IApprovalFailureReporter
@@ -420,13 +418,21 @@ namespace Newsgirl.Testing
         where TDb : IDbService<TPocos> where TPocos : IDbPocos<TPocos>, new()
     {
         private readonly string stageSqlFileName;
-        private readonly string connectionString;
         private readonly Func<NpgsqlConnection, TDb> createDbService;
+        
+        private readonly string testMasterConnectionString;
+        private NpgsqlConnection testMasterConnection;
+        
+        private string testDatabaseName;
+        private NpgsqlConnection testDatabaseConnection;
 
-        protected DatabaseTest(string stageSqlFileName, string connectionString, Func<NpgsqlConnection, TDb> createDbService)
+        protected NpgsqlConnection DbConnection => this.testDatabaseConnection;
+        protected TDb Db { get; private set; }
+
+        protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
             this.stageSqlFileName = stageSqlFileName;
-            this.connectionString = connectionString;
+            this.testMasterConnectionString = testMasterConnectionString;
             this.createDbService = createDbService;
         }
 
@@ -435,15 +441,24 @@ namespace Newsgirl.Testing
         /// </summary>
         public async Task InitializeAsync()
         {
-            var builder = new NpgsqlConnectionStringBuilder(this.connectionString)
+            var testMasterConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
             {
                 Enlist = false,
-                Pooling = false,
             };
+            
+            this.testMasterConnection = new NpgsqlConnection(testMasterConnectionStringBuilder.ToString());
+            this.testDatabaseName = Guid.NewGuid().ToString().Replace("-", string.Empty);
+            await this.testMasterConnection.ExecuteNonQuery($"create database \"{this.testDatabaseName}\";");
 
-            this.DbConnection = new NpgsqlConnection(builder.ToString());
-            this.Db = this.createDbService(this.DbConnection);
-            this.Tx = await this.Db.BeginTransaction();
+            var testConnectionString = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
+            {
+                Database = this.testDatabaseName,
+                Pooling = false,
+                Enlist = false,
+            };
+            
+            this.testDatabaseConnection = new NpgsqlConnection(testConnectionString.ToString());
+            this.Db = this.createDbService(this.testDatabaseConnection);
 
             await this.ExecuteStageSql();
         }
@@ -458,15 +473,9 @@ namespace Newsgirl.Testing
 
             foreach (string sql in parts)
             {
-                await this.Db.ExecuteNonQuery(sql);
+                await this.testDatabaseConnection.ExecuteNonQuery(sql);
             }
         }
-
-        private NpgsqlTransaction Tx { get; set; }
-
-        protected NpgsqlConnection DbConnection { get; private set; }
-
-        protected TDb Db { get; private set; }
 
         /// <summary>
         /// Called when an object is no longer needed. Called just before <see cref="M:System.IDisposable.Dispose" />
@@ -474,18 +483,13 @@ namespace Newsgirl.Testing
         /// </summary>
         public async Task DisposeAsync()
         {
-            await this.Tx.RollbackAsync();
-
-            await using (var tx = await this.Db.BeginTransaction())
-            {
-                await this.ExecuteStageSql();
-
-                await tx.CommitAsync();
-            }
-
-            await this.DbConnection.DisposeAsync();
-
+            await this.testDatabaseConnection.DisposeAsync();
+            
             this.Db.Dispose();
+            
+            await this.testMasterConnection.ExecuteNonQuery($"drop database \"{this.testDatabaseName}\";");
+            
+            await this.testMasterConnection.DisposeAsync();
         }
     }
 
@@ -493,7 +497,7 @@ namespace Newsgirl.Testing
     {
         protected AppDatabaseTest() : base(
             "before-app-tests.sql",
-            TestHelper.TestConfig.AppTestConnectionString,
+            TestHelper.TestConfig.TestMasterConnectionString,
             x => new DbService(x)
         ) { }
     }

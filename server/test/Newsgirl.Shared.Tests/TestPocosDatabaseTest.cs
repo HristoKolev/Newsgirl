@@ -7,7 +7,7 @@ namespace Newsgirl.Shared.Tests
     {
         protected TestPocosDatabaseTest() : base(
             "before-db-tests.sql",
-            TestHelper.TestConfig.DbTestConnectionString,
+            TestHelper.TestConfig.TestMasterConnectionString,
             x => new DbService<TestDbPocos>(x)
         ) { }
     }

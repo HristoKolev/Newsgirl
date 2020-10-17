@@ -453,30 +453,15 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
-    public class TransactionConnectionExtensionsTest
+    public class TransactionConnectionExtensionsTest : TestPocosDatabaseTest
     {
-        private static NpgsqlConnection CreateConnection()
-        {
-            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.DbTestConnectionString)
-            {
-                Enlist = false,
-                Pooling = false,
-            };
-
-            return new NpgsqlConnection(builder.ToString());
-        }
-
         [Fact]
         public async Task ExecuteInTransactionAndCommit_works_with_default_CT()
         {
-            await using (var db = CreateConnection())
+            await this.DbConnection.ExecuteInTransactionAndCommit(async () =>
             {
-                await db.OpenAsync();
-                await db.ExecuteInTransactionAndCommit(async () =>
-                {
-                    await db.ExecuteScalar<int>("select 1;");
-                });
-            }
+                await this.DbConnection.ExecuteScalar<int>("select 1;");
+            });
         }
 
         [Fact]
@@ -486,18 +471,14 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                await using (var db = CreateConnection())
-                {
-                    await db.OpenAsync();
-                    var cts = new CancellationTokenSource();
+                var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransactionAndCommit(async () =>
-                    {
-                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
-                        cts.CancelAfter(10);
-                        await t;
-                    }, cts.Token);
-                }
+                await this.DbConnection.ExecuteInTransactionAndCommit(async () =>
+                {
+                    var t = this.DbConnection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    cts.CancelAfter(10);
+                    await t;
+                }, cts.Token);
             }
             catch (Exception err)
             {
@@ -510,14 +491,10 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public async Task ExecuteInTransaction_works_with_default_CT()
         {
-            await using (var db = CreateConnection())
+            await this.DbConnection.ExecuteInTransaction(async tx =>
             {
-                await db.OpenAsync();
-                await db.ExecuteInTransaction(async tx =>
-                {
-                    await db.ExecuteScalar<int>("select 1;");
-                });
-            }
+                await this.DbConnection.ExecuteScalar<int>("select 1;");
+            });
         }
 
         [Fact]
@@ -527,18 +504,14 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                await using (var db = CreateConnection())
-                {
-                    await db.OpenAsync();
-                    var cts = new CancellationTokenSource();
+                var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransaction(async tx =>
-                    {
-                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
-                        cts.CancelAfter(10);
-                        await t;
-                    }, cts.Token);
-                }
+                await this.DbConnection.ExecuteInTransaction(async tx =>
+                {
+                    var t = this.DbConnection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    cts.CancelAfter(10);
+                    await t;
+                }, cts.Token);
             }
             catch (Exception err)
             {
@@ -549,35 +522,15 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
-    public class TransactionDbServiceTest
+    public class TransactionDbServiceTest : TestPocosDatabaseTest
     {
-        private static NpgsqlConnection CreateConnection()
-        {
-            var builder = new NpgsqlConnectionStringBuilder(TestHelper.TestConfig.DbTestConnectionString)
-            {
-                Enlist = false,
-                Pooling = false,
-            };
-
-            return new NpgsqlConnection(builder.ToString());
-        }
-
-        private static DbService<TestDbPocos> CreateDbService(NpgsqlConnection connection)
-        {
-            return new DbService<TestDbPocos>(connection);
-        }
-
         [Fact]
         public async Task ExecuteInTransactionAndCommit_works_with_default_CT()
         {
-            await using (var connection = CreateConnection())
-            using (var db = CreateDbService(connection))
+            await this.Db.ExecuteInTransactionAndCommit(async () =>
             {
-                await db.ExecuteInTransactionAndCommit(async () =>
-                {
-                    await db.ExecuteScalar<int>("select 1;");
-                });
-            }
+                await this.Db.ExecuteScalar<int>("select 1;");
+            });
         }
 
         [Fact]
@@ -587,18 +540,14 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                await using (var connection = CreateConnection())
-                using (var db = CreateDbService(connection))
-                {
-                    var cts = new CancellationTokenSource();
+                var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransactionAndCommit(async () =>
-                    {
-                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
-                        cts.CancelAfter(10);
-                        await t;
-                    }, cts.Token);
-                }
+                await this.Db.ExecuteInTransactionAndCommit(async () =>
+                {
+                    var t = this.Db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    cts.CancelAfter(10);
+                    await t;
+                }, cts.Token);
             }
             catch (Exception err)
             {
@@ -611,14 +560,10 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public async Task ExecuteInTransaction_works_with_default_CT()
         {
-            await using (var connection = CreateConnection())
-            using (var db = CreateDbService(connection))
+            await this.Db.ExecuteInTransaction(async tx =>
             {
-                await db.ExecuteInTransaction(async tx =>
-                {
-                    await db.ExecuteScalar<int>("select 1;");
-                });
-            }
+                await this.Db.ExecuteScalar<int>("select 1;");
+            });
         }
 
         [Fact]
@@ -628,18 +573,14 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                await using (var connection = CreateConnection())
-                using (var db = CreateDbService(connection))
-                {
-                    var cts = new CancellationTokenSource();
+                var cts = new CancellationTokenSource();
 
-                    await db.ExecuteInTransaction(async tx =>
-                    {
-                        var t = db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
-                        cts.CancelAfter(10);
-                        await t;
-                    }, cts.Token);
-                }
+                await this.Db.ExecuteInTransaction(async tx =>
+                {
+                    var t = this.Db.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    cts.CancelAfter(10);
+                    await t;
+                }, cts.Token);
             }
             catch (Exception err)
             {
