@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Exe</OutputType>
+
+    <IsPackable>false</IsPackable>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="snapshots" />
+  </ItemGroup>
+</Project>

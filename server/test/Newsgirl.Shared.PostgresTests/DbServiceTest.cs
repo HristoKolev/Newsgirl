@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Tests
+namespace Newsgirl.Shared.PostgresTests
 {
     using System;
     using System.Linq;

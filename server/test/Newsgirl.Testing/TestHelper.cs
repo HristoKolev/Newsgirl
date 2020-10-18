@@ -419,14 +419,14 @@ namespace Newsgirl.Testing
     {
         private readonly string stageSqlFileName;
         private readonly Func<NpgsqlConnection, TDb> createDbService;
-        
+
         private readonly string testMasterConnectionString;
         private NpgsqlConnection testMasterConnection;
-        
-        private string testDatabaseName;
-        private NpgsqlConnection testDatabaseConnection;
 
-        protected NpgsqlConnection DbConnection => this.testDatabaseConnection;
+        private string testDatabaseName;
+
+        protected NpgsqlConnection DbConnection { get; private set; }
+
         protected TDb Db { get; private set; }
 
         protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
@@ -445,7 +445,7 @@ namespace Newsgirl.Testing
             {
                 Enlist = false,
             };
-            
+
             this.testMasterConnection = new NpgsqlConnection(testMasterConnectionStringBuilder.ToString());
             this.testDatabaseName = Guid.NewGuid().ToString().Replace("-", string.Empty);
             await this.testMasterConnection.ExecuteNonQuery($"create database \"{this.testDatabaseName}\";");
@@ -456,9 +456,9 @@ namespace Newsgirl.Testing
                 Pooling = false,
                 Enlist = false,
             };
-            
-            this.testDatabaseConnection = new NpgsqlConnection(testConnectionString.ToString());
-            this.Db = this.createDbService(this.testDatabaseConnection);
+
+            this.DbConnection = new NpgsqlConnection(testConnectionString.ToString());
+            this.Db = this.createDbService(this.DbConnection);
 
             await this.ExecuteStageSql();
         }
@@ -473,7 +473,7 @@ namespace Newsgirl.Testing
 
             foreach (string sql in parts)
             {
-                await this.testDatabaseConnection.ExecuteNonQuery(sql);
+                await this.DbConnection.ExecuteNonQuery(sql);
             }
         }
 
@@ -483,12 +483,12 @@ namespace Newsgirl.Testing
         /// </summary>
         public async Task DisposeAsync()
         {
-            await this.testDatabaseConnection.DisposeAsync();
-            
+            await this.DbConnection.DisposeAsync();
+
             this.Db.Dispose();
-            
+
             await this.testMasterConnection.ExecuteNonQuery($"drop database \"{this.testDatabaseName}\";");
-            
+
             await this.testMasterConnection.DisposeAsync();
         }
     }
@@ -628,7 +628,7 @@ namespace Newsgirl.Testing
             }
         }
     }
-    
+
     // string testMasterConnectionString = "Server=dev-host.lan;Port=4203;Database=test_master;Uid=test_master;Pwd=test_master;";
     //
     // await using (var testMasterConnection = new NpgsqlConnection(testMasterConnectionString))

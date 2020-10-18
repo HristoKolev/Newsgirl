@@ -1,9 +1,9 @@
-namespace Newsgirl.Shared.Tests
+namespace Newsgirl.Shared.PostgresTests
 {
     using System.Linq;
     using Xunit;
 
-    public class ManualTests : TestPocosDatabaseTest
+    public class DbFunctionsTests : TestPocosDatabaseTest
     {
         [Fact]
         public void FunctionsWork()

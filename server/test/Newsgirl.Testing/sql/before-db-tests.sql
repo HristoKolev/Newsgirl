@@ -1,6 +1,5 @@
 ﻿
-drop schema "public" cascade;
-
+drop schema if exists "public" cascade;
 create schema "public";
 
 create table "public"."test1" (

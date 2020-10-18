@@ -1,6 +1,6 @@
 
-drop schema if exists public cascade;
-create schema public;
+drop schema if exists "public" cascade;
+create schema "public";
 
 create table system_settings (
   setting_id    serial,

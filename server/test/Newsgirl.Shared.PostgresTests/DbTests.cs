@@ -1,4 +1,4 @@
-namespace Newsgirl.Shared.Tests
+namespace Newsgirl.Shared.PostgresTests
 {
     using System;
     using System.Collections.Generic;
@@ -7,7 +7,7 @@ namespace Newsgirl.Shared.Tests
     using Postgres;
     using Xunit;
 
-    public class Test1Test : TestPocosDatabaseTest
+    public class Test1TestCrud : TestPocosDatabaseTest
     {
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
@@ -45,7 +45,10 @@ namespace Newsgirl.Shared.Tests
 
             await this.Db.Delete(poco);
         }
+    }
 
+    public class Test1TestDeleteByIdArray : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
         public async Task Delete_by_id_array(List<Test1Poco> poco)
@@ -58,14 +61,20 @@ namespace Newsgirl.Shared.Tests
             int deletedCount = await this.Db.Delete<Test1Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
             Assert.Equal(poco.Count, deletedCount);
         }
+    }
 
+    public class Test1TestBulkInsert : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
         public async Task BulkInsert(List<Test1Poco> poco)
         {
             await this.Db.BulkInsert(poco);
         }
+    }
 
+    public class Test1TestGetNonPkParameters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void GetNonPkParameters(Test1Poco poco)
@@ -92,7 +101,10 @@ namespace Newsgirl.Shared.Tests
                 }
             }
         }
+    }
 
+    public class Test1TestGetAllColumns : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void GetAllColumns(Test1Poco poco)
@@ -123,14 +135,20 @@ namespace Newsgirl.Shared.Tests
                 }
             }
         }
+    }
 
+    public class Test1TestCopy : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test1Poco>))]
         public Task Copy(List<Test1Poco> pocos)
         {
             return this.Db.Copy(pocos);
         }
+    }
 
+    public class Test1TestGetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void Getters(Test1Poco poco)
@@ -161,7 +179,10 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestTimestamp1, getters["test_timestamp1"](poco));
             Assert.Equal(poco.TestTimestamp2, getters["test_timestamp2"](poco));
         }
+    }
 
+    public class Test1TestSetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test1Poco>))]
         public void Setters(Test1Poco poco)
@@ -241,7 +262,7 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
-    public class Test2Test : TestPocosDatabaseTest
+    public class Test2TestCrud : TestPocosDatabaseTest
     {
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
@@ -260,7 +281,10 @@ namespace Newsgirl.Shared.Tests
 
             await this.Db.Delete(poco);
         }
+    }
 
+    public class Test2TestDeleteByIdArray : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test2Poco>))]
         public async Task Delete_by_id_array(List<Test2Poco> poco)
@@ -273,14 +297,20 @@ namespace Newsgirl.Shared.Tests
             int deletedCount = await this.Db.Delete<Test2Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
             Assert.Equal(poco.Count, deletedCount);
         }
+    }
 
+    public class Test2TestBulkInsert : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test2Poco>))]
         public async Task BulkInsert(List<Test2Poco> poco)
         {
             await this.Db.BulkInsert(poco);
         }
+    }
 
+    public class Test2TestGetNonPkParameters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void GetNonPkParameters(Test2Poco poco)
@@ -307,7 +337,10 @@ namespace Newsgirl.Shared.Tests
                 }
             }
         }
+    }
 
+    public class Test2TestGetAllColumns : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void GetAllColumns(Test2Poco poco)
@@ -338,14 +371,20 @@ namespace Newsgirl.Shared.Tests
                 }
             }
         }
+    }
 
+    public class Test2TestCopy : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedBulkData<Test2Poco>))]
         public Task Copy(List<Test2Poco> pocos)
         {
             return this.Db.Copy(pocos);
         }
+    }
 
+    public class Test2TestGetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void Getters(Test2Poco poco)
@@ -357,7 +396,10 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestName, getters["test_name"](poco));
             Assert.Equal(poco.TestNumber, getters["test_number"](poco));
         }
+    }
 
+    public class Test2TestSetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<Test2Poco>))]
         public void Setters(Test2Poco poco)
@@ -380,7 +422,7 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
-    public class VGenerateSeriesTest : TestPocosDatabaseTest
+    public class VGenerateSeriesTestGetters : TestPocosDatabaseTest
     {
         [Theory]
         [ClassData(typeof(GeneratedData<VGenerateSeriesPoco>))]
@@ -390,7 +432,10 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Equal(poco.Num, getters["num"](poco));
         }
+    }
 
+    public class VGenerateSeriesTestSetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<VGenerateSeriesPoco>))]
         public void Setters(VGenerateSeriesPoco poco)
@@ -404,7 +449,7 @@ namespace Newsgirl.Shared.Tests
         }
     }
 
-    public class View1Test : TestPocosDatabaseTest
+    public class View1TestGetters : TestPocosDatabaseTest
     {
         [Theory]
         [ClassData(typeof(GeneratedData<View1Poco>))]
@@ -439,7 +484,10 @@ namespace Newsgirl.Shared.Tests
             Assert.Equal(poco.TestTimestamp1, getters["test_timestamp1"](poco));
             Assert.Equal(poco.TestTimestamp2, getters["test_timestamp2"](poco));
         }
+    }
 
+    public class View1TestSetters : TestPocosDatabaseTest
+    {
         [Theory]
         [ClassData(typeof(GeneratedData<View1Poco>))]
         public void Setters(View1Poco poco)

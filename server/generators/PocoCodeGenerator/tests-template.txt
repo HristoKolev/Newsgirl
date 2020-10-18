@@ -11,10 +11,10 @@ namespace @Model.Namespace
 
 @foreach(var table in Model.Tables)
 {
-    @:public class @(table.ClassName)Test : TestPocosDatabaseTest
-    @:{
     if(!table.IsView)
     {
+    @:public class @(table.ClassName)TestCrud : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public async Task Crud(@(table.ClassName)Poco poco)
@@ -32,7 +32,10 @@ namespace @Model.Namespace
 @:
             @:await this.Db.Delete(poco);
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestDeleteByIdArray : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
         @:public async Task Delete_by_id_array(List<@(table.ClassName)Poco> poco)
@@ -45,14 +48,20 @@ namespace @Model.Namespace
             @:int deletedCount = await this.Db.Delete<@(table.ClassName)Poco>(poco.Select(x => x.GetPrimaryKey()).ToArray());
             @:Assert.Equal(poco.Count, deletedCount);
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestBulkInsert : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
         @:public async Task BulkInsert(List<@(table.ClassName)Poco> poco)
         @:{
             @:await this.Db.BulkInsert(poco);
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestGetNonPkParameters : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void GetNonPkParameters(@(table.ClassName)Poco poco)
@@ -79,7 +88,10 @@ namespace @Model.Namespace
                 @:}
             @:}
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestGetAllColumns : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void GetAllColumns(@(table.ClassName)Poco poco)
@@ -110,15 +122,21 @@ namespace @Model.Namespace
                 @:}
             @:}
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestCopy : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedBulkData<@(table.ClassName)Poco>))]
         @:public Task Copy(List<@(table.ClassName)Poco> pocos)
         @:{
             @:return this.Db.Copy(pocos);
         @:}
+    @:}
 @:
     }
+    @:public class @(table.ClassName)TestGetters : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void Getters(@(table.ClassName)Poco poco)
@@ -130,7 +148,10 @@ namespace @Model.Namespace
             @:Assert.Equal(poco.@(column.PropertyName), getters["@(column.ColumnName)"](poco));
         }
         @:}
+    @:}
 @:
+    @:public class @(table.ClassName)TestSetters : TestPocosDatabaseTest
+    @:{
         @:[Theory]
         @:[ClassData(typeof(GeneratedData<@(table.ClassName)Poco>))]
         @:public void Setters(@(table.ClassName)Poco poco)

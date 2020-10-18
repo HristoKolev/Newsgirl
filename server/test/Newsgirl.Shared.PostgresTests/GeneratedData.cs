@@ -1,4 +1,4 @@
-﻿namespace Newsgirl.Shared.Tests
+﻿namespace Newsgirl.Shared.PostgresTests
 {
     using System;
     using System.Collections;
@@ -13,10 +13,7 @@
         public IEnumerator<object[]> GetEnumerator()
         {
             return PocoDataGenerator.GenerateData<T>()
-                .Select(x => new object[]
-                {
-                    x,
-                })
+                .Select(x => new object[] {x})
                 .GetEnumerator();
         }
 
@@ -91,90 +88,7 @@
             return list;
         }
 
-        public static object GetArrayValuesByType(NpgsqlDbType dbType)
-        {
-            switch (dbType)
-            {
-                case NpgsqlDbType.Bigint:
-                {
-                    return GenerateLongArray();
-                }
-                case NpgsqlDbType.Double:
-                {
-                    return GenerateDoubleArray();
-                }
-                case NpgsqlDbType.Integer:
-                {
-                    return GenerateIntArray();
-                }
-                case NpgsqlDbType.Numeric:
-                {
-                    return GenerateDecimalArray();
-                }
-                case NpgsqlDbType.Real:
-                {
-                    return GenerateFloatArray();
-                }
-                case NpgsqlDbType.Smallint:
-                {
-                    return GenerateShortArray();
-                }
-                case NpgsqlDbType.Boolean:
-                {
-                    return GenerateBooleanArray();
-                }
-                case NpgsqlDbType.Char:
-                {
-                    return GenerateCharArray();
-                }
-                case NpgsqlDbType.Text:
-                {
-                    return GenerateStringArray();
-                }
-                case NpgsqlDbType.Varchar:
-                {
-                    return GenerateStringArray();
-                }
-                case NpgsqlDbType.Bytea:
-                {
-                    return GenerateByteArray();
-                }
-                case NpgsqlDbType.Date:
-                {
-                    return GenerateDateArray();
-                }
-                case NpgsqlDbType.Timestamp:
-                {
-                    return GenerateDateTimeArray();
-                }
-                case NpgsqlDbType.Uuid:
-                {
-                    return GenerateGuidArray();
-                }
-                case NpgsqlDbType.Xml:
-                {
-                    return GenerateXmlArray();
-                }
-                case NpgsqlDbType.Json:
-                {
-                    return GenerateJsonArray();
-                }
-                case NpgsqlDbType.Jsonb:
-                {
-                    return GenerateJsonArray();
-                }
-                case NpgsqlDbType.TimestampTz:
-                {
-                    return GenerateDateTimeOffsetArray();
-                }
-                default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(dbType), dbType, null);
-                }
-            }
-        }
-
-        public static object[] GetValuesByType(NpgsqlDbType dbType)
+        private static object[] GetValuesByType(NpgsqlDbType dbType)
         {
             switch (dbType)
             {
@@ -257,55 +171,6 @@
             }
         }
 
-        public static object[] GetValuesByType(Type type)
-        {
-            string typeName = type.Name;
-
-            switch (typeName)
-            {
-                case "String":
-                {
-                    return GenerateStringArray().Select(x => (object) x).ToArray();
-                }
-                case "DateTime":
-                {
-                    return GenerateDateTimeArray().Select(x => (object) x).ToArray();
-                }
-                case "DateTimeOffset":
-                {
-                    return GenerateDateTimeOffsetArray().Select(x => (object) x).ToArray();
-                }
-                case "decimal":
-                {
-                    return GenerateDecimalArray().Select(x => (object) x).ToArray();
-                }
-                case "double":
-                {
-                    return GenerateDoubleArray().Select(x => (object) x).ToArray();
-                }
-                case "float":
-                {
-                    return GenerateFloatArray().Select(x => (object) x).ToArray();
-                }
-                case "int":
-                {
-                    return GenerateIntArray().Select(x => (object) x).ToArray();
-                }
-                case "long":
-                {
-                    return GenerateLongArray().Select(x => (object) x).ToArray();
-                }
-                case "short":
-                {
-                    return GenerateShortArray().Select(x => (object) x).ToArray();
-                }
-                default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(typeName), typeName, null);
-                }
-            }
-        }
-
         private static bool[] GenerateBooleanArray()
         {
             return new[] {true, false};
@@ -331,12 +196,7 @@
 
         private static string[] GenerateCharArray()
         {
-            return new[]
-            {
-                "a",
-                "b",
-                "c",
-            };
+            return new[] {"a", "b", "c"};
         }
 
         private static DateTime[] GenerateDateArray()
@@ -371,50 +231,27 @@
 
         private static decimal[] GenerateDecimalArray()
         {
-            return new[]
-            {
-                0m,
-                1.234m,
-                -1.234m,
-            };
+            return new[] {0m, 1.234m, -1.234m};
         }
 
         private static double[] GenerateDoubleArray()
         {
-            return new[]
-            {
-                0d,
-                1.234d,
-                -1.234d,
-            };
+            return new[] {0d, 1.234d, -1.234d};
         }
 
         private static float[] GenerateFloatArray()
         {
-            return new[]
-            {
-                0f,
-                1.234f,
-                -1.234f,
-            };
+            return new[] {0f, 1.234f, -1.234f};
         }
 
         private static string[] GenerateGuidArray()
         {
-            return new[]
-            {
-                "173e5661-e425-431a-a3b0-03e7d65b95aa",
-            };
+            return new[] {"173e5661-e425-431a-a3b0-03e7d65b95aa"};
         }
 
         private static int[] GenerateIntArray()
         {
-            return new[]
-            {
-                -1,
-                0,
-                1,
-            };
+            return new[] {-1, 0, 1};
         }
 
         private static string[] GenerateJsonArray()
@@ -430,22 +267,12 @@
 
         private static long[] GenerateLongArray()
         {
-            return new[]
-            {
-                -1L,
-                0L,
-                1L,
-            };
+            return new[] {-1L, 0L, 1L};
         }
 
         private static short[] GenerateShortArray()
         {
-            return new short[]
-            {
-                -1,
-                0,
-                1,
-            };
+            return new short[] {-1, 0, 1};
         }
 
         private static string[] GenerateStringArray()
