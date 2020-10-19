@@ -1,9 +1,11 @@
 using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
 using Newsgirl.Testing;
+using Xunit;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
+[assembly: CollectionBehavior(MaxParallelThreads = 16)]
 
 namespace Newsgirl.Testing
 {
@@ -94,10 +96,13 @@ namespace Newsgirl.Testing
             get
             {
                 var transactionService = Substitute.For<DbTransactionService>();
+
                 transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>())
                     .Returns(info => info.Arg<Func<Task>>()());
+
                 transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction, Task>>())
                     .Returns(Task.CompletedTask);
+
                 transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction, Task>>())
                     .Returns(Task.CompletedTask);
 
@@ -424,10 +429,11 @@ namespace Newsgirl.Testing
         private NpgsqlConnection testMasterConnection;
 
         private string testDatabaseName;
+        private TDb testDb;
 
         protected NpgsqlConnection DbConnection { get; private set; }
 
-        protected TDb Db { get; private set; }
+        protected TDb Db => this.testDb;
 
         protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
@@ -436,9 +442,6 @@ namespace Newsgirl.Testing
             this.createDbService = createDbService;
         }
 
-        /// <summary>
-        /// Called immediately after the class has been created, before it is used.
-        /// </summary>
         public async Task InitializeAsync()
         {
             var testMasterConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
@@ -458,7 +461,7 @@ namespace Newsgirl.Testing
             };
 
             this.DbConnection = new NpgsqlConnection(testConnectionString.ToString());
-            this.Db = this.createDbService(this.DbConnection);
+            this.testDb = this.createDbService(this.DbConnection);
 
             await this.ExecuteStageSql();
         }
@@ -477,15 +480,11 @@ namespace Newsgirl.Testing
             }
         }
 
-        /// <summary>
-        /// Called when an object is no longer needed. Called just before <see cref="M:System.IDisposable.Dispose" />
-        /// if the class also implements that.
-        /// </summary>
         public async Task DisposeAsync()
         {
             await this.DbConnection.DisposeAsync();
 
-            this.Db.Dispose();
+            this.testDb.Dispose();
 
             await this.testMasterConnection.ExecuteNonQuery($"drop database \"{this.testDatabaseName}\";");
 

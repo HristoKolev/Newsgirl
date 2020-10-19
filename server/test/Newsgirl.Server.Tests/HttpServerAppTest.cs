@@ -12,7 +12,7 @@ namespace Newsgirl.Server.Tests
     using Testing;
     using Xunit;
 
-    public class HttpServerAppTest
+    public class HttpServerAppTestServerShutsDownCorrectly
     {
         [Fact]
         public async Task Server_Shuts_Down_Correctly()
@@ -31,7 +31,10 @@ namespace Newsgirl.Server.Tests
                 await shutdownTask;
             }
         }
+    }
 
+    public class HttpServerAppTestIoCResolvesAllRegisteredTypes
+    {
         [Fact]
         public async Task IoC_Resolves_All_Registered_Types()
         {
@@ -55,7 +58,10 @@ namespace Newsgirl.Server.Tests
                 }
             }
         }
+    }
 
+    public class HttpServerAppTestRespondsToRequest
+    {
         [Fact]
         public async Task Responds_to_request()
         {
