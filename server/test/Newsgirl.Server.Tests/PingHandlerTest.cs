@@ -5,7 +5,7 @@ namespace Newsgirl.Server.Tests
     using Testing;
     using Xunit;
 
-    public class PingHandlerTest
+    public class PingHandlerTest : AppDatabaseTest
     {
         [Fact]
         public async Task Ping_returns_correct_result()

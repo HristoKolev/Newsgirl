@@ -1,17 +1,17 @@
 namespace Newsgirl.Fetcher.Tests
 {
-    using System;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Core;
+    using Newtonsoft.Json;
     using Testing;
     using Xunit;
 
-    public class InitializationTest
+    public class FetcherAppTest : AppDatabaseTest
     {
-        private static async Task<FetcherApp> CreateFetcherApp()
+        private async Task<FetcherApp> CreateFetcherApp()
         {
             var app = new FetcherApp
             {
@@ -19,8 +19,9 @@ namespace Newsgirl.Fetcher.Tests
             };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
-            Environment.SetEnvironmentVariable("APP_CONFIG_PATH", appConfigPath);
-            Assert.Equal(appConfigPath, app.AppConfigPath);
+            var injectedConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+            app.InjectedAppConfig = injectedConfig;
+            app.InjectedAppConfig.ConnectionString = this.DbConnectionString;
 
             await app.Initialize();
 
@@ -30,7 +31,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task Fetcher_Runs_Without_Error()
         {
-            await using var app = await CreateFetcherApp();
+            await using var app = await this.CreateFetcherApp();
 
             await app.RunCycle();
         }
@@ -38,7 +39,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task IoC_Resolves_All_Registered_Types()
         {
-            await using var app = await CreateFetcherApp();
+            await using var app = await this.CreateFetcherApp();
 
             var ignored = new[]
             {

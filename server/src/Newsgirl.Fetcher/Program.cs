@@ -29,6 +29,8 @@
 
         public IContainer IoC { get; set; }
 
+        public FetcherAppConfig InjectedAppConfig { get; set; }
+
         public async Task Initialize()
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
@@ -54,7 +56,10 @@
 
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
-            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            }
 
             var builder = new ContainerBuilder();
             builder.RegisterModule<SharedModule>();
@@ -67,7 +72,15 @@
 
         private async Task LoadConfig()
         {
-            this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));                
+            }
+            else
+            {
+                this.AppConfig = this.InjectedAppConfig;
+            }
+
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
@@ -81,7 +94,7 @@
         {
             try
             {
-                this.Log.General(() => new LogData("Reloading config..."));
+                this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
                 await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
             }

@@ -430,10 +430,13 @@ namespace Newsgirl.Testing
 
         private string testDatabaseName;
         private TDb testDb;
+        private string testConnectionString;
 
         protected NpgsqlConnection DbConnection { get; private set; }
 
         protected TDb Db => this.testDb;
+
+        protected string DbConnectionString => this.testConnectionString;
 
         protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
@@ -453,14 +456,15 @@ namespace Newsgirl.Testing
             this.testDatabaseName = Guid.NewGuid().ToString().Replace("-", string.Empty);
             await this.testMasterConnection.ExecuteNonQuery($"create database \"{this.testDatabaseName}\";");
 
-            var testConnectionString = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
+            var testConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
             {
                 Database = this.testDatabaseName,
                 Pooling = false,
                 Enlist = false,
             };
 
-            this.DbConnection = new NpgsqlConnection(testConnectionString.ToString());
+            this.testConnectionString = testConnectionStringBuilder.ToString();
+            this.DbConnection = new NpgsqlConnection(this.testConnectionString);
             this.testDb = this.createDbService(this.DbConnection);
 
             await this.ExecuteStageSql();
@@ -483,11 +487,8 @@ namespace Newsgirl.Testing
         public async Task DisposeAsync()
         {
             await this.DbConnection.DisposeAsync();
-
             this.testDb.Dispose();
-
             await this.testMasterConnection.ExecuteNonQuery($"drop database \"{this.testDatabaseName}\";");
-
             await this.testMasterConnection.DisposeAsync();
         }
     }
@@ -627,37 +628,4 @@ namespace Newsgirl.Testing
             }
         }
     }
-
-    // string testMasterConnectionString = "Server=dev-host.lan;Port=4203;Database=test_master;Uid=test_master;Pwd=test_master;";
-    //
-    // await using (var testMasterConnection = new NpgsqlConnection(testMasterConnectionString))
-    // {
-    //     await testMasterConnection.OpenAsync();
-    //
-    //     string testDatabase = Guid.NewGuid().ToString().Replace("-", string.Empty);
-    //     await testMasterConnection.ExecuteNonQuery($"create database \"{testDatabase}\";");
-    //
-    //     try
-    //     {
-    //         var testConnectionString = new NpgsqlConnectionStringBuilder(testMasterConnectionString)
-    //         {
-    //             Database = testDatabase,
-    //             Pooling = false,
-    //             Enlist = false,
-    //         };
-    //
-    //         await using (var testConnection = new NpgsqlConnection(testConnectionString.ToString()))
-    //         {
-    //             await testConnection.OpenAsync();
-    //
-    //             // int i = await testConnection.ExecuteScalar<int>("select 1;");
-    //             //
-    //             // Console.WriteLine(i);
-    //         }
-    //     }
-    //     finally
-    //     {
-    //         await testMasterConnection.ExecuteNonQuery($"drop database \"{testDatabase}\";");
-    //     }
-    // }
 }
