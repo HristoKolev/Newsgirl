@@ -4,19 +4,14 @@ namespace Newsgirl.Server.Tests
     using Testing;
     using Xunit;
 
-    public class PingHandlerTest : AppDatabaseTest
+    public class PingHandlerTest : HttpServerAppTest
     {
         [Fact]
         public async Task Ping_returns_correct_result()
         {
-            await using (var tester = await HttpServerAppTester.Create(this.ConnectionString))
-            {
-                var rcpClient = new TestRpcClient(tester.App);
+            var result = await this.RpcClient.Ping(new PingRequest());
 
-                var result = await rcpClient.Ping(new PingRequest());
-
-                Snapshot.Match(result);
-            }
+            Snapshot.Match(result);
         }
     }
 }

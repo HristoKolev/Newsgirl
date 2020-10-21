@@ -28,10 +28,13 @@ namespace Newsgirl.Server.Tests
 
         protected HttpServerApp App => this.tester.App;
 
+        protected RpcClient RpcClient { get; private set; }
+
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
             this.tester = await HttpServerAppTester.Create(this.ConnectionString);
+            this.RpcClient = new TestRpcClient(this.tester.App);
         }
 
         public override async Task DisposeAsync()
