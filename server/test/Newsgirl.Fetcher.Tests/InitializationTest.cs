@@ -20,8 +20,8 @@ namespace Newsgirl.Fetcher.Tests
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
             var injectedConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+            injectedConfig.ConnectionString = this.ConnectionString;
             app.InjectedAppConfig = injectedConfig;
-            app.InjectedAppConfig.ConnectionString = this.ConnectionString;
 
             await app.Initialize();
 

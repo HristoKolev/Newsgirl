@@ -74,7 +74,7 @@
         {
             if (this.InjectedAppConfig == null)
             {
-                this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));                
+                this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             }
             else
             {

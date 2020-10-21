@@ -15,7 +15,7 @@ namespace Newsgirl.Benchmarks
     using System.Threading.Tasks;
     using BenchmarkDotNet.Attributes;
     using Microsoft.AspNetCore.Http;
-    using Server.Tests.Infrastructure;
+    using Server.Tests;
     using Testing;
 
     [MemoryDiagnoser]

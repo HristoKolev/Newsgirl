@@ -1,7 +1,6 @@
 namespace Newsgirl.Server.Tests
 {
     using System.Threading.Tasks;
-    using Infrastructure;
     using Testing;
     using Xunit;
 

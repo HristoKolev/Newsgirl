@@ -430,13 +430,12 @@ namespace Newsgirl.Testing
 
         private string testDatabaseName;
         private TDb testDb;
-        private string testConnectionString;
 
         protected NpgsqlConnection Connection { get; private set; }
 
         protected TDb Db => this.testDb;
 
-        protected string ConnectionString => this.testConnectionString;
+        protected string ConnectionString { get; private set; }
 
         protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
@@ -463,8 +462,8 @@ namespace Newsgirl.Testing
                 Enlist = false,
             };
 
-            this.testConnectionString = testConnectionStringBuilder.ToString();
-            this.Connection = new NpgsqlConnection(this.testConnectionString);
+            this.ConnectionString = testConnectionStringBuilder.ToString();
+            this.Connection = new NpgsqlConnection(this.ConnectionString);
             this.testDb = this.createDbService(this.Connection);
 
             await this.ExecuteStageSql();
