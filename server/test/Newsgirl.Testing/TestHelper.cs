@@ -432,11 +432,11 @@ namespace Newsgirl.Testing
         private TDb testDb;
         private string testConnectionString;
 
-        protected NpgsqlConnection DbConnection { get; private set; }
+        protected NpgsqlConnection Connection { get; private set; }
 
         protected TDb Db => this.testDb;
 
-        protected string DbConnectionString => this.testConnectionString;
+        protected string ConnectionString => this.testConnectionString;
 
         protected DatabaseTest(string stageSqlFileName, string testMasterConnectionString, Func<NpgsqlConnection, TDb> createDbService)
         {
@@ -445,7 +445,7 @@ namespace Newsgirl.Testing
             this.createDbService = createDbService;
         }
 
-        public async Task InitializeAsync()
+        public virtual async Task InitializeAsync()
         {
             var testMasterConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
             {
@@ -464,8 +464,8 @@ namespace Newsgirl.Testing
             };
 
             this.testConnectionString = testConnectionStringBuilder.ToString();
-            this.DbConnection = new NpgsqlConnection(this.testConnectionString);
-            this.testDb = this.createDbService(this.DbConnection);
+            this.Connection = new NpgsqlConnection(this.testConnectionString);
+            this.testDb = this.createDbService(this.Connection);
 
             await this.ExecuteStageSql();
         }
@@ -480,13 +480,13 @@ namespace Newsgirl.Testing
 
             foreach (string sql in parts)
             {
-                await this.DbConnection.ExecuteNonQuery(sql);
+                await this.Connection.ExecuteNonQuery(sql);
             }
         }
 
-        public async Task DisposeAsync()
+        public virtual async Task DisposeAsync()
         {
-            await this.DbConnection.DisposeAsync();
+            await this.Connection.DisposeAsync();
             this.testDb.Dispose();
             await this.testMasterConnection.ExecuteNonQuery($"drop database \"{this.testDatabaseName}\";");
             await this.testMasterConnection.DisposeAsync();

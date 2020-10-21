@@ -19,16 +19,16 @@ namespace Newsgirl.Shared.PostgresTests
 
             var parameters = new[]
             {
-                this.DbConnection.CreateParameter("n", number),
+                this.Connection.CreateParameter("n", number),
             };
 
-            await this.DbConnection.ExecuteNonQuery(@"
+            await this.Connection.ExecuteNonQuery(@"
                 INSERT into public.test2 
                 (test_name, test_date, test_number) values
                 ('enq_test', now(), :n);
             ", parameters, CancellationToken.None);
 
-            int result = await this.DbConnection.ExecuteScalar<int>(
+            int result = await this.Connection.ExecuteScalar<int>(
                 "select test_number from public.test2 where test_name = 'enq_test';"
             );
 
@@ -40,13 +40,13 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 123;
 
-            await this.DbConnection.ExecuteNonQuery($@"
+            await this.Connection.ExecuteNonQuery($@"
                 INSERT into public.test2 
                 (test_name, test_date, test_number) values
                 ('enq_test', now(), {number});
             ");
 
-            int result = await this.DbConnection.ExecuteScalar<int>(
+            int result = await this.Connection.ExecuteScalar<int>(
                 "select test_number from public.test2 where test_name = 'enq_test';"
             );
 
@@ -58,13 +58,13 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 123;
 
-            await this.DbConnection.ExecuteNonQuery(@"
+            await this.Connection.ExecuteNonQuery(@"
                 INSERT into public.test2 
                 (test_name, test_date, test_number) values
                 ('enq_test', now(), :n);
-            ", this.DbConnection.CreateParameter("n", number));
+            ", this.Connection.CreateParameter("n", number));
 
-            int result = await this.DbConnection.ExecuteScalar<int>(
+            int result = await this.Connection.ExecuteScalar<int>(
                 "select test_number from public.test2 where test_name = 'enq_test';"
             );
 
@@ -75,8 +75,8 @@ namespace Newsgirl.Shared.PostgresTests
         public async Task ExecuteScalar1()
         {
             int number = 123;
-            var parameters = new[] {this.DbConnection.CreateParameter("n", number)};
-            int result = await this.DbConnection.ExecuteScalar<int>("select :n;", parameters, CancellationToken.None);
+            var parameters = new[] {this.Connection.CreateParameter("n", number)};
+            int result = await this.Connection.ExecuteScalar<int>("select :n;", parameters, CancellationToken.None);
             Assert.Equal(number, result);
         }
 
@@ -84,7 +84,7 @@ namespace Newsgirl.Shared.PostgresTests
         public async Task ExecuteScalar2()
         {
             int number = 123;
-            int result = await this.DbConnection.ExecuteScalar<int>($"select {number};");
+            int result = await this.Connection.ExecuteScalar<int>($"select {number};");
             Assert.Equal(number, result);
         }
 
@@ -92,7 +92,7 @@ namespace Newsgirl.Shared.PostgresTests
         public async Task ExecuteScalar3()
         {
             int number = 123;
-            int result = await this.DbConnection.ExecuteScalar<int>("select :n;", this.DbConnection.CreateParameter("n", number));
+            int result = await this.Connection.ExecuteScalar<int>("select :n;", this.Connection.CreateParameter("n", number));
             Assert.Equal(number, result);
         }
 
@@ -103,10 +103,10 @@ namespace Newsgirl.Shared.PostgresTests
 
             var parameters = new[]
             {
-                this.DbConnection.CreateParameter("n", number),
+                this.Connection.CreateParameter("n", number),
             };
 
-            var result = await this.DbConnection.Query<Test2Model>(
+            var result = await this.Connection.Query<Test2Model>(
                 "select test_id, test_name, test_number from test2 where test_number = :n;",
                 parameters,
                 CancellationToken.None
@@ -120,7 +120,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 3;
 
-            var result = await this.DbConnection.Query<Test2Model>(
+            var result = await this.Connection.Query<Test2Model>(
                 $"select test_id, test_name, test_number from test2 where test_number = {number};"
             );
 
@@ -132,9 +132,9 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 3;
 
-            var result = await this.DbConnection.Query<Test2Model>(
+            var result = await this.Connection.Query<Test2Model>(
                 "select test_id, test_name, test_number from test2 where test_number = :n;",
-                this.DbConnection.CreateParameter("n", number)
+                this.Connection.CreateParameter("n", number)
             );
 
             Snapshot.Match(result);
@@ -147,10 +147,10 @@ namespace Newsgirl.Shared.PostgresTests
 
             var parameters = new[]
             {
-                this.DbConnection.CreateParameter("n", number),
+                this.Connection.CreateParameter("n", number),
             };
 
-            var result = await this.DbConnection.QueryOne<Test2Model>(
+            var result = await this.Connection.QueryOne<Test2Model>(
                 "select test_id, test_name, test_number from test2 where test_number = :n;",
                 parameters,
                 CancellationToken.None
@@ -164,7 +164,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 3;
 
-            var result = await this.DbConnection.QueryOne<Test2Model>(
+            var result = await this.Connection.QueryOne<Test2Model>(
                 $"select test_id, test_name, test_number from test2 where test_number = {number};"
             );
 
@@ -176,9 +176,9 @@ namespace Newsgirl.Shared.PostgresTests
         {
             int number = 3;
 
-            var result = await this.DbConnection.QueryOne<Test2Model>(
+            var result = await this.Connection.QueryOne<Test2Model>(
                 "select test_id, test_name, test_number from test2 where test_number = :n;",
-                this.DbConnection.CreateParameter("n", number)
+                this.Connection.CreateParameter("n", number)
             );
 
             Snapshot.Match(result);
@@ -198,7 +198,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.ExecuteNonQuery(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+                await this.Connection.ExecuteNonQuery(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
 
@@ -207,7 +207,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.ExecuteNonQuery("select 1;", null, CancellationToken.None);
+                await this.Connection.ExecuteNonQuery("select 1;", null, CancellationToken.None);
             });
         }
 
@@ -225,7 +225,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.ExecuteScalar<int>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+                await this.Connection.ExecuteScalar<int>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
 
@@ -234,7 +234,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1;", null, CancellationToken.None);
+                await this.Connection.ExecuteScalar<int>("select 1;", null, CancellationToken.None);
             });
         }
 
@@ -245,7 +245,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1 where false;");
+                await this.Connection.ExecuteScalar<int>("select 1 where false;");
             }
             catch (Exception err)
             {
@@ -262,7 +262,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.ExecuteScalar<int>("create table test22 (); select * from test22;");
+                await this.Connection.ExecuteScalar<int>("create table test22 (); select * from test22;");
             }
             catch (Exception err)
             {
@@ -279,7 +279,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1,1;");
+                await this.Connection.ExecuteScalar<int>("select 1,1;");
             }
             catch (Exception err)
             {
@@ -296,7 +296,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.ExecuteScalar<int>("select * from (values (1), (2)) as x;");
+                await this.Connection.ExecuteScalar<int>("select * from (values (1), (2)) as x;");
             }
             catch (Exception err)
             {
@@ -313,7 +313,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.ExecuteScalar<int>("select null;");
+                await this.Connection.ExecuteScalar<int>("select null;");
             }
             catch (Exception err)
             {
@@ -326,7 +326,7 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public async Task ExecuteScalar_can_return_null()
         {
-            string x = await this.DbConnection.ExecuteScalar<string>("select null;");
+            string x = await this.Connection.ExecuteScalar<string>("select null;");
 
             Assert.Null(x);
         }
@@ -345,7 +345,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.Query<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+                await this.Connection.Query<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
 
@@ -354,14 +354,14 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.Query<TestRow>("select 1;", null, CancellationToken.None);
+                await this.Connection.Query<TestRow>("select 1;", null, CancellationToken.None);
             });
         }
 
         [Fact]
         public async Task Query_handles_null_values()
         {
-            var rows = await this.DbConnection.Query<TestRow>("select null as col1, null as col2;");
+            var rows = await this.Connection.Query<TestRow>("select null as col1, null as col2;");
             var row = rows.First();
 
             Assert.Null(row.Col1);
@@ -382,7 +382,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.QueryOne<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
+                await this.Connection.QueryOne<TestRow>(null, Array.Empty<NpgsqlParameter>(), CancellationToken.None);
             });
         }
 
@@ -391,14 +391,14 @@ namespace Newsgirl.Shared.PostgresTests
         {
             await Snapshot.MatchError(async () =>
             {
-                await this.DbConnection.QueryOne<TestRow>("select 1;", null, CancellationToken.None);
+                await this.Connection.QueryOne<TestRow>("select 1;", null, CancellationToken.None);
             });
         }
 
         [Fact]
         public async Task QueryOne_returns_null_on_no_rows()
         {
-            var row = await this.DbConnection.QueryOne<TestRow>("select 1 where false;");
+            var row = await this.Connection.QueryOne<TestRow>("select 1 where false;");
 
             Assert.Null(row);
         }
@@ -410,7 +410,7 @@ namespace Newsgirl.Shared.PostgresTests
 
             try
             {
-                await this.DbConnection.QueryOne<TestRow>("select * from (values (1, 2), (3, 4)) as x(col1, col2);");
+                await this.Connection.QueryOne<TestRow>("select * from (values (1, 2), (3, 4)) as x(col1, col2);");
             }
             catch (Exception err)
             {
@@ -423,23 +423,23 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public void CreateParameter_with_npgsql_type()
         {
-            var parameter1 = this.DbConnection.CreateParameter("p1", 1, NpgsqlDbType.Integer);
+            var parameter1 = this.Connection.CreateParameter("p1", 1, NpgsqlDbType.Integer);
             Assert.Equal(1, (int) parameter1.Value);
-            var parameter2 = this.DbConnection.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
+            var parameter2 = this.Connection.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
             Assert.Equal(DBNull.Value, parameter2.Value);
         }
 
         [Fact]
         public void CreateParameter_boxed()
         {
-            var parameter1 = this.DbConnection.CreateParameter("p1", (object) 1);
+            var parameter1 = this.Connection.CreateParameter("p1", (object) 1);
             Assert.Equal(1, (int) parameter1.Value);
         }
 
         [Fact]
         public void CreateParameter_with_inferred_npgsql_type()
         {
-            var parameter = this.DbConnection.CreateParameter("p1", 1);
+            var parameter = this.Connection.CreateParameter("p1", 1);
             Assert.Equal(1, (int) parameter.Value);
         }
 
@@ -448,7 +448,7 @@ namespace Newsgirl.Shared.PostgresTests
         {
             Snapshot.MatchError(() =>
             {
-                this.DbConnection.CreateParameter("p1", new TestRow());
+                this.Connection.CreateParameter("p1", new TestRow());
             });
         }
     }
@@ -458,9 +458,9 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public async Task ExecuteInTransactionAndCommit_works_with_default_CT()
         {
-            await this.DbConnection.ExecuteInTransactionAndCommit(async () =>
+            await this.Connection.ExecuteInTransactionAndCommit(async () =>
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1;");
+                await this.Connection.ExecuteScalar<int>("select 1;");
             });
         }
 
@@ -473,9 +473,9 @@ namespace Newsgirl.Shared.PostgresTests
             {
                 var cts = new CancellationTokenSource();
 
-                await this.DbConnection.ExecuteInTransactionAndCommit(async () =>
+                await this.Connection.ExecuteInTransactionAndCommit(async () =>
                 {
-                    var t = this.DbConnection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    var t = this.Connection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
                     cts.CancelAfter(10);
                     await t;
                 }, cts.Token);
@@ -491,9 +491,9 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public async Task ExecuteInTransaction_works_with_default_CT()
         {
-            await this.DbConnection.ExecuteInTransaction(async tx =>
+            await this.Connection.ExecuteInTransaction(async tx =>
             {
-                await this.DbConnection.ExecuteScalar<int>("select 1;");
+                await this.Connection.ExecuteScalar<int>("select 1;");
             });
         }
 
@@ -506,9 +506,9 @@ namespace Newsgirl.Shared.PostgresTests
             {
                 var cts = new CancellationTokenSource();
 
-                await this.DbConnection.ExecuteInTransaction(async tx =>
+                await this.Connection.ExecuteInTransaction(async tx =>
                 {
-                    var t = this.DbConnection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
+                    var t = this.Connection.ExecuteNonQuery("select pg_sleep(10);", cts.Token);
                     cts.CancelAfter(10);
                     await t;
                 }, cts.Token);

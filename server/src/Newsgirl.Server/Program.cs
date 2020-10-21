@@ -22,9 +22,11 @@ namespace Newsgirl.Server
         private TaskCompletionSource<object> shutdownTriggered;
         private ManualResetEventSlim shutdownCompleted;
 
-        public string AppConfigPath { get; set; }
+        public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
         public HttpServerAppConfig AppConfig { get; set; }
+
+        public HttpServerAppConfig InjectedAppConfig { get; set; }
 
         public SystemSettingsModel SystemSettings { get; set; }
 
@@ -50,8 +52,6 @@ namespace Newsgirl.Server
             {
                 throw new ApplicationException("The application is already started.");
             }
-
-            this.AppConfigPath = EnvVariableHelper.Get("APP_CONFIG_PATH");
 
             this.shutdownTriggered = new TaskCompletionSource<object>();
             this.shutdownCompleted = new ManualResetEventSlim();
@@ -100,7 +100,10 @@ namespace Newsgirl.Server
 
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
-            this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            }
 
             var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
             var rpcEngineOptions = new RpcEngineOptions
@@ -149,7 +152,15 @@ namespace Newsgirl.Server
 
         private async Task LoadConfig()
         {
-            this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+            }
+            else
+            {
+                this.AppConfig = this.InjectedAppConfig;
+            }
+
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
@@ -184,8 +195,6 @@ namespace Newsgirl.Server
 
             try
             {
-                this.AppConfigPath = null;
-
                 this.shutdownTriggered = null;
 
                 if (this.AppConfigWatcher != null)

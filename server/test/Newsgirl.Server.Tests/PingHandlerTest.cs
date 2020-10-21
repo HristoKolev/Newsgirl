@@ -10,7 +10,7 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task Ping_returns_correct_result()
         {
-            await using (var tester = await HttpServerAppTester.Create())
+            await using (var tester = await HttpServerAppTester.Create(this.ConnectionString))
             {
                 var rcpClient = new TestRpcClient(tester.App);
 

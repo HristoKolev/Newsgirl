@@ -15,7 +15,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var log = new StructuredLogMock();
 
-            var importService = new FeedItemsImportService(this.Db, this.DbConnection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
             var feeds = Enumerable.Range(1, 10)
                 .Select(i => new FeedPoco
@@ -38,7 +38,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var log = new StructuredLogMock();
 
-            var importService = new FeedItemsImportService(this.Db, this.DbConnection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
             var feeds = Enumerable.Range(1, 10)
                 .Select(i => new FeedPoco
@@ -124,7 +124,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var log = new StructuredLogMock();
 
-            var importService = new FeedItemsImportService(this.Db, this.DbConnection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
             var feeds = Enumerable.Range(1, 10)
                 .Select(i => new FeedPoco
