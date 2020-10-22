@@ -5,7 +5,7 @@ using Xunit;
 
 [assembly: UseReporter(typeof(CustomReporter))]
 [assembly: UseApprovalSubdirectory("./snapshots")]
-[assembly: CollectionBehavior(MaxParallelThreads = 16)]
+[assembly: CollectionBehavior(MaxParallelThreads = 32)]
 
 namespace Newsgirl.Testing
 {
