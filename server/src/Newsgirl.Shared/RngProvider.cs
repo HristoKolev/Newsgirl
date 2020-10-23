@@ -9,21 +9,18 @@ namespace Newsgirl.Shared
         public string GenerateSecureString(int length);
     }
 
-    public class RngProviderImpl : RngProvider
+    public class RngProviderImpl
     {
         public string GenerateSecureString(int length)
         {
             using var rngCryptoServiceProvider = new RNGCryptoServiceProvider();
-
             var buffer = ArrayPool<byte>.Shared.Rent(length);
 
             try
             {
                 rngCryptoServiceProvider.GetBytes(buffer, 0, length);
-
-                string result = Convert.ToBase64String(buffer, 0, length);
-
-                return result;
+                string base64 = Convert.ToBase64String(buffer, 0, length);
+                return base64.Substring(0, length).Replace('+', '-').Replace('/', '_');
             }
             finally
             {

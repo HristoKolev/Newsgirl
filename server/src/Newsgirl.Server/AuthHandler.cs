@@ -9,16 +9,16 @@ namespace Newsgirl.Server
     public class AuthHandler
     {
         private readonly IDbService db;
-        private readonly DateProvider dateProvider;
+        private readonly RngProvider rngProvider;
 
-        public AuthHandler(IDbService db, DateProvider dateProvider)
+        public AuthHandler(IDbService db, RngProvider rngProvider)
         {
             this.db = db;
-            this.dateProvider = dateProvider;
+            this.rngProvider = rngProvider;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
-        public async Task<RpcResult<RegisterResponse>> Register(RegisterRequest req)
+        public async Task<RpcResult<RegisterResponse>> Register(RegisterRequest req, RequestInfo requestInfo)
         {
             req.Email = req.Email.ToLowerInvariant();
 
@@ -28,30 +28,39 @@ namespace Newsgirl.Server
             {
                 return "Username is already taken.";
             }
-            
-            var profile = new UserProfilePoco
-            {
-                EmailAddress = req.Email,
-                RegistrationDate = this.dateProvider.Now(),
-            };
 
-            await this.db.Save(profile);
-            
-            var login = new LoginPoco
+            await using (var tx = await this.db.BeginTransaction())
             {
-                Username = req.Email,
-                Verified = false,
-                UserProfileID = profile.UserProfileID,
-                Password = ,
-                VerificationCode = 
-            };
+                var profile = new UserProfilePoco
+                {
+                    EmailAddress = req.Email,
+                    RegistrationDate = requestInfo.RequestTime,
+                };
 
-            return new RegisterResponse();
+                await this.db.Save(profile);
+
+                var login = new LoginPoco
+                {
+                    Username = req.Email,
+                    Verified = false,
+                    UserProfileID = profile.UserProfileID,
+                    Password = BCryptHelper.CreatePassword(req.Password),
+                    VerificationCode = this.rngProvider.GenerateSecureString(100),
+                    // add registration date
+                };
+
+                await this.db.Save(login);
+
+                await tx.CommitAsync();
+
+                return new RegisterResponse();
+            }
         }
     }
 
     public class RegisterRequest
     {
+        [Email]
         [Required(ErrorMessage = "The email field is required.")]
         public string Email { get; set; }
 

@@ -3,9 +3,11 @@ namespace Newsgirl.Shared
     using System;
     using System.Buffers;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Toolkit.HighPerformance.Buffers;
@@ -134,6 +136,16 @@ namespace Newsgirl.Shared
         public static string SomethingOrNull(this string x)
         {
             return string.IsNullOrWhiteSpace(x) ? null : x;
+        }
+    }
+
+    public static class RegexExtensions
+    {
+        public static bool IsOnlyMatch(this Regex regex, string input)
+        {
+            var matches = regex.Matches(input);
+
+            return matches.Count == 1 && matches.First().Value == input;
         }
     }
 

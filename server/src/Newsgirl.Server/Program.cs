@@ -109,6 +109,14 @@ namespace Newsgirl.Server
             var rpcEngineOptions = new RpcEngineOptions
             {
                 PotentialHandlerTypes = potentialRpcTypes,
+                MiddlewareTypes = new[]
+                {
+                    typeof(RequestInfoMiddleware),
+                },
+                ParameterTypeWhitelist = new[]
+                {
+                    typeof(RequestInfo),
+                },
             };
             this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
