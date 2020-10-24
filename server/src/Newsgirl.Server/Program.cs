@@ -46,6 +46,8 @@ namespace Newsgirl.Server
 
         public bool Started { get; set; }
 
+        public Module InjectedIoCModule { get; set; }
+
         public async Task Start(params string[] listenOnAddresses)
         {
             if (this.Started)
@@ -123,6 +125,12 @@ namespace Newsgirl.Server
             var builder = new ContainerBuilder();
             builder.RegisterModule<SharedModule>();
             builder.RegisterModule(new HttpServerIoCModule(this));
+
+            if (this.InjectedIoCModule != null)
+            {
+                builder.RegisterModule(this.InjectedIoCModule);
+            }
+
             this.IoC = builder.Build();
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();

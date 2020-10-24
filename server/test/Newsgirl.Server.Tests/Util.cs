@@ -33,7 +33,10 @@ namespace Newsgirl.Server.Tests
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
-            this.tester = await HttpServerAppTester.Create(this.ConnectionString);
+
+            var mockModule = new FunctionAutofacModule(this.ConfigureMocks);
+
+            this.tester = await HttpServerAppTester.Create(this.ConnectionString, mockModule);
             this.RpcClient = new TestRpcClient(this.tester.App);
         }
 
@@ -42,17 +45,39 @@ namespace Newsgirl.Server.Tests
             await this.tester.DisposeAsync();
             await base.DisposeAsync();
         }
+
+        protected virtual void ConfigureMocks(ContainerBuilder builder) { }
+    }
+
+    public class FunctionAutofacModule : Module
+    {
+        private readonly Action<ContainerBuilder> func;
+
+        public FunctionAutofacModule(Action<ContainerBuilder> func)
+        {
+            this.func = func;
+        }
+
+        protected override void Load(ContainerBuilder builder)
+        {
+            this.func(builder);
+
+            base.Load(builder);
+        }
     }
 
     public class HttpServerAppTester : IAsyncDisposable
     {
         public HttpServerApp App { get; private set; }
 
-        public static async Task<HttpServerAppTester> Create(string connectionString)
+        public static async Task<HttpServerAppTester> Create(string connectionString, Module mockModule)
         {
             var tester = new HttpServerAppTester();
 
-            var app = new HttpServerApp();
+            var app = new HttpServerApp
+            {
+                InjectedIoCModule = mockModule,
+            };
 
             TaskScheduler.UnobservedTaskException += tester.OnUnobservedTaskException;
             AppDomain.CurrentDomain.UnhandledException += tester.OnUnhandledException;

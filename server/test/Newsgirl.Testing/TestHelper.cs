@@ -627,4 +627,25 @@ namespace Newsgirl.Testing
             }
         }
     }
+
+    public class RngProviderMock : RngProvider
+    {
+        public string GenerateSecureString(int length)
+        {
+            return new string('X', length);
+        }
+    }
+
+    public class PasswordServiceMock : PasswordService
+    {
+        public string CreatePassword(string password)
+        {
+            return $"$${password}$$";
+        }
+
+        public bool CheckPassword(string password, string hash)
+        {
+            return hash.Remove(hash.Length - 2, 2).Remove(0, 2) == password;
+        }
+    }
 }

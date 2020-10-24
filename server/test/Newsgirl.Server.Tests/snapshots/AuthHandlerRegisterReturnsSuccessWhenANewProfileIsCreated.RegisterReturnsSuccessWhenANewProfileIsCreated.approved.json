@@ -1,0 +1,22 @@
+﻿{
+  "login": {
+    "LoginID": 1,
+    "Password": "$$test123$$",
+    "RegistrationDate": "2000-01-01T00:00:00",
+    "Username": "test@abc.de",
+    "UserProfileID": 1,
+    "VerificationCode": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "Verified": false
+  },
+  "profile": {
+    "EmailAddress": "test@abc.de",
+    "RegistrationDate": "2000-01-01T00:00:00",
+    "UserProfileID": 1
+  },
+  "result": {
+    "ErrorMessages": null,
+    "Headers": {},
+    "IsOk": true,
+    "Payload": {}
+  }
+}

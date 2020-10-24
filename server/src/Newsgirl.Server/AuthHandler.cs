@@ -10,11 +10,13 @@ namespace Newsgirl.Server
     {
         private readonly IDbService db;
         private readonly RngProvider rngProvider;
+        private readonly PasswordService passwordService;
 
-        public AuthHandler(IDbService db, RngProvider rngProvider)
+        public AuthHandler(IDbService db, RngProvider rngProvider, PasswordService passwordService)
         {
             this.db = db;
             this.rngProvider = rngProvider;
+            this.passwordService = passwordService;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
@@ -44,7 +46,7 @@ namespace Newsgirl.Server
                 {
                     UserProfileID = profile.UserProfileID,
                     Username = req.Email,
-                    Password = BCryptHelper.CreatePassword(req.Password),
+                    Password = this.passwordService.CreatePassword(req.Password),
                     RegistrationDate = requestInfo.RequestTime,
                     Verified = false,
                     VerificationCode = this.rngProvider.GenerateSecureString(100),

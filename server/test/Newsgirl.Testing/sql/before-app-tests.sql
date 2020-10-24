@@ -97,9 +97,9 @@ INSERT into public.system_settings(setting_name, setting_value) VALUES
 
 -- Insert Data
 
-INSERT INTO public.user_profiles (email_address, registration_date)
-values ('test@test.com', '2020-06-06');
+-- INSERT INTO public.user_profiles (email_address, registration_date)
+-- values ('test@test.com', '2020-06-06');
 
-insert into public.user_logins(registration_date, username, password, verification_code, verified, user_profile_id)
-VALUES ('2020-06-06', 'test@test.com', '$2a$12$qmfDrN5aAa99f7rlaqmLQ.K4zHWnrDq1ciKxgkuwccZE5bPlfMjvC', null, true, 1);
+-- insert into public.user_logins(registration_date, username, password, verification_code, verified, user_profile_id)
+-- VALUES ('2020-06-06', 'test@test.com', '$2a$12$qmfDrN5aAa99f7rlaqmLQ.K4zHWnrDq1ciKxgkuwccZE5bPlfMjvC', null, true, 1);
 

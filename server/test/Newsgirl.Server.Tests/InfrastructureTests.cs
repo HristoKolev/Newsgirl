@@ -190,7 +190,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(Handler))
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 200; i++)
                 {
                     var uri = new Uri(tester.Server.BoundAddresses.First());
 

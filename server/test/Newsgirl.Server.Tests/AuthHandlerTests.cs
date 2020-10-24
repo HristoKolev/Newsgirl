@@ -1,6 +1,7 @@
 namespace Newsgirl.Server.Tests
 {
     using System.Threading.Tasks;
+    using Autofac;
     using LinqToDB;
     using Shared;
     using Testing;
@@ -45,6 +46,13 @@ namespace Newsgirl.Server.Tests
 
     public class AuthHandlerRegisterReturnsSuccessWhenANewProfileIsCreated : HttpServerAppTest
     {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateProviderStub);
+            builder.RegisterType<RngProviderMock>().As<RngProvider>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+        }
+
         [Fact]
         public async Task RegisterReturnsSuccessWhenANewProfileIsCreated()
         {
