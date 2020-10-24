@@ -10,6 +10,7 @@ namespace Newsgirl.Shared
             builder.RegisterType<DbTransactionServiceImpl>().As<DbTransactionService>().InstancePerLifetimeScope();
             builder.RegisterType<DateProviderImpl>().As<DateProvider>().SingleInstance();
             builder.RegisterType<RngProviderImpl>().As<RngProvider>().SingleInstance();
+            builder.RegisterType<RequestInfoMiddleware>();
 
             base.Load(builder);
         }

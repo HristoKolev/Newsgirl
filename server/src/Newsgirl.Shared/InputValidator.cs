@@ -58,7 +58,7 @@ namespace Newsgirl.Shared
     {
         public EmailAttribute()
         {
-            ErrorMessage = "Please, enter a valid email address.";
+            this.ErrorMessage = "Please, enter a valid email address.";
         }
 
         private readonly Regex emailRegex =

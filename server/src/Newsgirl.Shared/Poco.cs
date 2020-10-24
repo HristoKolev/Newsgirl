@@ -365,181 +365,6 @@ namespace Newsgirl.Shared
     }
 
     /// <summary>
-    /// <para>Table name: 'logins'.</para>
-    /// <para>Table schema: 'public'.</para>
-    /// </summary>
-    [Table(Schema = "public", Name = "logins")]
-    public class LoginPoco : IPoco<LoginPoco>
-    {
-        /// <summary>
-        /// <para>Column name: 'login_id'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>Primary key of table: 'logins'.</para>
-        /// <para>Primary key constraint name: 'logins_pkey'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        [PrimaryKey]
-        [Identity]
-        [Column(Name = "login_id", DataType = DataType.Int32)]
-        public int LoginID { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'password'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'text'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
-        /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.Text'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "password", DataType = DataType.Text)]
-        public string Password { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'user_profile_id'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>Foreign key column [public.logins.user_profile_id -> public.user_profiles.user_profile_id].</para>
-        /// <para>Foreign key constraint name: 'logins_user_profile_id_fkey'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "user_profile_id", DataType = DataType.Int32)]
-        public int UserProfileID { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'username'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'text'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
-        /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.Text'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "username", DataType = DataType.Text)]
-        public string Username { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'verification_code'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'text'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
-        /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.Text'.</para>
-        /// </summary>
-        [Nullable]
-        [Column(Name = "verification_code", DataType = DataType.Text)]
-        public string VerificationCode { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'verified'.</para>
-        /// <para>Table name: 'logins'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'boolean'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
-        /// <para>CLR type: 'bool'.</para>
-        /// <para>linq2db data type: 'DataType.Boolean'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "verified", DataType = DataType.Boolean)]
-        public bool Verified { get; set; }
-
-        public NpgsqlParameter[] GetNonPkParameters()
-        {
-            // ReSharper disable once RedundantExplicitArrayCreation
-            return new NpgsqlParameter[]
-            {
-                new NpgsqlParameter<string>
-                {
-                    TypedValue = this.Password,
-                    NpgsqlDbType = NpgsqlDbType.Text,
-                },
-                new NpgsqlParameter<int>
-                {
-                    TypedValue = this.UserProfileID,
-                    NpgsqlDbType = NpgsqlDbType.Integer,
-                },
-                new NpgsqlParameter<string>
-                {
-                    TypedValue = this.Username,
-                    NpgsqlDbType = NpgsqlDbType.Text,
-                },
-                new NpgsqlParameter<string>
-                {
-                    TypedValue = this.VerificationCode,
-                    NpgsqlDbType = NpgsqlDbType.Text,
-                },
-                new NpgsqlParameter<bool>
-                {
-                    TypedValue = this.Verified,
-                    NpgsqlDbType = NpgsqlDbType.Boolean,
-                },
-            };
-        }
-
-        public int GetPrimaryKey()
-        {
-            return this.LoginID;
-        }
-
-        public void SetPrimaryKey(int value)
-        {
-            this.LoginID = value;
-        }
-
-        public bool IsNew()
-        {
-            return this.LoginID == default;
-        }
-
-        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
-        {
-            if (this.Password == null)
-            {
-                await importer.WriteNullAsync();
-            }
-            else
-            {
-                await importer.WriteAsync(this.Password, NpgsqlDbType.Text);
-            }
-
-            await importer.WriteAsync(this.UserProfileID, NpgsqlDbType.Integer);
-
-            if (this.Username == null)
-            {
-                await importer.WriteNullAsync();
-            }
-            else
-            {
-                await importer.WriteAsync(this.Username, NpgsqlDbType.Text);
-            }
-
-            if (this.VerificationCode == null)
-            {
-                await importer.WriteNullAsync();
-            }
-            else
-            {
-                await importer.WriteAsync(this.VerificationCode, NpgsqlDbType.Text);
-            }
-
-            await importer.WriteAsync(this.Verified, NpgsqlDbType.Boolean);
-        }
-
-        public static TableMetadataModel Metadata => DbMetadata.LoginPocoMetadata;
-    }
-
-    /// <summary>
     /// <para>Table name: 'system_settings'.</para>
     /// <para>Table schema: 'public'.</para>
     /// </summary>
@@ -643,6 +468,201 @@ namespace Newsgirl.Shared
         }
 
         public static TableMetadataModel Metadata => DbMetadata.SystemSettingPocoMetadata;
+    }
+
+    /// <summary>
+    /// <para>Table name: 'user_logins'.</para>
+    /// <para>Table schema: 'public'.</para>
+    /// </summary>
+    [Table(Schema = "public", Name = "user_logins")]
+    public class UserLoginPoco : IPoco<UserLoginPoco>
+    {
+        /// <summary>
+        /// <para>Column name: 'login_id'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>Primary key of table: 'user_logins'.</para>
+        /// <para>Primary key constraint name: 'user_logins_pkey'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'integer'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
+        /// <para>CLR type: 'int'.</para>
+        /// <para>linq2db data type: 'DataType.Int32'.</para>
+        /// </summary>
+        [PrimaryKey]
+        [Identity]
+        [Column(Name = "login_id", DataType = DataType.Int32)]
+        public int LoginID { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'password'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "password", DataType = DataType.Text)]
+        public string Password { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'registration_date'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>CLR type: 'DateTime'.</para>
+        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "registration_date", DataType = DataType.DateTime2)]
+        public DateTime RegistrationDate { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'user_profile_id'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>Foreign key column [public.user_logins.user_profile_id -> public.user_profiles.user_profile_id].</para>
+        /// <para>Foreign key constraint name: 'user_logins_user_profile_id_fkey'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'integer'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
+        /// <para>CLR type: 'int'.</para>
+        /// <para>linq2db data type: 'DataType.Int32'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "user_profile_id", DataType = DataType.Int32)]
+        public int UserProfileID { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'username'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "username", DataType = DataType.Text)]
+        public string Username { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'verification_code'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [Nullable]
+        [Column(Name = "verification_code", DataType = DataType.Text)]
+        public string VerificationCode { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'verified'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'boolean'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
+        /// <para>CLR type: 'bool'.</para>
+        /// <para>linq2db data type: 'DataType.Boolean'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "verified", DataType = DataType.Boolean)]
+        public bool Verified { get; set; }
+
+        public NpgsqlParameter[] GetNonPkParameters()
+        {
+            // ReSharper disable once RedundantExplicitArrayCreation
+            return new NpgsqlParameter[]
+            {
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.Password,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<DateTime>
+                {
+                    TypedValue = this.RegistrationDate,
+                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                },
+                new NpgsqlParameter<int>
+                {
+                    TypedValue = this.UserProfileID,
+                    NpgsqlDbType = NpgsqlDbType.Integer,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.Username,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.VerificationCode,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
+                new NpgsqlParameter<bool>
+                {
+                    TypedValue = this.Verified,
+                    NpgsqlDbType = NpgsqlDbType.Boolean,
+                },
+            };
+        }
+
+        public int GetPrimaryKey()
+        {
+            return this.LoginID;
+        }
+
+        public void SetPrimaryKey(int value)
+        {
+            this.LoginID = value;
+        }
+
+        public bool IsNew()
+        {
+            return this.LoginID == default;
+        }
+
+        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
+        {
+            if (this.Password == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.Password, NpgsqlDbType.Text);
+            }
+
+            await importer.WriteAsync(this.RegistrationDate, NpgsqlDbType.Timestamp);
+
+            await importer.WriteAsync(this.UserProfileID, NpgsqlDbType.Integer);
+
+            if (this.Username == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.Username, NpgsqlDbType.Text);
+            }
+
+            if (this.VerificationCode == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.VerificationCode, NpgsqlDbType.Text);
+            }
+
+            await importer.WriteAsync(this.Verified, NpgsqlDbType.Boolean);
+        }
+
+        public static TableMetadataModel Metadata => DbMetadata.UserLoginPocoMetadata;
     }
 
     /// <summary>
@@ -767,7 +787,7 @@ namespace Newsgirl.Shared
         /// <summary>
         /// <para>Column name: 'login_id'.</para>
         /// <para>Table name: 'user_sessions'.</para>
-        /// <para>Foreign key column [public.user_sessions.login_id -> public.logins.login_id].</para>
+        /// <para>Foreign key column [public.user_sessions.login_id -> public.user_logins.login_id].</para>
         /// <para>Foreign key constraint name: 'user_sessions_login_id_fkey'.</para>
         /// <para>This column is not nullable.</para>
         /// <para>PostgreSQL data type: 'integer'.</para>
@@ -873,14 +893,14 @@ namespace Newsgirl.Shared
         public IQueryable<FeedPoco> Feeds => this.LinqProvider.GetTable<FeedPoco>();
 
         /// <summary>
-        /// <para>Database table 'logins'.</para>
-        /// </summary>
-        public IQueryable<LoginPoco> Logins => this.LinqProvider.GetTable<LoginPoco>();
-
-        /// <summary>
         /// <para>Database table 'system_settings'.</para>
         /// </summary>
         public IQueryable<SystemSettingPoco> SystemSettings => this.LinqProvider.GetTable<SystemSettingPoco>();
+
+        /// <summary>
+        /// <para>Database table 'user_logins'.</para>
+        /// </summary>
+        public IQueryable<UserLoginPoco> UserLogins => this.LinqProvider.GetTable<UserLoginPoco>();
 
         /// <summary>
         /// <para>Database table 'user_profiles'.</para>
@@ -910,9 +930,9 @@ namespace Newsgirl.Shared
 
         internal static readonly TableMetadataModel FeedPocoMetadata;
 
-        internal static readonly TableMetadataModel LoginPocoMetadata;
-
         internal static readonly TableMetadataModel SystemSettingPocoMetadata;
+
+        internal static readonly TableMetadataModel UserLoginPocoMetadata;
 
         internal static readonly TableMetadataModel UserProfilePocoMetadata;
 
@@ -1398,243 +1418,6 @@ namespace Newsgirl.Shared
                 },
             };
 
-            LoginPocoMetadata = new TableMetadataModel
-            {
-                ClassName = "Login",
-                PluralClassName = "Logins",
-                TableName = "logins",
-                TableSchema = "public",
-                PrimaryKeyColumnName = "login_id",
-                PrimaryKeyPropertyName = "LoginID",
-                Columns = new List<ColumnMetadataModel>
-                {
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "login_id",
-                        DbDataType = "integer",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("True"),
-                        PrimaryKeyConstraintName = "logins_pkey" == string.Empty ? null : "logins_pkey",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "LoginID",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "int",
-                            ClrType = typeof(int),
-                            ClrNonNullableTypeName = "int",
-                            ClrNonNullableType = typeof(int),
-                            ClrNullableTypeName = "int?",
-                            ClrNullableType = typeof(int?),
-                            DbDataType = "integer",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Int32",
-                            Linq2DbDataType = DataType.Int32,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
-                            NpgsqlDbType = NpgsqlDbType.Integer,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "password",
-                        DbDataType = "text",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "Password",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "string",
-                            ClrType = typeof(string),
-                            ClrNonNullableTypeName = "string",
-                            ClrNonNullableType = typeof(string),
-                            ClrNullableTypeName = "string",
-                            ClrNullableType = typeof(string),
-                            DbDataType = "text",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("False"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.Text",
-                            Linq2DbDataType = DataType.Text,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
-                            NpgsqlDbType = NpgsqlDbType.Text,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "user_profile_id",
-                        DbDataType = "integer",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("True"),
-                        ForeignKeyConstraintName = "logins_user_profile_id_fkey" == string.Empty ? null : "logins_user_profile_id_fkey",
-                        ForeignKeyReferenceColumnName = "user_profile_id" == string.Empty ? null : "user_profile_id",
-                        ForeignKeyReferenceSchemaName = "public" == string.Empty ? null : "public",
-                        ForeignKeyReferenceTableName = "user_profiles" == string.Empty ? null : "user_profiles",
-                        PropertyName = "UserProfileID",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "int",
-                            ClrType = typeof(int),
-                            ClrNonNullableTypeName = "int",
-                            ClrNonNullableType = typeof(int),
-                            ClrNullableTypeName = "int?",
-                            ClrNullableType = typeof(int?),
-                            DbDataType = "integer",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Int32",
-                            Linq2DbDataType = DataType.Int32,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
-                            NpgsqlDbType = NpgsqlDbType.Integer,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "username",
-                        DbDataType = "text",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "Username",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "string",
-                            ClrType = typeof(string),
-                            ClrNonNullableTypeName = "string",
-                            ClrNonNullableType = typeof(string),
-                            ClrNullableTypeName = "string",
-                            ClrNullableType = typeof(string),
-                            DbDataType = "text",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("False"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.Text",
-                            Linq2DbDataType = DataType.Text,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
-                            NpgsqlDbType = NpgsqlDbType.Text,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "verification_code",
-                        DbDataType = "text",
-                        IsNullable = bool.Parse("True"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "VerificationCode",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "string",
-                            ClrType = typeof(string),
-                            ClrNonNullableTypeName = "string",
-                            ClrNonNullableType = typeof(string),
-                            ClrNullableTypeName = "string",
-                            ClrNullableType = typeof(string),
-                            DbDataType = "text",
-                            IsNullable = bool.Parse("True"),
-                            IsClrValueType = bool.Parse("False"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.Text",
-                            Linq2DbDataType = DataType.Text,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
-                            NpgsqlDbType = NpgsqlDbType.Text,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "verified",
-                        DbDataType = "boolean",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "Verified",
-                        TableName = "logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "bool",
-                            ClrType = typeof(bool),
-                            ClrNonNullableTypeName = "bool",
-                            ClrNonNullableType = typeof(bool),
-                            ClrNullableTypeName = "bool?",
-                            ClrNullableType = typeof(bool?),
-                            DbDataType = "boolean",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Boolean",
-                            Linq2DbDataType = DataType.Boolean,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Boolean",
-                            NpgsqlDbType = NpgsqlDbType.Boolean,
-                        },
-                    },
-                },
-                NonPkColumnNames = new[]
-                {
-                    "password",
-                    "user_profile_id",
-                    "username",
-                    "verification_code",
-                    "verified",
-                },
-            };
-
             SystemSettingPocoMetadata = new TableMetadataModel
             {
                 ClassName = "SystemSetting",
@@ -1758,6 +1541,280 @@ namespace Newsgirl.Shared
                 {
                     "setting_name",
                     "setting_value",
+                },
+            };
+
+            UserLoginPocoMetadata = new TableMetadataModel
+            {
+                ClassName = "UserLogin",
+                PluralClassName = "UserLogins",
+                TableName = "user_logins",
+                TableSchema = "public",
+                PrimaryKeyColumnName = "login_id",
+                PrimaryKeyPropertyName = "LoginID",
+                Columns = new List<ColumnMetadataModel>
+                {
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "login_id",
+                        DbDataType = "integer",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("True"),
+                        PrimaryKeyConstraintName = "user_logins_pkey" == string.Empty ? null : "user_logins_pkey",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "LoginID",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "int",
+                            ClrType = typeof(int),
+                            ClrNonNullableTypeName = "int",
+                            ClrNonNullableType = typeof(int),
+                            ClrNullableTypeName = "int?",
+                            ClrNullableType = typeof(int?),
+                            DbDataType = "integer",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int32",
+                            Linq2DbDataType = DataType.Int32,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                            NpgsqlDbType = NpgsqlDbType.Integer,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "password",
+                        DbDataType = "text",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "Password",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "string",
+                            ClrType = typeof(string),
+                            ClrNonNullableTypeName = "string",
+                            ClrNonNullableType = typeof(string),
+                            ClrNullableTypeName = "string",
+                            ClrNullableType = typeof(string),
+                            DbDataType = "text",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("False"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Text",
+                            Linq2DbDataType = DataType.Text,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
+                            NpgsqlDbType = NpgsqlDbType.Text,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "registration_date",
+                        DbDataType = "timestamp without time zone",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "RegistrationDate",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "DateTime",
+                            ClrType = typeof(DateTime),
+                            ClrNonNullableTypeName = "DateTime",
+                            ClrNonNullableType = typeof(DateTime),
+                            ClrNullableTypeName = "DateTime?",
+                            ClrNullableType = typeof(DateTime?),
+                            DbDataType = "timestamp without time zone",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.DateTime2",
+                            Linq2DbDataType = DataType.DateTime2,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
+                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "user_profile_id",
+                        DbDataType = "integer",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("True"),
+                        ForeignKeyConstraintName = "user_logins_user_profile_id_fkey" == string.Empty ? null : "user_logins_user_profile_id_fkey",
+                        ForeignKeyReferenceColumnName = "user_profile_id" == string.Empty ? null : "user_profile_id",
+                        ForeignKeyReferenceSchemaName = "public" == string.Empty ? null : "public",
+                        ForeignKeyReferenceTableName = "user_profiles" == string.Empty ? null : "user_profiles",
+                        PropertyName = "UserProfileID",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "int",
+                            ClrType = typeof(int),
+                            ClrNonNullableTypeName = "int",
+                            ClrNonNullableType = typeof(int),
+                            ClrNullableTypeName = "int?",
+                            ClrNullableType = typeof(int?),
+                            DbDataType = "integer",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int32",
+                            Linq2DbDataType = DataType.Int32,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                            NpgsqlDbType = NpgsqlDbType.Integer,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "username",
+                        DbDataType = "text",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "Username",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "string",
+                            ClrType = typeof(string),
+                            ClrNonNullableTypeName = "string",
+                            ClrNonNullableType = typeof(string),
+                            ClrNullableTypeName = "string",
+                            ClrNullableType = typeof(string),
+                            DbDataType = "text",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("False"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Text",
+                            Linq2DbDataType = DataType.Text,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
+                            NpgsqlDbType = NpgsqlDbType.Text,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "verification_code",
+                        DbDataType = "text",
+                        IsNullable = bool.Parse("True"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "VerificationCode",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "string",
+                            ClrType = typeof(string),
+                            ClrNonNullableTypeName = "string",
+                            ClrNonNullableType = typeof(string),
+                            ClrNullableTypeName = "string",
+                            ClrNullableType = typeof(string),
+                            DbDataType = "text",
+                            IsNullable = bool.Parse("True"),
+                            IsClrValueType = bool.Parse("False"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Text",
+                            Linq2DbDataType = DataType.Text,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
+                            NpgsqlDbType = NpgsqlDbType.Text,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "verified",
+                        DbDataType = "boolean",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "Verified",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "bool",
+                            ClrType = typeof(bool),
+                            ClrNonNullableTypeName = "bool",
+                            ClrNonNullableType = typeof(bool),
+                            ClrNullableTypeName = "bool?",
+                            ClrNullableType = typeof(bool?),
+                            DbDataType = "boolean",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Boolean",
+                            Linq2DbDataType = DataType.Boolean,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Boolean",
+                            NpgsqlDbType = NpgsqlDbType.Boolean,
+                        },
+                    },
+                },
+                NonPkColumnNames = new[]
+                {
+                    "password",
+                    "registration_date",
+                    "user_profile_id",
+                    "username",
+                    "verification_code",
+                    "verified",
                 },
             };
 
@@ -1946,7 +2003,7 @@ namespace Newsgirl.Shared
                         ForeignKeyConstraintName = "user_sessions_login_id_fkey" == string.Empty ? null : "user_sessions_login_id_fkey",
                         ForeignKeyReferenceColumnName = "login_id" == string.Empty ? null : "login_id",
                         ForeignKeyReferenceSchemaName = "public" == string.Empty ? null : "public",
-                        ForeignKeyReferenceTableName = "logins" == string.Empty ? null : "logins",
+                        ForeignKeyReferenceTableName = "user_logins" == string.Empty ? null : "user_logins",
                         PropertyName = "LoginID",
                         TableName = "user_sessions",
                         TableSchema = "public",

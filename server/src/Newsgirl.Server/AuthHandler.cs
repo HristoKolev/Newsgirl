@@ -20,11 +20,12 @@ namespace Newsgirl.Server
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
         public async Task<RpcResult<RegisterResponse>> Register(RegisterRequest req, RequestInfo requestInfo)
         {
-            req.Email = req.Email.ToLowerInvariant();
+            req.Email = req.Email.Trim().ToLower();
+            req.Password = req.Password.Trim();
 
-            var existingLogin = await this.db.Poco.Logins.FirstOrDefaultAsync(x => x.Username == req.Email);
+            var existingLogin = await this.db.Poco.UserLogins.FirstOrDefaultAsync(x => x.Username == req.Email);
 
-            if (existingLogin == null)
+            if (existingLogin != null)
             {
                 return "Username is already taken.";
             }
@@ -39,14 +40,14 @@ namespace Newsgirl.Server
 
                 await this.db.Save(profile);
 
-                var login = new LoginPoco
+                var login = new UserLoginPoco
                 {
-                    Username = req.Email,
-                    Verified = false,
                     UserProfileID = profile.UserProfileID,
+                    Username = req.Email,
                     Password = BCryptHelper.CreatePassword(req.Password),
+                    RegistrationDate = requestInfo.RequestTime,
+                    Verified = false,
                     VerificationCode = this.rngProvider.GenerateSecureString(100),
-                    // add registration date
                 };
 
                 await this.db.Save(login);
