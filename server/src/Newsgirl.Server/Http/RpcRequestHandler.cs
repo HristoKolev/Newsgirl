@@ -30,6 +30,7 @@ namespace Newsgirl.Server.Http
         private readonly InstanceProvider instanceProvider;
         private readonly AsyncLocals asyncLocals;
         private readonly ErrorReporter errorReporter;
+        private readonly DateTimeService dateTimeService;
         private readonly ILog log;
 
         private HttpContext httpContext;
@@ -44,19 +45,21 @@ namespace Newsgirl.Server.Http
             InstanceProvider instanceProvider,
             AsyncLocals asyncLocals,
             ErrorReporter errorReporter,
+            DateTimeService dateTimeService,
             ILog log)
         {
             this.rpcEngine = rpcEngine;
             this.instanceProvider = instanceProvider;
             this.asyncLocals = asyncLocals;
             this.errorReporter = errorReporter;
+            this.dateTimeService = dateTimeService;
             this.log = log;
         }
 
         public async Task HandleRequest(HttpContext ctx, string rpcRequestType)
         {
             this.httpContext = ctx;
-            this.requestStart = DateTime.UtcNow;
+            this.requestStart = this.dateTimeService.CurrentTime();
             this.requestType = rpcRequestType;
 
             // Diagnostic data in case of an error.
@@ -71,7 +74,8 @@ namespace Newsgirl.Server.Http
                         this.rpcResponse,
                         this.rpcResponse == null || !this.rpcResponse.IsOk,
                         this.requestStart,
-                        this.requestType
+                        this.requestType,
+                        this.dateTimeService
                     )
                 },
             };
@@ -96,7 +100,8 @@ namespace Newsgirl.Server.Http
                     null,
                     this.rpcResponse == null || !this.rpcResponse.IsOk,
                     this.requestStart,
-                    this.requestType
+                    this.requestType,
+                    this.dateTimeService
                 ));
 
                 this.log.HttpDetailed(() => new HttpLogData(
@@ -107,7 +112,8 @@ namespace Newsgirl.Server.Http
                     this.rpcResponse,
                     this.rpcResponse == null || !this.rpcResponse.IsOk,
                     this.requestStart,
-                    this.requestType
+                    this.requestType,
+                    this.dateTimeService
                 ));
 
                 this.requestBody?.Dispose();
@@ -304,9 +310,10 @@ namespace Newsgirl.Server.Http
             RpcResult<object> rpcResponse,
             bool requestFailed,
             DateTime requestStart,
-            string requestType)
+            string requestType,
+            DateTimeService dateTimeService)
         {
-            var now = System.DateTime.UtcNow;
+            var now = dateTimeService.CurrentTime();
 
             this.DateTime = now.ToString("O");
             this.RequestID = context.Connection.Id;

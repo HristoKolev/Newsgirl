@@ -478,6 +478,19 @@ namespace Newsgirl.Shared
     public class UserLoginPoco : IPoco<UserLoginPoco>
     {
         /// <summary>
+        /// <para>Column name: 'enabled'.</para>
+        /// <para>Table name: 'user_logins'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'boolean'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Boolean'.</para>
+        /// <para>CLR type: 'bool'.</para>
+        /// <para>linq2db data type: 'DataType.Boolean'.</para>
+        /// </summary>
+        [NotNull]
+        [Column(Name = "enabled", DataType = DataType.Boolean)]
+        public bool Enabled { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'login_id'.</para>
         /// <para>Table name: 'user_logins'.</para>
         /// <para>Primary key of table: 'user_logins'.</para>
@@ -494,7 +507,7 @@ namespace Newsgirl.Shared
         public int LoginID { get; set; }
 
         /// <summary>
-        /// <para>Column name: 'password'.</para>
+        /// <para>Column name: 'password_hash'.</para>
         /// <para>Table name: 'user_logins'.</para>
         /// <para>This column is not nullable.</para>
         /// <para>PostgreSQL data type: 'text'.</para>
@@ -503,21 +516,8 @@ namespace Newsgirl.Shared
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
         [NotNull]
-        [Column(Name = "password", DataType = DataType.Text)]
-        public string Password { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'registration_date'.</para>
-        /// <para>Table name: 'user_logins'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
-        /// <para>CLR type: 'DateTime'.</para>
-        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "registration_date", DataType = DataType.DateTime2)]
-        public DateTime RegistrationDate { get; set; }
+        [Column(Name = "password_hash", DataType = DataType.Text)]
+        public string PasswordHash { get; set; }
 
         /// <summary>
         /// <para>Column name: 'user_profile_id'.</para>
@@ -578,15 +578,15 @@ namespace Newsgirl.Shared
             // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
+                new NpgsqlParameter<bool>
+                {
+                    TypedValue = this.Enabled,
+                    NpgsqlDbType = NpgsqlDbType.Boolean,
+                },
                 new NpgsqlParameter<string>
                 {
-                    TypedValue = this.Password,
+                    TypedValue = this.PasswordHash,
                     NpgsqlDbType = NpgsqlDbType.Text,
-                },
-                new NpgsqlParameter<DateTime>
-                {
-                    TypedValue = this.RegistrationDate,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
                 },
                 new NpgsqlParameter<int>
                 {
@@ -628,16 +628,16 @@ namespace Newsgirl.Shared
 
         public async Task WriteToImporter(NpgsqlBinaryImporter importer)
         {
-            if (this.Password == null)
+            await importer.WriteAsync(this.Enabled, NpgsqlDbType.Boolean);
+
+            if (this.PasswordHash == null)
             {
                 await importer.WriteNullAsync();
             }
             else
             {
-                await importer.WriteAsync(this.Password, NpgsqlDbType.Text);
+                await importer.WriteAsync(this.PasswordHash, NpgsqlDbType.Text);
             }
-
-            await importer.WriteAsync(this.RegistrationDate, NpgsqlDbType.Timestamp);
 
             await importer.WriteAsync(this.UserProfileID, NpgsqlDbType.Integer);
 
@@ -772,6 +772,19 @@ namespace Newsgirl.Shared
     public class UserSessionPoco : IPoco<UserSessionPoco>
     {
         /// <summary>
+        /// <para>Column name: 'expiration_date'.</para>
+        /// <para>Table name: 'user_sessions'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>CLR type: 'DateTime?'.</para>
+        /// <para>linq2db data type: 'DataType.DateTime2'.</para>
+        /// </summary>
+        [Nullable]
+        [Column(Name = "expiration_date", DataType = DataType.DateTime2)]
+        public DateTime? ExpirationDate { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'login_date'.</para>
         /// <para>Table name: 'user_sessions'.</para>
         /// <para>This column is not nullable.</para>
@@ -815,26 +828,14 @@ namespace Newsgirl.Shared
         [Column(Name = "session_id", DataType = DataType.Int32)]
         public int SessionID { get; set; }
 
-        /// <summary>
-        /// <para>Column name: 'user_profile_id'.</para>
-        /// <para>Table name: 'user_sessions'.</para>
-        /// <para>Foreign key column [public.user_sessions.user_profile_id -> public.user_profiles.user_profile_id].</para>
-        /// <para>Foreign key constraint name: 'user_sessions_user_profile_id_fkey'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        [NotNull]
-        [Column(Name = "user_profile_id", DataType = DataType.Int32)]
-        public int UserProfileID { get; set; }
-
         public NpgsqlParameter[] GetNonPkParameters()
         {
             // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
+                this.ExpirationDate.HasValue
+                    ? new NpgsqlParameter<DateTime> {TypedValue = this.ExpirationDate.Value, NpgsqlDbType = NpgsqlDbType.Timestamp}
+                    : new NpgsqlParameter {Value = DBNull.Value},
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.LoginDate,
@@ -843,11 +844,6 @@ namespace Newsgirl.Shared
                 new NpgsqlParameter<int>
                 {
                     TypedValue = this.LoginID,
-                    NpgsqlDbType = NpgsqlDbType.Integer,
-                },
-                new NpgsqlParameter<int>
-                {
-                    TypedValue = this.UserProfileID,
                     NpgsqlDbType = NpgsqlDbType.Integer,
                 },
             };
@@ -870,11 +866,18 @@ namespace Newsgirl.Shared
 
         public async Task WriteToImporter(NpgsqlBinaryImporter importer)
         {
+            if (!this.ExpirationDate.HasValue)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.ExpirationDate.Value, NpgsqlDbType.Timestamp);
+            }
+
             await importer.WriteAsync(this.LoginDate, NpgsqlDbType.Timestamp);
 
             await importer.WriteAsync(this.LoginID, NpgsqlDbType.Integer);
-
-            await importer.WriteAsync(this.UserProfileID, NpgsqlDbType.Integer);
         }
 
         public static TableMetadataModel Metadata => DbMetadata.UserSessionPocoMetadata;
@@ -1558,6 +1561,42 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "enabled",
+                        DbDataType = "boolean",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "Enabled",
+                        TableName = "user_logins",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "bool",
+                            ClrType = typeof(bool),
+                            ClrNonNullableTypeName = "bool",
+                            ClrNonNullableType = typeof(bool),
+                            ClrNullableTypeName = "bool?",
+                            ClrNullableType = typeof(bool?),
+                            DbDataType = "boolean",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Boolean",
+                            Linq2DbDataType = DataType.Boolean,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Boolean",
+                            NpgsqlDbType = NpgsqlDbType.Boolean,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "login_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -1594,7 +1633,7 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "password",
+                        ColumnName = "password_hash",
                         DbDataType = "text",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
@@ -1604,7 +1643,7 @@ namespace Newsgirl.Shared
                         ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
                         ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "Password",
+                        PropertyName = "PasswordHash",
                         TableName = "user_logins",
                         TableSchema = "public",
                         PropertyType = new SimpleType
@@ -1624,42 +1663,6 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Text,
                             NpgsqlDbTypeName = "NpgsqlDbType.Text",
                             NpgsqlDbType = NpgsqlDbType.Text,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "registration_date",
-                        DbDataType = "timestamp without time zone",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "RegistrationDate",
-                        TableName = "user_logins",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "DateTime",
-                            ClrType = typeof(DateTime),
-                            ClrNonNullableTypeName = "DateTime",
-                            ClrNonNullableType = typeof(DateTime),
-                            ClrNullableTypeName = "DateTime?",
-                            ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.DateTime2",
-                            Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
                         },
                     },
                     new ColumnMetadataModel
@@ -1809,8 +1812,8 @@ namespace Newsgirl.Shared
                 },
                 NonPkColumnNames = new[]
                 {
-                    "password",
-                    "registration_date",
+                    "enabled",
+                    "password_hash",
                     "user_profile_id",
                     "username",
                     "verification_code",
@@ -1958,6 +1961,42 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "expiration_date",
+                        DbDataType = "timestamp without time zone",
+                        IsNullable = bool.Parse("True"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "ExpirationDate",
+                        TableName = "user_sessions",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "DateTime?",
+                            ClrType = typeof(DateTime?),
+                            ClrNonNullableTypeName = "DateTime",
+                            ClrNonNullableType = typeof(DateTime),
+                            ClrNullableTypeName = "DateTime?",
+                            ClrNullableType = typeof(DateTime?),
+                            DbDataType = "timestamp without time zone",
+                            IsNullable = bool.Parse("True"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("True"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.DateTime2",
+                            Linq2DbDataType = DataType.DateTime2,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
+                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "login_date",
                         DbDataType = "timestamp without time zone",
                         IsNullable = bool.Parse("False"),
@@ -2062,48 +2101,12 @@ namespace Newsgirl.Shared
                             NpgsqlDbType = NpgsqlDbType.Integer,
                         },
                     },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "user_profile_id",
-                        DbDataType = "integer",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("True"),
-                        ForeignKeyConstraintName = "user_sessions_user_profile_id_fkey" == string.Empty ? null : "user_sessions_user_profile_id_fkey",
-                        ForeignKeyReferenceColumnName = "user_profile_id" == string.Empty ? null : "user_profile_id",
-                        ForeignKeyReferenceSchemaName = "public" == string.Empty ? null : "public",
-                        ForeignKeyReferenceTableName = "user_profiles" == string.Empty ? null : "user_profiles",
-                        PropertyName = "UserProfileID",
-                        TableName = "user_sessions",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "int",
-                            ClrType = typeof(int),
-                            ClrNonNullableTypeName = "int",
-                            ClrNonNullableType = typeof(int),
-                            ClrNullableTypeName = "int?",
-                            ClrNullableType = typeof(int?),
-                            DbDataType = "integer",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Int32",
-                            Linq2DbDataType = DataType.Int32,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
-                            NpgsqlDbType = NpgsqlDbType.Integer,
-                        },
-                    },
                 },
                 NonPkColumnNames = new[]
                 {
+                    "expiration_date",
                     "login_date",
                     "login_id",
-                    "user_profile_id",
                 },
             };
 

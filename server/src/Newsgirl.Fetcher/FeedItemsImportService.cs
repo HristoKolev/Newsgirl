@@ -30,12 +30,7 @@ namespace Newsgirl.Fetcher
 
         public async Task ImportItems(FeedUpdateModel[] updates)
         {
-            const string IMPORT_HEADER =
-                "COPY public.feed_items " +
-                "(feed_id, feed_item_added_time, feed_item_description, feed_item_hash, feed_item_title, feed_item_url) " +
-                "FROM STDIN (FORMAT BINARY)";
-
-            await using (var importer = this.dbConnection.BeginBinaryImport(IMPORT_HEADER))
+            await using (var importer = this.dbConnection.BeginBinaryImport(this.db.GetCopyHeader<FeedItemPoco>()))
             {
                 for (int i = 0; i < updates.Length; i++)
                 {
@@ -52,31 +47,7 @@ namespace Newsgirl.Fetcher
 
                         await importer.StartRowAsync();
 
-                        await importer.WriteAsync(newItem.FeedID, NpgsqlDbType.Integer);
-
-                        await importer.WriteAsync(newItem.FeedItemAddedTime, NpgsqlDbType.Timestamp);
-
-                        if (newItem.FeedItemDescription == null)
-                        {
-                            await importer.WriteNullAsync();
-                        }
-                        else
-                        {
-                            await importer.WriteAsync(newItem.FeedItemDescription, NpgsqlDbType.Text);
-                        }
-
-                        await importer.WriteAsync(newItem.FeedItemHash, NpgsqlDbType.Bigint);
-
-                        await importer.WriteAsync(newItem.FeedItemTitle, NpgsqlDbType.Text);
-
-                        if (newItem.FeedItemUrl == null)
-                        {
-                            await importer.WriteNullAsync();
-                        }
-                        else
-                        {
-                            await importer.WriteAsync(newItem.FeedItemUrl, NpgsqlDbType.Text);
-                        }
+                        await newItem.WriteToImporter(importer);
                     }
                 }
 

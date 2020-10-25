@@ -63,12 +63,13 @@ namespace Newsgirl.Testing
 
         public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        public static DateProvider DateProviderStub
+        public static DateTimeService DateTimeServiceStub
         {
             get
             {
-                var dateStub = Substitute.For<DateProvider>();
-                dateStub.Now().Returns(Date2000);
+                var dateStub = Substitute.For<DateTimeService>();
+                dateStub.EventTime().Returns(Date2000);
+                dateStub.CurrentTime().Returns(Date2000);
                 return dateStub;
             }
         }
@@ -628,7 +629,7 @@ namespace Newsgirl.Testing
         }
     }
 
-    public class RngProviderMock : RngProvider
+    public class RngServiceMock : RngService
     {
         public string GenerateSecureString(int length)
         {
@@ -638,14 +639,14 @@ namespace Newsgirl.Testing
 
     public class PasswordServiceMock : PasswordService
     {
-        public string CreatePassword(string password)
+        public string HashPassword(string password)
         {
             return $"$${password}$$";
         }
 
-        public bool CheckPassword(string password, string hash)
+        public bool VerifyPassword(string password, string passwordHash)
         {
-            return hash.Remove(hash.Length - 2, 2).Remove(0, 2) == password;
+            return passwordHash.Remove(passwordHash.Length - 2, 2).Remove(0, 2) == password;
         }
     }
 }

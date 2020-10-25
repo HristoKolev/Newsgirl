@@ -145,13 +145,16 @@
 
         public async Task RunCycle()
         {
-            var fetcherInstance = this.IoC.Resolve<FeedFetcher>();
+            await using (var subContainer = this.IoC.BeginLifetimeScope())
+            {
+                var fetcherInstance = subContainer.Resolve<FeedFetcher>();
 
-            await fetcherInstance.FetchFeeds();
+                await fetcherInstance.FetchFeeds();
 
-            this.Log.General(() => new LogData($"Waiting {this.SystemSettings.FetcherCyclePause} seconds..."));
+                this.Log.General(() => $"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
 
-            await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
+                await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
+            }
         }
     }
 

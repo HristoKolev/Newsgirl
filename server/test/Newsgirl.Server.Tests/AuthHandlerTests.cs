@@ -25,11 +25,11 @@ namespace Newsgirl.Server.Tests
 
             var login = new UserLoginPoco
             {
-                Password = password,
+                PasswordHash = password,
                 Username = email,
                 Verified = true,
-                RegistrationDate = TestHelper.Date2000,
                 UserProfileID = profile.UserProfileID,
+                Enabled = true,
             };
 
             await this.Db.Insert(login);
@@ -48,8 +48,8 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateProviderStub);
-            builder.RegisterType<RngProviderMock>().As<RngProvider>();
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
         }
 

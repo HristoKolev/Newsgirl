@@ -591,12 +591,12 @@ namespace Newsgirl.Shared
         {
             return Ok(x);
         }
-        
+
         public static implicit operator RpcResult<T>(string errorMessage)
         {
             return Error<T>(errorMessage);
         }
-        
+
         public static implicit operator RpcResult<T>(string[] errorMessages)
         {
             return Error<T>(errorMessages);

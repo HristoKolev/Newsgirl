@@ -1,6 +1,6 @@
 ﻿{
   "ErrorMessages": [
-    "Username is already taken."
+    "There already is an account with that email address."
   ],
   "Headers": {},
   "IsOk": false,

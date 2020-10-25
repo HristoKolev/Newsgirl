@@ -4,12 +4,12 @@ namespace Newsgirl.Shared
     using System.Buffers;
     using System.Security.Cryptography;
 
-    public interface RngProvider
+    public interface RngService
     {
         public string GenerateSecureString(int length);
     }
 
-    public class RngProviderImpl : RngProvider
+    public class RngServiceImpl : RngService
     {
         public string GenerateSecureString(int length)
         {

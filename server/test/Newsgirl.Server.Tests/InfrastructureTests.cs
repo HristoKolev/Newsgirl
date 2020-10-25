@@ -608,7 +608,7 @@ namespace Newsgirl.Server.Tests
 
             var rpcEngine = new RpcEngine(rpcEngineOptions);
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
-            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, logMock);
+            var handler = new RpcRequestHandler(rpcEngine, instanceProvider, new AsyncLocalsImpl(), errorReporter, TestHelper.DateTimeServiceStub, logMock);
 
             Task Handler(HttpContext context)
             {

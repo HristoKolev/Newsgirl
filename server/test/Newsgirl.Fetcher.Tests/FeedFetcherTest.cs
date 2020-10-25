@@ -52,7 +52,7 @@ namespace Newsgirl.Fetcher.Tests
 
             var fetcher = new FeedFetcher(
                 TestResourceContentProvider,
-                new FeedParser(new Hasher(), TestHelper.DateProviderStub, TestHelper.LogStub),
+                new FeedParser(new Hasher(), TestHelper.DateTimeServiceStub, TestHelper.LogStub),
                 importService,
                 new SystemSettingsModel
                 {
@@ -93,7 +93,7 @@ namespace Newsgirl.Fetcher.Tests
 
             var fetcher = new FeedFetcher(
                 contentProvider,
-                new FeedParser(new Hasher(), TestHelper.DateProviderStub, log),
+                new FeedParser(new Hasher(), TestHelper.DateTimeServiceStub, log),
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,

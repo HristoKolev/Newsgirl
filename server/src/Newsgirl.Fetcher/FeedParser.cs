@@ -9,14 +9,14 @@ namespace Newsgirl.Fetcher
 
     public class FeedParser : IFeedParser
     {
-        private readonly DateProvider dateProvider;
+        private readonly DateTimeService dateTimeService;
         private readonly Hasher hasher;
         private readonly ILog log;
 
-        public FeedParser(Hasher hasher, DateProvider dateProvider, ILog log)
+        public FeedParser(Hasher hasher, DateTimeService dateTimeService, ILog log)
         {
             this.hasher = hasher;
-            this.dateProvider = dateProvider;
+            this.dateTimeService = dateTimeService;
             this.log = log;
         }
 
@@ -27,8 +27,6 @@ namespace Newsgirl.Fetcher
             var allItems = (List<FeedItem>) materializedFeed.Items;
 
             var parsedFeed = new ParsedFeed(allItems.Count);
-
-            var fetchTime = this.dateProvider.Now();
 
             using (var memoryStream = new MemoryStream(allItems.Count * 8))
             {
@@ -67,7 +65,7 @@ namespace Newsgirl.Fetcher
                         FeedItemUrl = GetItemUrl(feedItem).SomethingOrNull()?.Trim(),
                         FeedItemTitle = feedItem.Title.SomethingOrNull()?.Trim(),
                         FeedItemDescription = feedItem.Description.SomethingOrNull()?.Trim(),
-                        FeedItemAddedTime = fetchTime,
+                        FeedItemAddedTime = this.dateTimeService.EventTime(),
                         FeedItemHash = feedItemHash,
                     });
 

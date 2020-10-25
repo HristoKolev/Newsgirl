@@ -1,8 +1,8 @@
 ﻿{
   "login": {
+    "Enabled": true,
     "LoginID": 1,
-    "Password": "$$test123$$",
-    "RegistrationDate": "2000-01-01T00:00:00",
+    "PasswordHash": "$$test123$$",
     "Username": "test@abc.de",
     "UserProfileID": 1,
     "VerificationCode": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",

@@ -24,6 +24,8 @@ namespace Newsgirl.Shared.Postgres
 
         private readonly Linq2DbWrapper linqProvider;
 
+        private readonly ConcurrentDictionary<TableMetadataModel, string> copyHeaderMap = new ConcurrentDictionary<TableMetadataModel, string>();
+
         public TPocos Poco { get; }
 
         public DbService(NpgsqlConnection connection)
@@ -181,16 +183,12 @@ namespace Newsgirl.Shared.Postgres
         {
             var metadata = DbMetadataHelpers.GetMetadata<T>();
 
-            string tableSchema = metadata.TableSchema;
-            string tableName = metadata.TableName;
-            string primaryKeyName = metadata.PrimaryKeyColumnName;
-
             var parameters = new[]
             {
                 this.CreateParameter("pk", id),
             };
 
-            string sql = $"SELECT * FROM \"{tableSchema}\".\"{tableName}\" WHERE \"{primaryKeyName}\" = @pk;";
+            string sql = $"SELECT * FROM \"{metadata.TableSchema}\".\"{metadata.TableName}\" WHERE \"{metadata.PrimaryKeyColumnName}\" = @pk;";
 
             return this.connection.QueryOne<T>(sql, parameters, cancellationToken);
         }
@@ -516,44 +514,7 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         public async Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>
         {
-            var metadata = DbMetadataHelpers.GetMetadata<T>();
-            var columns = metadata.Columns;
-
-            var copyHeaderBuilder = new StringBuilder(128);
-
-            // STATEMENT HEADER
-            copyHeaderBuilder.Append("COPY \"");
-            copyHeaderBuilder.Append(metadata.TableSchema);
-            copyHeaderBuilder.Append("\".\"");
-            copyHeaderBuilder.Append(metadata.TableName);
-            copyHeaderBuilder.Append("\" (");
-
-            bool headerFirstRun = true;
-
-            for (int i = 0; i < columns.Count; i++)
-            {
-                var column = columns[i];
-
-                if (!column.IsPrimaryKey)
-                {
-                    if (headerFirstRun)
-                    {
-                        copyHeaderBuilder.Append("\"");
-                        headerFirstRun = false;
-                    }
-                    else
-                    {
-                        copyHeaderBuilder.Append(", \"");
-                    }
-
-                    copyHeaderBuilder.Append(column.ColumnName);
-                    copyHeaderBuilder.Append('"');
-                }
-            }
-
-            copyHeaderBuilder.Append(") FROM STDIN (FORMAT BINARY)");
-
-            await using (var importer = this.connection.BeginBinaryImport(copyHeaderBuilder.ToString()))
+            await using (var importer = this.connection.BeginBinaryImport(this.GetCopyHeader<T>()))
             {
                 foreach (var poco in pocos)
                 {
@@ -564,6 +525,49 @@ namespace Newsgirl.Shared.Postgres
 
                 await importer.CompleteAsync();
             }
+        }
+
+        /// <summary>
+        /// Returns a postgresql binary copy header.
+        /// </summary>
+        public string GetCopyHeader<T>() where T : IReadOnlyPoco<T>
+        {
+            return this.copyHeaderMap.GetOrAdd(DbMetadataHelpers.GetMetadata<T>(), metadata =>
+            {
+                var columnNames = metadata.NonPkColumnNames;
+
+                var builder = new StringBuilder();
+
+                builder.Append("COPY \"");
+                builder.Append(metadata.TableSchema);
+                builder.Append("\".\"");
+                builder.Append(metadata.TableName);
+                builder.Append("\" (");
+
+                bool first = true;
+
+                for (int i = 0; i < columnNames.Length; i++)
+                {
+                    var columnName = columnNames[i];
+
+                    if (first)
+                    {
+                        builder.Append("\"");
+                        first = false;
+                    }
+                    else
+                    {
+                        builder.Append(", \"");
+                    }
+
+                    builder.Append(columnName);
+                    builder.Append('"');
+                }
+
+                builder.Append(") FROM STDIN (FORMAT BINARY)");
+
+                return builder.ToString();
+            });
         }
 
         #endregion
@@ -756,6 +760,11 @@ namespace Newsgirl.Shared.Postgres
         Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>;
 
         #endregion
+
+        /// <summary>
+        /// Returns a postgresql binary copy header.
+        /// </summary>
+        string GetCopyHeader<T>() where T : IReadOnlyPoco<T>;
     }
 
     public interface ILinqProvider

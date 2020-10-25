@@ -4,9 +4,9 @@ namespace Newsgirl.Shared
 
     public interface PasswordService
     {
-        string CreatePassword(string password);
+        string HashPassword(string password);
 
-        bool CheckPassword(string password, string hash);
+        bool VerifyPassword(string password, string passwordHash);
     }
 
     public class PasswordServiceImpl : PasswordService
@@ -14,14 +14,14 @@ namespace Newsgirl.Shared
         private static readonly HashType HashType = HashType.SHA512;
         private static readonly int WorkFactor = 12;
 
-        public string CreatePassword(string password)
+        public string HashPassword(string password)
         {
             return BCrypt.EnhancedHashPassword(password, HashType, WorkFactor);
         }
 
-        public bool CheckPassword(string password, string hash)
+        public bool VerifyPassword(string password, string passwordHash)
         {
-            return BCrypt.EnhancedVerify(password, hash, HashType);
+            return BCrypt.EnhancedVerify(password, passwordHash, HashType);
         }
     }
 }

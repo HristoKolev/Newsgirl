@@ -42,7 +42,7 @@ namespace Newsgirl.Fetcher
 
         public async Task FetchFeeds()
         {
-            this.log.General(() => new LogData("Beginning fetch cycle..."));
+            this.log.General(() => "Beginning fetch cycle...");
 
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
 
@@ -93,7 +93,7 @@ namespace Newsgirl.Fetcher
                 await this.feedItemsImportService.ImportItems(updates);
             });
 
-            this.log.General(() => new LogData("Fetch cycle complete."));
+            this.log.General(() => "Fetch cycle complete.");
         }
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)

@@ -8,11 +8,10 @@ namespace Newsgirl.Shared
         {
             builder.RegisterType<SystemSettingsService>().InstancePerLifetimeScope();
             builder.RegisterType<DbTransactionServiceImpl>().As<DbTransactionService>().InstancePerLifetimeScope();
-            builder.RegisterType<DateProviderImpl>().As<DateProvider>().SingleInstance();
-            builder.RegisterType<RngProviderImpl>().As<RngProvider>().SingleInstance();
-            builder.RegisterType<PasswordServiceImpl>().As<PasswordService>().SingleInstance();
+            builder.RegisterType<DateTimeServiceImpl>().As<DateTimeService>().InstancePerLifetimeScope();
 
-            builder.RegisterType<RequestInfoMiddleware>();
+            builder.RegisterType<RngServiceImpl>().As<RngService>().SingleInstance();
+            builder.RegisterType<PasswordServiceImpl>().As<PasswordService>().SingleInstance();
 
             base.Load(builder);
         }

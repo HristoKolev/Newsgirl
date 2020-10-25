@@ -111,14 +111,6 @@ namespace Newsgirl.Server
             var rpcEngineOptions = new RpcEngineOptions
             {
                 PotentialHandlerTypes = potentialRpcTypes,
-                MiddlewareTypes = new[]
-                {
-                    typeof(RequestInfoMiddleware),
-                },
-                ParameterTypeWhitelist = new[]
-                {
-                    typeof(RequestInfo),
-                },
             };
             this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
@@ -157,9 +149,9 @@ namespace Newsgirl.Server
 
             this.Server = new CustomHttpServerImpl();
 
-            this.Server.Started += addresses => this.Log.General(() => new LogData($"HTTP server is UP on {string.Join("; ", addresses)} ..."));
-            this.Server.Stopping += () => this.Log.General(() => new LogData("HTTP server is shutting down ..."));
-            this.Server.Stopped += () => this.Log.General(() => new LogData("HTTP server is down ..."));
+            this.Server.Started += addresses => this.Log.General(() => $"HTTP server is UP on {string.Join("; ", addresses)} ...");
+            this.Server.Stopping += () => this.Log.General(() => "HTTP server is shutting down ...");
+            this.Server.Stopped += () => this.Log.General(() => "HTTP server is down ...");
 
             await this.Server.Start(RequestDelegate, listenOnAddresses);
 
@@ -192,7 +184,7 @@ namespace Newsgirl.Server
         {
             try
             {
-                this.Log.General(() => new LogData("Reloading config..."));
+                this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
                 await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
             }
@@ -356,6 +348,7 @@ namespace Newsgirl.Server
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
+            builder.RegisterType<AuthService>().InstancePerLifetimeScope();
 
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();

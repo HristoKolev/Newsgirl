@@ -62,10 +62,10 @@ create table public.user_profiles (
 create table public.user_logins (
     login_id serial,
 
-    registration_date timestamp(0)    not null,
+    enabled boolean not null,
 
     username text not null,
-    password text not null,
+    password_hash text not null,
 
     verification_code text,
     verified bool not null,
@@ -76,14 +76,14 @@ create table public.user_logins (
 );
 
 create table public.user_sessions (
-  session_id serial,
+    session_id serial,
 
-  user_profile_id int not null references user_profiles,
-  login_id int not null references user_logins,
+    login_date timestamp(0) not null,
+    expiration_date timestamp(0),
 
-  login_date timestamp(0) not null,
+    login_id int not null references user_logins,
 
-  primary key (session_id)
+    primary key (session_id)
 );
 
 --SPLIT_HERE
@@ -94,12 +94,3 @@ INSERT into public.system_settings(setting_name, setting_value) VALUES
   ('HttpClientRequestTimeout', '120'),
   ('ParallelFeedFetching', 'true')
 ;
-
--- Insert Data
-
--- INSERT INTO public.user_profiles (email_address, registration_date)
--- values ('test@test.com', '2020-06-06');
-
--- insert into public.user_logins(registration_date, username, password, verification_code, verified, user_profile_id)
--- VALUES ('2020-06-06', 'test@test.com', '$2a$12$qmfDrN5aAa99f7rlaqmLQ.K4zHWnrDq1ciKxgkuwccZE5bPlfMjvC', null, true, 1);
-
