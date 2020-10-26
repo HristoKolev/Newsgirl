@@ -22,6 +22,7 @@ namespace @Model.Namespace
     @:/// <para>Table schema: '@table.TableSchema'.</para>
     @:/// </summary>
     @:[Table(Schema = "@table.TableSchema", Name = "@table.TableName")]
+    @:[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     @:public class @(table.ClassName)Poco : @(table.IsView ? $"IReadOnlyPoco<{table.ClassName}Poco>" : $"IPoco<{table.ClassName}Poco>")
     @:{
     @foreach(var column in table.Columns)

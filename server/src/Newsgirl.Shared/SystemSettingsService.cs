@@ -36,7 +36,16 @@ namespace Newsgirl.Shared
                         $"No system_settings entry found for property '{propertyInfo.Name}' of type '{modelType.Name}').");
                 }
 
-                var value = Convert.ChangeType(entry.SettingValue, propertyInfo.PropertyType);
+                object value;
+
+                if (propertyInfo.PropertyType == typeof(byte[]))
+                {
+                    value = Convert.FromBase64String(entry.SettingValue);
+                }
+                else
+                {
+                    value = Convert.ChangeType(entry.SettingValue, propertyInfo.PropertyType);
+                }
 
                 propertyInfo.SetValue(instance, value);
             }
@@ -66,5 +75,10 @@ namespace Newsgirl.Shared
         public int FetcherCyclePause { get; set; }
 
         public bool ParallelFeedFetching { get; set; }
+
+        /// <summary>
+        /// The pfx certificate that is used to create JWT tokens.
+        /// </summary>
+        public byte[] SessionCertificate { get; set; }
     }
 }

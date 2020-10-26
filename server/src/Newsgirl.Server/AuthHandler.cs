@@ -35,10 +35,9 @@ namespace Newsgirl.Server
 
             await using (var tx = await this.db.BeginTransaction())
             {
-                await this.authService.CreateProfile(req.Email, req.Password);
+                var session = await this.authService.CreateProfile(req.Email, req.Password);
 
                 await tx.CommitAsync();
-
                 return new RegisterResponse();
             }
         }
@@ -64,15 +63,13 @@ namespace Newsgirl.Server
             login.PasswordHash = null;
             login.VerificationCode = null;
 
-            UserSession session;
-
             await using (var tx = await this.db.BeginTransaction())
             {
-                session = await this.authService.CreateSession(login, req.RememberMe);
-                await tx.CommitAsync();
-            }
+                var session = await this.authService.CreateSession(login, req.RememberMe);
 
-            return new LoginResponse();
+                await tx.CommitAsync();
+                return new LoginResponse();
+            }
         }
     }
 
@@ -117,7 +114,7 @@ namespace Newsgirl.Server
             };
         }
 
-        public async Task CreateProfile(string email, string password)
+        public async Task<UserSession> CreateProfile(string email, string password)
         {
             var profile = new UserProfilePoco
             {
@@ -138,6 +135,22 @@ namespace Newsgirl.Server
             };
 
             await this.db.Save(login);
+
+            var session = new UserSessionPoco
+            {
+                LoginDate = this.dateTimeService.EventTime(),
+                LoginID = login.LoginID,
+                ExpirationDate = this.dateTimeService.EventTime().AddHours(3),
+            };
+
+            await this.db.Save(session);
+
+            return new UserSession
+            {
+                Login = login,
+                Profile = profile,
+                Session = session,
+            };
         }
     }
 

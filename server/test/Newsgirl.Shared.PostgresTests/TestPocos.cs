@@ -18,6 +18,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "test1")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class Test1Poco : IPoco<Test1Poco>
     {
         /// <summary>
@@ -592,6 +593,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "test2")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class Test2Poco : IPoco<Test2Poco>
     {
         /// <summary>
@@ -711,6 +713,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "v_generate_series")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class VGenerateSeriesPoco : IReadOnlyPoco<VGenerateSeriesPoco>
     {
         /// <summary>
@@ -734,6 +737,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "view1")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class View1Poco : IReadOnlyPoco<View1Poco>
     {
         /// <summary>

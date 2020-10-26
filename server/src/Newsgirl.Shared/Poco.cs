@@ -18,6 +18,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "feed_items")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class FeedItemPoco : IPoco<FeedItemPoco>
     {
         /// <summary>
@@ -213,6 +214,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "feeds")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class FeedPoco : IPoco<FeedPoco>
     {
         /// <summary>
@@ -369,6 +371,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "system_settings")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class SystemSettingPoco : IPoco<SystemSettingPoco>
     {
         /// <summary>
@@ -475,6 +478,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_logins")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class UserLoginPoco : IPoco<UserLoginPoco>
     {
         /// <summary>
@@ -670,6 +674,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_profiles")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class UserProfilePoco : IPoco<UserProfilePoco>
     {
         /// <summary>
@@ -769,6 +774,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_sessions")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class UserSessionPoco : IPoco<UserSessionPoco>
     {
         /// <summary>
