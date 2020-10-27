@@ -7,6 +7,7 @@ namespace @Model.Namespace
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
@@ -22,7 +23,7 @@ namespace @Model.Namespace
     @:/// <para>Table schema: '@table.TableSchema'.</para>
     @:/// </summary>
     @:[Table(Schema = "@table.TableSchema", Name = "@table.TableName")]
-    @:[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    @:[ExcludeFromCodeCoverage]
     @:public class @(table.ClassName)Poco : @(table.IsView ? $"IReadOnlyPoco<{table.ClassName}Poco>" : $"IPoco<{table.ClassName}Poco>")
     @:{
     @foreach(var column in table.Columns)
@@ -55,7 +56,7 @@ namespace @Model.Namespace
 }
 else
 {
-        @:@(column.PropertyType.IsNullable ? "[Nullable]" : "[NotNull]")
+        @:@(column.PropertyType.IsNullable ? "[Nullable]" : "[LinqToDB.Mapping.NotNull]")
 }        
         @:[Column(Name = "@column.ColumnName", DataType = @column.PropertyType.Linq2DbDataTypeName)]
         @:public @column.PropertyType.ClrTypeName @column.PropertyName { get; set; }

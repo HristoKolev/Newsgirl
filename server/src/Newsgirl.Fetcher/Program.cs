@@ -46,6 +46,7 @@
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
                         this.ErrorReporter,
+                        this.IoC.Resolve<DateTimeService>(),
                         this.AppConfig.Logging.Elasticsearch,
                         this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
                     )

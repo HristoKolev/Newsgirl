@@ -36,9 +36,15 @@ namespace Newsgirl.Shared.Logging
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
+        private readonly DateTimeService dateTimeService;
 
-        public ElasticsearchEventDestination(ErrorReporter errorReporter, ElasticsearchConfig config, string indexName) : base(errorReporter)
+        public ElasticsearchEventDestination(
+            ErrorReporter errorReporter,
+            DateTimeService dateTimeService,
+            ElasticsearchConfig config,
+            string indexName) : base(errorReporter)
         {
+            this.dateTimeService = dateTimeService;
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
@@ -51,6 +57,7 @@ namespace Newsgirl.Shared.Logging
             {
                 for (int i = 0; i < data.Count; i++)
                 {
+                    data[i].Fields.Add("log_date", this.dateTimeService.CurrentTime().ToString("O"));
                     array[i] = data[i].Fields;
                 }
 

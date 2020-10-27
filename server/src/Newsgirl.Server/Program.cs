@@ -4,11 +4,13 @@ namespace Newsgirl.Server
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
     using Http;
     using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.ObjectPool;
     using Newtonsoft.Json;
     using Shared;
     using Shared.Logging;
@@ -29,6 +31,8 @@ namespace Newsgirl.Server
         public HttpServerAppConfig InjectedAppConfig { get; set; }
 
         public SystemSettingsModel SystemSettings { get; set; }
+
+        public SystemPools SystemPools { get; set; }
 
         public StructuredLogger Log { get; set; }
 
@@ -62,6 +66,29 @@ namespace Newsgirl.Server
 
             await this.LoadConfig();
 
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            }
+
+            var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
+            var rpcEngineOptions = new RpcEngineOptions
+            {
+                PotentialHandlerTypes = potentialRpcTypes,
+            };
+            this.RpcEngine = new RpcEngine(rpcEngineOptions);
+
+            var builder = new ContainerBuilder();
+            builder.RegisterModule<SharedModule>();
+            builder.RegisterModule(new HttpServerIoCModule(this));
+
+            if (this.InjectedIoCModule != null)
+            {
+                builder.RegisterModule(this.InjectedIoCModule);
+            }
+
+            this.IoC = builder.Build();
+
             var loggerBuilder = new StructuredLoggerBuilder();
 
             loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
@@ -70,6 +97,7 @@ namespace Newsgirl.Server
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
                         this.ErrorReporter,
+                        this.IoC.Resolve<DateTimeService>(),
                         this.AppConfig.Logging.Elasticsearch,
                         this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
                     )
@@ -102,31 +130,9 @@ namespace Newsgirl.Server
 
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
 
-            if (this.InjectedAppConfig == null)
-            {
-                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
-            }
-
-            var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
-            var rpcEngineOptions = new RpcEngineOptions
-            {
-                PotentialHandlerTypes = potentialRpcTypes,
-            };
-            this.RpcEngine = new RpcEngine(rpcEngineOptions);
-
-            var builder = new ContainerBuilder();
-            builder.RegisterModule<SharedModule>();
-            builder.RegisterModule(new HttpServerIoCModule(this));
-
-            if (this.InjectedIoCModule != null)
-            {
-                builder.RegisterModule(this.InjectedIoCModule);
-            }
-
-            this.IoC = builder.Build();
-
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+            this.SystemPools = new SystemPoolsImpl(this.SystemSettings);
 
             async Task RequestDelegate(HttpContext context)
             {
@@ -228,6 +234,7 @@ namespace Newsgirl.Server
 
                 this.AppConfig = null;
                 this.SystemSettings = null;
+                this.SystemPools = null;
 
                 if (this.Log != null)
                 {
@@ -326,6 +333,25 @@ namespace Newsgirl.Server
         public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
     }
 
+    public interface SystemPools
+    {
+        ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
+    }
+
+    public class SystemPoolsImpl : SystemPools
+    {
+        public SystemPoolsImpl(SystemSettingsModel systemSettings)
+        {
+            var factory = new FunctionFactoryObjectPolicy<X509Certificate2>(
+                () => new X509Certificate2(systemSettings.SessionCertificate)
+            );
+
+            this.JwtSigningCertificates = new DefaultObjectPool<X509Certificate2>(factory, 128);
+        }
+
+        public ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
+    }
+
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;
@@ -344,11 +370,13 @@ namespace Newsgirl.Server
 
             builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
+            builder.Register((c, p) => this.app.SystemPools).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
             builder.RegisterType<AuthService>().InstancePerLifetimeScope();
+            builder.RegisterType<JwtServiceImpl>().As<JwtService>();
 
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();

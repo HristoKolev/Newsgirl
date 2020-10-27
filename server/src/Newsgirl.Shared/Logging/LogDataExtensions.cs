@@ -27,7 +27,6 @@ namespace Newsgirl.Shared.Logging
         public LogData(string message)
         {
             this.Fields.Add("message", message);
-            this.Fields.Add("log_date", DateTime.UtcNow.ToString("O"));
         }
 
         /// <summary>

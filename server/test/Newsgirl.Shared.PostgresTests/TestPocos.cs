@@ -5,6 +5,7 @@ namespace Newsgirl.Shared.PostgresTests
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
@@ -18,7 +19,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "test1")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class Test1Poco : IPoco<Test1Poco>
     {
         /// <summary>
@@ -43,7 +44,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'long'.</para>
         /// <para>linq2db data type: 'DataType.Int64'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_bigint2", DataType = DataType.Int64)]
         public long TestBigint2 { get; set; }
 
@@ -56,7 +57,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'bool'.</para>
         /// <para>linq2db data type: 'DataType.Boolean'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_boolean1", DataType = DataType.Boolean)]
         public bool TestBoolean1 { get; set; }
 
@@ -95,7 +96,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.NChar'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_char2", DataType = DataType.NChar)]
         public string TestChar2 { get; set; }
 
@@ -108,7 +109,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.Date'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_date1", DataType = DataType.Date)]
         public DateTime TestDate1 { get; set; }
 
@@ -147,7 +148,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'decimal'.</para>
         /// <para>linq2db data type: 'DataType.Decimal'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_decimal2", DataType = DataType.Decimal)]
         public decimal TestDecimal2 { get; set; }
 
@@ -173,7 +174,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'double'.</para>
         /// <para>linq2db data type: 'DataType.Double'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_double2", DataType = DataType.Double)]
         public double TestDouble2 { get; set; }
 
@@ -215,7 +216,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_integer2", DataType = DataType.Int32)]
         public int TestInteger2 { get; set; }
 
@@ -228,7 +229,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.NVarChar'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_name1", DataType = DataType.NVarChar)]
         public string TestName1 { get; set; }
 
@@ -267,7 +268,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'float'.</para>
         /// <para>linq2db data type: 'DataType.Single'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_real2", DataType = DataType.Single)]
         public float TestReal2 { get; set; }
 
@@ -293,7 +294,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_text2", DataType = DataType.Text)]
         public string TestText2 { get; set; }
 
@@ -306,7 +307,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_timestamp1", DataType = DataType.DateTime2)]
         public DateTime TestTimestamp1 { get; set; }
 
@@ -593,7 +594,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "test2")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class Test2Poco : IPoco<Test2Poco>
     {
         /// <summary>
@@ -605,7 +606,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_date", DataType = DataType.DateTime2)]
         public DateTime TestDate { get; set; }
 
@@ -634,7 +635,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_name", DataType = DataType.Text)]
         public string TestName { get; set; }
 
@@ -647,7 +648,7 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "test_number", DataType = DataType.Int32)]
         public int TestNumber { get; set; }
 
@@ -713,7 +714,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "v_generate_series")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class VGenerateSeriesPoco : IReadOnlyPoco<VGenerateSeriesPoco>
     {
         /// <summary>
@@ -737,7 +738,7 @@ namespace Newsgirl.Shared.PostgresTests
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "view1")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class View1Poco : IReadOnlyPoco<View1Poco>
     {
         /// <summary>

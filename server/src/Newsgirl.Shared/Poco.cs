@@ -5,6 +5,7 @@ namespace Newsgirl.Shared
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
@@ -18,7 +19,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "feed_items")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class FeedItemPoco : IPoco<FeedItemPoco>
     {
         /// <summary>
@@ -32,7 +33,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_id", DataType = DataType.Int32)]
         public int FeedID { get; set; }
 
@@ -45,7 +46,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_item_added_time", DataType = DataType.DateTime2)]
         public DateTime FeedItemAddedTime { get; set; }
 
@@ -71,7 +72,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'long'.</para>
         /// <para>linq2db data type: 'DataType.Int64'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_item_hash", DataType = DataType.Int64)]
         public long FeedItemHash { get; set; }
 
@@ -100,7 +101,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_item_title", DataType = DataType.Text)]
         public string FeedItemTitle { get; set; }
 
@@ -214,7 +215,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "feeds")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class FeedPoco : IPoco<FeedPoco>
     {
         /// <summary>
@@ -268,7 +269,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_name", DataType = DataType.Text)]
         public string FeedName { get; set; }
 
@@ -281,7 +282,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "feed_url", DataType = DataType.Text)]
         public string FeedUrl { get; set; }
 
@@ -371,7 +372,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "system_settings")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class SystemSettingPoco : IPoco<SystemSettingPoco>
     {
         /// <summary>
@@ -399,7 +400,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "setting_name", DataType = DataType.Text)]
         public string SettingName { get; set; }
 
@@ -412,7 +413,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "setting_value", DataType = DataType.Text)]
         public string SettingValue { get; set; }
 
@@ -478,7 +479,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_logins")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class UserLoginPoco : IPoco<UserLoginPoco>
     {
         /// <summary>
@@ -490,7 +491,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'bool'.</para>
         /// <para>linq2db data type: 'DataType.Boolean'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "enabled", DataType = DataType.Boolean)]
         public bool Enabled { get; set; }
 
@@ -519,7 +520,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "password_hash", DataType = DataType.Text)]
         public string PasswordHash { get; set; }
 
@@ -534,7 +535,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "user_profile_id", DataType = DataType.Int32)]
         public int UserProfileID { get; set; }
 
@@ -547,7 +548,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "username", DataType = DataType.Text)]
         public string Username { get; set; }
 
@@ -573,7 +574,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'bool'.</para>
         /// <para>linq2db data type: 'DataType.Boolean'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "verified", DataType = DataType.Boolean)]
         public bool Verified { get; set; }
 
@@ -674,7 +675,7 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_profiles")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class UserProfilePoco : IPoco<UserProfilePoco>
     {
         /// <summary>
@@ -686,7 +687,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.Text'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "email_address", DataType = DataType.Text)]
         public string EmailAddress { get; set; }
 
@@ -699,7 +700,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "registration_date", DataType = DataType.DateTime2)]
         public DateTime RegistrationDate { get; set; }
 
@@ -774,9 +775,22 @@ namespace Newsgirl.Shared
     /// <para>Table schema: 'public'.</para>
     /// </summary>
     [Table(Schema = "public", Name = "user_sessions")]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     public class UserSessionPoco : IPoco<UserSessionPoco>
     {
+        /// <summary>
+        /// <para>Column name: 'csrf_token'.</para>
+        /// <para>Table name: 'user_sessions'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [LinqToDB.Mapping.NotNull]
+        [Column(Name = "csrf_token", DataType = DataType.Text)]
+        public string CsrfToken { get; set; }
+
         /// <summary>
         /// <para>Column name: 'expiration_date'.</para>
         /// <para>Table name: 'user_sessions'.</para>
@@ -799,7 +813,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "login_date", DataType = DataType.DateTime2)]
         public DateTime LoginDate { get; set; }
 
@@ -814,7 +828,7 @@ namespace Newsgirl.Shared
         /// <para>CLR type: 'int'.</para>
         /// <para>linq2db data type: 'DataType.Int32'.</para>
         /// </summary>
-        [NotNull]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "login_id", DataType = DataType.Int32)]
         public int LoginID { get; set; }
 
@@ -839,6 +853,11 @@ namespace Newsgirl.Shared
             // ReSharper disable once RedundantExplicitArrayCreation
             return new NpgsqlParameter[]
             {
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.CsrfToken,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
                 this.ExpirationDate.HasValue
                     ? new NpgsqlParameter<DateTime> {TypedValue = this.ExpirationDate.Value, NpgsqlDbType = NpgsqlDbType.Timestamp}
                     : new NpgsqlParameter {Value = DBNull.Value},
@@ -872,6 +891,15 @@ namespace Newsgirl.Shared
 
         public async Task WriteToImporter(NpgsqlBinaryImporter importer)
         {
+            if (this.CsrfToken == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.CsrfToken, NpgsqlDbType.Text);
+            }
+
             if (!this.ExpirationDate.HasValue)
             {
                 await importer.WriteNullAsync();
@@ -1967,6 +1995,42 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "csrf_token",
+                        DbDataType = "text",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "CsrfToken",
+                        TableName = "user_sessions",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "string",
+                            ClrType = typeof(string),
+                            ClrNonNullableTypeName = "string",
+                            ClrNonNullableType = typeof(string),
+                            ClrNullableTypeName = "string",
+                            ClrNullableType = typeof(string),
+                            DbDataType = "text",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("False"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Text",
+                            Linq2DbDataType = DataType.Text,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
+                            NpgsqlDbType = NpgsqlDbType.Text,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "expiration_date",
                         DbDataType = "timestamp without time zone",
                         IsNullable = bool.Parse("True"),
@@ -2110,6 +2174,7 @@ namespace Newsgirl.Shared
                 },
                 NonPkColumnNames = new[]
                 {
+                    "csrf_token",
                     "expiration_date",
                     "login_date",
                     "login_id",

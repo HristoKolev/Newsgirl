@@ -12,12 +12,14 @@ namespace Newsgirl.Server
         private readonly IDbService db;
         private readonly PasswordService passwordService;
         private readonly AuthService authService;
+        private readonly JwtService jwtService;
 
-        public AuthHandler(IDbService db, PasswordService passwordService, AuthService authService)
+        public AuthHandler(IDbService db, PasswordService passwordService, AuthService authService, JwtService jwtService)
         {
             this.db = db;
             this.passwordService = passwordService;
             this.authService = authService;
+            this.jwtService = jwtService;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
@@ -102,6 +104,7 @@ namespace Newsgirl.Server
                 LoginDate = this.dateTimeService.EventTime(),
                 LoginID = login.LoginID,
                 ExpirationDate = rememberMe ? (DateTime?) null : this.dateTimeService.EventTime().AddHours(3),
+                CsrfToken = this.rngService.GenerateSecureString(40),
             };
 
             await this.db.Save(session);
@@ -141,6 +144,7 @@ namespace Newsgirl.Server
                 LoginDate = this.dateTimeService.EventTime(),
                 LoginID = login.LoginID,
                 ExpirationDate = this.dateTimeService.EventTime().AddHours(3),
+                CsrfToken = this.rngService.GenerateSecureString(40),
             };
 
             await this.db.Save(session);

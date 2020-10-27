@@ -26,28 +26,28 @@ namespace Newsgirl.Shared
 
             var instance = new T();
 
-            foreach (var propertyInfo in modelType.GetProperties())
+            foreach (var prop in modelType.GetProperties())
             {
-                var entry = entries.FirstOrDefault(x => x.SettingName == propertyInfo.Name);
+                var entry = entries.FirstOrDefault(x => x.SettingName == prop.Name);
 
                 if (entry == null)
                 {
                     throw new ApplicationException(
-                        $"No system_settings entry found for property '{propertyInfo.Name}' of type '{modelType.Name}').");
+                        $"No system_settings entry found for property '{prop.Name}' of type '{modelType.Name}').");
                 }
 
                 object value;
 
-                if (propertyInfo.PropertyType == typeof(byte[]))
+                if (prop.PropertyType == typeof(byte[]))
                 {
                     value = Convert.FromBase64String(entry.SettingValue);
                 }
                 else
                 {
-                    value = Convert.ChangeType(entry.SettingValue, propertyInfo.PropertyType);
+                    value = Convert.ChangeType(entry.SettingValue, prop.PropertyType);
                 }
 
-                propertyInfo.SetValue(instance, value);
+                prop.SetValue(instance, value);
             }
 
             return instance;

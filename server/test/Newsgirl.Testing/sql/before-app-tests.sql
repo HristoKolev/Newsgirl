@@ -80,6 +80,7 @@ create table public.user_sessions (
 
     login_date timestamp(0) not null,
     expiration_date timestamp(0),
+    csrf_token text not null,
 
     login_id int not null references user_logins,
 
