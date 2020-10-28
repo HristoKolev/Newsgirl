@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpcCodeGenerator", "generat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Shared.PostgresTests", "test\Newsgirl.Shared.PostgresTests\Newsgirl.Shared.PostgresTests.csproj", "{3D10E0F8-1D73-42FB-B21B-051FB8B2C569}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CookieDough", "CookieDough\CookieDough.csproj", "{118DE81F-667C-47F3-AAAE-55D0F42D1482}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,10 @@ Global
 		{3D10E0F8-1D73-42FB-B21B-051FB8B2C569}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D10E0F8-1D73-42FB-B21B-051FB8B2C569}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D10E0F8-1D73-42FB-B21B-051FB8B2C569}.Release|Any CPU.Build.0 = Release|Any CPU
+		{118DE81F-667C-47F3-AAAE-55D0F42D1482}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{118DE81F-667C-47F3-AAAE-55D0F42D1482}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{118DE81F-667C-47F3-AAAE-55D0F42D1482}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{118DE81F-667C-47F3-AAAE-55D0F42D1482}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,5 +108,6 @@ Global
 		{CE9E794C-5982-40E7-9081-D5D8FB82A24B} = {A85B23BC-64B2-4955-B6E6-B672F0C0C516}
 		{0C64DDF1-5458-4F31-BF45-F1FFBA163A01} = {A85B23BC-64B2-4955-B6E6-B672F0C0C516}
 		{3D10E0F8-1D73-42FB-B21B-051FB8B2C569} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
+		{118DE81F-667C-47F3-AAAE-55D0F42D1482} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
 	EndGlobalSection
 EndGlobal

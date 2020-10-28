@@ -13,13 +13,15 @@ namespace Newsgirl.Server
         private readonly PasswordService passwordService;
         private readonly AuthService authService;
         private readonly JwtService jwtService;
+        private readonly DateTimeService dateTimeService;
 
-        public AuthHandler(IDbService db, PasswordService passwordService, AuthService authService, JwtService jwtService)
+        public AuthHandler(IDbService db, PasswordService passwordService, AuthService authService, JwtService jwtService, DateTimeService dateTimeService)
         {
             this.db = db;
             this.passwordService = passwordService;
             this.authService = authService;
             this.jwtService = jwtService;
+            this.dateTimeService = dateTimeService;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
@@ -37,10 +39,20 @@ namespace Newsgirl.Server
 
             await using (var tx = await this.db.BeginTransaction())
             {
-                var session = await this.authService.CreateProfile(req.Email, req.Password);
+                var (profile, login) = await this.authService.CreateProfile(req.Email, req.Password);
+
+                var session = await this.authService.CreateSession(login.LoginID, false);
 
                 await tx.CommitAsync();
-                return new RegisterResponse();
+
+                return new RpcResult<RegisterResponse>
+                {
+                    Payload = new RegisterResponse(),
+                    Headers =
+                    {
+                        {"Set-Cookie", this.FormatCookie(session)},
+                    },
+                };
             }
         }
 
@@ -62,17 +74,30 @@ namespace Newsgirl.Server
                 return "Wrong username or password.";
             }
 
-            login.PasswordHash = null;
-            login.VerificationCode = null;
+            var profile = await this.db.Poco.UserProfiles.FirstOrDefaultAsync(x => x.UserProfileID == login.UserProfileID);
 
             await using (var tx = await this.db.BeginTransaction())
             {
-                var session = await this.authService.CreateSession(login, req.RememberMe);
+                var session = await this.authService.CreateSession(login.LoginID, req.RememberMe);
 
                 await tx.CommitAsync();
                 return new LoginResponse();
             }
         }
+
+        private string FormatCookie(UserSessionPoco session)
+        {
+            string token = this.jwtService.EncodeSession(new JwtPayload {SessionID = session.SessionID});
+            DateTime expirationDate = session.ExpirationDate ?? this.dateTimeService.EventTime().AddYears(1000);
+            string cookie = $"token={token}; Expires={expirationDate}; Secure; HttpOnly";
+
+            return cookie;
+        }
+    }
+
+    public class JwtPayload
+    {
+        public int SessionID { get; set; }
     }
 
     public class AuthService
@@ -82,7 +107,11 @@ namespace Newsgirl.Server
         private readonly RngService rngService;
         private readonly DateTimeService dateTimeService;
 
-        public AuthService(IDbService db, PasswordService passwordService, RngService rngService, DateTimeService dateTimeService)
+        public AuthService(
+            IDbService db,
+            PasswordService passwordService,
+            RngService rngService,
+            DateTimeService dateTimeService)
         {
             this.db = db;
             this.passwordService = passwordService;
@@ -95,29 +124,22 @@ namespace Newsgirl.Server
             return this.db.Poco.UserLogins.FirstOrDefaultAsync(x => x.Username == username);
         }
 
-        public async Task<UserSession> CreateSession(UserLoginPoco login, bool rememberMe)
+        public async Task<UserSessionPoco> CreateSession(int loginID, bool rememberMe)
         {
-            var profile = await this.db.Poco.UserProfiles.FirstOrDefaultAsync(x => x.UserProfileID == login.UserProfileID);
-
             var session = new UserSessionPoco
             {
                 LoginDate = this.dateTimeService.EventTime(),
-                LoginID = login.LoginID,
+                LoginID = loginID,
                 ExpirationDate = rememberMe ? (DateTime?) null : this.dateTimeService.EventTime().AddHours(3),
                 CsrfToken = this.rngService.GenerateSecureString(40),
             };
 
             await this.db.Save(session);
 
-            return new UserSession
-            {
-                Login = login,
-                Profile = profile,
-                Session = session,
-            };
+            return session;
         }
 
-        public async Task<UserSession> CreateProfile(string email, string password)
+        public async Task<(UserProfilePoco, UserLoginPoco)> CreateProfile(string email, string password)
         {
             var profile = new UserProfilePoco
             {
@@ -139,32 +161,8 @@ namespace Newsgirl.Server
 
             await this.db.Save(login);
 
-            var session = new UserSessionPoco
-            {
-                LoginDate = this.dateTimeService.EventTime(),
-                LoginID = login.LoginID,
-                ExpirationDate = this.dateTimeService.EventTime().AddHours(3),
-                CsrfToken = this.rngService.GenerateSecureString(40),
-            };
-
-            await this.db.Save(session);
-
-            return new UserSession
-            {
-                Login = login,
-                Profile = profile,
-                Session = session,
-            };
+            return (profile, login);
         }
-    }
-
-    public class UserSession
-    {
-        public UserSessionPoco Session { get; set; }
-
-        public UserLoginPoco Login { get; set; }
-
-        public UserProfilePoco Profile { get; set; }
     }
 
     public class RegisterRequest
