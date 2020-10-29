@@ -166,12 +166,20 @@ namespace Newsgirl.Server.Tests
 
             var result = await this.app.RpcEngine.Execute(requestMessage, instanceProvider);
 
+            RpcResult<TResponse> convertedResult;
+
             if (result.IsOk)
             {
-                return RpcResult.Ok((TResponse) result.Payload);
+                convertedResult = RpcResult.Ok((TResponse) result.Payload);
+            }
+            else
+            {
+                convertedResult = RpcResult.Error<TResponse>(result.ErrorMessages);
             }
 
-            return RpcResult.Error<TResponse>(result.ErrorMessages);
+            convertedResult.Headers = result.Headers;
+
+            return convertedResult;
         }
     }
 

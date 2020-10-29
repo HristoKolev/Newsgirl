@@ -15,7 +15,12 @@ namespace Newsgirl.Server
         private readonly JwtService jwtService;
         private readonly DateTimeService dateTimeService;
 
-        public AuthHandler(IDbService db, PasswordService passwordService, AuthService authService, JwtService jwtService, DateTimeService dateTimeService)
+        public AuthHandler(
+            IDbService db,
+            PasswordService passwordService,
+            AuthService authService,
+            JwtService jwtService,
+            DateTimeService dateTimeService)
         {
             this.db = db;
             this.passwordService = passwordService;
@@ -43,16 +48,23 @@ namespace Newsgirl.Server
 
                 var session = await this.authService.CreateSession(login.LoginID, false);
 
-                await tx.CommitAsync();
-
-                return new RpcResult<RegisterResponse>
+                var result = new RpcResult<RegisterResponse>
                 {
-                    Payload = new RegisterResponse(),
+                    Payload = new RegisterResponse
+                    {
+                        CsrfToken = session.CsrfToken,
+                        EmailAddress = profile.EmailAddress,
+                        UserProfileID = profile.UserProfileID,
+                    },
                     Headers =
                     {
                         {"Set-Cookie", this.FormatCookie(session)},
                     },
                 };
+
+                await tx.CommitAsync();
+
+                return result;
             }
         }
 
@@ -80,16 +92,32 @@ namespace Newsgirl.Server
             {
                 var session = await this.authService.CreateSession(login.LoginID, req.RememberMe);
 
+                var result = new RpcResult<LoginResponse>
+                {
+                    Payload = new LoginResponse
+                    {
+                        CsrfToken = session.CsrfToken,
+                        EmailAddress = profile.EmailAddress,
+                        UserProfileID = profile.UserProfileID,
+                    },
+                    Headers =
+                    {
+                        {"Set-Cookie", this.FormatCookie(session)},
+                    },
+                };
+
                 await tx.CommitAsync();
-                return new LoginResponse();
+
+                return result;
             }
         }
 
         private string FormatCookie(UserSessionPoco session)
         {
-            string token = this.jwtService.EncodeSession(new JwtPayload {SessionID = session.SessionID});
+            var payload = new JwtPayload {SessionID = session.SessionID};
+            string token = this.jwtService.EncodeSession(payload);
             DateTime expirationDate = session.ExpirationDate ?? this.dateTimeService.EventTime().AddYears(1000);
-            string cookie = $"token={token}; Expires={expirationDate}; Secure; HttpOnly";
+            string cookie = $"token={token}; Expires={expirationDate:R}; Secure; HttpOnly";
 
             return cookie;
         }
@@ -176,7 +204,14 @@ namespace Newsgirl.Server
         public string Password { get; set; }
     }
 
-    public class RegisterResponse { }
+    public class RegisterResponse
+    {
+        public string CsrfToken { get; set; }
+
+        public string EmailAddress { get; set; }
+
+        public int UserProfileID { get; set; }
+    }
 
     public class LoginRequest
     {
@@ -189,5 +224,12 @@ namespace Newsgirl.Server
         public bool RememberMe { get; set; }
     }
 
-    public class LoginResponse { }
+    public class LoginResponse
+    {
+        public string CsrfToken { get; set; }
+
+        public string EmailAddress { get; set; }
+
+        public int UserProfileID { get; set; }
+    }
 }

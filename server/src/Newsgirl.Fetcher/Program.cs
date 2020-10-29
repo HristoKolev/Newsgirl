@@ -38,6 +38,16 @@
 
             await this.LoadConfig();
 
+            if (this.InjectedAppConfig == null)
+            {
+                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
+            }
+
+            var builder = new ContainerBuilder();
+            builder.RegisterModule<SharedModule>();
+            builder.RegisterModule(new FetcherIoCModule(this));
+            this.IoC = builder.Build();
+
             var loggerBuilder = new StructuredLoggerBuilder();
 
             loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
@@ -56,16 +66,6 @@
             this.Log = loggerBuilder.Build();
 
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
-
-            if (this.InjectedAppConfig == null)
-            {
-                this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
-            }
-
-            var builder = new ContainerBuilder();
-            builder.RegisterModule<SharedModule>();
-            builder.RegisterModule(new FetcherIoCModule(this));
-            this.IoC = builder.Build();
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();

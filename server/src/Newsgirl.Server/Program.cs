@@ -226,12 +226,6 @@ namespace Newsgirl.Server
 
                 this.RpcEngine = null;
 
-                if (this.IoC != null)
-                {
-                    await this.IoC.DisposeAsync();
-                    this.IoC = null;
-                }
-
                 this.AppConfig = null;
                 this.SystemSettings = null;
                 this.SystemPools = null;
@@ -240,6 +234,12 @@ namespace Newsgirl.Server
                 {
                     await this.Log.DisposeAsync();
                     this.Log = null;
+                }
+
+                if (this.IoC != null)
+                {
+                    await this.IoC.DisposeAsync();
+                    this.IoC = null;
                 }
 
                 if (this.ErrorReporter != null)

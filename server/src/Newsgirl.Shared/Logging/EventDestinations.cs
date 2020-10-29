@@ -22,7 +22,7 @@ namespace Newsgirl.Shared.Logging
             {
                 var log = data[i];
 
-                string json = JsonSerializer.Serialize(log.Fields);
+                string json = JsonSerializer.Serialize(new Dictionary<string, object>(log.Fields));
 
                 await Console.Out.WriteLineAsync(json);
             }
