@@ -7,6 +7,11 @@ namespace Newsgirl.Server
     {
         protected abstract Task<RpcResult<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request);
 
+        public Task<RpcResult<LoginResponse>> Login(LoginRequest request)
+        {
+            return this.RpcExecute<LoginRequest, LoginResponse>(request);
+        }
+
         public Task<RpcResult<PingResponse>> Ping(PingRequest request)
         {
             return this.RpcExecute<PingRequest, PingResponse>(request);

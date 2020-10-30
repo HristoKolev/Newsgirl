@@ -81,6 +81,11 @@ namespace Newsgirl.Server
                 return "Wrong username or password.";
             }
 
+            if (!login.Enabled)
+            {
+                return "Wrong username or password.";
+            }
+
             if (!this.passwordService.VerifyPassword(req.Password, login.PasswordHash))
             {
                 return "Wrong username or password.";

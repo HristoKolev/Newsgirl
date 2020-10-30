@@ -15,24 +15,8 @@ namespace Newsgirl.Server.Tests
             string email = "test@abc.de";
             string password = "test123";
 
-            var profile = new UserProfilePoco
-            {
-                EmailAddress = email,
-                RegistrationDate = TestHelper.Date2000,
-            };
-
-            await this.Db.Insert(profile);
-
-            var login = new UserLoginPoco
-            {
-                PasswordHash = password,
-                Username = email,
-                Verified = true,
-                UserProfileID = profile.UserProfileID,
-                Enabled = true,
-            };
-
-            await this.Db.Insert(login);
+            var authService = this.App.IoC.Resolve<AuthService>();
+            await authService.CreateProfile(email, password);
 
             var result = await this.RpcClient.Register(new RegisterRequest
             {
@@ -75,6 +59,117 @@ namespace Newsgirl.Server.Tests
                 profile,
                 login,
             });
+        }
+    }
+
+    public class AuthHandlerLoginReturnsAnErrorOnWrongUsername : HttpServerAppTest
+    {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+        }
+
+        [Fact]
+        public async Task LoginReturnsAnErrorOnWrongUsername()
+        {
+            string email = "test@abc.de";
+            string password = "test123";
+
+            var result = await this.RpcClient.Login(new LoginRequest
+            {
+                Username = email,
+                Password = password,
+            });
+
+            Snapshot.Match(result);
+        }
+    }
+
+    public class AuthHandlerLoginReturnsAnErrorOnWrongPassword : HttpServerAppTest
+    {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+        }
+
+        [Fact]
+        public async Task LoginReturnsAnErrorOnWrongPassword()
+        {
+            string email = "test123@abc.de";
+            string password = "test123";
+
+            var authService = this.App.IoC.Resolve<AuthService>();
+            await authService.CreateProfile(email, password);
+
+            var result = await this.RpcClient.Login(new LoginRequest
+            {
+                Username = email,
+                Password = password + "wrong",
+            });
+
+            Snapshot.Match(result);
+        }
+    }
+
+    public class AuthHandlerLoginReturnsAnErrorWhenTheLoginIsDisabled : HttpServerAppTest
+    {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+        }
+
+        [Fact]
+        public async Task LoginReturnsAnErrorWhenTheLoginIsDisabled()
+        {
+            string email = "test123@abc.de";
+            string password = "test123";
+
+            var authService = this.App.IoC.Resolve<AuthService>();
+            var (_, login) = await authService.CreateProfile(email, password);
+            login.Enabled = false;
+            await this.Db.Save(login);
+
+            var result = await this.RpcClient.Login(new LoginRequest
+            {
+                Username = email,
+                Password = password,
+            });
+
+            Snapshot.Match(result);
+        }
+    }
+
+    public class AuthHandlerLoginWorksInTheCorrectCase : HttpServerAppTest
+    {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+        }
+
+        [Fact]
+        public async Task LoginWorksInTheCorrectCase()
+        {
+            string email = "test123@abc.de";
+            string password = "test123";
+
+            var authService = this.App.IoC.Resolve<AuthService>();
+            await authService.CreateProfile(email, password);
+
+            var result = await this.RpcClient.Login(new LoginRequest
+            {
+                Username = email,
+                Password = password,
+            });
+
+            Snapshot.Match(result);
         }
     }
 }

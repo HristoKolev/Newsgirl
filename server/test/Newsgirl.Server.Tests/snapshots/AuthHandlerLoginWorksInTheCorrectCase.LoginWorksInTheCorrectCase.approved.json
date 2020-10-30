@@ -1,0 +1,12 @@
+﻿{
+  "ErrorMessages": null,
+  "Headers": {
+    "Set-Cookie": "token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJTZXNzaW9uSUQiOjF9.GsfZDO3wdFTenozIILNKIjShfH15H18ogvXLOcxPPhIThoN7rZPmy7MO2c3dbFnitOKY4tJ9y7ryrl60QBPwkBWadoF8AQNJTfmdvWg1jTFMf_Y8OnQftQPjByGIUGPkSfnOKB4634iikdLjsj_K3ZVW0rloEQSO_OcnizitRnFr7_z6BPD9RIWsLyypzc7OsInBwpFcwElyMLWH33PkbfM-00R1PucYyl-yq-d4O3sni70UD6_BQ04yBHAIswcxFlN4ZjtuBIDFBj60BlBBaI_bWCD2ozm6eKv05llJSpkjvowhXZ61DM0d3SDiwbATghhXZzgAUQ-ADW0oAecKFqWi0nBbyDSzWMOP5lSHomcTCZ1MA_jmemBxsaao9GruR2aVqh2d_qJCBd-4v-COKvC9AuoC6YTt-AX8n8l4PPtVypY3NEr3obUnfaU3DYbd79UlNEBJ2VsPG1FNQ3WGhTgYa2U6XFStiBAOblTSbxN4SyhDBWKygbGcWHpuFPOS7O_7EaC91hg39dV3TZouittJjgMG3KPmMn4vYvDbwbu0QN4iWZ9RGusIVF1zEOAd26kjadIIO75xBKKjdhsnElvSE9j2-KgOuXpnTJHNcIilvcUypE5Joik718PjmwGjg1mpm6cIS8n5dumrmtVmhOezO05uqDM1gkO9odvrfWA; Expires=Sat, 01 Jan 2000 03:00:00 GMT; Secure; HttpOnly"
+  },
+  "IsOk": true,
+  "Payload": {
+    "CsrfToken": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "EmailAddress": "test123@abc.de",
+    "UserProfileID": 1
+  }
+}
