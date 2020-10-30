@@ -120,6 +120,9 @@
             this.AppConfigWatcher?.Dispose();
             this.AppConfigWatcher = null;
 
+            await this.Log.DisposeAsync();
+            this.Log = null;
+
             if (this.IoC != null)
             {
                 await this.IoC.DisposeAsync();
@@ -128,9 +131,6 @@
 
             this.AppConfig = null;
             this.SystemSettings = null;
-
-            await this.Log.DisposeAsync();
-            this.Log = null;
 
             AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
