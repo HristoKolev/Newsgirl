@@ -38,7 +38,7 @@
                     methodName = methodName.Remove(methodName.Length - REQUEST_POSTFIX.Length, REQUEST_POSTFIX.Length);
                 }
 
-                return $"        public Task<RpcResult<{metadata.ResponseType.Name}>> " +
+                return $"        public virtual Task<RpcResult<{metadata.ResponseType.Name}>> " +
                        $"{methodName}({metadata.RequestType.Name} request)\n        {{\n    " +
                        $"        return this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);\n        }}";
             });

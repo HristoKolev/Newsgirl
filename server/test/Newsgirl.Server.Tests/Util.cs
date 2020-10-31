@@ -10,6 +10,7 @@ using Xunit;
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net.Http;
@@ -149,6 +150,8 @@ namespace Newsgirl.Server.Tests
     {
         private readonly HttpServerApp app;
 
+        public Dictionary<string, string> RequestHeaders { get; } = new Dictionary<string, string>();
+
         public TestRpcClient(HttpServerApp app)
         {
             this.app = app;
@@ -160,6 +163,7 @@ namespace Newsgirl.Server.Tests
             {
                 Payload = request,
                 Type = request.GetType().Name,
+                Headers = this.RequestHeaders,
             };
 
             var instanceProvider = this.app.IoC.Resolve<InstanceProvider>();
@@ -178,6 +182,14 @@ namespace Newsgirl.Server.Tests
             }
 
             convertedResult.Headers = result.Headers;
+
+            foreach (var kvp in convertedResult.Headers)
+            {
+                if (kvp.Value == "Set-Cookie")
+                {
+                    this.RequestHeaders["Cookie"] = kvp.Value;
+                }
+            }
 
             return convertedResult;
         }

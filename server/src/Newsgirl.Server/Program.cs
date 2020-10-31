@@ -75,6 +75,8 @@ namespace Newsgirl.Server
             var rpcEngineOptions = new RpcEngineOptions
             {
                 PotentialHandlerTypes = potentialRpcTypes,
+                MiddlewareTypes = new[] {typeof(AuthenticationMiddleware)},
+                ParameterTypeWhitelist = new[] {typeof(AuthenticationResult)},
             };
             this.RpcEngine = new RpcEngine(rpcEngineOptions);
 
@@ -376,11 +378,12 @@ namespace Newsgirl.Server
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
             builder.RegisterType<AuthService>().InstancePerLifetimeScope();
-            builder.RegisterType<JwtServiceImpl>().As<JwtService>();
-
+            builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
+            builder.RegisterType<AuthenticationMiddleware>().InstancePerLifetimeScope();
 
+            // Always create
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();
 
             foreach (var handlerClass in handlerClasses)

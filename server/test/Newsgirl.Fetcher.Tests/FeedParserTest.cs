@@ -1,8 +1,6 @@
 namespace Newsgirl.Fetcher.Tests
 {
     using System.Threading.Tasks;
-    using NSubstitute;
-    using Shared;
     using Testing;
     using Xunit;
 
@@ -16,11 +14,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var hasher = new Hasher();
 
-            var dateStub = Substitute.For<DateTimeService>();
-            dateStub.EventTime().Returns(TestHelper.Date2000);
-            dateStub.CurrentTime().Returns(TestHelper.Date2000);
-
-            var parser = new FeedParser(hasher, dateStub, TestHelper.LogStub);
+            var parser = new FeedParser(hasher, TestHelper.DateTimeServiceStub, TestHelper.LogStub);
 
             string feedContent = await TestHelper.GetResourceText(resourceName);
 

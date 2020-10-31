@@ -13,7 +13,8 @@
 
             async Task Handler(HttpContext context)
             {
-                //context.Response.Cookies.Append("cats", num++.ToString());
+                context.Response.Cookies.Append("cats", num++.ToString());
+                context.Response.Cookies.Append("cats1", num++.ToString(), new CookieOptions());
                 await context.Response.WriteUtf8("test123");
             }
 
