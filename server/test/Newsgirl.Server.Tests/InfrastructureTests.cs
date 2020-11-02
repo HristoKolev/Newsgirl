@@ -617,9 +617,9 @@ namespace Newsgirl.Server.Tests
 
             Task Handler(HttpContext context)
             {
-                string requestType = RpcRequestHandler.ParseRequestType(context);
-
-                return handler.HandleRequest(context, requestType);
+                var requestPath = context.Request.Path;
+                string rpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
+                return handler.HandleRequest(context, rpcRequestType);
             }
 
             return Handler;

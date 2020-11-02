@@ -186,7 +186,7 @@ namespace Newsgirl.Server.Tests
             Snapshot.Match(result);
         }
     }
-    
+
     public class AuthHandlerProfileInfoWorks : HttpServerAppTest
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
@@ -211,7 +211,6 @@ namespace Newsgirl.Server.Tests
                 Username = email,
                 Password = password,
             });
-
 
             var info = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
 

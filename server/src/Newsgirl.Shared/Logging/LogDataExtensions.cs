@@ -9,11 +9,11 @@ namespace Newsgirl.Shared.Logging
     /// </summary>
     public static class GeneralLoggingExtensions
     {
-        public const string GeneralEventStream = "GENERAL_LOG";
+        public const string GENERAL_EVENT_STREAM = "GENERAL_LOG";
 
         public static void General(this ILog log, Func<LogData> func)
         {
-            log.Log(GeneralEventStream, func);
+            log.Log(GENERAL_EVENT_STREAM, func);
         }
     }
 

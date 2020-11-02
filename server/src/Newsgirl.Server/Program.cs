@@ -93,7 +93,7 @@ namespace Newsgirl.Server
 
             var loggerBuilder = new StructuredLoggerBuilder();
 
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
                 {
@@ -136,34 +136,35 @@ namespace Newsgirl.Server
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
             this.SystemPools = new SystemPoolsImpl(this.SystemSettings);
 
-            async Task RequestDelegate(HttpContext context)
-            {
-                string requestType = RpcRequestHandler.ParseRequestType(context);
-
-                if (requestType != null)
-                {
-                    await using (var requestScope = this.IoC.BeginLifetimeScope())
-                    {
-                        var handler = requestScope.Resolve<RpcRequestHandler>();
-
-                        await handler.HandleRequest(context, requestType);
-                    }
-                }
-                else
-                {
-                    context.Response.StatusCode = 404;
-                }
-            }
-
             this.Server = new CustomHttpServerImpl();
-
             this.Server.Started += addresses => this.Log.General(() => $"HTTP server is UP on {string.Join("; ", addresses)} ...");
             this.Server.Stopping += () => this.Log.General(() => "HTTP server is shutting down ...");
             this.Server.Stopped += () => this.Log.General(() => "HTTP server is down ...");
 
-            await this.Server.Start(RequestDelegate, listenOnAddresses);
+            await this.Server.Start(this.ProcessHttpRequest, listenOnAddresses);
 
             this.Started = true;
+        }
+
+        private async Task ProcessHttpRequest(HttpContext context)
+        {
+            var requestPath = context.Request.Path;
+
+            await using (var requestScope = this.IoC.BeginLifetimeScope())
+            {
+                
+                
+                const string RPC_ROUTE_PATH = "/rpc/";
+                if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
+                {
+                    string rpcRequestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length);
+                    var handler = requestScope.Resolve<RpcRequestHandler>();
+                    await handler.HandleRequest(context, rpcRequestType);
+                    return;
+                }
+
+                context.Response.StatusCode = 404;
+            }
         }
 
         private async Task LoadConfig()

@@ -56,26 +56,26 @@ namespace Newsgirl.Server.Http
             this.log = log;
         }
 
-        public async Task HandleRequest(HttpContext ctx, string rpcRequestType)
+        public async Task HandleRequest(HttpContext context, string rpcRequestType)
         {
-            this.httpContext = ctx;
-            this.requestStart = this.dateTimeService.CurrentTime();
+            this.httpContext = context;
             this.requestType = rpcRequestType;
+            this.requestStart = this.dateTimeService.CurrentTime();
 
             // Diagnostic data in case of an error.
             this.asyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
             {
                 {
                     "http", new HttpLogData(
-                        this.httpContext,
+                        context: this.httpContext,
                         // ReSharper disable once AccessToDisposedClosure
-                        this.requestBody,
-                        this.rpcRequest,
-                        this.rpcResponse,
-                        this.rpcResponse == null || !this.rpcResponse.IsOk,
-                        this.requestStart,
-                        this.requestType,
-                        this.dateTimeService
+                        requestBody: this.requestBody,
+                        rpcRequest: this.rpcRequest,
+                        rpcResponse: this.rpcResponse,
+                        requestFailed: this.rpcResponse == null || !this.rpcResponse.IsOk,
+                        requestStart: this.requestStart,
+                        requestType: this.requestType,
+                        dateTimeService: this.dateTimeService
                     )
                 },
             };
@@ -255,19 +255,6 @@ namespace Newsgirl.Server.Http
 
         public static string ParseRequestType(HttpContext context)
         {
-            var requestPath = context.Request.Path;
-
-            const string RPC_ROUTE_PATH = "/rpc/";
-
-            if (requestPath.HasValue
-                && requestPath.Value!.StartsWith(RPC_ROUTE_PATH)
-                && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
-            {
-                string requestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length);
-
-                return requestType;
-            }
-
             return null;
         }
     }

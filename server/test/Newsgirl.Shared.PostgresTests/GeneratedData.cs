@@ -42,7 +42,7 @@
 
     public class PocoDataGenerator
     {
-        private const int RandomSeed = 938274923;
+        private const int RANDOM_SEED = 938274923;
 
         public static List<T> GenerateData<T>()
             where T : class, IReadOnlyPoco<T>, new()
@@ -178,7 +178,7 @@
 
         private static byte[][] GenerateByteArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             byte[][] all = new byte[1][];
 
@@ -201,7 +201,7 @@
 
         private static DateTime[] GenerateDateArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
                 .Select(i => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27)))
@@ -210,7 +210,7 @@
 
         private static DateTime[] GenerateDateTimeArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
                 .Select(i => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27), random.Next(1, 24),
@@ -220,7 +220,7 @@
 
         private static DateTimeOffset[] GenerateDateTimeOffsetArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
                 .Select(i => new DateTimeOffset(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27),
@@ -256,7 +256,7 @@
 
         private static string[] GenerateJsonArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             return new[]
             {
@@ -277,7 +277,7 @@
 
         private static string[] GenerateStringArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             string template = "abcdefghijklmnopqrstuvwxyz";
             template = template + template.ToUpper();
@@ -291,7 +291,7 @@
 
         private static string[] GenerateXmlArray()
         {
-            var random = new Random(RandomSeed);
+            var random = new Random(RANDOM_SEED);
 
             return new[]
             {

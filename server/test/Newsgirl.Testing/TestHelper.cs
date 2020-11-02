@@ -298,7 +298,7 @@ namespace Newsgirl.Testing
 
     public static class JsonPrettyPrint
     {
-        private const string IndentString = "  ";
+        private const string INDENT_STRING = "  ";
 
         public static string FormatJson(string str)
         {
@@ -322,7 +322,7 @@ namespace Newsgirl.Testing
                             if (str[i + 1] != '}')
                             {
                                 sb.AppendLine();
-                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(IndentString));
+                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(INDENT_STRING));
                             }
                         }
 
@@ -336,7 +336,7 @@ namespace Newsgirl.Testing
                             if (str[i + 1] != ']')
                             {
                                 sb.AppendLine();
-                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(IndentString));
+                                Enumerable.Range(0, ++indent).ForEach(item => sb.Append(INDENT_STRING));
                             }
                         }
 
@@ -349,7 +349,7 @@ namespace Newsgirl.Testing
                             if (str[i - 1] != '{')
                             {
                                 sb.AppendLine();
-                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(IndentString));
+                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(INDENT_STRING));
                             }
                         }
 
@@ -363,7 +363,7 @@ namespace Newsgirl.Testing
                             if (str[i - 1] != '[')
                             {
                                 sb.AppendLine();
-                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(IndentString));
+                                Enumerable.Range(0, --indent).ForEach(item => sb.Append(INDENT_STRING));
                             }
                         }
 
@@ -393,7 +393,7 @@ namespace Newsgirl.Testing
                         if (!quoted)
                         {
                             sb.AppendLine();
-                            Enumerable.Range(0, indent).ForEach(item => sb.Append(IndentString));
+                            Enumerable.Range(0, indent).ForEach(item => sb.Append(INDENT_STRING));
                         }
 
                         break;
@@ -545,7 +545,7 @@ namespace Newsgirl.Testing
     public class ErrorReporterMock : ErrorReporter, IAsyncDisposable
     {
         private readonly ErrorReporterMockConfig config;
-        private const string ZeroGuid = "61289445-04b7-4f59-bbdd-499c36861bc0";
+        private const string ZERO_GUID = "61289445-04b7-4f59-bbdd-499c36861bc0";
 
         public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
 
@@ -574,7 +574,7 @@ namespace Newsgirl.Testing
         public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
             this.Errors.Add((exception, fingerprint, additionalInfo));
-            return Task.FromResult(ZeroGuid);
+            return Task.FromResult(ZERO_GUID);
         }
 
         public Task<string> Error(Exception exception, Dictionary<string, object> additionalInfo)

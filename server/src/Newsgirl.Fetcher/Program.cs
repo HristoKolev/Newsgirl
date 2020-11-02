@@ -50,7 +50,7 @@
 
             var loggerBuilder = new StructuredLoggerBuilder();
 
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GeneralEventStream, new Dictionary<string, Func<EventDestination<LogData>>>
+            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
                 {
