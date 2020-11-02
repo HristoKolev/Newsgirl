@@ -186,4 +186,36 @@ namespace Newsgirl.Server.Tests
             Snapshot.Match(result);
         }
     }
+    
+    public class AuthHandlerProfileInfoWorks : HttpServerAppTest
+    {
+        protected override void ConfigureMocks(ContainerBuilder builder)
+        {
+            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.RegisterType<RngServiceMock>().As<RngService>();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
+            builder.RegisterType<StructuredLogMock>().As<ILog>();
+        }
+
+        [Fact]
+        public async Task ProfileInfoWorks()
+        {
+            string email = "test123@abc.de";
+            string password = "test123";
+
+            var authService = this.App.IoC.Resolve<AuthService>();
+            await authService.CreateProfile(email, password);
+
+            var result = await this.RpcClient.Login(new LoginRequest
+            {
+                Username = email,
+                Password = password,
+            });
+
+
+            var info = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
+
+            Snapshot.Match(result);
+        }
+    }
 }

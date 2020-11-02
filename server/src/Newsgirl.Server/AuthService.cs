@@ -69,5 +69,10 @@ namespace Newsgirl.Server
 
             return (profile, login);
         }
+
+        public Task<UserSessionPoco> GetSession(int sessionID)
+        {
+            return this.db.Poco.UserSessions.FirstOrDefaultAsync(x => x.SessionID == sessionID);
+        }
     }
 }

@@ -17,6 +17,11 @@ namespace Newsgirl.Server
             return this.RpcExecute<PingRequest, PingResponse>(request);
         }
 
+        public virtual Task<RpcResult<ProfileInfoResponse>> ProfileInfo(ProfileInfoRequest request)
+        {
+            return this.RpcExecute<ProfileInfoRequest, ProfileInfoResponse>(request);
+        }
+
         public virtual Task<RpcResult<RegisterResponse>> Register(RegisterRequest request)
         {
             return this.RpcExecute<RegisterRequest, RegisterResponse>(request);

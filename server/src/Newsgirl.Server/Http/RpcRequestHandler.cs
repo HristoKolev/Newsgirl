@@ -364,17 +364,17 @@ namespace Newsgirl.Server.Http
 
     public static class HttpLoggingExtensions
     {
-        public const string HttpKey = "HTTP_REQUESTS";
-        public const string HttpDetailedKey = "HTTP_REQUESTS_DETAILED";
+        public const string HTTP_KEY = "HTTP_REQUESTS";
+        public const string HTTP_DETAILED_KEY = "HTTP_REQUESTS_DETAILED";
 
         public static void Http(this ILog log, Func<HttpLogData> func)
         {
-            log.Log(HttpKey, func);
+            log.Log(HTTP_KEY, func);
         }
 
         public static void HttpDetailed(this ILog log, Func<HttpLogData> func)
         {
-            log.Log(HttpDetailedKey, func);
+            log.Log(HTTP_DETAILED_KEY, func);
         }
     }
 }

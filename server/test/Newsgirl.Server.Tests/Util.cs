@@ -148,9 +148,11 @@ namespace Newsgirl.Server.Tests
 
     public class TestRpcClient : RpcClient
     {
+        private const string COOKIE_HEADER = "Cookie";
+
         private readonly HttpServerApp app;
 
-        public Dictionary<string, string> RequestHeaders { get; } = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> requestHeaders = new Dictionary<string, string>();
 
         public TestRpcClient(HttpServerApp app)
         {
@@ -163,31 +165,34 @@ namespace Newsgirl.Server.Tests
             {
                 Payload = request,
                 Type = request.GetType().Name,
-                Headers = this.RequestHeaders,
+                Headers = this.requestHeaders,
             };
 
             var instanceProvider = this.app.IoC.Resolve<InstanceProvider>();
 
             var result = await this.app.RpcEngine.Execute(requestMessage, instanceProvider);
 
-            RpcResult<TResponse> convertedResult;
-
-            if (result.IsOk)
+            var convertedResult = new RpcResult<TResponse>
             {
-                convertedResult = RpcResult.Ok((TResponse) result.Payload);
-            }
-            else
-            {
-                convertedResult = RpcResult.Error<TResponse>(result.ErrorMessages);
-            }
-
-            convertedResult.Headers = result.Headers;
+                Payload = (TResponse) result.Payload,
+                ErrorMessages = result.ErrorMessages,
+                Headers = result.Headers,
+            };
 
             foreach (var kvp in convertedResult.Headers)
             {
-                if (kvp.Value == "Set-Cookie")
+                if (kvp.Key == "Set-Cookie")
                 {
-                    this.RequestHeaders["Cookie"] = kvp.Value;
+                    string cookie = kvp.Value.Split(';')[0];
+
+                    if (this.requestHeaders.ContainsKey(COOKIE_HEADER))
+                    {
+                        this.requestHeaders[COOKIE_HEADER] += "; " + cookie;
+                    }
+                    else
+                    {
+                        this.requestHeaders[COOKIE_HEADER] = cookie;
+                    }
                 }
             }
 

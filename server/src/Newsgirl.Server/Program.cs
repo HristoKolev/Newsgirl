@@ -24,6 +24,13 @@ namespace Newsgirl.Server
         private TaskCompletionSource<object> shutdownTriggered;
         private ManualResetEventSlim shutdownCompleted;
 
+        public static readonly RpcEngineOptions RpcEngineOptions = new RpcEngineOptions
+        {
+            PotentialHandlerTypes = typeof(HttpServerApp).Assembly.GetTypes(),
+            MiddlewareTypes = new[] {typeof(AuthenticationMiddleware)},
+            ParameterTypeWhitelist = new[] {typeof(AuthResult)},
+        };
+
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
         public HttpServerAppConfig AppConfig { get; set; }
@@ -71,14 +78,7 @@ namespace Newsgirl.Server
                 this.AppConfigWatcher = new FileWatcher(this.AppConfigPath, () => this.ReloadStartupConfig().GetAwaiter().GetResult());
             }
 
-            var potentialRpcTypes = typeof(HttpServerApp).Assembly.GetTypes();
-            var rpcEngineOptions = new RpcEngineOptions
-            {
-                PotentialHandlerTypes = potentialRpcTypes,
-                MiddlewareTypes = new[] {typeof(AuthenticationMiddleware)},
-                ParameterTypeWhitelist = new[] {typeof(AuthenticationResult)},
-            };
-            this.RpcEngine = new RpcEngine(rpcEngineOptions);
+            this.RpcEngine = new RpcEngine(RpcEngineOptions);
 
             var builder = new ContainerBuilder();
             builder.RegisterModule<SharedModule>();
@@ -106,7 +106,7 @@ namespace Newsgirl.Server
                 },
             });
 
-            loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
+            loggerBuilder.AddEventStream(HttpLoggingExtensions.HTTP_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
@@ -117,7 +117,7 @@ namespace Newsgirl.Server
                 },
             });
 
-            loggerBuilder.AddEventStream(HttpLoggingExtensions.HttpDetailedKey, new Dictionary<string, Func<EventDestination<HttpLogData>>>
+            loggerBuilder.AddEventStream(HttpLoggingExtensions.HTTP_DETAILED_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
             {
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(

@@ -1,6 +1,7 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
     using LinqToDB;
@@ -117,6 +118,14 @@ namespace Newsgirl.Server
             }
         }
 
+        [RpcBind(typeof(ProfileInfoRequest), typeof(ProfileInfoResponse))]
+#pragma warning disable 1998
+        public async Task<ProfileInfoResponse> ProfileInfo(ProfileInfoRequest req, AuthResult authResult)
+#pragma warning restore 1998
+        {
+            return new ProfileInfoResponse();
+        }
+
         private string FormatCookie(UserSessionPoco session)
         {
             var payload = new JwtPayload {SessionID = session.SessionID};
@@ -130,18 +139,104 @@ namespace Newsgirl.Server
 
     public class AuthenticationMiddleware : RpcMiddleware
     {
-        public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        private static Dictionary<string, string> GetCookies(IReadOnlyDictionary<string, string> headers)
         {
-            return next(context, instanceProvider);
+            if (headers == null)
+            {
+                return null;
+            }
+
+            string cookieHeader = headers.GetValueOrDefault("Cookie");
+
+            if (string.IsNullOrWhiteSpace(cookieHeader))
+            {
+                return null;
+            }
+
+            var cookieHeaderParts = cookieHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+            if (cookieHeaderParts.Length == 0)
+            {
+                return null;
+            }
+
+            var cookieValues = new Dictionary<string, string>();
+
+            for (int i = 0; i < cookieHeaderParts.Length; i++)
+            {
+                string[] kvp = cookieHeaderParts[i].Split('=', StringSplitOptions.RemoveEmptyEntries);
+
+                if (kvp.Length == 2)
+                {
+                    string key = kvp[0];
+                    string value = kvp[1];
+
+                    if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
+                    {
+                        cookieValues.Add(key.Trim(), value.Trim());
+                    }
+                }
+            }
+
+            return cookieValues;
+        }
+
+        private static async Task<AuthResult> Authenticate(RpcRequestMessage requestMessage, JwtService jwtService, AuthService authService)
+        {
+            var cookies = GetCookies(requestMessage.Headers);
+
+            string token = cookies.GetValueOrDefault("token");
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return AuthResult.Anonymous;
+            }
+
+            var tokenPayload = jwtService.DecodeSession<JwtPayload>(token);
+
+            if (tokenPayload == null)
+            {
+                return AuthResult.Anonymous;
+            }
+
+            string csrfToken = requestMessage.Headers.GetValueOrDefault("Csrf-Token");
+
+            if (string.IsNullOrWhiteSpace(csrfToken))
+            {
+                return AuthResult.Anonymous;
+            }
+            
+            var userSession = await authService.GetSession(tokenPayload.SessionID);
+            
+            
+            
+            
+        }
+
+        public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        {
+            var jwtService = instanceProvider.Get<JwtService>();
+            var authService = instanceProvider.Get<AuthService>();
+
+            var authResult = await Authenticate(context.RequestMessage, jwtService, authService);
+
+            await next(context, instanceProvider);
         }
     }
 
-    public class AuthenticationResult { }
+    public class AuthResult
+    {
+        public static readonly AuthResult Anonymous = new AuthResult();
+    }
 
     public class JwtPayload
     {
         public int SessionID { get; set; }
     }
+
+    public class ProfileInfoRequest { }
+
+    public class ProfileInfoResponse { }
 
     public class RegisterRequest
     {

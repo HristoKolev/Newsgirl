@@ -2,17 +2,14 @@
 {
     using System.IO;
     using System.Linq;
+    using Newsgirl.Server;
     using Newsgirl.Shared;
 
     public class Program
     {
         public static void Main()
         {
-            var engine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = typeof(Newsgirl.Server.Program)
-                    .Assembly.ExportedTypes.ToArray(),
-            });
+            var engine = new RpcEngine(HttpServerApp.RpcEngineOptions);
 
             const string FILE_TEMPLATE = @"namespace Newsgirl.Server
 {
