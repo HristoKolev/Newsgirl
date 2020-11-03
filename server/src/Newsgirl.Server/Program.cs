@@ -27,7 +27,7 @@ namespace Newsgirl.Server
         public static readonly RpcEngineOptions RpcEngineOptions = new RpcEngineOptions
         {
             PotentialHandlerTypes = typeof(HttpServerApp).Assembly.GetTypes(),
-            MiddlewareTypes = new[] {typeof(AuthenticationMiddleware)},
+            //MiddlewareTypes = new[] {typeof(AuthenticationMiddleware)},
             ParameterTypeWhitelist = new[] {typeof(AuthResult)},
         };
 
@@ -152,8 +152,10 @@ namespace Newsgirl.Server
 
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
-                
-                
+                var authFilter = requestScope.Resolve<AuthenticationFilter>();
+                var authResult = authFilter.Authenticate(context.Request.Headers);
+                Console.WriteLine(authResult);
+
                 const string RPC_ROUTE_PATH = "/rpc/";
                 if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
                 {
@@ -382,7 +384,7 @@ namespace Newsgirl.Server
             builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
-            builder.RegisterType<AuthenticationMiddleware>().InstancePerLifetimeScope();
+            builder.RegisterType<AuthenticationFilter>().InstancePerLifetimeScope();
 
             // Always create
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();

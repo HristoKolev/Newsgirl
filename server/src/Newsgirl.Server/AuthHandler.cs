@@ -1,7 +1,6 @@
 namespace Newsgirl.Server
 {
     using System;
-    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
     using JWT;
@@ -123,7 +122,7 @@ namespace Newsgirl.Server
 
         [RpcBind(typeof(ProfileInfoRequest), typeof(ProfileInfoResponse))]
 #pragma warning disable 1998
-        public async Task<ProfileInfoResponse> ProfileInfo(ProfileInfoRequest req, AuthResult authResult)
+        public async Task<ProfileInfoResponse> ProfileInfo(ProfileInfoRequest req)
 #pragma warning restore 1998
         {
             return new ProfileInfoResponse();
@@ -137,91 +136,6 @@ namespace Newsgirl.Server
             string cookie = $"token={token}; Expires={expirationDate:R}; Secure; HttpOnly";
 
             return cookie;
-        }
-    }
-
-    public class AuthenticationMiddleware : RpcMiddleware
-    {
-        private static Dictionary<string, string> GetCookies(IReadOnlyDictionary<string, string> headers)
-        {
-            if (headers == null)
-            {
-                return null;
-            }
-
-            string cookieHeader = headers.GetValueOrDefault("Cookie");
-
-            if (string.IsNullOrWhiteSpace(cookieHeader))
-            {
-                return null;
-            }
-
-            var cookieHeaderParts = cookieHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-            if (cookieHeaderParts.Length == 0)
-            {
-                return null;
-            }
-
-            var cookieValues = new Dictionary<string, string>();
-
-            for (int i = 0; i < cookieHeaderParts.Length; i++)
-            {
-                string[] kvp = cookieHeaderParts[i].Split('=', StringSplitOptions.RemoveEmptyEntries);
-
-                if (kvp.Length == 2)
-                {
-                    string key = kvp[0];
-                    string value = kvp[1];
-
-                    if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
-                    {
-                        cookieValues.Add(key.Trim(), value.Trim());
-                    }
-                }
-            }
-
-            return cookieValues;
-        }
-
-        private static async Task<AuthResult> Authenticate(RpcRequestMessage requestMessage, JwtService jwtService, AuthService authService)
-        {
-            var cookies = GetCookies(requestMessage.Headers);
-
-            string token = cookies.GetValueOrDefault("token");
-
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                return AuthResult.Anonymous;
-            }
-
-            var tokenPayload = jwtService.DecodeSession<JwtPayload>(token);
-
-            if (tokenPayload == null)
-            {
-                return AuthResult.Anonymous;
-            }
-
-            string csrfToken = requestMessage.Headers.GetValueOrDefault("Csrf-Token");
-
-            if (string.IsNullOrWhiteSpace(csrfToken))
-            {
-                return AuthResult.Anonymous;
-            }
-
-            var userSession = await authService.GetSession(tokenPayload.SessionID);
-
-            throw new NotImplementedException();
-        }
-
-        public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-        {
-            var jwtService = instanceProvider.Get<JwtService>();
-            var authService = instanceProvider.Get<AuthService>();
-
-            var authResult = await Authenticate(context.RequestMessage, jwtService, authService);
-
-            await next(context, instanceProvider);
         }
     }
 
@@ -352,11 +266,6 @@ namespace Newsgirl.Server
                 this.systemPools.JwtSigningCertificates.Return(cert);
             }
         }
-    }
-
-    public class AuthResult
-    {
-        public static readonly AuthResult Anonymous = new AuthResult();
     }
 
     public class JwtPayload
