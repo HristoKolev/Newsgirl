@@ -67,15 +67,15 @@ namespace Newsgirl.Server.Http
             {
                 {
                     "http", new HttpLogData(
-                        context: this.httpContext,
+                        this.httpContext,
                         // ReSharper disable once AccessToDisposedClosure
-                        requestBody: this.requestBody,
-                        rpcRequest: this.rpcRequest,
-                        rpcResponse: this.rpcResponse,
-                        requestFailed: this.rpcResponse == null || !this.rpcResponse.IsOk,
-                        requestStart: this.requestStart,
-                        requestType: this.requestType,
-                        dateTimeService: this.dateTimeService
+                        this.requestBody,
+                        this.rpcRequest,
+                        this.rpcResponse,
+                        this.rpcResponse == null || !this.rpcResponse.IsOk,
+                        this.requestStart,
+                        this.requestType,
+                        this.dateTimeService
                     )
                 },
             };
@@ -241,6 +241,13 @@ namespace Newsgirl.Server.Http
             try
             {
                 this.httpContext.Response.StatusCode = 200;
+
+                foreach (var header in result.Headers)
+                {
+                    this.httpContext.Response.Headers[header.Key] = header.Value;
+                }
+
+                result.Headers = null;
 
                 await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, SerializationOptions);
             }

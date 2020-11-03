@@ -10,16 +10,15 @@ using Xunit;
 namespace Newsgirl.Server.Tests
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Runtime.ExceptionServices;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
     using Http;
     using Microsoft.AspNetCore.Http;
-    using Newtonsoft.Json;
     using Shared;
     using Testing;
 
@@ -38,7 +37,7 @@ namespace Newsgirl.Server.Tests
             var mockModule = new FunctionAutofacModule(this.ConfigureMocks);
 
             this.tester = await HttpServerAppTester.Create(this.ConnectionString, mockModule);
-            this.RpcClient = new TestRpcClient(this.tester.App);
+            this.RpcClient = new TestRpcClient(this.tester.App.Server.BoundAddresses.First());
         }
 
         public override async Task DisposeAsync()
@@ -96,7 +95,7 @@ namespace Newsgirl.Server.Tests
             app.ErrorReporter = new ErrorReporterMock();
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
-            var injectedConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+            var injectedConfig = JsonSerializer.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
             injectedConfig.ConnectionString = connectionString;
             app.InjectedAppConfig = injectedConfig;
 
@@ -148,55 +147,38 @@ namespace Newsgirl.Server.Tests
 
     public class TestRpcClient : RpcClient
     {
-        private const string COOKIE_HEADER = "Cookie";
+        private readonly HttpClient httpClient;
 
-        private readonly HttpServerApp app;
-
-        private readonly Dictionary<string, string> requestHeaders = new Dictionary<string, string>();
-
-        public TestRpcClient(HttpServerApp app)
+        public TestRpcClient(string address)
         {
-            this.app = app;
+            this.httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(address),
+            };
         }
 
         protected override async Task<RpcResult<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
         {
-            var requestMessage = new RpcRequestMessage
+            string rpcRequestType = request.GetType().Name;
+            string json = JsonSerializer.Serialize(request);
+
+            var content = new StringContent(json, EncodingHelper.UTF8, "application/json");
+            var requestUri = new Uri("/rpc/" + rpcRequestType, UriKind.Relative);
+
+            var response = await this.httpClient.PostAsync(requestUri, content);
+            response.EnsureSuccessStatusCode();
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            var serializerOptions = new JsonSerializerOptions
             {
-                Payload = request,
-                Type = request.GetType().Name,
-                Headers = this.requestHeaders,
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             };
 
-            var instanceProvider = this.app.IoC.Resolve<InstanceProvider>();
+            var result = JsonSerializer.Deserialize<RpcResult<TResponse>>(responseBody, serializerOptions);
 
-            var result = await this.app.RpcEngine.Execute(requestMessage, instanceProvider);
-
-            var convertedResult = new RpcResult<TResponse>
-            {
-                Payload = (TResponse) result.Payload,
-                ErrorMessages = result.ErrorMessages,
-                Headers = result.Headers,
-            };
-
-            foreach (var kvp in convertedResult.Headers)
-            {
-                if (kvp.Key == "Set-Cookie")
-                {
-                    string cookie = kvp.Value.Split(';')[0];
-
-                    if (this.requestHeaders.ContainsKey(COOKIE_HEADER))
-                    {
-                        this.requestHeaders[COOKIE_HEADER] += "; " + cookie;
-                    }
-                    else
-                    {
-                        this.requestHeaders[COOKIE_HEADER] = cookie;
-                    }
-                }
-            }
-
-            return convertedResult;
+            return result;
         }
     }
 

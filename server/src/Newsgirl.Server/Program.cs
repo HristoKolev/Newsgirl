@@ -49,7 +49,7 @@ namespace Newsgirl.Server
 
         public IContainer IoC { get; set; }
 
-        private CustomHttpServer Server { get; set; }
+        public CustomHttpServer Server { get; set; }
 
         public AsyncLocals AsyncLocals { get; set; }
 
@@ -153,13 +153,13 @@ namespace Newsgirl.Server
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
                 var authFilter = requestScope.Resolve<AuthenticationFilter>();
-                var authResult = authFilter.Authenticate(context.Request.Headers);
+                var authResult = await authFilter.Authenticate(context.Request.Headers);
                 Console.WriteLine(authResult);
 
-                const string RPC_ROUTE_PATH = "/rpc/";
-                if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length)
+                const string RPC_ROUTE_PATH = "/rpc";
+                if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length + 1)
                 {
-                    string rpcRequestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length);
+                    string rpcRequestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length + 1);
                     var handler = requestScope.Resolve<RpcRequestHandler>();
                     await handler.HandleRequest(context, rpcRequestType);
                     return;

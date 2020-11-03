@@ -48,6 +48,11 @@ namespace Newsgirl.Server
 
             string cookieHeader = GetHeaderValue(headers, COOKIE_HEADER);
 
+            if (cookieHeader == null)
+            {
+                return null;
+            }
+
             var cookieHeaderParts = cookieHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
             if (cookieHeaderParts.Length == 0)
@@ -80,18 +85,23 @@ namespace Newsgirl.Server
         {
             var cookies = GetCookies(headers);
 
+            if (cookies == null)
+            {
+                return AuthResult.Anonymous; // no cookies at all
+            }
+
             string token = cookies.GetValueOrDefault("token");
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                return AuthResult.Anonymous; // no jwt token
+                return AuthResult.Anonymous; // no jwt cookie
             }
 
             var tokenPayload = this.jwtService.DecodeSession<JwtPayload>(token);
 
             if (tokenPayload == null)
             {
-                return AuthResult.Anonymous; // invalid token
+                return AuthResult.Anonymous; // invalid jwt
             }
 
             var userSession = await this.authService.GetSession(tokenPayload.SessionID);
