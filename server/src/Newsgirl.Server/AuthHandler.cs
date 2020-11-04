@@ -17,19 +17,22 @@ namespace Newsgirl.Server
         private readonly AuthService authService;
         private readonly JwtService jwtService;
         private readonly DateTimeService dateTimeService;
+        private readonly HttpContextProvider httpContextProvider;
 
         public AuthHandler(
             IDbService db,
             PasswordService passwordService,
             AuthService authService,
             JwtService jwtService,
-            DateTimeService dateTimeService)
+            DateTimeService dateTimeService,
+            HttpContextProvider httpContextProvider)
         {
             this.db = db;
             this.passwordService = passwordService;
             this.authService = authService;
             this.jwtService = jwtService;
             this.dateTimeService = dateTimeService;
+            this.httpContextProvider = httpContextProvider;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
@@ -59,13 +62,12 @@ namespace Newsgirl.Server
                         EmailAddress = profile.EmailAddress,
                         UserProfileID = profile.UserProfileID,
                     },
-                    Headers =
-                    {
-                        {"Set-Cookie", this.FormatCookie(session)},
-                    },
                 };
 
                 await tx.CommitAsync();
+
+                var context = this.httpContextProvider.HttpContext;
+                context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
             }
@@ -108,13 +110,12 @@ namespace Newsgirl.Server
                         EmailAddress = profile.EmailAddress,
                         UserProfileID = profile.UserProfileID,
                     },
-                    Headers =
-                    {
-                        {"Set-Cookie", this.FormatCookie(session)},
-                    },
                 };
 
                 await tx.CommitAsync();
+
+                var context = this.httpContextProvider.HttpContext;
+                context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
             }

@@ -402,8 +402,6 @@ namespace Newsgirl.Server.Tests
                     Num = req.Num + 1,
                 });
 
-                result.Headers.Add("test_key", "test_value");
-
                 return Task.FromResult(result);
             }
 
@@ -426,21 +424,6 @@ namespace Newsgirl.Server.Tests
         public class IncrementTestRequest
         {
             public int Num { get; set; }
-        }
-
-        public class TestHeadersMiddleware : RpcMiddleware
-        {
-            public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
-            {
-                await next(context, instanceProvider);
-
-                var response = (Task<RpcResult<IncrementTestResponse>>) context.ResponseTask;
-
-                foreach (var header in context.RequestMessage.Headers)
-                {
-                    response.Result.Headers.Add(header.Key, header.Value);
-                }
-            }
         }
 
         [Fact]
@@ -577,10 +560,6 @@ namespace Newsgirl.Server.Tests
                 {
                     typeof(IncrementHandler),
                 },
-                MiddlewareTypes = new[]
-                {
-                    typeof(TestHeadersMiddleware),
-                },
             });
 
             string responseBody;
@@ -591,7 +570,6 @@ namespace Newsgirl.Server.Tests
                 {
                     RequestUri = new Uri($"/rpc/{nameof(IncrementTestRequest)}", UriKind.Relative),
                     Content = new StringContent("{ \"num\": 33 }"),
-                    Headers = {{"Cookie", "cats=6;"}},
                 };
 
                 var response = await tester.Client.SendAsync(httpRequestMessage);

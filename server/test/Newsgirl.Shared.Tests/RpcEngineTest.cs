@@ -1047,8 +1047,6 @@ namespace Newsgirl.Shared.Tests
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal(ResultOfResponseTypeTestHandler.ResultValue.Payload, result.Payload);
-
-            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
         }
 
         public class ResultOfResponseTypeTestHandler
@@ -1059,31 +1057,8 @@ namespace Newsgirl.Shared.Tests
             public Task<RpcResult<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
             {
                 ResultValue = RpcResult.Ok(new SimpleResponse1());
-                ResultValue.Headers.Add("handler_method_header1", "handler_method_header1_value");
                 return Task.FromResult(ResultValue);
             }
-        }
-
-        [Fact]
-        public async Task Execute_correctly_returns_headers()
-        {
-            var rpcEngine = new RpcEngine(new RpcEngineOptions
-            {
-                PotentialHandlerTypes = new[]
-                {
-                    typeof(ResultOfResponseTypeTestHandler),
-                },
-            });
-
-            var rpcRequestMessage = new RpcRequestMessage
-            {
-                Payload = new SimpleRequest1(),
-                Type = nameof(SimpleRequest1),
-            };
-
-            var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
-
-            Assert.Equal("handler_method_header1_value", result.Headers["handler_method_header1"]);
         }
 
         [Fact]
@@ -1110,7 +1085,6 @@ namespace Newsgirl.Shared.Tests
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal("test123", result.ErrorMessages[0]);
-            Assert.Equal("value1", result.Headers["header1"]);
         }
 
         public class SimpleResultMiddleware : RpcMiddleware
@@ -1118,7 +1092,6 @@ namespace Newsgirl.Shared.Tests
             public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
                 var result = RpcResult.Error("test123");
-                result.Headers.Add("header1", "value1");
 
                 context.SetResponse(result);
 
@@ -1290,7 +1263,6 @@ namespace Newsgirl.Shared.Tests
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
             Assert.Equal("test123", result.ErrorMessages[0]);
-            Assert.Equal("value1", result.Headers["header1"]);
         }
 
         public class ObjectTaskOfResultTestHandler
@@ -1310,7 +1282,6 @@ namespace Newsgirl.Shared.Tests
             public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
                 var result = RpcResult.Error("test123");
-                result.Headers.Add("header1", "value1");
 
                 context.SetResponse(result);
 

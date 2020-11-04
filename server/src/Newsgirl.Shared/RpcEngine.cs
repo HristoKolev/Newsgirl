@@ -509,9 +509,6 @@ namespace Newsgirl.Shared
     {
         public object Payload { get; set; }
 
-        // ReSharper disable once CollectionNeverUpdated.Global
-        public Dictionary<string, string> Headers { get; set; }
-
         public string Type { get; set; }
     }
 
@@ -522,8 +519,6 @@ namespace Newsgirl.Shared
     public class RpcResult
     {
         public bool IsOk => this.ErrorMessages == null || this.ErrorMessages.Length == 0;
-
-        public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>(0);
 
         public string[] ErrorMessages { get; set; }
 
@@ -566,7 +561,6 @@ namespace Newsgirl.Shared
         {
             return new RpcResult<object>
             {
-                Headers = this.Headers,
                 ErrorMessages = this.ErrorMessages,
                 Payload = null,
             };
@@ -583,7 +577,6 @@ namespace Newsgirl.Shared
             {
                 Payload = this.Payload,
                 ErrorMessages = this.ErrorMessages,
-                Headers = this.Headers,
             };
         }
 

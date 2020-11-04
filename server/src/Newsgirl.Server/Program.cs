@@ -152,9 +152,11 @@ namespace Newsgirl.Server
 
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
+                // Set the context first before resolving anything else.
+                requestScope.Resolve<HttpContextProvider>().HttpContext = context;
+
                 var authFilter = requestScope.Resolve<AuthenticationFilter>();
                 var authResult = await authFilter.Authenticate(context.Request.Headers);
-                Console.WriteLine(authResult);
 
                 const string RPC_ROUTE_PATH = "/rpc";
                 if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length + 1)
@@ -357,6 +359,11 @@ namespace Newsgirl.Server
         public ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
     }
 
+    public class HttpContextProvider
+    {
+        public HttpContext HttpContext { get; set; }
+    }
+
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;
@@ -385,6 +392,7 @@ namespace Newsgirl.Server
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
             builder.RegisterType<AuthenticationFilter>().InstancePerLifetimeScope();
+            builder.RegisterType<HttpContextProvider>().InstancePerLifetimeScope();
 
             // Always create
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();

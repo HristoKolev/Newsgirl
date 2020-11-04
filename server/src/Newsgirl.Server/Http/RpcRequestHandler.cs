@@ -15,11 +15,6 @@ namespace Newsgirl.Server.Http
     /// </summary>
     public class RpcRequestHandler
     {
-        private static readonly HashSet<string> HttpHeaderWhitelist = new HashSet<string>
-        {
-            "Cookie",
-        };
-
         private static readonly JsonSerializerOptions SerializationOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
@@ -195,16 +190,7 @@ namespace Newsgirl.Server.Http
                 {
                     Type = this.requestType,
                     Payload = payload,
-                    Headers = new Dictionary<string, string>(),
                 };
-
-                foreach (var header in this.httpContext.Request.Headers)
-                {
-                    if (HttpHeaderWhitelist.Contains(header.Key))
-                    {
-                        rpcRequestMessage.Headers.Add(header.Key, header.Value.ToString());
-                    }
-                }
 
                 return rpcRequestMessage;
             }
@@ -242,13 +228,6 @@ namespace Newsgirl.Server.Http
             {
                 this.httpContext.Response.StatusCode = 200;
 
-                foreach (var header in result.Headers)
-                {
-                    this.httpContext.Response.Headers[header.Key] = header.Value;
-                }
-
-                result.Headers = null;
-
                 await JsonSerializer.SerializeAsync(this.httpContext.Response.Body, result, SerializationOptions);
             }
             catch (Exception err)
@@ -258,11 +237,6 @@ namespace Newsgirl.Server.Http
                     {"result", result},
                 });
             }
-        }
-
-        public static string ParseRequestType(HttpContext context)
-        {
-            return null;
         }
     }
 
