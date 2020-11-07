@@ -2,6 +2,7 @@ namespace Newsgirl.Server
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Primitives;
     using Shared;
@@ -90,21 +91,21 @@ namespace Newsgirl.Server
                 return AuthResult.Anonymous; // no cookies at all
             }
 
-            string token = cookies.GetValueOrDefault("token");
+            string jwt = cookies.GetValueOrDefault("jwt");
 
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(jwt))
             {
                 return AuthResult.Anonymous; // no jwt cookie
             }
 
-            var tokenPayload = this.jwtService.DecodeSession<JwtPayload>(token);
+            var jwtPayload = this.jwtService.DecodeSession<JwtPayload>(jwt);
 
-            if (tokenPayload == null)
+            if (jwtPayload == null)
             {
                 return AuthResult.Anonymous; // invalid jwt
             }
 
-            var userSession = await this.authService.GetSession(tokenPayload.SessionID);
+            var userSession = await this.authService.GetSession(jwtPayload.SessionID);
 
             if (userSession == null)
             {
@@ -129,6 +130,7 @@ namespace Newsgirl.Server
         }
     }
 
+    [DebuggerDisplay("SessionID = {" + nameof(SessionID) + "}, ValidCsrfToken = {" + nameof(ValidCsrfToken) + "}")]
     public class AuthResult
     {
         public static readonly AuthResult Anonymous = new AuthResult();

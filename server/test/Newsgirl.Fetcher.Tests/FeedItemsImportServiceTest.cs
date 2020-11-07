@@ -64,7 +64,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemHash = i,
                             FeedItemTitle = $"title {i}",
                             FeedItemUrl = $"url {i}",
-                            FeedItemAddedTime = TestHelper.Date2000,
+                            FeedItemAddedTime = TestHelper.Date3000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 1),
                     NewFeedItemsHash = 1,
@@ -79,7 +79,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemHash = i,
                             FeedItemTitle = $"title {100 + i}",
                             FeedItemUrl = $"url {100 + i}",
-                            FeedItemAddedTime = TestHelper.Date2000,
+                            FeedItemAddedTime = TestHelper.Date3000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 2),
                     NewFeedItemsHash = 2,
@@ -104,7 +104,7 @@ namespace Newsgirl.Fetcher.Tests
                             FeedItemHash = i,
                             FeedItemTitle = $"title {i}",
                             FeedItemUrl = null,
-                            FeedItemAddedTime = TestHelper.Date2000,
+                            FeedItemAddedTime = TestHelper.Date3000,
                         }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 5),
                     NewFeedItemsHash = 5,
@@ -143,7 +143,7 @@ namespace Newsgirl.Fetcher.Tests
                     FeedItemDescription = $"desc {i}",
                     FeedItemTitle = $"title {i}",
                     FeedItemUrl = $"url {i}",
-                    FeedItemAddedTime = TestHelper.Date2000,
+                    FeedItemAddedTime = TestHelper.Date3000,
                 }).ToList();
 
             feedItems.AddRange(Enumerable.Range(30, 10)
@@ -154,7 +154,7 @@ namespace Newsgirl.Fetcher.Tests
                     FeedItemDescription = $"desc {i}",
                     FeedItemTitle = $"title {i}",
                     FeedItemUrl = $"url {i}",
-                    FeedItemAddedTime = TestHelper.Date2000,
+                    FeedItemAddedTime = TestHelper.Date3000,
                 }));
 
             await this.Db.BulkInsert(feedItems);

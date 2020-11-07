@@ -3,9 +3,5 @@
     "num": 34
   },
   "isOk": true,
-  "headers": {
-    "test_key": "test_value",
-    "Cookie": "cats=6;"
-  },
   "errorMessages": null
 }

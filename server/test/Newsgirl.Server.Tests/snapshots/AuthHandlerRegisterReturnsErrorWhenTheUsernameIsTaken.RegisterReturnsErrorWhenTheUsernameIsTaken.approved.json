@@ -2,7 +2,6 @@
   "ErrorMessages": [
     "There already is an account with that email address."
   ],
-  "Headers": {},
   "IsOk": false,
   "Payload": null
 }

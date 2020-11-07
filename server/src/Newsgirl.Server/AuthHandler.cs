@@ -132,9 +132,9 @@ namespace Newsgirl.Server
         private string FormatCookie(UserSessionPoco session)
         {
             var payload = new JwtPayload {SessionID = session.SessionID};
-            string token = this.jwtService.EncodeSession(payload);
+            string jwt = this.jwtService.EncodeSession(payload);
             DateTime expirationDate = session.ExpirationDate ?? this.dateTimeService.EventTime().AddYears(1000);
-            string cookie = $"token={token}; Expires={expirationDate:R}; Secure; HttpOnly";
+            string cookie = $"jwt={jwt}; Expires={expirationDate:R}; Path=/; Secure; HttpOnly";
 
             return cookie;
         }

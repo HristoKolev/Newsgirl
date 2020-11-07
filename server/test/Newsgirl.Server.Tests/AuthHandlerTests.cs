@@ -1,5 +1,6 @@
 namespace Newsgirl.Server.Tests
 {
+    using System;
     using System.Threading.Tasks;
     using Autofac;
     using LinqToDB;
@@ -211,6 +212,9 @@ namespace Newsgirl.Server.Tests
                 Username = email,
                 Password = password,
             });
+
+            var c = this.RpcClient.Cookies;
+            Console.WriteLine(c);
 
             var info = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
 

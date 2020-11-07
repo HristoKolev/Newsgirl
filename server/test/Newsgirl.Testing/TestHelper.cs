@@ -61,15 +61,15 @@ namespace Newsgirl.Testing
             return content;
         }
 
-        public static DateTime Date2000 = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static DateTime Date3000 = new DateTime(3000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static DateTimeService DateTimeServiceStub
         {
             get
             {
                 var dateStub = Substitute.For<DateTimeService>();
-                dateStub.EventTime().Returns(Date2000);
-                dateStub.CurrentTime().Returns(Date2000);
+                dateStub.EventTime().Returns(Date3000);
+                dateStub.CurrentTime().Returns(Date3000);
                 return dateStub;
             }
         }

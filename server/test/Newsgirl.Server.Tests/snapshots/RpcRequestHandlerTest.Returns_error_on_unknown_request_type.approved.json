@@ -1,7 +1,6 @@
 ﻿{
   "payload": null,
   "isOk": false,
-  "headers": {},
   "errorMessages": [
     "No RPC handler for request: NotRegisteredRequest."
   ]

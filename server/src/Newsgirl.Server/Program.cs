@@ -152,11 +152,15 @@ namespace Newsgirl.Server
 
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
+                var httpContextProvider = requestScope.Resolve<HttpContextProvider>();
+                
                 // Set the context first before resolving anything else.
-                requestScope.Resolve<HttpContextProvider>().HttpContext = context;
+                httpContextProvider.HttpContext = context;
 
                 var authFilter = requestScope.Resolve<AuthenticationFilter>();
                 var authResult = await authFilter.Authenticate(context.Request.Headers);
+
+                httpContextProvider.AuthResult = authResult;
 
                 const string RPC_ROUTE_PATH = "/rpc";
                 if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length + 1)
@@ -362,6 +366,8 @@ namespace Newsgirl.Server
     public class HttpContextProvider
     {
         public HttpContext HttpContext { get; set; }
+        
+        public AuthResult AuthResult { get; set; }
     }
 
     public class HttpServerIoCModule : Module

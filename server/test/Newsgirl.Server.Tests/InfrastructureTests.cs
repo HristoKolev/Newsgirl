@@ -441,7 +441,7 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(handler))
             {
-                var response = await tester.Client.GetAsync("/");
+                var response = await tester.Client.GetAsync($"/rpc/{nameof(IncrementTestRequest)}");
                 tester.EnsureHandlerSuccess();
                 response.EnsureSuccessStatusCode();
 

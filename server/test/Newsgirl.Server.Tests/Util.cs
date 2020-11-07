@@ -10,8 +10,10 @@ using Xunit;
 namespace Newsgirl.Server.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Runtime.ExceptionServices;
     using System.Text.Json;
@@ -28,7 +30,7 @@ namespace Newsgirl.Server.Tests
 
         protected HttpServerApp App => this.tester.App;
 
-        protected RpcClient RpcClient { get; private set; }
+        protected TestRpcClient RpcClient { get; private set; }
 
         public override async Task InitializeAsync()
         {
@@ -148,10 +150,22 @@ namespace Newsgirl.Server.Tests
     public class TestRpcClient : RpcClient
     {
         private readonly HttpClient httpClient;
+        private readonly HttpClientHandler httpClientHandler;
+
+        public Dictionary<string, string> Cookies
+        {
+            get
+            {
+                var cookies = this.httpClientHandler.CookieContainer.GetCookies(new Uri("http://127.0.0.1"));
+                return cookies.ToDictionary(x => x.Name, x => x.Value);
+            }
+        }
 
         public TestRpcClient(string address)
         {
-            this.httpClient = new HttpClient
+            this.httpClientHandler = new HttpClientHandler();
+
+            this.httpClient = new HttpClient(this.httpClientHandler)
             {
                 BaseAddress = new Uri(address),
             };
@@ -168,6 +182,8 @@ namespace Newsgirl.Server.Tests
             var response = await this.httpClient.PostAsync(requestUri, content);
             response.EnsureSuccessStatusCode();
 
+            this.SecureCookiesWorkaround(response.Headers);
+
             string responseBody = await response.Content.ReadAsStringAsync();
 
             var serializerOptions = new JsonSerializerOptions
@@ -178,7 +194,105 @@ namespace Newsgirl.Server.Tests
 
             var result = JsonSerializer.Deserialize<RpcResult<TResponse>>(responseBody, serializerOptions);
 
+            if (result.Payload is LoginResponse loginResponse)
+            {
+                this.httpClient.DefaultRequestHeaders.Add("Csrf-Token", loginResponse.CsrfToken);
+            }
+
+            if (result.Payload is RegisterResponse registerResponse)
+            {
+                this.httpClient.DefaultRequestHeaders.Add("Csrf-Token", registerResponse.CsrfToken);
+            }
+
             return result;
+        }
+
+        private void SecureCookiesWorkaround(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+        {
+            var cookies = ParseSetCookieHeaders(headers, this.httpClient.BaseAddress);
+
+            foreach (var cookie in cookies.Where(x => x.Secure))
+            {
+                cookie.Secure = false;
+                this.httpClientHandler.CookieContainer.Add(cookie);
+            }
+        }
+
+        private static List<Cookie> ParseSetCookieHeaders(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers, Uri requestUri)
+        {
+            var cookieValues = new List<Cookie>();
+
+            var setCookieHeaderValues = headers
+                .Where(x => string.Equals(x.Key, "Set-Cookie", StringComparison.CurrentCultureIgnoreCase))
+                .SelectMany(x => x.Value)
+                .ToList();
+
+            foreach (string cookieHeaderValue in setCookieHeaderValues)
+            {
+                var cookieParts = cookieHeaderValue.Split(';').Select(x => x.Trim()).ToList();
+
+                if (cookieParts.Count == 0)
+                {
+                    throw new DetailedLogException("Could not parse cookies.")
+                    {
+                        Details =
+                        {
+                            {"headers", headers},
+                        },
+                    };
+                }
+
+                var cookie = new Cookie
+                {
+                    Domain = requestUri.Host,
+                };
+
+                for (int i = 0; i < cookieParts.Count; i++)
+                {
+                    string cookiePart = cookieParts[i];
+
+                    var kvp = cookiePart.Split('=', StringSplitOptions.RemoveEmptyEntries);
+
+                    string key = kvp[0].Trim();
+                    string value = kvp.Length > 1 ? kvp[1].Trim() : null;
+
+                    if (i == 0)
+                    {
+                        cookie.Name = key;
+                        cookie.Value = value;
+                    }
+                    else
+                    {
+                        switch (key.ToLower())
+                        {
+                            case "path":
+                            {
+                                cookie.Path = value;
+                                break;
+                            }
+                            case "secure":
+                            {
+                                cookie.Secure = true;
+                                break;
+                            }
+                            case "httponly":
+                            {
+                                cookie.HttpOnly = true;
+                                break;
+                            }
+                            case "expires":
+                            {
+                                cookie.Expires = DateTime.Parse(value);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                cookieValues.Add(cookie);
+            }
+
+            return cookieValues;
         }
     }
 

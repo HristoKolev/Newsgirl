@@ -1,7 +1,6 @@
 ﻿{
   "payload": null,
   "isOk": false,
-  "headers": {},
   "errorMessages": [
     "Request type is null or an empty string."
   ]
