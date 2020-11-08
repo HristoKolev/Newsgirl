@@ -17,7 +17,7 @@ namespace Newsgirl.Server
         private readonly AuthService authService;
         private readonly JwtService jwtService;
         private readonly DateTimeService dateTimeService;
-        private readonly HttpContextProvider httpContextProvider;
+        private readonly HttpRequestState httpRequestState;
 
         public AuthHandler(
             IDbService db,
@@ -25,14 +25,14 @@ namespace Newsgirl.Server
             AuthService authService,
             JwtService jwtService,
             DateTimeService dateTimeService,
-            HttpContextProvider httpContextProvider)
+            HttpRequestState httpRequestState)
         {
             this.db = db;
             this.passwordService = passwordService;
             this.authService = authService;
             this.jwtService = jwtService;
             this.dateTimeService = dateTimeService;
-            this.httpContextProvider = httpContextProvider;
+            this.httpRequestState = httpRequestState;
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
@@ -52,7 +52,7 @@ namespace Newsgirl.Server
             {
                 var (profile, login) = await this.authService.CreateProfile(req.Email, req.Password);
 
-                var session = await this.authService.CreateSession(login.LoginID, false);
+                var session = await this.authService.CreateSession(login.LoginID, profile.UserProfileID, false);
 
                 var result = new RpcResult<RegisterResponse>
                 {
@@ -66,7 +66,7 @@ namespace Newsgirl.Server
 
                 await tx.CommitAsync();
 
-                var context = this.httpContextProvider.HttpContext;
+                var context = this.httpRequestState.HttpContext;
                 context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
@@ -100,7 +100,7 @@ namespace Newsgirl.Server
 
             await using (var tx = await this.db.BeginTransaction())
             {
-                var session = await this.authService.CreateSession(login.LoginID, req.RememberMe);
+                var session = await this.authService.CreateSession(login.LoginID, profile.UserProfileID, req.RememberMe);
 
                 var result = new RpcResult<LoginResponse>
                 {
@@ -114,7 +114,7 @@ namespace Newsgirl.Server
 
                 await tx.CommitAsync();
 
-                var context = this.httpContextProvider.HttpContext;
+                var context = this.httpRequestState.HttpContext;
                 context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
@@ -140,14 +140,22 @@ namespace Newsgirl.Server
         }
     }
 
-    public class AuthService
+    public interface AuthService
+    {
+        Task<UserLoginPoco> FindLogin(string username);
+        Task<UserSessionPoco> CreateSession(int loginID, int userProfileID, bool rememberMe);
+        Task<(UserProfilePoco, UserLoginPoco)> CreateProfile(string email, string password);
+        Task<UserSessionPoco> GetSession(int sessionID);
+    }
+
+    public class AuthServiceImpl : AuthService
     {
         private readonly IDbService db;
         private readonly PasswordService passwordService;
         private readonly RngService rngService;
         private readonly DateTimeService dateTimeService;
 
-        public AuthService(
+        public AuthServiceImpl(
             IDbService db,
             PasswordService passwordService,
             RngService rngService,
@@ -164,12 +172,13 @@ namespace Newsgirl.Server
             return this.db.Poco.UserLogins.FirstOrDefaultAsync(x => x.Username == username);
         }
 
-        public async Task<UserSessionPoco> CreateSession(int loginID, bool rememberMe)
+        public async Task<UserSessionPoco> CreateSession(int loginID, int userProfileID, bool rememberMe)
         {
             var session = new UserSessionPoco
             {
                 LoginDate = this.dateTimeService.EventTime(),
                 LoginID = loginID,
+                ProfileID = userProfileID,
                 ExpirationDate = rememberMe ? (DateTime?) null : this.dateTimeService.EventTime().AddHours(3),
                 CsrfToken = this.rngService.GenerateSecureString(40),
             };
@@ -212,35 +221,44 @@ namespace Newsgirl.Server
 
     public interface JwtService
     {
-        T DecodeSession<T>(string jwt);
+        T DecodeSession<T>(string jwt) where T : class;
 
-        string EncodeSession<T>(T session);
+        string EncodeSession<T>(T session) where T : class;
     }
 
     public class JwtServiceImpl : JwtService
     {
         private readonly SystemPools systemPools;
+        private readonly DateTimeService dateTimeService;
+        private readonly ErrorReporter errorReporter;
 
         // Just to satisfy the API.
         // In reality when `X509Certificate2` is used the byte[] key is ignored.
         // The method checks it for NULL and for Length - therefore the length of 1.
         private static readonly byte[] DummyKeyArray = new byte[1];
 
-        public JwtServiceImpl(SystemPools systemPools)
+        public JwtServiceImpl(SystemPools systemPools, DateTimeService dateTimeService, ErrorReporter errorReporter)
         {
             this.systemPools = systemPools;
+            this.dateTimeService = dateTimeService;
+            this.errorReporter = errorReporter;
         }
 
-        public T DecodeSession<T>(string jwt)
+        public T DecodeSession<T>(string jwt) where T : class
         {
             var cert = this.systemPools.JwtSigningCertificates.Get();
 
             try
             {
                 var serializer = new JsonNetSerializer();
-                var validator = new JwtValidator(serializer, new UtcDateTimeProvider());
+                var validator = new JwtValidator(serializer, new CustomDateTimeProvider(this.dateTimeService));
                 var decoder = new JwtDecoder(serializer, validator, new JwtBase64UrlEncoder(), new RSAlgorithmFactory(() => cert));
                 return decoder.DecodeToObject<T>(jwt, DummyKeyArray, true);
+            }
+            catch (Exception ex)
+            {
+                this.errorReporter.Error(ex);
+                return null;
             }
             finally
             {
@@ -248,7 +266,7 @@ namespace Newsgirl.Server
             }
         }
 
-        public string EncodeSession<T>(T session)
+        public string EncodeSession<T>(T session) where T : class
         {
             var cert = this.systemPools.JwtSigningCertificates.Get();
 
@@ -265,6 +283,21 @@ namespace Newsgirl.Server
             finally
             {
                 this.systemPools.JwtSigningCertificates.Return(cert);
+            }
+        }
+
+        private class CustomDateTimeProvider : IDateTimeProvider
+        {
+            private readonly DateTimeService dateTimeService;
+
+            public CustomDateTimeProvider(DateTimeService dateTimeService)
+            {
+                this.dateTimeService = dateTimeService;
+            }
+
+            public DateTimeOffset GetNow()
+            {
+                return this.dateTimeService.CurrentTime();
             }
         }
     }

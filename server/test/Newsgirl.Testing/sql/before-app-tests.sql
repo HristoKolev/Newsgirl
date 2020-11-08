@@ -83,6 +83,7 @@ create table public.user_sessions (
     csrf_token text not null,
 
     login_id int not null references user_logins,
+    profile_id int not null references user_profiles,
 
     primary key (session_id)
 );

@@ -49,6 +49,22 @@ namespace Newsgirl.Server.Tests
         }
 
         protected virtual void ConfigureMocks(ContainerBuilder builder) { }
+
+        protected async Task<RegisterResponse> CreateProfile()
+        {
+            var registerResult = await this.RpcClient.Register(new RegisterRequest
+            {
+                Email = "test123@abc.de",
+                Password = "test123",
+            });
+
+            if (!registerResult.IsOk)
+            {
+                throw new DetailedLogException("The `RegisterRequest` call failed.");
+            }
+
+            return registerResult.Payload;
+        }
     }
 
     public class FunctionAutofacModule : Module
@@ -63,7 +79,6 @@ namespace Newsgirl.Server.Tests
         protected override void Load(ContainerBuilder builder)
         {
             this.func(builder);
-
             base.Load(builder);
         }
     }
@@ -149,17 +164,16 @@ namespace Newsgirl.Server.Tests
 
     public class TestRpcClient : RpcClient
     {
+        private const string CSRF_TOKEN_HEADER = "Csrf-Token";
+
         private readonly HttpClient httpClient;
         private readonly HttpClientHandler httpClientHandler;
 
-        public Dictionary<string, string> Cookies
-        {
-            get
-            {
-                var cookies = this.httpClientHandler.CookieContainer.GetCookies(new Uri("http://127.0.0.1"));
-                return cookies.ToDictionary(x => x.Name, x => x.Value);
-            }
-        }
+        public Dictionary<string, string> Cookies =>
+            this.httpClientHandler.CookieContainer.GetCookies(this.httpClient.BaseAddress)
+                .ToDictionary(x => x.Name, x => x.Value);
+
+        public string CsrfToken { get; set; }
 
         public TestRpcClient(string address)
         {
@@ -173,35 +187,40 @@ namespace Newsgirl.Server.Tests
 
         protected override async Task<RpcResult<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
         {
-            string rpcRequestType = request.GetType().Name;
-            string json = JsonSerializer.Serialize(request);
-
-            var content = new StringContent(json, EncodingHelper.UTF8, "application/json");
-            var requestUri = new Uri("/rpc/" + rpcRequestType, UriKind.Relative);
-
-            var response = await this.httpClient.PostAsync(requestUri, content);
-            response.EnsureSuccessStatusCode();
-
-            this.SecureCookiesWorkaround(response.Headers);
-
-            string responseBody = await response.Content.ReadAsStringAsync();
-
             var serializerOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             };
 
+            var response = await this.httpClient.SendAsync(new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                Headers = {{CSRF_TOKEN_HEADER, this.CsrfToken}},
+                RequestUri = new Uri("/rpc/" + request.GetType().Name, UriKind.Relative),
+                Content = new StringContent(
+                    JsonSerializer.Serialize(request, serializerOptions),
+                    EncodingHelper.UTF8,
+                    "application/json"
+                ),
+            });
+
+            response.EnsureSuccessStatusCode();
+
+            this.SecureCookiesWorkaround(response.Headers);
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+
             var result = JsonSerializer.Deserialize<RpcResult<TResponse>>(responseBody, serializerOptions);
 
             if (result.Payload is LoginResponse loginResponse)
             {
-                this.httpClient.DefaultRequestHeaders.Add("Csrf-Token", loginResponse.CsrfToken);
+                this.CsrfToken = loginResponse.CsrfToken;
             }
 
             if (result.Payload is RegisterResponse registerResponse)
             {
-                this.httpClient.DefaultRequestHeaders.Add("Csrf-Token", registerResponse.CsrfToken);
+                this.CsrfToken = registerResponse.CsrfToken;
             }
 
             return result;

@@ -201,22 +201,9 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task ProfileInfoWorks()
         {
-            string email = "test123@abc.de";
-            string password = "test123";
-
-            var authService = this.App.IoC.Resolve<AuthService>();
-            await authService.CreateProfile(email, password);
-
-            var result = await this.RpcClient.Login(new LoginRequest
-            {
-                Username = email,
-                Password = password,
-            });
-
-            var c = this.RpcClient.Cookies;
-            Console.WriteLine(c);
-
-            var info = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
+            await this.CreateProfile();
+    
+            var result = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
 
             Snapshot.Match(result);
         }

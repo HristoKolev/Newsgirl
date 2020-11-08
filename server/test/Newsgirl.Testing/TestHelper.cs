@@ -10,6 +10,7 @@ using Xunit;
 namespace Newsgirl.Testing
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -647,6 +648,29 @@ namespace Newsgirl.Testing
         public bool VerifyPassword(string password, string passwordHash)
         {
             return passwordHash.Remove(passwordHash.Length - 2, 2).Remove(0, 2) == password;
+        }
+    }
+    
+    public class FalsyStringData : IEnumerable<object[]>
+    {
+        private static readonly object[][] Data = {
+            new object[] {null},
+            new object[] {""},
+            new object[] {" "},
+            new object[] {"  "},
+            new object[] {"\t"},
+            new object[] {"\r"},
+            new object[] {"\n"},
+        };
+        
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            return ((IEnumerable<object[]>) Data).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }

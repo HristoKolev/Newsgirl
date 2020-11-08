@@ -56,21 +56,16 @@ namespace Newsgirl.Server
 
             var cookieHeaderParts = cookieHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-            if (cookieHeaderParts.Length == 0)
-            {
-                return null;
-            }
-
             var cookieValues = new Dictionary<string, string>();
 
             for (int i = 0; i < cookieHeaderParts.Length; i++)
             {
-                string[] kvp = cookieHeaderParts[i].Split('=', StringSplitOptions.RemoveEmptyEntries);
+                string[] cookieParts = cookieHeaderParts[i].Split('=', StringSplitOptions.RemoveEmptyEntries);
 
-                if (kvp.Length == 2)
+                if (cookieParts.Length == 2)
                 {
-                    string key = kvp[0];
-                    string value = kvp[1];
+                    string key = cookieParts[0];
+                    string value = cookieParts[1];
 
                     if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
                     {
@@ -112,7 +107,7 @@ namespace Newsgirl.Server
                 return AuthResult.Anonymous; // non existent session
             }
 
-            if (userSession.ExpirationDate.HasValue && this.dateTimeService.EventTime() > userSession.ExpirationDate.Value)
+            if (userSession.ExpirationDate.HasValue && this.dateTimeService.EventTime() >= userSession.ExpirationDate.Value)
             {
                 return AuthResult.Anonymous; // expired session
             }
@@ -123,6 +118,7 @@ namespace Newsgirl.Server
             {
                 SessionID = userSession.SessionID,
                 LoginID = userSession.LoginID,
+                ProfileID = userSession.ProfileID,
                 ValidCsrfToken = userSession.CsrfToken == csrfToken,
             };
 
@@ -130,7 +126,7 @@ namespace Newsgirl.Server
         }
     }
 
-    [DebuggerDisplay("SessionID = {" + nameof(SessionID) + "}, ValidCsrfToken = {" + nameof(ValidCsrfToken) + "}")]
+    [DebuggerDisplay("ProfileID = {" + nameof(ProfileID) + "}, ValidCsrfToken = {" + nameof(ValidCsrfToken) + "}")]
     public class AuthResult
     {
         public static readonly AuthResult Anonymous = new AuthResult();
@@ -139,6 +135,8 @@ namespace Newsgirl.Server
 
         public int LoginID { get; set; }
 
+        public int ProfileID { get; set; }
+        
         public bool ValidCsrfToken { get; set; }
     }
 }

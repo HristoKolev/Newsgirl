@@ -148,26 +148,28 @@ namespace Newsgirl.Server
 
         private async Task ProcessHttpRequest(HttpContext context)
         {
-            var requestPath = context.Request.Path;
-
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
-                var httpContextProvider = requestScope.Resolve<HttpContextProvider>();
-                
+                // Use this for request scoped state like the reference to the HttpContext object.
+                var httpRequestState = requestScope.Resolve<HttpRequestState>();
+
                 // Set the context first before resolving anything else.
-                httpContextProvider.HttpContext = context;
+                httpRequestState.HttpContext = context;
 
-                var authFilter = requestScope.Resolve<AuthenticationFilter>();
-                var authResult = await authFilter.Authenticate(context.Request.Headers);
+                // Set the result of the authentication step.
+                var authenticationFilter = requestScope.Resolve<AuthenticationFilter>();
+                httpRequestState.AuthResult = await authenticationFilter.Authenticate(context.Request.Headers);
 
-                httpContextProvider.AuthResult = authResult;
+                var requestPath = context.Request.Path;
 
                 const string RPC_ROUTE_PATH = "/rpc";
                 if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length + 1)
                 {
                     string rpcRequestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length + 1);
-                    var handler = requestScope.Resolve<RpcRequestHandler>();
-                    await handler.HandleRequest(context, rpcRequestType);
+
+                    var rpcRequestHandler = requestScope.Resolve<RpcRequestHandler>();
+                    await rpcRequestHandler.HandleRequest(context, rpcRequestType);
+
                     return;
                 }
 
@@ -363,10 +365,10 @@ namespace Newsgirl.Server
         public ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
     }
 
-    public class HttpContextProvider
+    public class HttpRequestState
     {
         public HttpContext HttpContext { get; set; }
-        
+
         public AuthResult AuthResult { get; set; }
     }
 
@@ -393,12 +395,12 @@ namespace Newsgirl.Server
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
-            builder.RegisterType<AuthService>().InstancePerLifetimeScope();
+            builder.RegisterType<AuthServiceImpl>().As<AuthService>().InstancePerLifetimeScope();
             builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
             builder.RegisterType<AuthenticationFilter>().InstancePerLifetimeScope();
-            builder.RegisterType<HttpContextProvider>().InstancePerLifetimeScope();
+            builder.RegisterType<HttpRequestState>().InstancePerLifetimeScope();
 
             // Always create
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();

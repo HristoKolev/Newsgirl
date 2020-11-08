@@ -833,6 +833,21 @@ namespace Newsgirl.Shared
         public int LoginID { get; set; }
 
         /// <summary>
+        /// <para>Column name: 'profile_id'.</para>
+        /// <para>Table name: 'user_sessions'.</para>
+        /// <para>Foreign key column [public.user_sessions.profile_id -> public.user_profiles.user_profile_id].</para>
+        /// <para>Foreign key constraint name: 'user_sessions_profile_id_fkey'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'integer'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
+        /// <para>CLR type: 'int'.</para>
+        /// <para>linq2db data type: 'DataType.Int32'.</para>
+        /// </summary>
+        [LinqToDB.Mapping.NotNull]
+        [Column(Name = "profile_id", DataType = DataType.Int32)]
+        public int ProfileID { get; set; }
+
+        /// <summary>
         /// <para>Column name: 'session_id'.</para>
         /// <para>Table name: 'user_sessions'.</para>
         /// <para>Primary key of table: 'user_sessions'.</para>
@@ -869,6 +884,11 @@ namespace Newsgirl.Shared
                 new NpgsqlParameter<int>
                 {
                     TypedValue = this.LoginID,
+                    NpgsqlDbType = NpgsqlDbType.Integer,
+                },
+                new NpgsqlParameter<int>
+                {
+                    TypedValue = this.ProfileID,
                     NpgsqlDbType = NpgsqlDbType.Integer,
                 },
             };
@@ -912,6 +932,8 @@ namespace Newsgirl.Shared
             await importer.WriteAsync(this.LoginDate, NpgsqlDbType.Timestamp);
 
             await importer.WriteAsync(this.LoginID, NpgsqlDbType.Integer);
+
+            await importer.WriteAsync(this.ProfileID, NpgsqlDbType.Integer);
         }
 
         public static TableMetadataModel Metadata => DbMetadata.UserSessionPocoMetadata;
@@ -2139,6 +2161,42 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "profile_id",
+                        DbDataType = "integer",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("True"),
+                        ForeignKeyConstraintName = "user_sessions_profile_id_fkey" == string.Empty ? null : "user_sessions_profile_id_fkey",
+                        ForeignKeyReferenceColumnName = "user_profile_id" == string.Empty ? null : "user_profile_id",
+                        ForeignKeyReferenceSchemaName = "public" == string.Empty ? null : "public",
+                        ForeignKeyReferenceTableName = "user_profiles" == string.Empty ? null : "user_profiles",
+                        PropertyName = "ProfileID",
+                        TableName = "user_sessions",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "int",
+                            ClrType = typeof(int),
+                            ClrNonNullableTypeName = "int",
+                            ClrNonNullableType = typeof(int),
+                            ClrNullableTypeName = "int?",
+                            ClrNullableType = typeof(int?),
+                            DbDataType = "integer",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int32",
+                            Linq2DbDataType = DataType.Int32,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
+                            NpgsqlDbType = NpgsqlDbType.Integer,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "session_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -2178,6 +2236,7 @@ namespace Newsgirl.Shared
                     "expiration_date",
                     "login_date",
                     "login_id",
+                    "profile_id",
                 },
             };
 
