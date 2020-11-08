@@ -27,7 +27,7 @@ namespace Newsgirl.Server
         public static readonly RpcEngineOptions RpcEngineOptions = new RpcEngineOptions
         {
             PotentialHandlerTypes = typeof(HttpServerApp).Assembly.GetTypes(),
-            MiddlewareTypes = new[] {typeof(RpcAuthenticationMiddleware)},
+            MiddlewareTypes = new[] {typeof(RpcAuthenticationMiddleware), typeof(RpcInputValidationMiddleware)},
             ParameterTypeWhitelist = new[] {typeof(AuthResult)},
         };
 
@@ -402,6 +402,7 @@ namespace Newsgirl.Server
             builder.RegisterType<AuthenticationFilter>().InstancePerLifetimeScope();
             builder.RegisterType<HttpRequestState>().InstancePerLifetimeScope();
             builder.RegisterType<RpcAuthenticationMiddleware>().InstancePerLifetimeScope();
+            builder.RegisterType<RpcInputValidationMiddleware>().InstancePerLifetimeScope();
 
             // Always create
             var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();

@@ -2,7 +2,7 @@
   "login": {
     "Enabled": true,
     "LoginID": 1,
-    "PasswordHash": "$$test123$$",
+    "PasswordHash": "$$password123$$",
     "Username": "test@abc.de",
     "UserProfileID": 1,
     "VerificationCode": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",

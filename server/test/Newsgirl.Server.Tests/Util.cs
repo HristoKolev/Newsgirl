@@ -32,6 +32,10 @@ namespace Newsgirl.Server.Tests
 
         protected TestRpcClient RpcClient { get; private set; }
 
+        protected const string TEST_EMAIL = "test@abc.de";
+
+        protected const string TEST_PASSWORD = "password123";
+
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
@@ -54,8 +58,8 @@ namespace Newsgirl.Server.Tests
         {
             var registerResult = await this.RpcClient.Register(new RegisterRequest
             {
-                Email = "test123@abc.de",
-                Password = "test123",
+                Email = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
             if (!registerResult.IsOk)

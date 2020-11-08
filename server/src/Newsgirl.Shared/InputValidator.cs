@@ -7,7 +7,7 @@ namespace Newsgirl.Shared
     using System.Reflection;
     using System.Text.RegularExpressions;
 
-    public class InputValidator
+    public static class InputValidator
     {
         public static RpcResult Validate<T>(T obj)
         {
@@ -19,20 +19,23 @@ namespace Newsgirl.Shared
             {
                 var validResults = new List<ValidationResult>();
 
-                bool innerIsValid = Validator.TryValidateObject(instance, new ValidationContext(instance), validResults, true);
-
-                var innerErrorMessages = validResults.Select(v => v.ErrorMessage).ToArray();
+                bool innerIsValid = Validator.TryValidateObject(
+                    instance,
+                    new ValidationContext(instance),
+                    validResults,
+                    true
+                );
 
                 if (!innerIsValid)
                 {
                     isValid = false;
                 }
 
-                errorMessages.AddRange(innerErrorMessages);
+                errorMessages.AddRange(validResults.Select(v => v.ErrorMessage));
 
                 foreach (var propertyInfo in instance.GetType().GetProperties())
                 {
-                    bool shouldValidate = propertyInfo.GetCustomAttribute<ValidateObjectAttribute>() != null;
+                    bool shouldValidate = propertyInfo.GetCustomAttribute<ValidatePropertyAttribute>() != null;
 
                     if (shouldValidate)
                     {
@@ -52,7 +55,10 @@ namespace Newsgirl.Shared
         }
     }
 
-    public class ValidateObjectAttribute : Attribute { }
+    /// <summary>
+    /// Apply this attribute to properties of CLR types that should also be validated.
+    /// </summary>
+    public class ValidatePropertyAttribute : Attribute { }
 
     public class EmailAttribute : ValidationAttribute
     {
@@ -61,13 +67,13 @@ namespace Newsgirl.Shared
             this.ErrorMessage = "Please, enter a valid email address.";
         }
 
-        private readonly Regex emailRegex =
+        private static readonly Regex EmailRegex =
             new Regex(@"(([^<>()\[\].,;:\s@""]+(\.[^<>()\[\].,;:\s@""]+)*)|("".+""))@(([^<>()[\].,;:\s@""]+\.)+[^<>()[\].,;:\s@""]{2,})",
                 RegexOptions.Compiled);
 
         public override bool IsValid(object value)
         {
-            return string.IsNullOrWhiteSpace((string) value) || this.emailRegex.IsOnlyMatch((string) value);
+            return string.IsNullOrWhiteSpace((string) value) || EmailRegex.IsOnlyMatch((string) value);
         }
     }
 }

@@ -273,8 +273,7 @@ namespace Newsgirl.Shared.Logging
             // EventDestinationCollection.ConcurrentLogCalls
             var callCounterField = typeof(EventDestinationCollection).GetField(nameof(ConcurrentLogCalls), BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-            var logMethod = typeBuilder.DefineMethod(
-                nameof(Log),
+            var logMethod = typeBuilder.DefineMethod(nameof(Log),
                 MethodAttributes.Public |
                 MethodAttributes.ReuseSlot |
                 MethodAttributes.HideBySig |

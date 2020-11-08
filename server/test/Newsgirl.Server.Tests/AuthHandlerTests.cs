@@ -21,16 +21,13 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task RegisterReturnsErrorWhenTheUsernameIsTaken()
         {
-            string email = "test@abc.de";
-            string password = "test123";
-
             var authService = this.App.IoC.Resolve<AuthService>();
-            await authService.CreateProfile(email, password);
+            await authService.CreateProfile(TEST_EMAIL, TEST_PASSWORD);
 
             var result = await this.RpcClient.Register(new RegisterRequest
             {
-                Email = email,
-                Password = password,
+                Email = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
             Snapshot.Match(result);
@@ -50,16 +47,13 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task RegisterReturnsSuccessWhenANewProfileIsCreated()
         {
-            string email = "test@abc.de";
-            string password = "test123";
-
             var result = await this.RpcClient.Register(new RegisterRequest
             {
-                Email = email,
-                Password = password,
+                Email = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
-            var profile = await this.Db.Poco.UserProfiles.FirstOrDefaultAsync(x => x.EmailAddress == email);
+            var profile = await this.Db.Poco.UserProfiles.FirstOrDefaultAsync(x => x.EmailAddress == TEST_EMAIL);
 
             var login = await this.Db.Poco.UserLogins.FirstOrDefaultAsync(x => x.UserProfileID == profile.UserProfileID);
 
@@ -85,13 +79,10 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task LoginReturnsAnErrorOnWrongUsername()
         {
-            string email = "test@abc.de";
-            string password = "test123";
-
             var result = await this.RpcClient.Login(new LoginRequest
             {
-                Username = email,
-                Password = password,
+                Username = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
             Snapshot.Match(result);
@@ -111,16 +102,13 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task LoginReturnsAnErrorOnWrongPassword()
         {
-            string email = "test123@abc.de";
-            string password = "test123";
-
             var authService = this.App.IoC.Resolve<AuthService>();
-            await authService.CreateProfile(email, password);
+            await authService.CreateProfile(TEST_EMAIL, TEST_PASSWORD);
 
             var result = await this.RpcClient.Login(new LoginRequest
             {
-                Username = email,
-                Password = password + "wrong",
+                Username = TEST_EMAIL,
+                Password = TEST_PASSWORD + "wrong",
             });
 
             Snapshot.Match(result);
@@ -140,18 +128,15 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task LoginReturnsAnErrorWhenTheLoginIsDisabled()
         {
-            string email = "test123@abc.de";
-            string password = "test123";
-
             var authService = this.App.IoC.Resolve<AuthService>();
-            var (_, login) = await authService.CreateProfile(email, password);
+            var (_, login) = await authService.CreateProfile(TEST_EMAIL, TEST_PASSWORD);
             login.Enabled = false;
             await this.Db.Save(login);
 
             var result = await this.RpcClient.Login(new LoginRequest
             {
-                Username = email,
-                Password = password,
+                Username = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
             Snapshot.Match(result);
@@ -171,16 +156,13 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public async Task LoginWorksInTheCorrectCase()
         {
-            string email = "test123@abc.de";
-            string password = "test123";
-
             var authService = this.App.IoC.Resolve<AuthService>();
-            await authService.CreateProfile(email, password);
+            await authService.CreateProfile(TEST_EMAIL, TEST_PASSWORD);
 
             var result = await this.RpcClient.Login(new LoginRequest
             {
-                Username = email,
-                Password = password,
+                Username = TEST_EMAIL,
+                Password = TEST_PASSWORD,
             });
 
             Snapshot.Match(result);

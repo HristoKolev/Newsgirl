@@ -318,7 +318,7 @@ namespace Newsgirl.Server
         public string Email { get; set; }
 
         [Required(ErrorMessage = "The password field is required.")]
-        [StringLength(10, MinimumLength = 40, ErrorMessage = "The password must be at least 10 and 40 characters long.")]
+        [StringLength(40, MinimumLength = 10, ErrorMessage = "The password must be at least 10 and 40 characters long.")]
         public string Password { get; set; }
     }
 

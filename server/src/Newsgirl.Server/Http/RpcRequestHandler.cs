@@ -272,6 +272,22 @@ namespace Newsgirl.Server.Http
         }
     }
 
+    public class RpcInputValidationMiddleware : RpcMiddleware
+    {
+        public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        {
+            var validationResult = InputValidator.Validate(context.RequestMessage.Payload);
+
+            if (!validationResult.IsOk)
+            {
+                context.SetResponse(validationResult);
+                return;
+            }
+
+            await next(context, instanceProvider);
+        }
+    }
+
     public class RpcAuthAttribute : RpcSupplementalAttribute
     {
         public bool RequiresAuthentication { get; set; }

@@ -3,7 +3,7 @@
   "IsOk": true,
   "Payload": {
     "CsrfToken": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "EmailAddress": "test123@abc.de",
+    "EmailAddress": "test@abc.de",
     "UserProfileID": 1
   }
 }
