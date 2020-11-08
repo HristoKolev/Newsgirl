@@ -240,6 +240,43 @@ namespace Newsgirl.Server.Http
         }
     }
 
+    public class RpcAuthenticationMiddleware : RpcMiddleware
+    {
+        private static readonly RpcAuthAttribute DefaultAuthAttribute = new RpcAuthAttribute
+        {
+            RequiresAuthentication = true,
+        };
+
+        private readonly HttpRequestState httpRequestState;
+
+        public RpcAuthenticationMiddleware(HttpRequestState httpRequestState)
+        {
+            this.httpRequestState = httpRequestState;
+        }
+
+        public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
+        {
+            var authAttribute = context.GetSupplementalAttribute<RpcAuthAttribute>() ?? DefaultAuthAttribute;
+
+            var authResult = this.httpRequestState.AuthResult;
+
+            bool isAuthenticated = authResult.IsAuthenticated && authResult.ValidCsrfToken;
+
+            if (authAttribute.RequiresAuthentication && !isAuthenticated)
+            {
+                context.SetResponse(RpcResult.Error("Unauthorized access."));
+                return;
+            }
+
+            await next(context, instanceProvider);
+        }
+    }
+
+    public class RpcAuthAttribute : RpcSupplementalAttribute
+    {
+        public bool RequiresAuthentication { get; set; }
+    }
+
     public class HttpLogData
     {
         // ReSharper disable MemberCanBePrivate.Global

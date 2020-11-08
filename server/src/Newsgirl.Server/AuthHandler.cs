@@ -3,6 +3,7 @@ namespace Newsgirl.Server
     using System;
     using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
+    using Http;
     using JWT;
     using JWT.Algorithms;
     using JWT.Serializers;
@@ -10,6 +11,7 @@ namespace Newsgirl.Server
     using Shared;
     using Shared.Postgres;
 
+    [RpcAuth(RequiresAuthentication = false)]
     public class AuthHandler
     {
         private readonly IDbService db;
@@ -66,8 +68,8 @@ namespace Newsgirl.Server
 
                 await tx.CommitAsync();
 
-                var context = this.httpRequestState.HttpContext;
-                context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
+                this.httpRequestState.HttpContext.Response
+                    .Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
             }
@@ -114,26 +116,21 @@ namespace Newsgirl.Server
 
                 await tx.CommitAsync();
 
-                var context = this.httpRequestState.HttpContext;
-                context.Response.Headers["Set-Cookie"] = this.FormatCookie(session);
+                this.httpRequestState.HttpContext.Response
+                    .Headers["Set-Cookie"] = this.FormatCookie(session);
 
                 return result;
             }
         }
 
-        [RpcBind(typeof(ProfileInfoRequest), typeof(ProfileInfoResponse))]
-#pragma warning disable 1998
-        public async Task<ProfileInfoResponse> ProfileInfo(ProfileInfoRequest req)
-#pragma warning restore 1998
-        {
-            return new ProfileInfoResponse();
-        }
-
         private string FormatCookie(UserSessionPoco session)
         {
-            var payload = new JwtPayload {SessionID = session.SessionID};
-            string jwt = this.jwtService.EncodeSession(payload);
+            var jwtPayload = new JwtPayload {SessionID = session.SessionID};
+
+            string jwt = this.jwtService.EncodeSession(jwtPayload);
+
             DateTime expirationDate = session.ExpirationDate ?? this.dateTimeService.EventTime().AddYears(1000);
+
             string cookie = $"jwt={jwt}; Expires={expirationDate:R}; Path=/; Secure; HttpOnly";
 
             return cookie;
@@ -143,8 +140,11 @@ namespace Newsgirl.Server
     public interface AuthService
     {
         Task<UserLoginPoco> FindLogin(string username);
+
         Task<UserSessionPoco> CreateSession(int loginID, int userProfileID, bool rememberMe);
+
         Task<(UserProfilePoco, UserLoginPoco)> CreateProfile(string email, string password);
+
         Task<UserSessionPoco> GetSession(int sessionID);
     }
 

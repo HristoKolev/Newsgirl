@@ -1,8 +1,10 @@
 namespace Newsgirl.Server
 {
     using System.Threading.Tasks;
+    using Http;
     using Shared;
 
+    [RpcAuth(RequiresAuthentication = false)]
     public class PingHandler
     {
         [RpcBind(typeof(PingRequest), typeof(PingResponse))]

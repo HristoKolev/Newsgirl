@@ -518,7 +518,7 @@ namespace Newsgirl.Shared
     /// </summary>
     public class RpcResult
     {
-        public bool IsOk => this.ErrorMessages == null || this.ErrorMessages.Length == 0;
+        public bool IsOk => this.ErrorMessages == default || this.ErrorMessages.Length == 0;
 
         public string[] ErrorMessages { get; set; }
 

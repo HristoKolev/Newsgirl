@@ -131,12 +131,14 @@ namespace Newsgirl.Server
     {
         public static readonly AuthResult Anonymous = new AuthResult();
 
+        public bool IsAuthenticated => this.SessionID > 0;
+
         public int SessionID { get; set; }
 
         public int LoginID { get; set; }
 
         public int ProfileID { get; set; }
-        
+
         public bool ValidCsrfToken { get; set; }
     }
 }

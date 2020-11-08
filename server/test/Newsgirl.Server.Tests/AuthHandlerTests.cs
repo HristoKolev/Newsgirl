@@ -1,6 +1,5 @@
 namespace Newsgirl.Server.Tests
 {
-    using System;
     using System.Threading.Tasks;
     using Autofac;
     using LinqToDB;
@@ -202,7 +201,7 @@ namespace Newsgirl.Server.Tests
         public async Task ProfileInfoWorks()
         {
             await this.CreateProfile();
-    
+
             var result = await this.RpcClient.ProfileInfo(new ProfileInfoRequest());
 
             Snapshot.Match(result);

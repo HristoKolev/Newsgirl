@@ -650,10 +650,11 @@ namespace Newsgirl.Testing
             return passwordHash.Remove(passwordHash.Length - 2, 2).Remove(0, 2) == password;
         }
     }
-    
+
     public class FalsyStringData : IEnumerable<object[]>
     {
-        private static readonly object[][] Data = {
+        private static readonly object[][] Data =
+        {
             new object[] {null},
             new object[] {""},
             new object[] {" "},
@@ -662,7 +663,7 @@ namespace Newsgirl.Testing
             new object[] {"\r"},
             new object[] {"\n"},
         };
-        
+
         public IEnumerator<object[]> GetEnumerator()
         {
             return ((IEnumerable<object[]>) Data).GetEnumerator();
