@@ -124,7 +124,7 @@ namespace Newsgirl.Testing
                         {
                             string json = ResourceHelper.GetString("test-config.json").Result;
 
-                            _testConfig = JsonConvert.DeserializeObject<TestConfig>(json);
+                            _testConfig = System.Text.Json.JsonSerializer.Deserialize<TestConfig>(json);
                         }
                     }
                 }

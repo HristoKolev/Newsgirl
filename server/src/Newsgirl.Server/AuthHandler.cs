@@ -228,7 +228,7 @@ namespace Newsgirl.Server
 
     public class JwtServiceImpl : JwtService
     {
-        private readonly SystemPools systemPools;
+        private readonly SessionCertificatePool sessionCertificatePool;
         private readonly DateTimeService dateTimeService;
         private readonly ErrorReporter errorReporter;
 
@@ -237,16 +237,16 @@ namespace Newsgirl.Server
         // The method checks it for NULL and for Length - therefore the length of 1.
         private static readonly byte[] DummyKeyArray = new byte[1];
 
-        public JwtServiceImpl(SystemPools systemPools, DateTimeService dateTimeService, ErrorReporter errorReporter)
+        public JwtServiceImpl(SessionCertificatePool sessionCertificatePool, DateTimeService dateTimeService, ErrorReporter errorReporter)
         {
-            this.systemPools = systemPools;
+            this.sessionCertificatePool = sessionCertificatePool;
             this.dateTimeService = dateTimeService;
             this.errorReporter = errorReporter;
         }
 
         public T DecodeSession<T>(string jwt) where T : class
         {
-            var cert = this.systemPools.JwtSigningCertificates.Get();
+            var cert = this.sessionCertificatePool.Get();
 
             try
             {
@@ -262,13 +262,13 @@ namespace Newsgirl.Server
             }
             finally
             {
-                this.systemPools.JwtSigningCertificates.Return(cert);
+                this.sessionCertificatePool.Return(cert);
             }
         }
 
         public string EncodeSession<T>(T session) where T : class
         {
-            var cert = this.systemPools.JwtSigningCertificates.Get();
+            var cert = this.sessionCertificatePool.Get();
 
             try
             {
@@ -282,7 +282,7 @@ namespace Newsgirl.Server
             }
             finally
             {
-                this.systemPools.JwtSigningCertificates.Return(cert);
+                this.sessionCertificatePool.Return(cert);
             }
         }
 

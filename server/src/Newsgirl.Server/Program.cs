@@ -5,13 +5,13 @@ namespace Newsgirl.Server
     using System.IO;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
     using Http;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.ObjectPool;
-    using Newtonsoft.Json;
     using Shared;
     using Shared.Logging;
     using Shared.Postgres;
@@ -27,7 +27,11 @@ namespace Newsgirl.Server
         public static readonly RpcEngineOptions RpcEngineOptions = new RpcEngineOptions
         {
             PotentialHandlerTypes = typeof(HttpServerApp).Assembly.GetTypes(),
-            MiddlewareTypes = new[] {typeof(RpcAuthenticationMiddleware), typeof(RpcInputValidationMiddleware)},
+            MiddlewareTypes = new[]
+            {
+                typeof(RpcAuthenticationMiddleware),
+                typeof(RpcInputValidationMiddleware),
+            },
             ParameterTypeWhitelist = new[] {typeof(AuthResult)},
         };
 
@@ -39,7 +43,7 @@ namespace Newsgirl.Server
 
         public SystemSettingsModel SystemSettings { get; set; }
 
-        public SystemPools SystemPools { get; set; }
+        public SessionCertificatePool SessionCertificatePool { get; set; }
 
         public StructuredLogger Log { get; set; }
 
@@ -134,7 +138,7 @@ namespace Newsgirl.Server
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-            this.SystemPools = new SystemPoolsImpl(this.SystemSettings);
+            this.SessionCertificatePool = new SessionCertificatePool(this.SystemSettings);
 
             this.Server = new CustomHttpServerImpl();
             this.Server.Started += addresses => this.Log.General(() => $"HTTP server is UP on {string.Join("; ", addresses)} ...");
@@ -181,7 +185,7 @@ namespace Newsgirl.Server
         {
             if (this.InjectedAppConfig == null)
             {
-                this.AppConfig = JsonConvert.DeserializeObject<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+                this.AppConfig = JsonSerializer.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             }
             else
             {
@@ -241,7 +245,7 @@ namespace Newsgirl.Server
 
                 this.AppConfig = null;
                 this.SystemSettings = null;
-                this.SystemPools = null;
+                this.SessionCertificatePool = null;
 
                 if (this.Log != null)
                 {
@@ -346,23 +350,27 @@ namespace Newsgirl.Server
         public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
     }
 
-    public interface SystemPools
+    public class SessionCertificatePool : DefaultObjectPool<X509Certificate2>
     {
-        ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
-    }
+        private const int MAXIMUM_RETAINED = 128;
 
-    public class SystemPoolsImpl : SystemPools
-    {
-        public SystemPoolsImpl(SystemSettingsModel systemSettings)
+        public SessionCertificatePool(SystemSettingsModel systemSettings) :
+            base(new SessionCertificatePoolPolicy(systemSettings.SessionCertificate), MAXIMUM_RETAINED) { }
+
+        private class SessionCertificatePoolPolicy : DefaultPooledObjectPolicy<X509Certificate2>
         {
-            var factory = new FunctionFactoryObjectPolicy<X509Certificate2>(
-                () => new X509Certificate2(systemSettings.SessionCertificate)
-            );
+            public SessionCertificatePoolPolicy(byte[] certificateBytes)
+            {
+                this.certificateBytes = certificateBytes;
+            }
 
-            this.JwtSigningCertificates = new DefaultObjectPool<X509Certificate2>(factory, 128);
+            private readonly byte[] certificateBytes;
+
+            public override X509Certificate2 Create()
+            {
+                return new X509Certificate2(this.certificateBytes);
+            }
         }
-
-        public ObjectPool<X509Certificate2> JwtSigningCertificates { get; }
     }
 
     public class HttpRequestState
@@ -390,7 +398,7 @@ namespace Newsgirl.Server
 
             builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
-            builder.Register((c, p) => this.app.SystemPools).ExternallyOwned();
+            builder.Register((c, p) => this.app.SessionCertificatePool).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();

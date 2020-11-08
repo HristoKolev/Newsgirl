@@ -11,17 +11,17 @@ namespace Newsgirl.Shared
 
     public class PasswordServiceImpl : PasswordService
     {
-        private static readonly HashType HashType = HashType.SHA512;
-        private static readonly int WorkFactor = 12;
+        private const HashType HASH_TYPE = HashType.SHA512;
+        private const int WORK_FACTOR = 12;
 
         public string HashPassword(string password)
         {
-            return BCrypt.EnhancedHashPassword(password, HashType, WorkFactor);
+            return BCrypt.EnhancedHashPassword(password, HASH_TYPE, WORK_FACTOR);
         }
 
         public bool VerifyPassword(string password, string passwordHash)
         {
-            return BCrypt.EnhancedVerify(password, passwordHash, HashType);
+            return BCrypt.EnhancedVerify(password, passwordHash, HASH_TYPE);
         }
     }
 }

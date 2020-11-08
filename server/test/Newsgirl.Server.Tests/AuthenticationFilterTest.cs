@@ -277,16 +277,12 @@ namespace Newsgirl.Server.Tests
 
         private static JwtServiceImpl CreateJwtService()
         {
-            var systemPools = new SystemPoolsImpl(new SystemSettingsModel
+            var pool = new SessionCertificatePool(new SystemSettingsModel
             {
                 SessionCertificate = Convert.FromBase64String(SESSION_CERTIFICATE_BASE64),
             });
 
-            var jwtService = new JwtServiceImpl(
-                systemPools,
-                TestHelper.DateTimeServiceStub,
-                new ErrorReporterMock()
-            );
+            var jwtService = new JwtServiceImpl(pool, TestHelper.DateTimeServiceStub, new ErrorReporterMock());
 
             return jwtService;
         }

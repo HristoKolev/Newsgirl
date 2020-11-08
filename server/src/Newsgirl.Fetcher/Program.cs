@@ -3,9 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
-    using Newtonsoft.Json;
     using Shared;
     using Shared.Logging;
     using Shared.Postgres;
@@ -75,7 +75,7 @@
         {
             if (this.InjectedAppConfig == null)
             {
-                this.AppConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+                this.AppConfig = JsonSerializer.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             }
             else
             {

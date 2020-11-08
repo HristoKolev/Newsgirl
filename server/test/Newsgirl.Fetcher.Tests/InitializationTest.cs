@@ -2,10 +2,10 @@ namespace Newsgirl.Fetcher.Tests
 {
     using System.IO;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Core;
-    using Newtonsoft.Json;
     using Testing;
     using Xunit;
 
@@ -19,7 +19,7 @@ namespace Newsgirl.Fetcher.Tests
             };
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
-            var injectedConfig = JsonConvert.DeserializeObject<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+            var injectedConfig = JsonSerializer.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
             injectedConfig.ConnectionString = this.ConnectionString;
             app.InjectedAppConfig = injectedConfig;
 
