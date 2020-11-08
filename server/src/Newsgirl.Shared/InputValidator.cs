@@ -9,7 +9,7 @@ namespace Newsgirl.Shared
 
     public static class InputValidator
     {
-        public static RpcResult Validate<T>(T obj)
+        public static Result Validate<T>(T obj)
         {
             bool isValid = true;
 
@@ -48,10 +48,10 @@ namespace Newsgirl.Shared
 
             if (isValid)
             {
-                return RpcResult.Ok();
+                return Result.Ok();
             }
 
-            return RpcResult.Error(errorMessages.ToArray());
+            return Result.Error(errorMessages.ToArray());
         }
     }
 

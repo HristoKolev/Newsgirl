@@ -395,9 +395,9 @@ namespace Newsgirl.Server.Tests
         public class IncrementHandler
         {
             [RpcBind(typeof(IncrementTestRequest), typeof(IncrementTestResponse))]
-            public Task<RpcResult<IncrementTestResponse>> Increment(IncrementTestRequest req)
+            public Task<Result<IncrementTestResponse>> Increment(IncrementTestRequest req)
             {
-                var result = RpcResult.Ok(new IncrementTestResponse
+                var result = Result.Ok(new IncrementTestResponse
                 {
                     Num = req.Num + 1,
                 });
@@ -406,7 +406,7 @@ namespace Newsgirl.Server.Tests
             }
 
             [RpcBind(typeof(ThrowingTestRequest), typeof(ThrowingTestResponse))]
-            public Task<RpcResult<ThrowingTestResponse>> Increment(ThrowingTestRequest req)
+            public Task<Result<ThrowingTestResponse>> Increment(ThrowingTestRequest req)
             {
                 throw new DetailedLogException("Throwing from inside of a handler.");
             }

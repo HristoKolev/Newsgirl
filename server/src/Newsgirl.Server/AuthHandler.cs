@@ -38,7 +38,7 @@ namespace Newsgirl.Server
         }
 
         [RpcBind(typeof(RegisterRequest), typeof(RegisterResponse))]
-        public async Task<RpcResult<RegisterResponse>> Register(RegisterRequest req)
+        public async Task<Result<RegisterResponse>> Register(RegisterRequest req)
         {
             req.Email = req.Email.Trim().ToLower();
             req.Password = req.Password.Trim();
@@ -56,7 +56,7 @@ namespace Newsgirl.Server
 
                 var session = await this.authService.CreateSession(login.LoginID, profile.UserProfileID, false);
 
-                var result = new RpcResult<RegisterResponse>
+                var result = new Result<RegisterResponse>
                 {
                     Payload = new RegisterResponse
                     {
@@ -76,7 +76,7 @@ namespace Newsgirl.Server
         }
 
         [RpcBind(typeof(LoginRequest), typeof(LoginResponse))]
-        public async Task<RpcResult<LoginResponse>> Login(LoginRequest req)
+        public async Task<Result<LoginResponse>> Login(LoginRequest req)
         {
             req.Username = req.Username.Trim().ToLower();
             req.Password = req.Password.Trim();
@@ -104,7 +104,7 @@ namespace Newsgirl.Server
             {
                 var session = await this.authService.CreateSession(login.LoginID, profile.UserProfileID, req.RememberMe);
 
-                var result = new RpcResult<LoginResponse>
+                var result = new Result<LoginResponse>
                 {
                     Payload = new LoginResponse
                     {

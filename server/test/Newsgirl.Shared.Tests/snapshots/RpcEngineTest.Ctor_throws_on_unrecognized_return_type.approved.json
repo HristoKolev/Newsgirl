@@ -2,7 +2,7 @@
   {
     "Details": {},
     "Fingerprint": null,
-    "Message": "Only Task<Newsgirl.Shared.Tests.SimpleResponse1> and Task<RpcResult<Newsgirl.Shared.Tests.SimpleResponse1>> are supported for handler method `UnrecognizedReturnTypeTestHandler.RpcMethod`.",
+    "Message": "Only Task<Newsgirl.Shared.Tests.SimpleResponse1> and Task<Result<Newsgirl.Shared.Tests.SimpleResponse1>> are supported for handler method `UnrecognizedReturnTypeTestHandler.RpcMethod`.",
     "Data": {},
     "HelpLink": null,
     "Source": "Newsgirl.Shared",

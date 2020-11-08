@@ -189,7 +189,7 @@ namespace Newsgirl.Server.Tests
             };
         }
 
-        protected override async Task<RpcResult<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
+        protected override async Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
         {
             var serializerOptions = new JsonSerializerOptions
             {
@@ -215,7 +215,7 @@ namespace Newsgirl.Server.Tests
 
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            var result = JsonSerializer.Deserialize<RpcResult<TResponse>>(responseBody, serializerOptions);
+            var result = JsonSerializer.Deserialize<Result<TResponse>>(responseBody, serializerOptions);
 
             if (result.Payload is LoginResponse loginResponse)
             {

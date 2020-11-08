@@ -31,7 +31,7 @@ namespace Newsgirl.Server.Http
         private HttpContext httpContext;
         private IMemoryOwner<byte> requestBody;
         private RpcRequestMessage rpcRequest;
-        private RpcResult<object> rpcResponse;
+        private Result<object> rpcResponse;
         private DateTime requestStart;
         private string requestType;
 
@@ -75,7 +75,7 @@ namespace Newsgirl.Server.Http
                 },
             };
 
-            RpcResult<object> result;
+            Result<object> result;
 
             try
             {
@@ -84,7 +84,7 @@ namespace Newsgirl.Server.Http
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err, "RPC_SERVER_ERROR");
-                result = RpcResult.Error<object>($"General RPC error: {errorID}");
+                result = Result.Error<object>($"General RPC error: {errorID}");
             }
             finally
             {
@@ -117,7 +117,7 @@ namespace Newsgirl.Server.Http
             await this.WriteResult(result);
         }
 
-        private async Task<RpcResult<object>> ProcessRequest()
+        private async Task<Result<object>> ProcessRequest()
         {
             // Read request body.
             try
@@ -132,20 +132,20 @@ namespace Newsgirl.Server.Http
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err);
-                return RpcResult.Error<object>($"Failed to read RPC request body: {errorID}");
+                return Result.Error<object>($"Failed to read RPC request body: {errorID}");
             }
 
             // Find request metadata.
             if (string.IsNullOrWhiteSpace(this.requestType))
             {
-                return RpcResult.Error<object>("Request type is null or an empty string.");
+                return Result.Error<object>("Request type is null or an empty string.");
             }
 
             var metadata = this.rpcEngine.GetMetadataByRequestName(this.requestType);
 
             if (metadata == null)
             {
-                return RpcResult.Error<object>($"No RPC handler for request: {this.requestType}.");
+                return Result.Error<object>($"No RPC handler for request: {this.requestType}.");
             }
 
             // Parse the RPC message.
@@ -156,7 +156,7 @@ namespace Newsgirl.Server.Http
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err);
-                return RpcResult.Error<object>($"Failed to parse RPC body: {errorID}");
+                return Result.Error<object>($"Failed to parse RPC body: {errorID}");
             }
 
             // Execute.
@@ -171,7 +171,7 @@ namespace Newsgirl.Server.Http
                     {"rpcRequest", this.rpcRequest},
                 });
 
-                return RpcResult.Error<object>($"RPC execution error ({this.rpcRequest.Type}): {errorID}");
+                return Result.Error<object>($"RPC execution error ({this.rpcRequest.Type}): {errorID}");
             }
 
             return this.rpcResponse;
@@ -220,9 +220,9 @@ namespace Newsgirl.Server.Http
         }
 
         /// <summary>
-        /// Writes a <see cref="RpcResult" /> to the HTTP response.
+        /// Writes a <see cref="Result" /> to the HTTP response.
         /// </summary>
-        private async ValueTask WriteResult<T>(RpcResult<T> result)
+        private async ValueTask WriteResult<T>(Result<T> result)
         {
             try
             {
@@ -264,7 +264,7 @@ namespace Newsgirl.Server.Http
 
             if (authAttribute.RequiresAuthentication && !isAuthenticated)
             {
-                context.SetResponse(RpcResult.Error("Unauthorized access."));
+                context.SetResponse(Result.Error("Unauthorized access."));
                 return;
             }
 
@@ -301,7 +301,7 @@ namespace Newsgirl.Server.Http
         public HttpLogData(HttpContext context,
             IMemoryOwner<byte> requestBody,
             RpcRequestMessage rpcRequest,
-            RpcResult<object> rpcResponse,
+            Result<object> rpcResponse,
             bool requestFailed,
             DateTime requestStart,
             string requestType,

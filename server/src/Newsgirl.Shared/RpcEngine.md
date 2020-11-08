@@ -8,7 +8,7 @@ The names of the methods don't matter, but they must be public non-virtual insta
 
 Handler methods can only have parameters with types the same as the request type or any types that are whitelisted in `RpcEngineOptions.ParameterTypeWhitelist`. Objects of whitelisted types will be provided by registered middleware. Middleware will be explained in detail later.
 
-The return type of a handler method must be either `Task<ResponseType>` or `Task<RpcResult<ResponseType>>`.
+The return type of a handler method must be either `Task<ResponseType>` or `Task<Result<ResponseType>>`.
 
 Here is an example of a handler that receives a number, increments it an returns it:
 
@@ -92,9 +92,9 @@ Exceptions are thrown when one of those things happen:
 * if the handler method itself throws an exception
 * if any of the middleware instances throw an exception
 
-The handler method will be invoked along with the registered middleware and will return value of the method (wrapped in `RpcResult<>` if needed) will be returned from `Execute`.
+The handler method will be invoked along with the registered middleware and will return value of the method (wrapped in `Result<>` if needed) will be returned from `Execute`.
 
-`Execute` always returns `Task<RpcResult<object>>`.   
+`Execute` always returns `Task<Result<object>>`.   
 
 The instance provider object is used to obtain an instance of the handler and middleware types (if registered).
 
@@ -180,14 +180,14 @@ public class ExampleErrorHandlingMiddleware : RpcMiddleware
         }
         catch (Exception exception)
         {
-            context.SetResponse(RpcResult.Error($"An error occurred while executing request: {exception.Message}"));
+            context.SetResponse(Result.Error($"An error occurred while executing request: {exception.Message}"));
         }
     }
 }
 
 ```
 
-In an event that the next link in the chain (another middleware or the handler itself) throws an exception, we return an error `RpcResult` to the caller, instead of propagating the exception. If you want to set the response from middleware, you need to call `SetResponse` which accepts an object of type `RpcResult`.
+In an event that the next link in the chain (another middleware or the handler itself) throws an exception, we return an error `Result` to the caller, instead of propagating the exception. If you want to set the response from middleware, you need to call `SetResponse` which accepts an object of type `Result`.
 
 ### Supplemental attributes
 
@@ -235,7 +235,7 @@ public class ExampleAuthenticationMiddleware : RpcMiddleware
             && !authResult.IsLoggedIn // and the user is not authenticated
         )
         {
-            context.SetResponse(RpcResult.Error("Unauthorized access."));
+            context.SetResponse(Result.Error("Unauthorized access."));
             return;
         }
 

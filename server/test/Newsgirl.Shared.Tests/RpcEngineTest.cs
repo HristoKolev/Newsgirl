@@ -1051,12 +1051,12 @@ namespace Newsgirl.Shared.Tests
 
         public class ResultOfResponseTypeTestHandler
         {
-            public static RpcResult<SimpleResponse1> ResultValue { get; set; }
+            public static Result<SimpleResponse1> ResultValue { get; set; }
 
             [RpcBind(typeof(SimpleRequest1), typeof(SimpleResponse1))]
-            public Task<RpcResult<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
+            public Task<Result<SimpleResponse1>> RpcMethod(SimpleRequest1 request)
             {
-                ResultValue = RpcResult.Ok(new SimpleResponse1());
+                ResultValue = Result.Ok(new SimpleResponse1());
                 return Task.FromResult(ResultValue);
             }
         }
@@ -1091,7 +1091,7 @@ namespace Newsgirl.Shared.Tests
         {
             public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                var result = RpcResult.Error("test123");
+                var result = Result.Error("test123");
 
                 context.SetResponse(result);
 
@@ -1230,9 +1230,9 @@ namespace Newsgirl.Shared.Tests
         public class ObjectTaskOfResultOfResponseTestHandler
         {
             [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
-            public Task<RpcResult<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
             {
-                return Task.FromResult(RpcResult.Ok(new ExecutorTestResponse
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse
                 {
                     Number = 123,
                 }));
@@ -1268,9 +1268,9 @@ namespace Newsgirl.Shared.Tests
         public class ObjectTaskOfResultTestHandler
         {
             [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
-            public Task<RpcResult<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
             {
-                return Task.FromResult(RpcResult.Ok(new ExecutorTestResponse
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse
                 {
                     Number = 123,
                 }));
@@ -1281,7 +1281,7 @@ namespace Newsgirl.Shared.Tests
         {
             public Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                var result = RpcResult.Error("test123");
+                var result = Result.Error("test123");
 
                 context.SetResponse(result);
 
@@ -1328,9 +1328,9 @@ namespace Newsgirl.Shared.Tests
         public class GetMetadataByRequestNameTestHandler
         {
             [RpcBind(typeof(ExecutorTestRequest), typeof(ExecutorTestResponse))]
-            public Task<RpcResult<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
+            public Task<Result<ExecutorTestResponse>> RpcMethod1(ExecutorTestRequest req)
             {
-                return Task.FromResult(RpcResult.Ok(new ExecutorTestResponse()));
+                return Task.FromResult(Result.Ok(new ExecutorTestResponse()));
             }
         }
 

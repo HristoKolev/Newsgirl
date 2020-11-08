@@ -18,7 +18,7 @@
 
     public abstract class RpcClient
     {
-        protected abstract Task<RpcResult<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request);
+        protected abstract Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request);
 
 {methods}
     }
@@ -35,7 +35,7 @@
                     methodName = methodName.Remove(methodName.Length - REQUEST_POSTFIX.Length, REQUEST_POSTFIX.Length);
                 }
 
-                return $"        public virtual Task<RpcResult<{metadata.ResponseType.Name}>> " +
+                return $"        public virtual Task<Result<{metadata.ResponseType.Name}>> " +
                        $"{methodName}({metadata.RequestType.Name} request)\n        {{\n    " +
                        $"        return this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);\n        }}";
             });

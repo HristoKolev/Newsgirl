@@ -11,7 +11,7 @@ namespace Newsgirl.Shared
     {
         private Dictionary<string, RpcRequestMetadata> metadataByRequestName;
 
-        private Func<Task, RpcResult<object>> convertReturnValue;
+        private Func<Task, Result<object>> convertReturnValue;
 
         public RpcEngine(RpcEngineOptions options)
         {
@@ -143,12 +143,12 @@ namespace Newsgirl.Shared
                 // validate return type
                 var taskWrappedResponseType = typeof(Task<>).MakeGenericType(metadata.ResponseType);
 
-                var taskAndResultWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(RpcResult<>).MakeGenericType(metadata.ResponseType));
+                var taskAndResultWrappedResponseType = typeof(Task<>).MakeGenericType(typeof(Result<>).MakeGenericType(metadata.ResponseType));
 
                 if (metadata.HandlerMethod.ReturnType != taskAndResultWrappedResponseType && metadata.HandlerMethod.ReturnType != taskWrappedResponseType)
                 {
                     throw new DetailedLogException(
-                        $"Only {nameof(Task)}<{metadata.ResponseType}> and {nameof(Task)}<{nameof(RpcResult)}<{metadata.ResponseType}>> are supported for" +
+                        $"Only {nameof(Task)}<{metadata.ResponseType}> and {nameof(Task)}<{nameof(Result)}<{metadata.ResponseType}>> are supported for" +
                         $" handler method `{metadata.DeclaringType.Name}.{metadata.HandlerMethod.Name}`.");
                 }
 
@@ -180,9 +180,9 @@ namespace Newsgirl.Shared
             this.convertReturnValue = GetConvertReturnValue();
         }
 
-        private static Func<Task, RpcResult<object>> GetConvertReturnValue()
+        private static Func<Task, Result<object>> GetConvertReturnValue()
         {
-            var method = new DynamicMethod("convertReturnValue", typeof(RpcResult<object>), new[] {typeof(Task)});
+            var method = new DynamicMethod("convertReturnValue", typeof(Result<object>), new[] {typeof(Task)});
 
             var il = method.GetILGenerator();
 
@@ -200,21 +200,21 @@ namespace Newsgirl.Shared
             il.MarkLabel(afterNullCheckLabel);
 
             il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Isinst, typeof(RpcResult));
+            il.Emit(OpCodes.Isinst, typeof(Result));
 
             var nonResultLabel = il.DefineLabel();
             il.Emit(OpCodes.Brfalse_S, nonResultLabel);
-            il.Emit(OpCodes.Callvirt, typeof(RpcResult).GetMethod(nameof(RpcResult.ToGeneralForm))!);
+            il.Emit(OpCodes.Callvirt, typeof(Result).GetMethod(nameof(Result.ToGeneralForm))!);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(nonResultLabel);
 
-            il.Emit(OpCodes.Call, typeof(RpcResult).GetMethods()
-                .First(x => x.Name == nameof(RpcResult.Ok) && x.IsGenericMethod && x.GetParameters().Length == 1)
+            il.Emit(OpCodes.Call, typeof(Result).GetMethods()
+                .First(x => x.Name == nameof(Result.Ok) && x.IsGenericMethod && x.GetParameters().Length == 1)
                 .MakeGenericMethod(typeof(object)));
             il.Emit(OpCodes.Ret);
 
-            return method.CreateDelegate<Func<Task, RpcResult<object>>>();
+            return method.CreateDelegate<Func<Task, Result<object>>>();
         }
 
         private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcRequestMetadata metadata)
@@ -356,7 +356,7 @@ namespace Newsgirl.Shared
             return run;
         }
 
-        public async Task<RpcResult<object>> Execute(RpcRequestMessage requestMessage, InstanceProvider instanceProvider)
+        public async Task<Result<object>> Execute(RpcRequestMessage requestMessage, InstanceProvider instanceProvider)
         {
             if (requestMessage == null)
             {
@@ -422,12 +422,12 @@ namespace Newsgirl.Shared
 
         public Task ResponseTask { get; set; }
 
-        public void SetResponse(RpcResult result)
+        public void SetResponse(Result result)
         {
             this.ResponseTask = Task.FromResult(result);
         }
 
-        public void SetHandlerArgument<T>(T argument)
+        public void SetHandlerArgument<T>(T argument) where T : class
         {
             this.HandlerParameters.Add(typeof(T), argument);
         }
@@ -510,89 +510,5 @@ namespace Newsgirl.Shared
         public object Payload { get; set; }
 
         public string Type { get; set; }
-    }
-
-    /// <summary>
-    /// Simple result type, uses generic T for the value and string[] for the errors.
-    /// Defines a bunch of constructor methods for convenience.
-    /// </summary>
-    public class RpcResult
-    {
-        public bool IsOk => this.ErrorMessages == default || this.ErrorMessages.Length == 0;
-
-        public string[] ErrorMessages { get; set; }
-
-        public static RpcResult Ok()
-        {
-            return new RpcResult();
-        }
-
-        public static RpcResult<T> Ok<T>(T payload)
-        {
-            return new RpcResult<T> {Payload = payload};
-        }
-
-        public static RpcResult<T> Ok<T>()
-        {
-            return new RpcResult<T> {Payload = default};
-        }
-
-        public static RpcResult<T> Error<T>(string message)
-        {
-            return new RpcResult<T> {ErrorMessages = new[] {message}};
-        }
-
-        public static RpcResult<T> Error<T>(string[] errorMessages)
-        {
-            return new RpcResult<T> {ErrorMessages = errorMessages};
-        }
-
-        public static RpcResult Error(string message)
-        {
-            return new RpcResult {ErrorMessages = new[] {message}};
-        }
-
-        public static RpcResult Error(string[] errorMessages)
-        {
-            return new RpcResult {ErrorMessages = errorMessages};
-        }
-
-        public virtual RpcResult<object> ToGeneralForm()
-        {
-            return new RpcResult<object>
-            {
-                ErrorMessages = this.ErrorMessages,
-                Payload = null,
-            };
-        }
-    }
-
-    public class RpcResult<T> : RpcResult
-    {
-        public T Payload { get; set; }
-
-        public override RpcResult<object> ToGeneralForm()
-        {
-            return new RpcResult<object>
-            {
-                Payload = this.Payload,
-                ErrorMessages = this.ErrorMessages,
-            };
-        }
-
-        public static implicit operator RpcResult<T>(T x)
-        {
-            return Ok(x);
-        }
-
-        public static implicit operator RpcResult<T>(string errorMessage)
-        {
-            return Error<T>(errorMessage);
-        }
-
-        public static implicit operator RpcResult<T>(string[] errorMessages)
-        {
-            return Error<T>(errorMessages);
-        }
     }
 }
