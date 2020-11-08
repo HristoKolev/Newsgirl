@@ -15,7 +15,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub).SingleInstance();
             builder.RegisterType<RngServiceMock>().As<RngService>().SingleInstance();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>().SingleInstance();
-            builder.RegisterType<StructuredLogMock>().As<ILog>().SingleInstance();
+            builder.RegisterType<StructuredLogMock>().As<Log>().SingleInstance();
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]
@@ -194,7 +194,7 @@ namespace Newsgirl.Server.Tests
             builder.Register((c, p) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
-            builder.RegisterType<StructuredLogMock>().As<ILog>();
+            builder.RegisterType<StructuredLogMock>().As<Log>();
         }
 
         [Fact]

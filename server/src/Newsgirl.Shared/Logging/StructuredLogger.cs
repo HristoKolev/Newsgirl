@@ -13,7 +13,7 @@ namespace Newsgirl.Shared.Logging
     /// <summary>
     /// The primary logging API. This is what gets passed around by IoC and used by other code.
     /// </summary>
-    public interface ILog
+    public interface Log
     {
         /// <summary>
         /// Enqueues an event providing the event stream name and a function that creates the event.
@@ -114,11 +114,11 @@ namespace Newsgirl.Shared.Logging
     }
 
     /// <summary>
-    /// An implementation of ILog that can hot swap EventDestinationCollection instances when the configuration changes.
+    /// An implementation of Log that can hot swap EventDestinationCollection instances when the configuration changes.
     /// Dispatches all events to the current EventDestinationCollection instance.
     /// Reconfigure must be called before any calls to Log.
     /// </summary>
-    public class StructuredLogger : ILog, IAsyncDisposable
+    public class StructuredLogger : Log, IAsyncDisposable
     {
         /// <summary>
         /// The key is the event stream name and the value is a function that takes the current event source
@@ -180,10 +180,10 @@ namespace Newsgirl.Shared.Logging
     }
 
     /// <summary>
-    /// An implementation of ILog that provides a performant way of dispatching events to their destinations
+    /// An implementation of Log that provides a performant way of dispatching events to their destinations
     /// based on their event stream names.
     /// </summary>
-    public abstract class EventDestinationCollection : ILog, IAsyncDisposable
+    public abstract class EventDestinationCollection : Log, IAsyncDisposable
     {
         private Dictionary<string, object[]> destinationsByEventStreamName;
 

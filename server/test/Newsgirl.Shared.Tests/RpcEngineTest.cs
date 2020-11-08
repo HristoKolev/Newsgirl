@@ -1343,9 +1343,9 @@ namespace Newsgirl.Shared.Tests
             return resolver;
         }
 
-        private static ILog GetLog()
+        private static Log GetLog()
         {
-            return Substitute.For<ILog>();
+            return Substitute.For<Log>();
         }
     }
 

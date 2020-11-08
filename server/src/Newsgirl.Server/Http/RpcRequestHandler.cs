@@ -26,7 +26,7 @@ namespace Newsgirl.Server.Http
         private readonly AsyncLocals asyncLocals;
         private readonly ErrorReporter errorReporter;
         private readonly DateTimeService dateTimeService;
-        private readonly ILog log;
+        private readonly Log log;
 
         private HttpContext httpContext;
         private IMemoryOwner<byte> requestBody;
@@ -41,7 +41,7 @@ namespace Newsgirl.Server.Http
             AsyncLocals asyncLocals,
             ErrorReporter errorReporter,
             DateTimeService dateTimeService,
-            ILog log)
+            Log log)
         {
             this.rpcEngine = rpcEngine;
             this.instanceProvider = instanceProvider;
@@ -372,12 +372,12 @@ namespace Newsgirl.Server.Http
         public const string HTTP_KEY = "HTTP_REQUESTS";
         public const string HTTP_DETAILED_KEY = "HTTP_REQUESTS_DETAILED";
 
-        public static void Http(this ILog log, Func<HttpLogData> func)
+        public static void Http(this Log log, Func<HttpLogData> func)
         {
             log.Log(HTTP_KEY, func);
         }
 
-        public static void HttpDetailed(this ILog log, Func<HttpLogData> func)
+        public static void HttpDetailed(this Log log, Func<HttpLogData> func)
         {
             log.Log(HTTP_DETAILED_KEY, func);
         }

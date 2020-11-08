@@ -75,11 +75,11 @@ namespace Newsgirl.Testing
             }
         }
 
-        public static ILog LogStub
+        public static Log LogStub
         {
             get
             {
-                var logStub = Substitute.For<ILog>();
+                var logStub = Substitute.For<Log>();
                 return logStub;
             }
         }
@@ -611,7 +611,7 @@ namespace Newsgirl.Testing
         public bool ThrowFirstErrorOnDispose { get; set; } = true;
     }
 
-    public class StructuredLogMock : ILog
+    public class StructuredLogMock : Log
     {
         public Dictionary<string, List<object>> Logs { get; } = new Dictionary<string, List<object>>();
 

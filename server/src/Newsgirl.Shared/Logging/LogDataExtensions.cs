@@ -11,7 +11,7 @@ namespace Newsgirl.Shared.Logging
     {
         public const string GENERAL_EVENT_STREAM = "GENERAL_LOG";
 
-        public static void General(this ILog log, Func<LogData> func)
+        public static void General(this Log log, Func<LogData> func)
         {
             log.Log(GENERAL_EVENT_STREAM, func);
         }

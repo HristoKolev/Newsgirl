@@ -14,9 +14,9 @@ namespace Newsgirl.Fetcher
     {
         private readonly IDbService db;
         private readonly NpgsqlConnection dbConnection;
-        private readonly ILog log;
+        private readonly Log log;
 
-        public FeedItemsImportService(IDbService db, NpgsqlConnection dbConnection, ILog log)
+        public FeedItemsImportService(IDbService db, NpgsqlConnection dbConnection, Log log)
         {
             this.db = db;
             this.dbConnection = dbConnection;

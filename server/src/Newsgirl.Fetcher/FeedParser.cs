@@ -11,9 +11,9 @@ namespace Newsgirl.Fetcher
     {
         private readonly DateTimeService dateTimeService;
         private readonly Hasher hasher;
-        private readonly ILog log;
+        private readonly Log log;
 
-        public FeedParser(Hasher hasher, DateTimeService dateTimeService, ILog log)
+        public FeedParser(Hasher hasher, DateTimeService dateTimeService, Log log)
         {
             this.hasher = hasher;
             this.dateTimeService = dateTimeService;

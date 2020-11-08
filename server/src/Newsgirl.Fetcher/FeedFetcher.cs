@@ -15,7 +15,7 @@ namespace Newsgirl.Fetcher
         private readonly SystemSettingsModel systemSettings;
         private readonly DbTransactionService transactionService;
         private readonly Hasher hasher;
-        private readonly ILog log;
+        private readonly Log log;
         private readonly ErrorReporter errorReporter;
         private readonly AsyncLock dbLock;
 
@@ -26,7 +26,7 @@ namespace Newsgirl.Fetcher
             SystemSettingsModel systemSettings,
             DbTransactionService transactionService,
             Hasher hasher,
-            ILog log,
+            Log log,
             ErrorReporter errorReporter)
         {
             this.feedContentProvider = feedContentProvider;

@@ -196,7 +196,7 @@
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).As<ILog>().ExternallyOwned();
+            builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
 
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();

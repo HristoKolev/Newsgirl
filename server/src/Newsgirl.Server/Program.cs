@@ -386,7 +386,7 @@ namespace Newsgirl.Server
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<ILog>();
+            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<Log>();
 
             builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();

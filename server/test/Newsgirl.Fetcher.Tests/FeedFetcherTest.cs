@@ -85,7 +85,7 @@ namespace Newsgirl.Fetcher.Tests
 
             Exception err = null;
 
-            var log = Substitute.For<ILog>();
+            var log = Substitute.For<Log>();
             log.When(x => x.Log(Arg.Any<string>(), Arg.Any<Func<LogData>>())).Do(info => info.Arg<Func<LogData>>()());
 
             var errorReporter = Substitute.For<ErrorReporter>();

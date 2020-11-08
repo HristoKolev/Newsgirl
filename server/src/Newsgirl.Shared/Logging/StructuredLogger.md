@@ -70,7 +70,7 @@ public static class GeneralLoggingExtensions
 {
     public const string GeneralEventStream = "GENERAL_LOG";
 
-    public static void General(this ILog log, Func<LogData> func)
+    public static void General(this Log log, Func<LogData> func)
     {
         log.Log(GeneralEventStream, func);
     }
