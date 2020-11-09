@@ -240,8 +240,10 @@ namespace Newsgirl.Server.Http
         }
     }
 
-    public class RpcAuthenticationMiddleware : RpcMiddleware
+    public class RpcAuthorizationMiddleware : RpcMiddleware
     {
+        public const string UNAUTHORIZED_ACCESS_MESSAGE = "Unauthorized access.";
+
         private static readonly RpcAuthAttribute DefaultAuthAttribute = new RpcAuthAttribute
         {
             RequiresAuthentication = true,
@@ -249,7 +251,7 @@ namespace Newsgirl.Server.Http
 
         private readonly HttpRequestState httpRequestState;
 
-        public RpcAuthenticationMiddleware(HttpRequestState httpRequestState)
+        public RpcAuthorizationMiddleware(HttpRequestState httpRequestState)
         {
             this.httpRequestState = httpRequestState;
         }
@@ -264,9 +266,11 @@ namespace Newsgirl.Server.Http
 
             if (authAttribute.RequiresAuthentication && !isAuthenticated)
             {
-                context.SetResponse(Result.Error("Unauthorized access."));
+                context.SetResponse(Result.Error(UNAUTHORIZED_ACCESS_MESSAGE));
                 return;
             }
+
+            context.SetHandlerArgument(authResult);
 
             await next(context, instanceProvider);
         }

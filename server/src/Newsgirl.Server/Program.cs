@@ -29,7 +29,7 @@ namespace Newsgirl.Server
             PotentialHandlerTypes = typeof(HttpServerApp).Assembly.GetTypes(),
             MiddlewareTypes = new[]
             {
-                typeof(RpcAuthenticationMiddleware),
+                typeof(RpcAuthorizationMiddleware),
                 typeof(RpcInputValidationMiddleware),
             },
             ParameterTypeWhitelist = new[] {typeof(AuthResult)},
@@ -409,7 +409,7 @@ namespace Newsgirl.Server
             builder.RegisterType<LifetimeScopeInstanceProvider>().As<InstanceProvider>().InstancePerLifetimeScope();
             builder.RegisterType<AuthenticationFilter>().InstancePerLifetimeScope();
             builder.RegisterType<HttpRequestState>().InstancePerLifetimeScope();
-            builder.RegisterType<RpcAuthenticationMiddleware>().InstancePerLifetimeScope();
+            builder.RegisterType<RpcAuthorizationMiddleware>().InstancePerLifetimeScope();
             builder.RegisterType<RpcInputValidationMiddleware>().InstancePerLifetimeScope();
 
             // Always create
