@@ -16,7 +16,10 @@ namespace Newsgirl.Server
         private readonly AuthService authService;
         private readonly DateTimeService dateTimeService;
 
-        public AuthenticationFilter(JwtService jwtService, AuthService authService, DateTimeService dateTimeService)
+        public AuthenticationFilter(
+            JwtService jwtService,
+            AuthService authService,
+            DateTimeService dateTimeService)
         {
             this.jwtService = jwtService;
             this.authService = authService;

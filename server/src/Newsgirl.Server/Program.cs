@@ -1,6 +1,7 @@
 namespace Newsgirl.Server
 {
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -59,9 +60,9 @@ namespace Newsgirl.Server
 
         public RpcEngine RpcEngine { get; set; }
 
-        public bool Started { get; set; }
-
         public Module InjectedIoCModule { get; set; }
+
+        public bool Started { get; set; }
 
         public async Task Start(params string[] listenOnAddresses)
         {
@@ -154,30 +155,61 @@ namespace Newsgirl.Server
         {
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
+                // Resolve this to set the event timestamp.
+                var dateTimeService = requestScope.Resolve<DateTimeService>();
+
                 // Use this for request scoped state like the reference to the HttpContext object.
                 var httpRequestState = requestScope.Resolve<HttpRequestState>();
 
                 // Set the context first before resolving anything else.
                 httpRequestState.HttpContext = context;
 
-                // Set the result of the authentication step.
-                var authenticationFilter = requestScope.Resolve<AuthenticationFilter>();
-                httpRequestState.AuthResult = await authenticationFilter.Authenticate(context.Request.Headers);
-
-                var requestPath = context.Request.Path;
-
-                const string RPC_ROUTE_PATH = "/rpc";
-                if (requestPath.StartsWithSegments(RPC_ROUTE_PATH) && requestPath.Value.Length > RPC_ROUTE_PATH.Length + 1)
+                try
                 {
-                    string rpcRequestType = requestPath.Value.Remove(0, RPC_ROUTE_PATH.Length + 1);
+                    httpRequestState.RequestStart = dateTimeService.EventTime();
 
-                    var rpcRequestHandler = requestScope.Resolve<RpcRequestHandler>();
-                    await rpcRequestHandler.HandleRequest(context, rpcRequestType);
+                    // Diagnostic data in case of an error.
+                    this.AsyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
+                    {
+                        {"http", new HttpLogData(httpRequestState, true)},
+                    };
 
-                    return;
+                    // Set the result of the authentication step.
+                    httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
+                        .Authenticate(context.Request.Headers);
+
+                    // The value that we route on.
+                    string requestPath = context.Request.Path.Value;
+
+                    const string RPC_ROUTE_PATH = "/rpc/";
+                    if (requestPath.StartsWith(RPC_ROUTE_PATH))
+                    {
+                        if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
+                        {
+                            httpRequestState.RpcRequestType = null;
+                        }
+                        else
+                        {
+                            httpRequestState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
+                        }
+
+                        await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
+
+                        return;
+                    }
+
+                    // other http endpoints come here
+
+                    // otherwise 404
+                    context.Response.StatusCode = 404;
                 }
+                finally
+                {
+                    httpRequestState.RequestEnd = dateTimeService.CurrentTime();
 
-                context.Response.StatusCode = 404;
+                    this.Log.Http(() => new HttpLogData(httpRequestState, false));
+                    this.Log.HttpDetailed(() => new HttpLogData(httpRequestState, true));
+                }
             }
         }
 
@@ -373,13 +405,6 @@ namespace Newsgirl.Server
         }
     }
 
-    public class HttpRequestState
-    {
-        public HttpContext HttpContext { get; set; }
-
-        public AuthResult AuthResult { get; set; }
-    }
-
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;
@@ -413,7 +438,7 @@ namespace Newsgirl.Server
             builder.RegisterType<RpcInputValidationMiddleware>().InstancePerLifetimeScope();
 
             // Always create
-            var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct();
+            var handlerClasses = this.app.RpcEngine.Metadata.Select(x => x.DeclaringType).Distinct().ToList();
 
             foreach (var handlerClass in handlerClasses)
             {
@@ -421,6 +446,165 @@ namespace Newsgirl.Server
             }
 
             base.Load(builder);
+        }
+    }
+
+    public class HttpRequestState : IDisposable
+    {
+        public HttpContext HttpContext { get; set; }
+
+        public AuthResult AuthResult { get; set; }
+
+        public DateTime RequestStart { get; set; }
+
+        public DateTime RequestEnd { get; set; }
+
+        // --------
+
+        public string RpcRequestType { get; set; }
+
+        public IMemoryOwner<byte> RpcRequestBody { get; set; }
+
+        public object RpcRequestPayload { get; set; }
+
+        public Result<object> RpcResponse { get; set; }
+
+        // --------
+
+        public void Dispose()
+        {
+            this.RpcRequestBody?.Dispose();
+        }
+    }
+
+    public class HttpLogData
+    {
+        // ReSharper disable MemberCanBePrivate.Global
+        // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+        // ReSharper disable UnusedAutoPropertyAccessor.Global
+
+        public HttpLogData(HttpRequestState httpRequestState, bool detailedLog)
+        {
+            var context = httpRequestState.HttpContext;
+            var connectionInfo = context.Connection;
+            var httpRequest = context.Request;
+
+            this.LocalIp = connectionInfo.LocalIpAddress + ":" + connectionInfo.LocalPort;
+            this.RemoteIp = connectionInfo.RemoteIpAddress + ":" + connectionInfo.RemotePort;
+            this.HttpRequestID = connectionInfo.Id;
+            this.Method = httpRequest.Method;
+            this.Path = httpRequest.Path.ToString();
+            this.Query = httpRequest.QueryString.ToString();
+            this.Protocol = httpRequest.Protocol;
+            this.Scheme = httpRequest.Scheme;
+            this.Aborted = context.RequestAborted.IsCancellationRequested;
+            this.StatusCode = context.Response.StatusCode;
+
+            // --------
+
+            this.RequestStart = httpRequestState.RequestStart;
+            this.RequestEnd = httpRequestState.RequestEnd;
+            this.RequestDurationMs = (httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
+
+            // --------
+
+            this.RpcRequestType = httpRequestState.RpcRequestType;
+
+            if (httpRequestState.AuthResult != null)
+            {
+                this.UserSessionID = httpRequestState.AuthResult.SessionID;
+            }
+
+            if (detailedLog)
+            {
+                this.Headers = httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value.ToString());
+                this.Cookies = httpRequest.Cookies.ToDictionary(x => x.Key, x => x.Value);
+
+                if (httpRequestState.RpcRequestBody != null)
+                {
+                    this.RpcRequestBodyBase64 = Convert.ToBase64String(httpRequestState.RpcRequestBody.Memory.Span);
+                }
+
+                if (httpRequestState.RpcRequestPayload != null)
+                {
+                    this.RpcRequestPayload = httpRequestState.RpcRequestPayload;
+                }
+
+                if (httpRequestState.RpcResponse != null)
+                {
+                    this.RpcResponse = httpRequestState.RpcResponse;
+                }
+
+                this.AuthResult = httpRequestState.AuthResult;
+            }
+        }
+
+        public string LocalIp { get; set; }
+
+        public string RemoteIp { get; set; }
+
+        public string HttpRequestID { get; set; }
+
+        public string Method { get; set; }
+
+        public string Path { get; set; }
+
+        public string Query { get; set; }
+
+        public string Protocol { get; set; }
+
+        public string Scheme { get; set; }
+
+        public bool Aborted { get; set; }
+
+        public int StatusCode { get; set; }
+
+        public Dictionary<string, string> Headers { get; set; }
+
+        public Dictionary<string, string> Cookies { get; set; }
+
+        // --------
+
+        public DateTime RequestStart { get; set; }
+
+        public DateTime RequestEnd { get; set; }
+
+        public double RequestDurationMs { get; set; }
+
+        // --------
+
+        public int UserSessionID { get; set; }
+
+        public AuthResult AuthResult { get; set; }
+
+        // --------
+
+        public string RpcRequestType { get; set; }
+
+        public string RpcRequestBodyBase64 { get; set; }
+
+        public object RpcRequestPayload { get; set; }
+
+        public Result<object> RpcResponse { get; set; }
+
+        // ReSharper restore UnusedAutoPropertyAccessor.Global
+        // ReSharper restore AutoPropertyCanBeMadeGetOnly.Global
+        // ReSharper restore MemberCanBePrivate.Global
+    }
+
+    public static class HttpLoggingExtensions
+    {
+        public const string HTTP_KEY = "HTTP_REQUESTS";
+        public const string HTTP_DETAILED_KEY = "HTTP_REQUESTS_DETAILED";
+
+        public static void Http(this Log log, Func<HttpLogData> func)
+        {
+            log.Log(HTTP_KEY, func);
+        }
+
+        public static void HttpDetailed(this Log log, Func<HttpLogData> func)
+        {
+            log.Log(HTTP_DETAILED_KEY, func);
         }
     }
 

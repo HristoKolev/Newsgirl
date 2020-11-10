@@ -239,6 +239,7 @@ namespace Newsgirl.Server.Tests
             public class PrivateByDefaultResponse { }
         }
 
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
         private static void AssertUnauthorizedAccess(Result result)
         {
             Assert.False(result.IsOk);

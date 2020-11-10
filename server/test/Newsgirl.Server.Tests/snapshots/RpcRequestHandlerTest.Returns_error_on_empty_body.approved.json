@@ -2,6 +2,6 @@
   "payload": null,
   "isOk": false,
   "errorMessages": [
-    "Failed to read RPC request body: 61289445-04b7-4f59-bbdd-499c36861bc0"
+    "The HTTP request has an empty body."
   ]
 }

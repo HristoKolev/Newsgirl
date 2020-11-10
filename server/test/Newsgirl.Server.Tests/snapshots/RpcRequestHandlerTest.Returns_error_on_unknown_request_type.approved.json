@@ -2,6 +2,6 @@
   "payload": null,
   "isOk": false,
   "errorMessages": [
-    "No RPC handler for request: NotRegisteredRequest."
+    "No RPC handler for request. RequestType: NotRegisteredRequest."
   ]
 }

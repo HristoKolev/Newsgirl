@@ -587,26 +587,27 @@ namespace Newsgirl.Server.Tests
         private static RequestDelegate CreateHandler(RpcEngineOptions rpcEngineOptions)
         {
             var errorReporter = new ErrorReporterMock();
-            var logMock = new StructuredLogMock();
 
             var rpcEngine = new RpcEngine(rpcEngineOptions);
 
             var instanceProvider = new FuncInstanceProvider(Activator.CreateInstance);
 
-            var handler = new RpcRequestHandler(
-                rpcEngine,
-                instanceProvider,
-                new AsyncLocalsImpl(),
-                errorReporter,
-                TestHelper.DateTimeServiceStub,
-                logMock
-            );
-
             Task Handler(HttpContext context)
             {
+                var httpRequestState = new HttpRequestState
+                {
+                    HttpContext = context,
+                };
+
+                var handler = new RpcRequestHandler(
+                    rpcEngine,
+                    instanceProvider,
+                    errorReporter
+                );
+
                 var requestPath = context.Request.Path;
-                string rpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
-                return handler.HandleRequest(context, rpcRequestType);
+                httpRequestState.RpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
+                return handler.HandleRpcRequest(httpRequestState);
             }
 
             return Handler;

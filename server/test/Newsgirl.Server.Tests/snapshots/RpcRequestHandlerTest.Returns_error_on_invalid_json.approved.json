@@ -2,6 +2,6 @@
   "payload": null,
   "isOk": false,
   "errorMessages": [
-    "Failed to parse RPC body: 61289445-04b7-4f59-bbdd-499c36861bc0"
+    "Failed to parse RPC body. ErrorID: 61289445-04b7-4f59-bbdd-499c36861bc0."
   ]
 }
