@@ -155,60 +155,72 @@ namespace Newsgirl.Server
         {
             await using (var requestScope = this.IoC.BeginLifetimeScope())
             {
-                // Resolve this to set the event timestamp.
-                var dateTimeService = requestScope.Resolve<DateTimeService>();
-
-                // Use this for request scoped state like the reference to the HttpContext object.
-                var httpRequestState = requestScope.Resolve<HttpRequestState>();
-
-                // Set the context first before resolving anything else.
-                httpRequestState.HttpContext = context;
+                ErrorReporter scopedErrorReporter = null;
 
                 try
                 {
-                    httpRequestState.RequestStart = dateTimeService.EventTime();
+                    scopedErrorReporter = requestScope.Resolve<ErrorReporter>();
 
-                    // Diagnostic data in case of an error.
-                    this.AsyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
+                    // Resolve this to set the event timestamp.
+                    var dateTimeService = requestScope.Resolve<DateTimeService>();
+
+                    // Use this for request scoped state like the reference to the HttpContext object.
+                    var httpRequestState = requestScope.Resolve<HttpRequestState>();
+
+                    // Set the context first before resolving anything else.
+                    httpRequestState.HttpContext = context;
+
+                    try
                     {
-                        {"http", new HttpLogData(httpRequestState, true)},
-                    };
+                        httpRequestState.RequestStart = dateTimeService.EventTime();
 
-                    // Set the result of the authentication step.
-                    httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
-                        .Authenticate(context.Request.Headers);
-
-                    // The value that we route on.
-                    string requestPath = context.Request.Path.Value;
-
-                    const string RPC_ROUTE_PATH = "/rpc/";
-                    if (requestPath.StartsWith(RPC_ROUTE_PATH))
-                    {
-                        if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
+                        // Diagnostic data in case of an error.
+                        this.AsyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
                         {
-                            httpRequestState.RpcRequestType = null;
-                        }
-                        else
+                            {"http", new HttpLogData(httpRequestState, true)},
+                        };
+
+                        // Set the result of the authentication step.
+                        httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
+                            .Authenticate(context.Request.Headers);
+
+                        // The value that we route on.
+                        string requestPath = context.Request.Path.Value;
+
+                        const string RPC_ROUTE_PATH = "/rpc/";
+                        if (requestPath.StartsWith(RPC_ROUTE_PATH))
                         {
-                            httpRequestState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
+                            if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
+                            {
+                                httpRequestState.RpcRequestType = null;
+                            }
+                            else
+                            {
+                                httpRequestState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
+                            }
+
+                            await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
+
+                            return;
                         }
 
-                        await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
+                        // other http endpoints come here
 
-                        return;
+                        // otherwise 404
+                        context.Response.StatusCode = 404;
                     }
+                    finally
+                    {
+                        httpRequestState.RequestEnd = dateTimeService.CurrentTime();
 
-                    // other http endpoints come here
-
-                    // otherwise 404
-                    context.Response.StatusCode = 404;
+                        this.Log.Http(() => new HttpLogData(httpRequestState, false));
+                        this.Log.HttpDetailed(() => new HttpLogData(httpRequestState, true));
+                    }
                 }
-                finally
+                catch (Exception error)
                 {
-                    httpRequestState.RequestEnd = dateTimeService.CurrentTime();
-
-                    this.Log.Http(() => new HttpLogData(httpRequestState, false));
-                    this.Log.HttpDetailed(() => new HttpLogData(httpRequestState, true));
+                    var errorReporter = scopedErrorReporter ?? this.ErrorReporter;
+                    await errorReporter.Error(error, "GENERAL_HTTP_ERROR");
                 }
             }
         }
@@ -226,12 +238,17 @@ namespace Newsgirl.Server
 
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
+            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+            errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
+
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
             {
-                var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-                errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
                 this.ErrorReporter = errorReporter;
+            }
+            else
+            {
+                this.ErrorReporter.SetInnerReporter(errorReporter);
             }
         }
 
@@ -512,13 +529,15 @@ namespace Newsgirl.Server
 
             if (httpRequestState.AuthResult != null)
             {
-                this.UserSessionID = httpRequestState.AuthResult.SessionID;
+                this.SessionID = httpRequestState.AuthResult.SessionID;
+                this.LoginID = httpRequestState.AuthResult.LoginID;
+                this.ProfileID = httpRequestState.AuthResult.ProfileID;
+                this.ValidCsrfToken = httpRequestState.AuthResult.ValidCsrfToken;
             }
 
             if (detailedLog)
             {
-                this.Headers = httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value.ToString());
-                this.Cookies = httpRequest.Cookies.ToDictionary(x => x.Key, x => x.Value);
+                this.HeadersJson = JsonSerializer.Serialize(httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value));
 
                 if (httpRequestState.RpcRequestBody != null)
                 {
@@ -527,15 +546,26 @@ namespace Newsgirl.Server
 
                 if (httpRequestState.RpcRequestPayload != null)
                 {
-                    this.RpcRequestPayload = httpRequestState.RpcRequestPayload;
+                    this.RpcRequestPayloadJson = JsonSerializer.Serialize(
+                        httpRequestState.RpcRequestPayload,
+                        httpRequestState.RpcRequestPayload.GetType()
+                    );
                 }
 
                 if (httpRequestState.RpcResponse != null)
                 {
-                    this.RpcResponse = httpRequestState.RpcResponse;
+                    if (httpRequestState.RpcResponse.Payload != null)
+                    {
+                        this.RpcResponseJson = JsonSerializer.Serialize(
+                            httpRequestState.RpcResponse,
+                            typeof(Result<>).MakeGenericType(httpRequestState.RpcResponse.Payload.GetType())
+                        );
+                    }
+                    else
+                    {
+                        this.RpcResponseJson = JsonSerializer.Serialize(httpRequestState.RpcResponse);
+                    }
                 }
-
-                this.AuthResult = httpRequestState.AuthResult;
             }
         }
 
@@ -559,9 +589,7 @@ namespace Newsgirl.Server
 
         public int StatusCode { get; set; }
 
-        public Dictionary<string, string> Headers { get; set; }
-
-        public Dictionary<string, string> Cookies { get; set; }
+        public string HeadersJson { get; set; }
 
         // --------
 
@@ -573,9 +601,13 @@ namespace Newsgirl.Server
 
         // --------
 
-        public int UserSessionID { get; set; }
+        public int SessionID { get; set; }
 
-        public AuthResult AuthResult { get; set; }
+        public int LoginID { get; set; }
+
+        public int ProfileID { get; set; }
+
+        public bool ValidCsrfToken { get; set; }
 
         // --------
 
@@ -583,9 +615,9 @@ namespace Newsgirl.Server
 
         public string RpcRequestBodyBase64 { get; set; }
 
-        public object RpcRequestPayload { get; set; }
+        public string RpcRequestPayloadJson { get; set; }
 
-        public Result<object> RpcResponse { get; set; }
+        public string RpcResponseJson { get; set; }
 
         // ReSharper restore UnusedAutoPropertyAccessor.Global
         // ReSharper restore AutoPropertyCanBeMadeGetOnly.Global

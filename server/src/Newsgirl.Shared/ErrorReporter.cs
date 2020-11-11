@@ -20,6 +20,8 @@ namespace Newsgirl.Shared
         Task<string> Error(Exception exception, string fingerprint);
 
         Task<string> Error(Exception exception);
+
+        void SetInnerReporter(ErrorReporter errorReporter);
     }
 
     public class ErrorReporterImpl : ErrorReporter
@@ -77,6 +79,8 @@ namespace Newsgirl.Shared
         {
             return this.Error(exception, null, null);
         }
+
+        public void SetInnerReporter(ErrorReporter errorReporter) { }
 
         private async Task<string> SendToSentry(Exception exception, Dictionary<string, object> additionalInfo, string explicitlyDefinedFingerprint)
         {

@@ -1,7 +1,7 @@
 {
   "ConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;",
   "ErrorReporter": {
-    "SentryDsn": "http://8a2401136dba4dbf86de7328f1d21b38@home-sentry.lan/6",
+    "SentryDsn": "http://1de969f387b749e2b2bf3361d844f461@home-sentry.lan/7",
     "Environment": "testing",
     "ServerName": "hristo-ws"
   },
@@ -19,8 +19,8 @@
         "Name": "HTTP_REQUESTS",
         "Enabled": false,
         "Destinations": [
-          { "Name": "ConsoleConsumer", "Enabled": true },
-          { "Name": "ElasticsearchConsumer", "Enabled": true }
+          { "Name": "ConsoleConsumer", "Enabled": false },
+          { "Name": "ElasticsearchConsumer", "Enabled": false }
         ]
       },
       {
@@ -38,8 +38,8 @@
       "Password": "test123"      
     },
     "ElasticsearchIndexes": {
-      "GeneralLogIndex": "newsgirl-server-general-test",
-      "HttpLogIndex": "newsgirl-server-http-test"
+      "GeneralLogIndex": "newsgirl-server-general",
+      "HttpLogIndex": "newsgirl-server-http"
     }
   }
 }

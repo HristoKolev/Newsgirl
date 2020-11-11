@@ -548,6 +548,8 @@ namespace Newsgirl.Testing
         private readonly ErrorReporterMockConfig config;
         private const string ZERO_GUID = "61289445-04b7-4f59-bbdd-499c36861bc0";
 
+        private ErrorReporter innerReporter;
+
         public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
 
         public ErrorReporterMock() : this(new ErrorReporterMockConfig()) { }
@@ -575,6 +577,16 @@ namespace Newsgirl.Testing
         public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
         {
             this.Errors.Add((exception, fingerprint, additionalInfo));
+
+            try
+            {
+                this.innerReporter?.Error(exception, fingerprint, additionalInfo);
+            }
+            catch
+            {
+                // ignore
+            }
+
             return Task.FromResult(ZERO_GUID);
         }
 
@@ -591,6 +603,11 @@ namespace Newsgirl.Testing
         public Task<string> Error(Exception exception)
         {
             return this.Error(exception, null, null);
+        }
+
+        public void SetInnerReporter(ErrorReporter errorReporter)
+        {
+            this.innerReporter = errorReporter;
         }
 
         public ValueTask DisposeAsync()
