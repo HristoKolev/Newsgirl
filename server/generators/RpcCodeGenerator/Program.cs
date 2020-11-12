@@ -18,7 +18,8 @@
 
     public abstract class RpcClient
     {
-        protected abstract Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request);
+        protected abstract Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
+            where TRequest : class where TResponse : class;
 
 {methods}
     }

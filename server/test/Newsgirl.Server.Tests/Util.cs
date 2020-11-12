@@ -16,7 +16,6 @@ namespace Newsgirl.Server.Tests
     using System.Net;
     using System.Net.Http;
     using System.Runtime.ExceptionServices;
-    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
     using Http;
@@ -116,7 +115,7 @@ namespace Newsgirl.Server.Tests
             app.ErrorReporter = new ErrorReporterMock();
 
             string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
-            var injectedConfig = JsonSerializer.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+            var injectedConfig = JsonHelper.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
             injectedConfig.ConnectionString = connectionString;
             app.InjectedAppConfig = injectedConfig;
 
@@ -191,19 +190,13 @@ namespace Newsgirl.Server.Tests
 
         protected override async Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
         {
-            var serializerOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
-
             var response = await this.httpClient.SendAsync(new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
                 Headers = {{CSRF_TOKEN_HEADER, this.CsrfToken}},
                 RequestUri = new Uri("/rpc/" + request.GetType().Name, UriKind.Relative),
                 Content = new StringContent(
-                    JsonSerializer.Serialize(request, serializerOptions),
+                    JsonHelper.Serialize(request),
                     EncodingHelper.UTF8,
                     "application/json"
                 ),
@@ -215,7 +208,7 @@ namespace Newsgirl.Server.Tests
 
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            var result = JsonSerializer.Deserialize<Result<TResponse>>(responseBody, serializerOptions);
+            var result = JsonHelper.Deserialize<Result<TResponse>>(responseBody);
 
             if (result.Payload is LoginResponse loginResponse)
             {

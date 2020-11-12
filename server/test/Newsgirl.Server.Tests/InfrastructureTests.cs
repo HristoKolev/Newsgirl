@@ -11,7 +11,6 @@ namespace Newsgirl.Server.Tests
     using System.Net.Http;
     using System.Net.Sockets;
     using System.Text;
-    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Core;
@@ -190,34 +189,31 @@ namespace Newsgirl.Server.Tests
 
             await using (var tester = await HttpServerTester.Create(Handler))
             {
-                for (int i = 0; i < 200; i++)
-                {
-                    var uri = new Uri(tester.Server.BoundAddresses.First());
+                string text = string.Join("", Enumerable.Range(0, 10000).Select(_ => "X"));
+                string requestJson = "{\"type\": \"PingRequest\", \"payload\":{ \"data\": \"" + text + "\" } }";
+                var requestBody = EncodingHelper.UTF8.GetBytes(requestJson);
 
+                var uri = new Uri(tester.Server.BoundAddresses.First());
+
+                var requestHeaderBuilder = new StringBuilder();
+                requestHeaderBuilder.Append("POST / HTTP/1.1\r\n");
+                requestHeaderBuilder.Append($"Host: {uri.Host}\r\n");
+                requestHeaderBuilder.Append("Content-Length: " + requestBody.Length + "\r\n");
+                requestHeaderBuilder.Append("Connection: close\r\n");
+                requestHeaderBuilder.Append("\r\n");
+
+                for (int i = 0; i < 300; i++)
+                {
                     var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
                     {
                         LingerState = new LingerOption(true, 0), NoDelay = true,
                     };
 
                     socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port));
-
-                    string requestJson = "{\"type\": \"PingRequest\", \"payload\":{ \"data\": \"dd\" } }";
-                    var requestBody = JsonSerializer.SerializeToUtf8Bytes(requestJson);
-
-                    var requestHeaderBuilder = new StringBuilder();
-                    requestHeaderBuilder.Append("POST / HTTP/1.1\r\n");
-                    requestHeaderBuilder.Append($"Host: {uri.Host}\r\n");
-                    requestHeaderBuilder.Append("Content-Length: " + requestBody.Length + "\r\n");
-                    requestHeaderBuilder.Append("Connection: close\r\n");
-                    requestHeaderBuilder.Append("\r\n");
-
                     socket.Send(Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString()), SocketFlags.None);
-                    socket.Send(requestBody, 0, requestBody.Length / 2, SocketFlags.None);
+                    socket.Send(requestBody, 0, requestBody.Length - 1, SocketFlags.None);
                     socket.Close();
-
-                    // ReSharper disable once RedundantAssignment
                     socket = null;
-
                     GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
                 }
 
@@ -382,7 +378,7 @@ namespace Newsgirl.Server.Tests
                 BaseAddress = new Uri(this.App.GetAddress()),
             };
 
-            var response = await client.PostAsync($"/rpc/{nameof(PingRequest)}", new StringContent("{ \"payload\": {} }"));
+            var response = await client.PostAsync($"/rpc/{nameof(PingRequest)}", new StringContent("{}"));
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 

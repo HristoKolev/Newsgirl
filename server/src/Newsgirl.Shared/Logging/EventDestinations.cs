@@ -6,7 +6,6 @@ namespace Newsgirl.Shared.Logging
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
-    using System.Text.Json;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -22,7 +21,7 @@ namespace Newsgirl.Shared.Logging
             {
                 var log = data[i];
 
-                string json = JsonSerializer.Serialize(new Dictionary<string, object>(log.Fields));
+                string json = JsonHelper.Serialize(new Dictionary<string, object>(log.Fields));
 
                 await Console.Out.WriteLineAsync(json);
             }
@@ -103,11 +102,6 @@ namespace Newsgirl.Shared.Logging
         private readonly byte[] bulkHeaderBytes = EncodingHelper.UTF8.GetBytes("{\"create\":{}}\n");
         private readonly byte[] bulkNewLineBytes = EncodingHelper.UTF8.GetBytes("\n");
 
-        private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-        };
-
         public ElasticsearchClient(HttpClient httpClient, ElasticsearchConfig config)
         {
             this.httpClient = httpClient;
@@ -129,7 +123,7 @@ namespace Newsgirl.Shared.Logging
             for (int i = 0; i < data.Count; i++)
             {
                 await memStream.WriteAsync(this.bulkHeaderBytes);
-                await JsonSerializer.SerializeAsync(memStream, data[i]);
+                await JsonHelper.SerializeGenericType(memStream, data[i]);
                 await memStream.WriteAsync(this.bulkNewLineBytes);
             }
 
@@ -158,7 +152,7 @@ namespace Newsgirl.Shared.Logging
                 };
             }
 
-            var responseDto = JsonSerializer.Deserialize<ElasticsearchBulkResponse>(responseBody, JsonSerializerOptions);
+            var responseDto = JsonHelper.Deserialize<ElasticsearchBulkResponse>(responseBody);
 
             if (responseDto.Errors)
             {

@@ -2,7 +2,6 @@ namespace Newsgirl.Fetcher
 {
     using System.Collections.Generic;
     using System.IO;
-    using System.Text.Json;
     using CodeHollow.FeedReader;
     using Shared;
     using Shared.Logging;
@@ -40,7 +39,7 @@ namespace Newsgirl.Fetcher
                     {
                         this.log.General(() => new LogData("Cannot ID feed item.")
                         {
-                            {"feedItemJson", JsonSerializer.Serialize(feedItem)},
+                            {"feedItemJson", JsonHelper.Serialize(feedItem)},
                         });
 
                         continue;

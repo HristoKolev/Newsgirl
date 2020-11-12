@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Text.Json;
     using System.Threading.Tasks;
     using Autofac;
     using Shared;
@@ -75,7 +74,7 @@
         {
             if (this.InjectedAppConfig == null)
             {
-                this.AppConfig = JsonSerializer.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+                this.AppConfig = JsonHelper.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             }
             else
             {

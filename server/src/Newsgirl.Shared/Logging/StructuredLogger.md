@@ -104,7 +104,7 @@ public class ConsoleEventDestination : EventDestination<GeneralLogData>
         {
             var item = data[i];
 
-            string json = JsonSerializer.Serialize(item);
+            string json = JsonHelper.Serialize(item);
 
             await Console.Out.WriteLineAsync(json);
         }

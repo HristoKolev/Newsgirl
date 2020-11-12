@@ -1,0 +1,102 @@
+﻿{
+  "int1": 123,
+  "dec1": 123.456,
+  "str1": "test1",
+  "date1": "3000-01-01T01:01:01Z",
+  "innerObject": {
+    "int1": 123,
+    "dec1": 123.456,
+    "str1": "test1",
+    "date1": "3000-01-01T01:01:01Z",
+    "innerObject": null,
+    "innerArray": [
+      {
+        "int1": 123,
+        "dec1": 123.456,
+        "str1": "test1",
+        "date1": "3000-01-01T01:01:01Z",
+        "innerObject": null,
+        "innerArray": null,
+        "innerList": null,
+        "innerDict": null
+      },
+      {
+        "int1": 123,
+        "dec1": 123.456,
+        "str1": "test1",
+        "date1": "3000-01-01T01:01:01Z",
+        "innerObject": null,
+        "innerArray": null,
+        "innerList": [
+          {
+            "int1": 123,
+            "dec1": 123.456,
+            "str1": "test1",
+            "date1": "3000-01-01T01:01:01Z",
+            "innerObject": null,
+            "innerArray": null,
+            "innerList": null,
+            "innerDict": null
+          },
+          {
+            "int1": 123,
+            "dec1": 123.456,
+            "str1": "test1",
+            "date1": "3000-01-01T01:01:01Z",
+            "innerObject": null,
+            "innerArray": null,
+            "innerList": null,
+            "innerDict": null
+          },
+          {
+            "int1": 123,
+            "dec1": 123.456,
+            "str1": "test1",
+            "date1": "3000-01-01T01:01:01Z",
+            "innerObject": null,
+            "innerArray": null,
+            "innerList": null,
+            "innerDict": {
+              "key1": {
+                "int1": 123,
+                "dec1": 123.456,
+                "str1": "test1",
+                "date1": "3000-01-01T01:01:01Z",
+                "innerObject": null,
+                "innerArray": null,
+                "innerList": null,
+                "innerDict": null
+              },
+              "key2": {
+                "int1": 123,
+                "dec1": 123.456,
+                "str1": "test1",
+                "date1": "3000-01-01T01:01:01Z",
+                "innerObject": null,
+                "innerArray": null,
+                "innerList": null,
+                "innerDict": null
+              },
+              "key3": {
+                "int1": 123,
+                "dec1": 123.456,
+                "str1": "test1",
+                "date1": "3000-01-01T01:01:01Z",
+                "innerObject": null,
+                "innerArray": null,
+                "innerList": null,
+                "innerDict": null
+              }
+            }
+          }
+        ],
+        "innerDict": null
+      }
+    ],
+    "innerList": null,
+    "innerDict": null
+  },
+  "innerArray": null,
+  "innerList": null,
+  "innerDict": null
+}

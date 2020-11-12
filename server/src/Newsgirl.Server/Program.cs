@@ -6,7 +6,6 @@ namespace Newsgirl.Server
     using System.IO;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
-    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
@@ -221,6 +220,7 @@ namespace Newsgirl.Server
                 {
                     var errorReporter = scopedErrorReporter ?? this.ErrorReporter;
                     await errorReporter.Error(error, "GENERAL_HTTP_ERROR");
+                    throw;
                 }
             }
         }
@@ -229,7 +229,7 @@ namespace Newsgirl.Server
         {
             if (this.InjectedAppConfig == null)
             {
-                this.AppConfig = JsonSerializer.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
+                this.AppConfig = JsonHelper.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(this.AppConfigPath));
             }
             else
             {
@@ -537,7 +537,7 @@ namespace Newsgirl.Server
 
             if (detailedLog)
             {
-                this.HeadersJson = JsonSerializer.Serialize(httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value));
+                this.HeadersJson = JsonHelper.Serialize(httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value));
 
                 if (httpRequestState.RpcRequestBody != null)
                 {
@@ -546,25 +546,12 @@ namespace Newsgirl.Server
 
                 if (httpRequestState.RpcRequestPayload != null)
                 {
-                    this.RpcRequestPayloadJson = JsonSerializer.Serialize(
-                        httpRequestState.RpcRequestPayload,
-                        httpRequestState.RpcRequestPayload.GetType()
-                    );
+                    this.RpcRequestPayloadJson = JsonHelper.Serialize(httpRequestState.RpcRequestPayload);
                 }
 
                 if (httpRequestState.RpcResponse != null)
                 {
-                    if (httpRequestState.RpcResponse.Payload != null)
-                    {
-                        this.RpcResponseJson = JsonSerializer.Serialize(
-                            httpRequestState.RpcResponse,
-                            typeof(Result<>).MakeGenericType(httpRequestState.RpcResponse.Payload.GetType())
-                        );
-                    }
-                    else
-                    {
-                        this.RpcResponseJson = JsonSerializer.Serialize(httpRequestState.RpcResponse);
-                    }
+                    this.RpcResponseJson = JsonHelper.Serialize(httpRequestState.RpcResponse);
                 }
             }
         }

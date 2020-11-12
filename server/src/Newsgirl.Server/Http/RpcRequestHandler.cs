@@ -1,7 +1,6 @@
 namespace Newsgirl.Server.Http
 {
     using System;
-    using System.Text.Json;
     using System.Threading.Tasks;
     using Shared;
 
@@ -10,12 +9,6 @@ namespace Newsgirl.Server.Http
     /// </summary>
     public class RpcRequestHandler
     {
-        private static readonly JsonSerializerOptions SerializationOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-
         private readonly RpcEngine rpcEngine;
         private readonly InstanceProvider instanceProvider;
         private readonly ErrorReporter errorReporter;
@@ -44,12 +37,7 @@ namespace Newsgirl.Server.Http
             try
             {
                 httpRequestState.HttpContext.Response.StatusCode = 200;
-
-                await JsonSerializer.SerializeAsync(
-                    httpRequestState.HttpContext.Response.Body,
-                    result,
-                    SerializationOptions
-                );
+                await JsonHelper.Serialize(httpRequestState.HttpContext.Response.Body, result);
             }
             catch (Exception err)
             {
@@ -93,34 +81,16 @@ namespace Newsgirl.Server.Http
             {
                 try
                 {
-                    httpRequestState.RpcRequestPayload = JsonSerializer.Deserialize(
+                    httpRequestState.RpcRequestPayload = JsonHelper.Deserialize(
                         httpRequestState.RpcRequestBody.Memory.Span,
-                        metadata.RequestType,
-                        SerializationOptions
+                        metadata.RequestType
                     );
                 }
                 catch (Exception err)
                 {
-                    long? bytePositionInLine = null;
-                    long? lineNumber = null;
-                    string jsonPath = null;
-
-                    if (err is JsonException jsonException)
-                    {
-                        bytePositionInLine = jsonException.BytePositionInLine;
-                        lineNumber = jsonException.LineNumber;
-                        jsonPath = jsonException.Path;
-                    }
-
-                    throw new DetailedLogException("Failed to parse RPC body.")
+                    throw new DetailedLogException("Failed to parse RPC body.", err)
                     {
                         Fingerprint = "FAILED_TO_PARSE_RPC_BODY",
-                        Details =
-                        {
-                            {"bytePositionInLine", bytePositionInLine},
-                            {"lineNumber", lineNumber},
-                            {"jsonPath", jsonPath},
-                        },
                     };
                 }
             }

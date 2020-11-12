@@ -4,9 +4,9 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Text.Json;
     using System.Threading.Tasks;
     using Humanizer;
+    using Newsgirl.Shared;
     using Newsgirl.Shared.Postgres;
     using Npgsql;
     using NpgsqlTypes;
@@ -18,7 +18,7 @@
         {
             string settingsPath = GetLocalPath("settings.json");
 
-            var settings = JsonSerializer.Deserialize<Setting[]>(await File.ReadAllBytesAsync(settingsPath));
+            var settings = JsonHelper.Deserialize<Setting[]>(await File.ReadAllBytesAsync(settingsPath));
 
             foreach (var setting in settings)
             {

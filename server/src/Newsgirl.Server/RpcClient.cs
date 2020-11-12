@@ -5,7 +5,8 @@ namespace Newsgirl.Server
 
     public abstract class RpcClient
     {
-        protected abstract Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request);
+        protected abstract Task<Result<TResponse>> RpcExecute<TRequest, TResponse>(TRequest request)
+            where TRequest : class where TResponse : class;
 
         public virtual Task<Result<LoginResponse>> Login(LoginRequest request)
         {
