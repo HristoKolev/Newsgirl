@@ -92,44 +92,171 @@ namespace Newsgirl.Shared.Tests
             });
         }
 
+        [Fact]
+        public void Deserialize_throws_on_null_json()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize<TestJsonPayload>((string) null);
+            });
+        }
+
+        [Fact]
+        public void Deserialize_returns_correct_result()
+        {
+            var obj = JsonHelper.Deserialize<TestJsonPayload>(JsonTestFiles.TEST1);
+            TestJsonPayload.AssertCorrectObject(obj);
+        }
+
+        [Fact]
+        public void Deserialize_throws_on_invalid_json()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize<TestJsonPayload>(JsonTestFiles.INVALID_JSON);
+            });
+        }
+
+        [Fact]
+        public void DeserializeSpan_throws_on_empty_span()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize(default, typeof(TestJsonPayload));
+            });
+        }
+
+        [Fact]
+        public void DeserializeSpan_throws_on_null_type()
+        {
+            var bytes = new byte[10];
+
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize(bytes, null);
+            });
+        }
+
+        [Fact]
+        public void DeserializeSpan_returns_correct_result()
+        {
+            var bytes = EncodingHelper.UTF8.GetBytes(JsonTestFiles.TEST1);
+            var result = (TestJsonPayload) JsonHelper.Deserialize(bytes, typeof(TestJsonPayload));
+            TestJsonPayload.AssertCorrectObject(result);
+        }
+
+        [Fact]
+        public void DeserializeSpan_throws_on_invalid_json()
+        {
+            var bytes = EncodingHelper.UTF8.GetBytes(JsonTestFiles.INVALID_JSON);
+
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize(bytes, typeof(TestJsonPayload));
+            });
+        }
+
+        [Fact]
+        public void DeserializeSpanOfT_throws_on_empty_span()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize<TestJsonPayload>((ReadOnlySpan<byte>) default);
+            });
+        }
+
+        [Fact]
+        public void DeserializeSpanOfT_returns_correct_result()
+        {
+            var bytes = EncodingHelper.UTF8.GetBytes(JsonTestFiles.TEST1);
+            var result = JsonHelper.Deserialize<TestJsonPayload>(bytes);
+            TestJsonPayload.AssertCorrectObject(result);
+        }
+
+        [Fact]
+        public void DeserializeSpanOfT_throws_on_invalid_json()
+        {
+            var bytes = EncodingHelper.UTF8.GetBytes(JsonTestFiles.INVALID_JSON);
+
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize<TestJsonPayload>(bytes);
+            });
+        }
+
         public class TestJsonPayload
         {
+            private static readonly DateTime TestDate1 = new DateTime(3000, 1, 1, 1, 1, 1, DateTimeKind.Utc);
+            private const string TEST_STR1 = "test1";
+            private const int TEST_INT1 = 123;
+            private const decimal TEST_DEC1 = 123.456m;
+
             private static TestJsonPayload CreateSimple()
             {
                 return new TestJsonPayload
                 {
-                    Str1 = "test1",
-                    Int1 = 123,
-                    Dec1 = 123.456m,
-                    Date1 = new DateTime(3000, 1, 1, 1, 1, 1, DateTimeKind.Utc),
+                    Str1 = TEST_STR1,
+                    Int1 = TEST_INT1,
+                    Dec1 = TEST_DEC1,
+                    Date1 = TestDate1,
                 };
             }
 
-            public static object Create()
+            public static TestJsonPayload Create()
             {
                 var obj = CreateSimple();
                 obj.InnerObject = CreateSimple();
-                var arrayItem = CreateSimple();
-                var listItem = CreateSimple();
-                listItem.InnerDict = new Dictionary<string, TestJsonPayload>
+                obj.InnerDict = new Dictionary<string, TestJsonPayload>
                 {
                     {"key1", CreateSimple()},
                     {"key2", CreateSimple()},
                     {"key3", CreateSimple()},
                 };
-                arrayItem.InnerList = new List<TestJsonPayload>
+                obj.InnerList = new List<TestJsonPayload>
                 {
                     CreateSimple(),
                     CreateSimple(),
-                    listItem,
+                    CreateSimple(),
                 };
-                obj.InnerObject.InnerArray = new[]
+
+                obj.InnerArray = new[]
                 {
                     CreateSimple(),
-                    arrayItem,
+                    CreateSimple(),
+                    CreateSimple(),
                 };
 
                 return obj;
+            }
+
+            public static void AssertCorrectObject(TestJsonPayload obj)
+            {
+                AssertObjectData(obj);
+                AssertObjectData(obj.InnerObject);
+
+                foreach (var item in obj.InnerArray)
+                {
+                    AssertObjectData(item);
+                }
+
+                foreach (var item in obj.InnerList)
+                {
+                    AssertObjectData(item);
+                }
+
+                foreach (var item in obj.InnerDict.Values)
+                {
+                    AssertObjectData(item);
+                }
+            }
+
+            // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
+            private static void AssertObjectData(TestJsonPayload obj)
+            {
+                Assert.Equal(TEST_STR1, obj.Str1);
+                Assert.Equal(TEST_INT1, obj.Int1);
+                Assert.Equal(TEST_DEC1, obj.Dec1);
+                Assert.Equal(TestDate1, obj.Date1);
             }
 
             public int Int1 { get; set; }
@@ -151,14 +278,19 @@ namespace Newsgirl.Shared.Tests
 
         public struct TestJsonPayloadStruct
         {
+            private static readonly DateTime TestDate1 = new DateTime(3000, 1, 1, 1, 1, 1, DateTimeKind.Utc);
+            private const string TEST_STR1 = "test1";
+            private const int TEST_INT1 = 123;
+            private const decimal TEST_DEC1 = 123.456m;
+
             private static TestJsonPayloadStruct CreateSimple()
             {
                 return new TestJsonPayloadStruct
                 {
-                    Str1 = "test1",
-                    Int1 = 123,
-                    Dec1 = 123.456m,
-                    Date1 = new DateTime(3000, 1, 1, 1, 1, 1, DateTimeKind.Utc),
+                    Str1 = TEST_STR1,
+                    Int1 = TEST_INT1,
+                    Dec1 = TEST_DEC1,
+                    Date1 = TestDate1,
                 };
             }
 
@@ -188,6 +320,35 @@ namespace Newsgirl.Shared.Tests
                 return obj;
             }
 
+            public static void AssertCorrectObject(TestJsonPayloadStruct obj)
+            {
+                AssertObjectData(obj);
+
+                foreach (var item in obj.InnerArray)
+                {
+                    AssertObjectData(item);
+                }
+
+                foreach (var item in obj.InnerList)
+                {
+                    AssertObjectData(item);
+                }
+
+                foreach (var item in obj.InnerDict.Values)
+                {
+                    AssertObjectData(item);
+                }
+            }
+
+            // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
+            private static void AssertObjectData(TestJsonPayloadStruct obj)
+            {
+                Assert.Equal(TEST_STR1, obj.Str1);
+                Assert.Equal(TEST_INT1, obj.Int1);
+                Assert.Equal(TEST_DEC1, obj.Dec1);
+                Assert.Equal(TestDate1, obj.Date1);
+            }
+
             public int Int1 { get; set; }
 
             public decimal Dec1 { get; set; }
@@ -202,5 +363,124 @@ namespace Newsgirl.Shared.Tests
 
             public Dictionary<string, TestJsonPayloadStruct> InnerDict { get; set; }
         }
+    }
+
+    public static class JsonTestFiles
+    {
+        public const string INVALID_JSON = "{ \"data\": 12345CAT }";
+
+        public const string TEST1 = @"
+        {
+          ""int1"": 123,
+          ""dec1"": 123.456,
+          ""str1"": ""test1"",
+          ""date1"": ""3000-01-01T01:01:01Z"",
+          ""innerObject"": {
+            ""int1"": 123,
+            ""dec1"": 123.456,
+            ""str1"": ""test1"",
+            ""date1"": ""3000-01-01T01:01:01Z"",
+            ""innerObject"": null,
+            ""innerArray"": null,
+            ""innerList"": null,
+            ""innerDict"": null
+          },
+          ""innerArray"": [
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            }
+          ],
+          ""innerList"": [
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            }
+          ],
+          ""innerDict"": {
+            ""key1"": {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            ""key2"": {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            },
+            ""key3"": {
+              ""int1"": 123,
+              ""dec1"": 123.456,
+              ""str1"": ""test1"",
+              ""date1"": ""3000-01-01T01:01:01Z"",
+              ""innerObject"": null,
+              ""innerArray"": null,
+              ""innerList"": null,
+              ""innerDict"": null
+            }
+          }
+        }";
     }
 }

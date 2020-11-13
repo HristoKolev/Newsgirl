@@ -202,19 +202,23 @@ namespace Newsgirl.Server.Tests
                 requestHeaderBuilder.Append("Connection: close\r\n");
                 requestHeaderBuilder.Append("\r\n");
 
-                for (int i = 0; i < 300; i++)
+                var ipEndPoint = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port);
+                var reqHeader = Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString());
+
+                for (int i = 0; i < 1000; i++)
                 {
                     var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
                     {
-                        LingerState = new LingerOption(true, 0), NoDelay = true,
+                        LingerState = new LingerOption(true, 0),
+                        NoDelay = true,
                     };
 
-                    socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port));
-                    socket.Send(Encoding.ASCII.GetBytes(requestHeaderBuilder.ToString()), SocketFlags.None);
-                    socket.Send(requestBody, 0, requestBody.Length - 1, SocketFlags.None);
-                    socket.Close();
+                    socket.Connect(ipEndPoint);
+                    socket.Send(reqHeader, SocketFlags.None);
+                    socket.Send(requestBody, 0, requestBody.Length / 10, SocketFlags.None);
+                    socket.Dispose();
                     socket = null;
-                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+                    GC.Collect(0, GCCollectionMode.Default, false);
                 }
 
                 Snapshot.MatchError(tester.Exception);

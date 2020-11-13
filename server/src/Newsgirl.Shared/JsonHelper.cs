@@ -13,6 +13,18 @@ namespace Newsgirl.Shared
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
+        public static string Serialize<T>(T value) where T : class
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            var inputType = value.GetType();
+
+            return JsonSerializer.Serialize(value, inputType, SerializationOptions);
+        }
+
         public static Task Serialize<T>(Stream outputStream, T value) where T : class
         {
             if (outputStream == null)
@@ -30,7 +42,7 @@ namespace Newsgirl.Shared
             return JsonSerializer.SerializeAsync(outputStream, value, inputType, SerializationOptions);
         }
 
-        public static Task SerializeGenericType<T>(MemoryStream outputStream, T value)
+        public static Task SerializeGenericType<T>(Stream outputStream, T value)
         {
             if (outputStream == null)
             {
@@ -45,18 +57,6 @@ namespace Newsgirl.Shared
             return JsonSerializer.SerializeAsync(outputStream, value, SerializationOptions);
         }
 
-        public static string Serialize<T>(T value) where T : class
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            var inputType = value.GetType();
-
-            return JsonSerializer.Serialize(value, inputType, SerializationOptions);
-        }
-       
         public static T Deserialize<T>(string json) where T : class
         {
             if (json == null)
@@ -81,7 +81,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new DetailedJsonException("Failed deserialize json.")
+                throw new JsonHelperException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -95,21 +95,21 @@ namespace Newsgirl.Shared
             }
         }
 
-        public static object Deserialize(ReadOnlySpan<byte> utf8Bytes, Type type)
+        public static object Deserialize(ReadOnlySpan<byte> utf8Bytes, Type returnType)
         {
-            if (utf8Bytes == null)
+            if (utf8Bytes == default)
             {
-                throw new ArgumentNullException(nameof(utf8Bytes));
+                throw new ArgumentException("The utf8Bytes parameter must not be empty.", nameof(utf8Bytes));
             }
 
-            if (type == null)
+            if (returnType == null)
             {
-                throw new ArgumentNullException(nameof(type));
+                throw new ArgumentNullException(nameof(returnType));
             }
 
             try
             {
-                return JsonSerializer.Deserialize(utf8Bytes, type, SerializationOptions);
+                return JsonSerializer.Deserialize(utf8Bytes, returnType, SerializationOptions);
             }
             catch (Exception err)
             {
@@ -124,7 +124,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new DetailedJsonException("Failed deserialize json.")
+                throw new JsonHelperException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -132,7 +132,7 @@ namespace Newsgirl.Shared
                         {"lineNumber", lineNumber},
                         {"jsonPath", jsonPath},
                         {"base64Data", Convert.ToBase64String(utf8Bytes)},
-                        {"outputType", type.FullName},
+                        {"outputType", returnType.FullName},
                     },
                 };
             }
@@ -140,47 +140,12 @@ namespace Newsgirl.Shared
 
         public static T Deserialize<T>(ReadOnlySpan<byte> utf8Bytes)
         {
-            if (utf8Bytes == null)
-            {
-                throw new ArgumentNullException(nameof(utf8Bytes));
-            }
-
-            try
-            {
-                return JsonSerializer.Deserialize<T>(utf8Bytes, SerializationOptions);
-            }
-            catch (Exception err)
-            {
-                long? bytePositionInLine = null;
-                long? lineNumber = null;
-                string jsonPath = null;
-
-                if (err is JsonException jsonException)
-                {
-                    bytePositionInLine = jsonException.BytePositionInLine;
-                    lineNumber = jsonException.LineNumber;
-                    jsonPath = jsonException.Path;
-                }
-
-                throw new DetailedJsonException("Failed deserialize json.")
-                {
-                    Details =
-                    {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                        {"utf8Bytes", Convert.ToBase64String(utf8Bytes)},
-                        {"outputType", typeof(T).FullName},
-                    },
-                };
-            }
+            return (T) Deserialize(utf8Bytes, typeof(T));
         }
     }
 
-    public class DetailedJsonException : DetailedLogException
+    public class JsonHelperException : DetailedLogException
     {
-        public DetailedJsonException() { }
-        public DetailedJsonException(string message) : base(message) { }
-        public DetailedJsonException(string message, Exception inner) : base(message, inner) { }
+        public JsonHelperException(string message) : base(message) { }
     }
 }
