@@ -574,13 +574,13 @@ namespace Newsgirl.Testing
             this.config = config;
         }
 
-        public Task<string> Error(Exception exception, string fingerprint, Dictionary<string, object> additionalInfo)
+        public Task<string> Error(Exception exception, string explicitFingerprint, Dictionary<string, object> additionalInfo)
         {
-            this.Errors.Add((exception, fingerprint, additionalInfo));
+            this.Errors.Add((exception, explicitFingerprint, additionalInfo));
 
             try
             {
-                this.innerReporter?.Error(exception, fingerprint, additionalInfo);
+                this.innerReporter?.Error(exception, explicitFingerprint, additionalInfo);
             }
             catch
             {
@@ -595,9 +595,9 @@ namespace Newsgirl.Testing
             return this.Error(exception, null, additionalInfo);
         }
 
-        public Task<string> Error(Exception exception, string fingerprint)
+        public Task<string> Error(Exception exception, string explicitFingerprint)
         {
-            return this.Error(exception, fingerprint, null);
+            return this.Error(exception, explicitFingerprint, null);
         }
 
         public Task<string> Error(Exception exception)
@@ -608,6 +608,11 @@ namespace Newsgirl.Testing
         public void SetInnerReporter(ErrorReporter errorReporter)
         {
             this.innerReporter = errorReporter;
+        }
+
+        public void AddDataHook(Func<Dictionary<string, object>> hook)
+        {
+            this.innerReporter?.AddDataHook(hook);
         }
 
         public ValueTask DisposeAsync()

@@ -34,7 +34,7 @@ namespace Newsgirl.Shared
 
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new DetailedLogException($"No ENV variable found for `{name}`.")
+                throw new DetailedException($"No ENV variable found for `{name}`.")
                 {
                     Fingerprint = "ENV_VARIABLE_NOT_FOUND",
                 };

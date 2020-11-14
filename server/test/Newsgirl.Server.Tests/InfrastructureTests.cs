@@ -408,7 +408,7 @@ namespace Newsgirl.Server.Tests
             [RpcBind(typeof(ThrowingTestRequest), typeof(ThrowingTestResponse))]
             public Task<Result<ThrowingTestResponse>> Increment(ThrowingTestRequest req)
             {
-                throw new DetailedLogException("Throwing from inside of a handler.");
+                throw new DetailedException("Throwing from inside of a handler.");
             }
         }
 

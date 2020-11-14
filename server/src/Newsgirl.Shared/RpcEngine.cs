@@ -34,19 +34,19 @@ namespace Newsgirl.Shared
                 // validate method flags
                 if (markedMethod.IsStatic)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Static methods cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 if (!markedMethod.IsPublic)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Only public methods can be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 if (markedMethod.IsVirtual)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Virtual methods cannot be bound as an RPC handlers. This includes abstract methods and methods that belong to interfaces. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
@@ -55,24 +55,24 @@ namespace Newsgirl.Shared
 
                 if (bindAttribute!.RequestType == null)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"{nameof(RpcBindAttribute)} must have not null {nameof(RpcBindAttribute.RequestType)}. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 if (!bindAttribute.RequestType.IsClass)
                 {
-                    throw new DetailedLogException($"Request type {bindAttribute.RequestType.Name} must be a reference type.");
+                    throw new DetailedException($"Request type {bindAttribute.RequestType.Name} must be a reference type.");
                 }
 
                 if (bindAttribute.ResponseType == null)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"{nameof(RpcBindAttribute)} must have not null {nameof(RpcBindAttribute.ResponseType)}. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 if (!bindAttribute.ResponseType.IsClass)
                 {
-                    throw new DetailedLogException($"Response type {bindAttribute.ResponseType.Name} must be a reference type.");
+                    throw new DetailedException($"Response type {bindAttribute.ResponseType.Name} must be a reference type.");
                 }
 
                 var metadata = new RpcRequestMetadata
@@ -88,14 +88,14 @@ namespace Newsgirl.Shared
                 // throw if the type is abstract
                 if (metadata.DeclaringType!.IsAbstract)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Methods in abstract classes cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
                 // throw if the type is a value type
                 if (metadata.DeclaringType!.IsValueType)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Methods in value types cannot be bound as an RPC handlers. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                 }
 
@@ -104,7 +104,7 @@ namespace Newsgirl.Shared
 
                 if (duplicateMetadataEntry != null)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         "Handler binding conflict. A request is bound to 2 or more handler methods." +
                         $"{metadata.RequestType.Name} => {duplicateMetadataEntry.DeclaringType.Name}.{duplicateMetadataEntry.HandlerMethod.Name} AND " +
                         $"{metadata.RequestType.Name} => {metadata.DeclaringType!.Name}.{metadata.HandlerMethod.Name}");
@@ -122,7 +122,7 @@ namespace Newsgirl.Shared
                 {
                     if (!allowedParameterTypes.Contains(parameter))
                     {
-                        throw new DetailedLogException(
+                        throw new DetailedException(
                             $"Parameter of type {parameter.Name} is not supported for RPC methods. {markedMethod.DeclaringType!.Name}.{markedMethod.Name}");
                     }
                 }
@@ -147,7 +147,7 @@ namespace Newsgirl.Shared
 
                 if (metadata.HandlerMethod.ReturnType != taskAndResultWrappedResponseType && metadata.HandlerMethod.ReturnType != taskWrappedResponseType)
                 {
-                    throw new DetailedLogException(
+                    throw new DetailedException(
                         $"Only {nameof(Task)}<{metadata.ResponseType}> and {nameof(Task)}<{nameof(Result)}<{metadata.ResponseType}>> are supported for" +
                         $" handler method `{metadata.DeclaringType.Name}.{metadata.HandlerMethod.Name}`.");
                 }
@@ -163,7 +163,7 @@ namespace Newsgirl.Shared
                     {
                         if (!typeof(RpcMiddleware).IsAssignableFrom(middlewareType))
                         {
-                            throw new DetailedLogException($"Middleware type {middlewareType!.Name} does not implement {nameof(RpcMiddleware)}.");
+                            throw new DetailedException($"Middleware type {middlewareType!.Name} does not implement {nameof(RpcMiddleware)}.");
                         }
                     }
 
@@ -194,7 +194,7 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Brtrue_S, afterNullCheckLabel);
             il.Emit(OpCodes.Ldstr, "Handler method return values must not be null.");
-            il.Emit(OpCodes.Newobj, typeof(DetailedLogException).GetConstructor(new[] {typeof(string)})!);
+            il.Emit(OpCodes.Newobj, typeof(DetailedException).GetConstructor(new[] {typeof(string)})!);
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(afterNullCheckLabel);
@@ -360,24 +360,24 @@ namespace Newsgirl.Shared
         {
             if (requestMessage == null)
             {
-                throw new DetailedLogException("Request message is null.");
+                throw new DetailedException("Request message is null.");
             }
 
             if (requestMessage.Payload == null)
             {
-                throw new DetailedLogException("Request payload is null.");
+                throw new DetailedException("Request payload is null.");
             }
 
             if (string.IsNullOrWhiteSpace(requestMessage.Type))
             {
-                throw new DetailedLogException("Request type is null or empty.");
+                throw new DetailedException("Request type is null or empty.");
             }
 
             RpcRequestMetadata metadata;
 
             if (!this.metadataByRequestName.TryGetValue(requestMessage.Type, out metadata))
             {
-                throw new DetailedLogException($"No RPC handler for request `{requestMessage.Type}`.");
+                throw new DetailedException($"No RPC handler for request `{requestMessage.Type}`.");
             }
 
             var context = new RpcContext
@@ -391,7 +391,7 @@ namespace Newsgirl.Shared
 
             if (context.ResponseTask == null)
             {
-                throw new DetailedLogException("Rpc response task is null.");
+                throw new DetailedException("Rpc response task is null.");
             }
 
             return this.convertReturnValue(context.ResponseTask);

@@ -144,7 +144,7 @@ namespace Newsgirl.Shared
         }
     }
 
-    public class JsonHelperException : DetailedLogException
+    public class JsonHelperException : DetailedException
     {
         public JsonHelperException(string message) : base(message) { }
     }

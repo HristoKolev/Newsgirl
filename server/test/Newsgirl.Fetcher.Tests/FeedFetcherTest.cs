@@ -89,7 +89,7 @@ namespace Newsgirl.Fetcher.Tests
             log.When(x => x.Log(Arg.Any<string>(), Arg.Any<Func<LogData>>())).Do(info => info.Arg<Func<LogData>>()());
 
             var errorReporter = Substitute.For<ErrorReporter>();
-            await errorReporter.Error(Arg.Do<DetailedLogException>(x => err = x), Arg.Any<Dictionary<string, object>>());
+            await errorReporter.Error(Arg.Do<DetailedException>(x => err = x), Arg.Any<Dictionary<string, object>>());
 
             var fetcher = new FeedFetcher(
                 contentProvider,

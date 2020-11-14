@@ -63,7 +63,7 @@ namespace Newsgirl.Server.Tests
 
             if (!registerResult.IsOk)
             {
-                throw new DetailedLogException("The `RegisterRequest` call failed.");
+                throw new DetailedException("The `RegisterRequest` call failed.");
             }
 
             return registerResult.Payload;
@@ -104,7 +104,6 @@ namespace Newsgirl.Server.Tests
 
             Assert.Null(app.Log);
             Assert.Null(app.AppConfig);
-            Assert.Null(app.AsyncLocals);
             Assert.Null(app.ErrorReporter);
             Assert.Null(app.IoC);
             Assert.Null(app.RpcEngine);
@@ -123,7 +122,6 @@ namespace Newsgirl.Server.Tests
 
             Assert.NotNull(app.Log);
             Assert.NotNull(app.AppConfig);
-            Assert.NotNull(app.AsyncLocals);
             Assert.NotNull(app.ErrorReporter);
             Assert.NotNull(app.IoC);
             Assert.NotNull(app.RpcEngine);
@@ -152,7 +150,6 @@ namespace Newsgirl.Server.Tests
 
             Assert.Null(this.App.Log);
             Assert.Null(this.App.AppConfig);
-            Assert.Null(this.App.AsyncLocals);
             Assert.Null(this.App.ErrorReporter);
             Assert.Null(this.App.IoC);
             Assert.Null(this.App.RpcEngine);
@@ -249,7 +246,7 @@ namespace Newsgirl.Server.Tests
 
                 if (cookieParts.Count == 0)
                 {
-                    throw new DetailedLogException("Could not parse cookies.")
+                    throw new DetailedException("Could not parse cookies.")
                     {
                         Details =
                         {

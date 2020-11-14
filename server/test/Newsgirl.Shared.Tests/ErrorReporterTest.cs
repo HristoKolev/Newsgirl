@@ -28,7 +28,7 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                this.ThrowException();
+                ThrowException();
             }
             catch (Exception exception)
             {
@@ -41,7 +41,7 @@ namespace Newsgirl.Shared.Tests
         {
             var reporter = CreateReporter();
 
-            var testException = new DetailedLogException($"Testing {nameof(ErrorReporterImpl)}.");
+            var testException = new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
 
             await reporter.Error(testException, "TESTING_FINGERPRINT");
         }
@@ -51,7 +51,7 @@ namespace Newsgirl.Shared.Tests
         {
             var reporter = CreateReporter();
 
-            var testException = new DetailedLogException($"Testing {nameof(ErrorReporterImpl)}.");
+            var testException = new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
 
             await reporter.Error(testException, new Dictionary<string, object>
             {
@@ -66,7 +66,7 @@ namespace Newsgirl.Shared.Tests
 
             try
             {
-                this.ThrowException();
+                ThrowException();
             }
             catch (Exception exception)
             {
@@ -78,9 +78,9 @@ namespace Newsgirl.Shared.Tests
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void ThrowException()
+        private static void ThrowException()
         {
-            throw new DetailedLogException($"Testing {nameof(ErrorReporterImpl)}.");
+            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
         }
     }
 }

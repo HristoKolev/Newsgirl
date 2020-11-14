@@ -211,14 +211,14 @@ namespace Newsgirl.Server.Http
             }
             catch (EncoderFallbackException err)
             {
-                throw new DetailedLogException("Failed to encode UTF8 response body.", err)
+                throw new DetailedException("Failed to encode UTF8 response body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_ENCODE_UTF8_RESPONSE_BODY",
                 };
             }
             catch (Exception err)
             {
-                throw new DetailedLogException("Failed to write to HTTP response body.", err)
+                throw new DetailedException("Failed to write to HTTP response body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_WRITE_TO_RESPONSE_BODY",
                 };
@@ -242,7 +242,7 @@ namespace Newsgirl.Server.Http
             }
             catch (Exception err)
             {
-                throw new DetailedLogException("Failed to decode UTF8 from HTTP request body.", err)
+                throw new DetailedException("Failed to decode UTF8 from HTTP request body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
                     Details =
@@ -279,7 +279,7 @@ namespace Newsgirl.Server.Http
                 {
                     memoryOwner.Dispose();
 
-                    throw new DetailedLogException("Failed to read the HTTP request body.", err)
+                    throw new DetailedException("Failed to read the HTTP request body.", err)
                     {
                         Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                         Details =
@@ -298,7 +298,7 @@ namespace Newsgirl.Server.Http
             }
             catch (Exception err)
             {
-                throw new DetailedLogException("Failed to read the HTTP request body.", err)
+                throw new DetailedException("Failed to read the HTTP request body.", err)
                 {
                     Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                 };

@@ -108,7 +108,7 @@ namespace Newsgirl.Fetcher
                 }
                 catch (Exception err)
                 {
-                    throw new DetailedLogException("The http request for the feed failed.", err)
+                    throw new DetailedException("The http request for the feed failed.", err)
                     {
                         Fingerprint = "FEED_HTTP_REQUEST_FAILED",
                     };
@@ -137,7 +137,7 @@ namespace Newsgirl.Fetcher
                 }
                 catch (Exception err)
                 {
-                    throw new DetailedLogException("Failed to parse UTF-8 feed content.", err)
+                    throw new DetailedException("Failed to parse UTF-8 feed content.", err)
                     {
                         Fingerprint = "FEED_CONTENT_UTF8_PARSE_FAILED",
                         Details =
@@ -155,7 +155,7 @@ namespace Newsgirl.Fetcher
                 }
                 catch (Exception err)
                 {
-                    throw new DetailedLogException("Failed to parse feed content.", err)
+                    throw new DetailedException("Failed to parse feed content.", err)
                     {
                         Fingerprint = "FEED_CONTENT_PARSE_FAILED",
                         Details =

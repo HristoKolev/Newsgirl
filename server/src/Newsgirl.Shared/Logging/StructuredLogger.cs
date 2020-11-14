@@ -41,7 +41,7 @@ namespace Newsgirl.Shared.Logging
 
             if (this.destinationsFactoryMap.ContainsKey(eventStreamName))
             {
-                throw new DetailedLogException("There already is an event stream with this name.")
+                throw new DetailedException("There already is an event stream with this name.")
                 {
                     Details =
                     {
@@ -428,7 +428,7 @@ namespace Newsgirl.Shared.Logging
         {
             if (this.started)
             {
-                throw new DetailedLogException("The destination is already started.");
+                throw new DetailedException("The destination is already started.");
             }
 
             this.buffer = ArrayPool<TEventData>.Shared.Rent(16);
@@ -442,7 +442,7 @@ namespace Newsgirl.Shared.Logging
         {
             if (!this.started)
             {
-                throw new DetailedLogException("The destination is already stopped.");
+                throw new DetailedException("The destination is already stopped.");
             }
 
             try

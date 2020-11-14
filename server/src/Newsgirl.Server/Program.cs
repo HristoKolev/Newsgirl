@@ -58,8 +58,6 @@ namespace Newsgirl.Server
 
         public CustomHttpServer Server { get; set; }
 
-        public AsyncLocals AsyncLocals { get; set; }
-
         public RpcEngine RpcEngine { get; set; }
 
         public Module InjectedIoCModule { get; set; }
@@ -75,8 +73,6 @@ namespace Newsgirl.Server
 
             this.shutdownTriggered = new TaskCompletionSource<object>();
             this.shutdownCompleted = new ManualResetEventSlim();
-
-            this.AsyncLocals = new AsyncLocalsImpl();
 
             await this.LoadConfig();
 
@@ -169,18 +165,14 @@ namespace Newsgirl.Server
                     // Use this for request scoped state like the reference to the HttpContext object.
                     var httpRequestState = requestScope.Resolve<HttpRequestState>();
 
+                    scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> {{"httpRequestState", httpRequestState}});
+
                     // Set the context first before resolving anything else.
                     httpRequestState.HttpContext = context;
 
                     try
                     {
                         httpRequestState.RequestStart = dateTimeService.EventTime();
-
-                        // Diagnostic data in case of an error.
-                        this.AsyncLocals.CollectHttpData.Value = () => new Dictionary<string, object>
-                        {
-                            {"http", new HttpLogData(httpRequestState, true)},
-                        };
 
                         // Set the result of the authentication step.
                         httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
@@ -245,7 +237,6 @@ namespace Newsgirl.Server
             this.AppConfig.ErrorReporter.Release = this.AppVersion;
 
             var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
-            errorReporter.AddSyncHook(this.AsyncLocals.CollectHttpData);
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
@@ -324,8 +315,6 @@ namespace Newsgirl.Server
 
                     this.ErrorReporter = null;
                 }
-
-                this.AsyncLocals = null;
             }
             finally
             {
@@ -395,16 +384,6 @@ namespace Newsgirl.Server
         public string HttpLogIndex { get; set; }
     }
 
-    public interface AsyncLocals
-    {
-        public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; }
-    }
-
-    public class AsyncLocalsImpl : AsyncLocals
-    {
-        public AsyncLocal<Func<Dictionary<string, object>>> CollectHttpData { get; } = new AsyncLocal<Func<Dictionary<string, object>>>();
-    }
-
     public class SessionCertificatePool : DefaultObjectPool<X509Certificate2>
     {
         private const int MAXIMUM_RETAINED = 128;
@@ -441,16 +420,14 @@ namespace Newsgirl.Server
         {
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
-            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
             builder.Register((c, p) => this.app.Log).ExternallyOwned().As<Log>();
-
-            builder.Register((c, p) => this.app.AsyncLocals).ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
             builder.Register((c, p) => this.app.SessionCertificatePool).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
+            builder.Register((c, p) => (ErrorReporter) new ErrorReporterImpl(this.app.AppConfig.ErrorReporter)).InstancePerLifetimeScope();
             builder.RegisterType<AuthServiceImpl>().As<AuthService>().InstancePerLifetimeScope();
             builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();

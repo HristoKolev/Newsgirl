@@ -461,7 +461,7 @@ namespace Newsgirl.Shared.Postgres
                 }
                 default:
                 {
-                    throw new DetailedLogException($"Unexpected connection state: {connection.State.ToString()}. Possibly a race condition.");
+                    throw new DetailedException($"Unexpected connection state: {connection.State.ToString()}. Possibly a race condition.");
                 }
             }
 

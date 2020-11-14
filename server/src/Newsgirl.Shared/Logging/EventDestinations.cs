@@ -142,7 +142,7 @@ namespace Newsgirl.Shared.Logging
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new DetailedLogException("Elasticsearch endpoint returned a non-success status code.")
+                throw new DetailedException("Elasticsearch endpoint returned a non-success status code.")
                 {
                     Details =
                     {
@@ -156,7 +156,7 @@ namespace Newsgirl.Shared.Logging
 
             if (responseDto.Errors)
             {
-                throw new DetailedLogException("Elasticsearch endpoint returned an error.")
+                throw new DetailedException("Elasticsearch endpoint returned an error.")
                 {
                     Details =
                     {
