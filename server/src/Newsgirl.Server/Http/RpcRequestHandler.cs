@@ -31,6 +31,7 @@ namespace Newsgirl.Server.Http
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err, "RPC_GENERAL_SERVER_ERROR");
+                httpRequestState.HttpContext.AddErrorIdHeader(errorID);
                 result = Result.Error<object>($"General RPC server error. ErrorID: {errorID}.");
             }
 
@@ -48,7 +49,7 @@ namespace Newsgirl.Server.Http
         private async Task<Result<object>> ProcessRequest(HttpRequestState httpRequestState)
         {
             // Find request metadata.
-            if (string.IsNullOrWhiteSpace(httpRequestState.RpcRequestType))
+            if (string.IsNullOrWhiteSpace(httpRequestState.RpcState.RpcRequestType))
             {
                 return Result.Error<object>("Request type is null or an empty string.");
             }
@@ -56,47 +57,39 @@ namespace Newsgirl.Server.Http
             // Read request body.
             try
             {
-                httpRequestState.RpcRequestBody = await httpRequestState.HttpContext.Request.ReadToEnd();
+                httpRequestState.RpcState.RpcRequestBody = await httpRequestState.HttpContext.Request.ReadToEnd();
 
-                if (httpRequestState.RpcRequestBody.Memory.Length == 0)
+                if (httpRequestState.RpcState.RpcRequestBody.Memory.Length == 0)
                 {
                     return Result.Error<object>("The HTTP request has an empty body.");
                 }
             }
             catch (Exception err)
             {
-                string errorID = await this.errorReporter.Error(err);
+                string errorID = await this.errorReporter.Error(err, "FAILED_TO_READ_RPC_BODY");
+                httpRequestState.HttpContext.AddErrorIdHeader(errorID);
                 return Result.Error<object>($"Failed to read RPC request body. ErrorID: {errorID}.");
             }
 
-            var metadata = this.rpcEngine.GetMetadataByRequestName(httpRequestState.RpcRequestType);
+            var metadata = this.rpcEngine.GetMetadataByRequestName(httpRequestState.RpcState.RpcRequestType);
 
             if (metadata == null)
             {
-                return Result.Error<object>($"No RPC handler for request. RequestType: {httpRequestState.RpcRequestType}.");
+                return Result.Error<object>($"No RPC handler for request. RequestType: {httpRequestState.RpcState.RpcRequestType}.");
             }
 
             // Parse the RPC message.
             try
             {
-                try
-                {
-                    httpRequestState.RpcRequestPayload = JsonHelper.Deserialize(
-                        httpRequestState.RpcRequestBody.Memory.Span,
-                        metadata.RequestType
-                    );
-                }
-                catch (Exception err)
-                {
-                    throw new DetailedLogException("Failed to parse RPC body.", err)
-                    {
-                        Fingerprint = "FAILED_TO_PARSE_RPC_BODY",
-                    };
-                }
+                httpRequestState.RpcState.RpcRequestPayload = JsonHelper.Deserialize(
+                    httpRequestState.RpcState.RpcRequestBody.Memory.Span,
+                    metadata.RequestType
+                );
             }
             catch (Exception err)
             {
-                string errorID = await this.errorReporter.Error(err);
+                string errorID = await this.errorReporter.Error(err, "FAILED_TO_PARSE_RPC_BODY");
+                httpRequestState.HttpContext.AddErrorIdHeader(errorID);
                 return Result.Error<object>($"Failed to parse RPC body. ErrorID: {errorID}.");
             }
 
@@ -105,19 +98,20 @@ namespace Newsgirl.Server.Http
             {
                 var requestMessage = new RpcRequestMessage
                 {
-                    Type = httpRequestState.RpcRequestType,
-                    Payload = httpRequestState.RpcRequestPayload,
+                    Type = httpRequestState.RpcState.RpcRequestType,
+                    Payload = httpRequestState.RpcState.RpcRequestPayload,
                 };
 
-                httpRequestState.RpcResponse = await this.rpcEngine.Execute(requestMessage, this.instanceProvider);
+                httpRequestState.RpcState.RpcResponse = await this.rpcEngine.Execute(requestMessage, this.instanceProvider);
             }
             catch (Exception err)
             {
                 string errorID = await this.errorReporter.Error(err);
+                httpRequestState.HttpContext.AddErrorIdHeader(errorID);
                 return Result.Error<object>($"Failed to execute RPC request. ErrorID: {errorID}.");
             }
 
-            return httpRequestState.RpcResponse;
+            return httpRequestState.RpcState.RpcResponse;
         }
     }
 

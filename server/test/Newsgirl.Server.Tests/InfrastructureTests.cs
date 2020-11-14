@@ -597,6 +597,7 @@ namespace Newsgirl.Server.Tests
                 var httpRequestState = new HttpRequestState
                 {
                     HttpContext = context,
+                    RpcState = new RpcRequestState(),
                 };
 
                 var handler = new RpcRequestHandler(
@@ -606,7 +607,7 @@ namespace Newsgirl.Server.Tests
                 );
 
                 var requestPath = context.Request.Path;
-                httpRequestState.RpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
+                httpRequestState.RpcState.RpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
                 return handler.HandleRpcRequest(httpRequestState);
             }
 

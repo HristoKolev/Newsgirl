@@ -499,7 +499,12 @@ namespace Newsgirl.Shared.Logging
                             }
                             catch (Exception exception)
                             {
-                                await this.errorReporter.Error(exception);
+                                await this.errorReporter.Error(exception, "STRUCTURED_LOGGER_FAILED_TO_FLUSH", new Dictionary<string, object>
+                                {
+                                    {"EventDestinationType", this.GetType().FullName},
+                                    {"EventDataType", typeof(TEventData).FullName},
+                                });
+
                                 await Task.Delay(this.TimeBetweenRetries);
                             }
                         }
@@ -510,9 +515,14 @@ namespace Newsgirl.Shared.Logging
                 // This should never happen if this code functions normally.
                 // Exceptions thrown in custom Flush implementations are caught earlier.
                 // The only way we get here is if the implementation of this method throws an exception.
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    await this.errorReporter.Error(ex);
+                    await this.errorReporter.Error(exception, "STRUCTURED_LOGGER_CRITICAL_ERROR", new Dictionary<string, object>
+                    {
+                        {"EventDestinationType", this.GetType().FullName},
+                        {"EventDataType", typeof(TEventData).FullName},
+                    });
+
                     await Task.Delay(this.TimeBetweenMainLoopRestart);
                 }
             }

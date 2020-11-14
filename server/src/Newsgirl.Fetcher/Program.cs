@@ -32,9 +32,6 @@
 
         public async Task Initialize()
         {
-            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException += this.TaskSchedulerOnUnobservedTaskException;
-
             await this.LoadConfig();
 
             if (this.InjectedAppConfig == null)
@@ -100,18 +97,8 @@
             }
             catch (Exception exception)
             {
-                await this.ErrorReporter.Error(exception);
+                await this.ErrorReporter.Error(exception, "FAILED_TO_READ_JSON_CONFIG");
             }
-        }
-
-        private async void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error(e.Exception!.InnerException);
-        }
-
-        private async void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            await this.ErrorReporter.Error((Exception) e.ExceptionObject);
         }
 
         public async ValueTask DisposeAsync()
@@ -130,9 +117,6 @@
 
             this.AppConfig = null;
             this.SystemSettings = null;
-
-            AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException -= this.TaskSchedulerOnUnobservedTaskException;
 
             // ReSharper disable once SuspiciousTypeConversion.Global
             if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
@@ -217,30 +201,49 @@
     {
         private static async Task<int> Main()
         {
-            await using (var app = new FetcherApp())
+            var app = new FetcherApp();
+
+            async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
             {
-                try
-                {
-                    await app.Initialize();
+                await app.ErrorReporter.Error(e.Exception?.InnerException);
+            }
 
-                    while (true)
-                    {
-                        await app.RunCycle();
-                    }
-                }
-                catch (Exception exception)
-                {
-                    if (app.Log != null)
-                    {
-                        await app.ErrorReporter.Error(exception);
-                    }
-                    else
-                    {
-                        await Console.Error.WriteLineAsync(exception.ToString());
-                    }
+            async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+            {
+                await app.ErrorReporter.Error((Exception) e.ExceptionObject);
+            }
 
-                    return 1;
+            try
+            {
+                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+                AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
+                await app.Initialize();
+
+                while (true)
+                {
+                    await app.RunCycle();
                 }
+            }
+            catch (Exception exception)
+            {
+                if (app.Log != null)
+                {
+                    await app.ErrorReporter.Error(exception);
+                }
+                else
+                {
+                    await Console.Error.WriteLineAsync(exception.ToString());
+                }
+
+                return 1;
+            }
+            finally
+            {
+                await app.DisposeAsync();
+
+                AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
             }
         }
     }

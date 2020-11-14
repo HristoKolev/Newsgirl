@@ -298,6 +298,7 @@ namespace Newsgirl.Server.Tests
                             }
                             case "expires":
                             {
+                                // ReSharper disable once AssignNullToNotNullAttribute
                                 cookie.Expires = DateTime.Parse(value);
                                 break;
                             }

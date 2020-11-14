@@ -257,7 +257,7 @@ namespace Newsgirl.Server
             }
             catch (Exception ex)
             {
-                this.errorReporter.Error(ex);
+                this.errorReporter.Error(ex, "FAILED_TO_DECODE_JWT");
                 return null;
             }
             finally

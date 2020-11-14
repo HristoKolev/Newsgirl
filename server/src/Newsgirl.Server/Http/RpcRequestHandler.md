@@ -7,7 +7,7 @@ This module exposes an HTTP endpoint for RPC for processing requests.
 
 * RPC request type is read from the url: `/rpc/{RequestType}`. Example: `/rpc/PingRequest`. 
 
-* The RPC request payload and headers are read from the body of the HTTP request as JSON. Format: `{ payload: {...}, headers: {...} }`.
+* The RPC request payload is read from the body of the HTTP request as JSON.
 
 # Writing RPC responses
 

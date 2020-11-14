@@ -32,7 +32,10 @@ namespace Newsgirl.Server
                 typeof(RpcAuthorizationMiddleware),
                 typeof(RpcInputValidationMiddleware),
             },
-            ParameterTypeWhitelist = new[] {typeof(AuthResult)},
+            ParameterTypeWhitelist = new[]
+            {
+                typeof(AuthResult),
+            },
         };
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
@@ -187,15 +190,18 @@ namespace Newsgirl.Server
                         string requestPath = context.Request.Path.Value;
 
                         const string RPC_ROUTE_PATH = "/rpc/";
+
                         if (requestPath.StartsWith(RPC_ROUTE_PATH))
                         {
+                            httpRequestState.RpcState = new RpcRequestState();
+
                             if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
                             {
-                                httpRequestState.RpcRequestType = null;
+                                httpRequestState.RpcState.RpcRequestType = null;
                             }
                             else
                             {
-                                httpRequestState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
+                                httpRequestState.RpcState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
                             }
 
                             await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
@@ -262,7 +268,7 @@ namespace Newsgirl.Server
             }
             catch (Exception exception)
             {
-                await this.ErrorReporter.Error(exception);
+                await this.ErrorReporter.Error(exception, "FAILED_TO_READ_JSON_CONFIG");
             }
         }
 
@@ -476,8 +482,27 @@ namespace Newsgirl.Server
 
         public DateTime RequestEnd { get; set; }
 
-        // --------
+        public RpcRequestState RpcState { get; set; }
 
+        public void Dispose()
+        {
+            this.RpcState?.Dispose();
+        }
+    }
+
+    public static class HttpContextExtensions
+    {
+        public static void AddErrorIdHeader(this HttpContext httpContext, string errorID)
+        {
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.Headers["errorID"] = errorID;
+            }
+        }
+    }
+
+    public class RpcRequestState : IDisposable
+    {
         public string RpcRequestType { get; set; }
 
         public IMemoryOwner<byte> RpcRequestBody { get; set; }
@@ -485,8 +510,6 @@ namespace Newsgirl.Server
         public object RpcRequestPayload { get; set; }
 
         public Result<object> RpcResponse { get; set; }
-
-        // --------
 
         public void Dispose()
         {
@@ -525,8 +548,6 @@ namespace Newsgirl.Server
 
             // --------
 
-            this.RpcRequestType = httpRequestState.RpcRequestType;
-
             if (httpRequestState.AuthResult != null)
             {
                 this.SessionID = httpRequestState.AuthResult.SessionID;
@@ -535,23 +556,33 @@ namespace Newsgirl.Server
                 this.ValidCsrfToken = httpRequestState.AuthResult.ValidCsrfToken;
             }
 
+            var rpcState = httpRequestState.RpcState;
+
+            if (rpcState != null)
+            {
+                this.RpcRequestType = rpcState.RpcRequestType;
+            }
+
             if (detailedLog)
             {
                 this.HeadersJson = JsonHelper.Serialize(httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value));
 
-                if (httpRequestState.RpcRequestBody != null)
+                if (rpcState != null)
                 {
-                    this.RpcRequestBodyBase64 = Convert.ToBase64String(httpRequestState.RpcRequestBody.Memory.Span);
-                }
+                    if (rpcState.RpcRequestBody != null)
+                    {
+                        this.RpcRequestBodyBase64 = Convert.ToBase64String(rpcState.RpcRequestBody.Memory.Span);
+                    }
 
-                if (httpRequestState.RpcRequestPayload != null)
-                {
-                    this.RpcRequestPayloadJson = JsonHelper.Serialize(httpRequestState.RpcRequestPayload);
-                }
+                    if (rpcState.RpcRequestPayload != null)
+                    {
+                        this.RpcRequestPayloadJson = JsonHelper.Serialize(rpcState.RpcRequestPayload);
+                    }
 
-                if (httpRequestState.RpcResponse != null)
-                {
-                    this.RpcResponseJson = JsonHelper.Serialize(httpRequestState.RpcResponse);
+                    if (rpcState.RpcResponse != null)
+                    {
+                        this.RpcResponseJson = JsonHelper.Serialize(rpcState.RpcResponse);
+                    }
                 }
             }
         }

@@ -8,7 +8,7 @@
   "Logging": {
     "StructuredLogger": [
       {
-        "Name": "GENERAL_LOG",        
+        "Name": "GENERAL_LOG",
         "Enabled": true,
         "Destinations": [
           { "Name": "ConsoleConsumer", "Enabled": true },
@@ -35,7 +35,7 @@
     "Elasticsearch": {
       "Url": "http://dev-host.lan:9200",
       "Username": "newsgirl",
-      "Password": "test123"      
+      "Password": "test123"
     },
     "ElasticsearchIndexes": {
       "GeneralLogIndex": "newsgirl-server-general",
