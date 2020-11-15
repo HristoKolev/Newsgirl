@@ -189,6 +189,10 @@ namespace Newsgirl.Shared.Logging
     /// </summary>
     public class LogData : AppInfoEventData, IEnumerable
     {
+        private const string SERVER_NAME_KEY = "serverName";
+        private const string ENVIRONMENT_KEY = "environment";
+        private const string APP_VERSION_KEY = "appVersion";
+
         public Dictionary<string, object> Fields { get; } = new Dictionary<string, object>();
 
         public LogData(string message)
@@ -216,20 +220,20 @@ namespace Newsgirl.Shared.Logging
 
         public override string ServerName
         {
-            get => (string) this.Fields[nameof(this.ServerName)];
-            set => this.Fields[nameof(this.ServerName)] = value;
+            get => (string) this.Fields[SERVER_NAME_KEY];
+            set => this.Fields[SERVER_NAME_KEY] = value;
         }
 
         public override string Environment
         {
-            get => (string) this.Fields[nameof(this.Environment)];
-            set => this.Fields[nameof(this.Environment)] = value;
+            get => (string) this.Fields[ENVIRONMENT_KEY];
+            set => this.Fields[ENVIRONMENT_KEY] = value;
         }
 
         public override string AppVersion
         {
-            get => (string) this.Fields[nameof(this.AppVersion)];
-            set => this.Fields[nameof(this.AppVersion)] = value;
+            get => (string) this.Fields[APP_VERSION_KEY];
+            set => this.Fields[APP_VERSION_KEY] = value;
         }
     }
 

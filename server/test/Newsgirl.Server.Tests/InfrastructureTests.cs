@@ -217,6 +217,7 @@ namespace Newsgirl.Server.Tests
                     socket.Send(reqHeader, SocketFlags.None);
                     socket.Send(requestBody, 0, requestBody.Length / 10, SocketFlags.None);
                     socket.Dispose();
+                    // ReSharper disable once RedundantAssignment
                     socket = null;
                     GC.Collect(0, GCCollectionMode.Default, false);
                 }

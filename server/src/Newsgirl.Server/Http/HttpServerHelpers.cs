@@ -81,7 +81,7 @@ namespace Newsgirl.Server.Http
 
             this.RequestStart = httpRequestState.RequestStart;
             this.RequestEnd = httpRequestState.RequestEnd;
-            this.RequestDurationMs = (httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
+            this.RequestDurationMs = (long) (httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
 
             // --------
 
@@ -152,7 +152,7 @@ namespace Newsgirl.Server.Http
 
         public DateTime RequestEnd { get; set; }
 
-        public double RequestDurationMs { get; set; }
+        public long RequestDurationMs { get; set; }
 
         // --------
 
