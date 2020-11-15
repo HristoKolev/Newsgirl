@@ -353,21 +353,20 @@ namespace Newsgirl.Server.Tests
         [Fact]
         public void IoC_Resolves_All_Registered_Types()
         {
-            var ignored = new[]
-            {
-                typeof(ILifetimeScope),
-                typeof(IComponentContext),
-            };
+            var container = this.App.IoC;
 
-            var registeredTypes = this.App.IoC.ComponentRegistry.Registrations
+            var registeredTypes = container
+                .ComponentRegistry.Registrations
                 .SelectMany(x => x.Services)
-                .Select(x => ((TypedService) x).ServiceType)
-                .Where(x => !ignored.Contains(x))
+                .Cast<TypedService>()
+                .Select(x => x.ServiceType)
+                .Where(x => x != typeof(ILifetimeScope) && x != typeof(IComponentContext))
+                .Distinct()
                 .ToList();
 
             foreach (var registeredType in registeredTypes)
             {
-                this.App.IoC.Resolve(registeredType);
+                container.Resolve(registeredType);
             }
         }
     }

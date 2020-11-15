@@ -34,21 +34,21 @@ namespace Newsgirl.Shared
         private static readonly TimeSpan SentryFlushTimeout = TimeSpan.FromSeconds(60);
         private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
 
-        private readonly ErrorReporterConfig config;
+        private readonly AppInfoConfig appInfoConfig;
         private readonly ISentryClient sentryClient;
         private readonly AsyncLock sentryFlushLock;
         private readonly List<Func<Dictionary<string, object>>> dataHooks;
 
-        public ErrorReporterImpl(ErrorReporterConfig config)
+        public ErrorReporterImpl(ErrorReporterConfig config, AppInfoConfig appInfoConfig)
         {
-            this.config = config;
+            this.appInfoConfig = appInfoConfig;
             this.sentryFlushLock = new AsyncLock();
             this.dataHooks = new List<Func<Dictionary<string, object>>>();
             this.sentryClient = new SentryClient(new SentryOptions
             {
                 AttachStacktrace = true,
-                Dsn = new Dsn(this.config.SentryDsn),
-                Release = this.config.Release,
+                Dsn = new Dsn(config.SentryDsn),
+                Release = this.appInfoConfig.AppVersion,
             });
         }
 
@@ -93,8 +93,8 @@ namespace Newsgirl.Shared
             var sentryEvent = new SentryEvent(exception)
             {
                 Level = SentryLevel.Error,
-                ServerName = this.config.ServerName,
-                Environment = this.config.Environment,
+                ServerName = this.appInfoConfig.ServerName,
+                Environment = this.appInfoConfig.Environment,
             };
 
             var exceptionChain = GetExceptionChain(exception);
@@ -211,13 +211,7 @@ namespace Newsgirl.Shared
 
     public class ErrorReporterConfig
     {
-        public string ServerName { get; set; }
-
-        public string Environment { get; set; }
-
         public string SentryDsn { get; set; }
-
-        public string Release { get; set; }
     }
 
     public class DetailedException : Exception

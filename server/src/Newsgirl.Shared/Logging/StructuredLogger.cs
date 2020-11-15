@@ -114,6 +114,14 @@ namespace Newsgirl.Shared.Logging
     }
 
     /// <summary>
+    /// Derivatives will have a chance to modify every item before it gets enqueued to the destinations.
+    /// </summary>
+    public interface EventPreprocessor
+    {
+        void ProcessItem<TData>(ref TData item);
+    }
+
+    /// <summary>
     /// An implementation of Log that can hot swap EventDestinationCollection instances when the configuration changes.
     /// Dispatches all events to the current EventDestinationCollection instance.
     /// Reconfigure must be called before any calls to Log.
@@ -141,7 +149,7 @@ namespace Newsgirl.Shared.Logging
         /// The old collection gets disposed.
         /// Must be called before any calls to Log.
         /// </summary>
-        public async ValueTask Reconfigure(EventStreamConfig[] eventStreamConfigArray)
+        public async ValueTask Reconfigure(EventStreamConfig[] eventStreamConfigArray, EventPreprocessor eventPreprocessor = null)
         {
             var destinationsByEventStreamName = new Dictionary<string, object[]>();
 
@@ -159,7 +167,7 @@ namespace Newsgirl.Shared.Logging
 
             var oldCollection = this.eventDestinationCollection;
 
-            this.eventDestinationCollection = EventDestinationCollection.Build(destinationsByEventStreamName);
+            this.eventDestinationCollection = EventDestinationCollection.Build(destinationsByEventStreamName, eventPreprocessor);
 
             if (oldCollection != null)
             {
@@ -186,6 +194,7 @@ namespace Newsgirl.Shared.Logging
     public abstract class EventDestinationCollection : Log, IAsyncDisposable
     {
         private Dictionary<string, object[]> destinationsByEventStreamName;
+        protected EventPreprocessor EventPreprocessor;
 
         /// <summary>
         /// This counts how many concurrent calls to Log are executing at a specific moment.
@@ -228,7 +237,7 @@ namespace Newsgirl.Shared.Logging
         /// Takes a map of event stream name and array of destinations and creates an instance
         /// of EventDestinationCollection that is optimized for that specific configuration.
         /// </summary>
-        public static EventDestinationCollection Build(Dictionary<string, object[]> destinationsByEventStreamName)
+        public static EventDestinationCollection Build(Dictionary<string, object[]> destinationsByEventStreamName, EventPreprocessor eventPreprocessor)
         {
             var typeBuilder = ReflectionEmmitHelper.ModuleBuilder.DefineType(
                 nameof(EventDestinationCollection) + "+" + Guid.NewGuid(),
@@ -240,7 +249,7 @@ namespace Newsgirl.Shared.Logging
             var ctorIl = ctor.GetILGenerator();
             ctorIl.Emit(OpCodes.Ret);
 
-            EmitLog(typeBuilder, destinationsByEventStreamName);
+            EmitLog(typeBuilder, destinationsByEventStreamName, eventPreprocessor != null);
 
             var type = typeBuilder.CreateType();
 
@@ -256,11 +265,12 @@ namespace Newsgirl.Shared.Logging
             }
 
             instance!.destinationsByEventStreamName = destinationsByEventStreamName;
+            instance!.EventPreprocessor = eventPreprocessor;
 
             return instance;
         }
 
-        private static void EmitLog(TypeBuilder typeBuilder, Dictionary<string, object[]> destinationsByEventStreamName)
+        private static void EmitLog(TypeBuilder typeBuilder, Dictionary<string, object[]> destinationsByEventStreamName, bool emitPreprocessorCall)
         {
             // Interlocked.Increment
             var incrementMethod = typeof(Interlocked).GetMethods(BindingFlags.Static | BindingFlags.Public).First(x =>
@@ -273,6 +283,9 @@ namespace Newsgirl.Shared.Logging
             // EventDestinationCollection.ConcurrentLogCalls
             var callCounterField = typeof(EventDestinationCollection).GetField(nameof(ConcurrentLogCalls), BindingFlags.NonPublic | BindingFlags.Instance)!;
 
+            // EventDestinationCollection.EventPreprocessor
+            var preprocessorField = typeof(EventDestinationCollection).GetField(nameof(EventPreprocessor), BindingFlags.NonPublic | BindingFlags.Instance)!;
+
             var logMethod = typeBuilder.DefineMethod(nameof(Log),
                 MethodAttributes.Public |
                 MethodAttributes.ReuseSlot |
@@ -282,6 +295,9 @@ namespace Newsgirl.Shared.Logging
             );
 
             var typeParameter = logMethod.DefineGenericParameters("TLogData")[0];
+
+            // EventPreprocessor.ProcessItem<TData>(ref TData item)
+            var processItemMethod = typeof(EventPreprocessor).GetMethod(nameof(Logging.EventPreprocessor.ProcessItem))!.MakeGenericMethod(typeParameter);
 
             logMethod.SetParameters(typeof(string), typeof(Func<>).MakeGenericType(typeParameter));
             logMethod.SetReturnType(typeof(void));
@@ -334,6 +350,14 @@ namespace Newsgirl.Shared.Logging
             );
             il.Emit(OpCodes.Stloc, itemLocal);
 
+            if (emitPreprocessorCall)
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, preprocessorField!);
+                il.Emit(OpCodes.Ldloca_S, itemLocal);
+                il.Emit(OpCodes.Callvirt, processItemMethod);
+            }
+
             var loopCheckLabel = il.DefineLabel();
             var loopBodyLabel = il.DefineLabel();
 
@@ -358,7 +382,7 @@ namespace Newsgirl.Shared.Logging
             ));
             il.Emit(OpCodes.Pop);
 
-            // TODO: throw if false 
+            // TODO: throw if false
 
             // Increment step. i++
             il.Emit(OpCodes.Ldloc, arrayIndexLocal);

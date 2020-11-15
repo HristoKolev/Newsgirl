@@ -68,20 +68,17 @@ namespace Newsgirl.Shared.Tests
                     },
                 });
 
-                for (int j = 0; j < 5; j++)
+                for (int i = 0; i < 500; i++)
                 {
-                    for (int i = 0; i < 100; i++)
+                    logger.Log(MOCK_KEY, () =>
                     {
-                        logger.Log(MOCK_KEY, () =>
-                        {
-                            var logData = new TestLogData();
-                            expected.Add(logData);
-                            return logData;
-                        });
-                    }
-
-                    await Task.Delay(10);
+                        var logData = new TestLogData();
+                        expected.Add(logData);
+                        return logData;
+                    });
                 }
+
+                await Task.Delay(10);
             }
 
             AssertExt.SequentialEqual(expected, consumerMock.Logs);
@@ -316,9 +313,156 @@ namespace Newsgirl.Shared.Tests
 
             AssertExt.SequentialEqual(expected, consumerMock.Logs);
         }
+
+        [Fact]
+        public async Task Log_calls_the_preprocessor_if_it_exists()
+        {
+            const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
+
+            var consumerMock = new LogConsumerMock(null);
+
+            var expected = new List<TestLogData>();
+
+            var builder = new StructuredLoggerBuilder();
+
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
+            {
+                {CONSUMER_NAME, () => consumerMock},
+            });
+
+            var preprocessor = new TestEventPreprocessor();
+
+            await using (var logger = builder.Build())
+            {
+                var configs = new[]
+                {
+                    new EventStreamConfig
+                    {
+                        Name = MOCK_KEY,
+                        Enabled = true,
+                        Destinations = new[]
+                        {
+                            new EventDestinationConfig
+                            {
+                                Name = CONSUMER_NAME,
+                                Enabled = true,
+                            },
+                        },
+                    },
+                };
+
+                await logger.Reconfigure(configs, preprocessor);
+
+                for (int i = 0; i < 500; i++)
+                {
+                    logger.Log(MOCK_KEY, () =>
+                    {
+                        var logData = new TestLogData();
+                        expected.Add(logData);
+                        return logData;
+                    });
+                }
+
+                await Task.Delay(10);
+            }
+
+            AssertExt.SequentialEqual(expected, consumerMock.Logs);
+
+            foreach (var item in consumerMock.Logs)
+            {
+                Assert.Equal("test123", item.Str1);
+            }
+        }
+
+        [Fact]
+        public async Task Preprocessor_mutates_value_types()
+        {
+            const string MOCK_KEY = "MOCK_KEY";
+            const string CONSUMER_NAME = "LogConsumerMock";
+
+            var consumerMock = new LogConsumerStructMock(null);
+
+            var expected = new List<TestLogDataStruct>();
+
+            var builder = new StructuredLoggerBuilder();
+
+            builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogDataStruct>>>
+            {
+                {CONSUMER_NAME, () => consumerMock},
+            });
+
+            var preprocessor = new TestEventPreprocessor();
+
+            await using (var logger = builder.Build())
+            {
+                var configs = new[]
+                {
+                    new EventStreamConfig
+                    {
+                        Name = MOCK_KEY,
+                        Enabled = true,
+                        Destinations = new[]
+                        {
+                            new EventDestinationConfig
+                            {
+                                Name = CONSUMER_NAME,
+                                Enabled = true,
+                            },
+                        },
+                    },
+                };
+
+                await logger.Reconfigure(configs, preprocessor);
+
+                for (int i = 0; i < 500; i++)
+                {
+                    logger.Log(MOCK_KEY, () =>
+                    {
+                        var logData = new TestLogDataStruct();
+                        expected.Add(logData);
+                        return logData;
+                    });
+                }
+
+                await Task.Delay(10);
+            }
+
+            Assert.Equal(expected.Count, consumerMock.Logs.Count);
+
+            foreach (var item in consumerMock.Logs)
+            {
+                Assert.Equal("test123", item.Str1);
+            }
+        }
     }
 
-    public class TestLogData { }
+    public class TestEventPreprocessor : EventPreprocessor
+    {
+        public void ProcessItem<TData>(ref TData item)
+        {
+            if (item is TestLogData x)
+            {
+                x.Str1 = "test123";
+            }
+
+            if (item is TestLogDataStruct y)
+            {
+                y.Str1 = "test123";
+                item = (TData) (object) y;
+            }
+        }
+    }
+
+    public class TestLogData
+    {
+        public string Str1 { get; set; }
+    }
+
+    public struct TestLogDataStruct
+    {
+        public string Str1 { get; set; }
+    }
 
     public class LogConsumerMock : EventDestination<TestLogData>
     {
@@ -336,6 +480,37 @@ namespace Newsgirl.Shared.Tests
         }
 
         protected override async ValueTask Flush(ArraySegment<TestLogData> data)
+        {
+            if (this.WaitTime != TimeSpan.Zero)
+            {
+                await Task.Delay(this.WaitTime);
+            }
+
+            if (this.ShouldThrow)
+            {
+                throw new ApplicationException($"Throwing from inside of {nameof(LogConsumerMock)}.");
+            }
+
+            this.Logs.AddRange(data);
+        }
+    }
+
+    public class LogConsumerStructMock : EventDestination<TestLogDataStruct>
+    {
+        public List<TestLogDataStruct> Logs { get; } = new List<TestLogDataStruct>();
+
+        public bool ShouldThrow { get; set; }
+
+        public TimeSpan WaitTime { get; set; } = TimeSpan.Zero;
+
+        public LogConsumerStructMock(ErrorReporter errorReporter) : base(errorReporter)
+        {
+            this.TimeBetweenRetries = TimeSpan.Zero;
+            this.NumberOfRetries = 0;
+            this.TimeBetweenMainLoopRestart = TimeSpan.Zero;
+        }
+
+        protected override async ValueTask Flush(ArraySegment<TestLogDataStruct> data)
         {
             if (this.WaitTime != TimeSpan.Zero)
             {

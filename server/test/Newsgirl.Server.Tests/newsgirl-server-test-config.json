@@ -1,7 +1,9 @@
 {
   "ConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;",
   "ErrorReporter": {
-    "SentryDsn": "http://1de969f387b749e2b2bf3361d844f461@home-sentry.lan/7",
+    "SentryDsn": "http://1de969f387b749e2b2bf3361d844f461@home-sentry.lan/7"    
+  },
+  "AppInfo": {
     "Environment": "testing",
     "ServerName": "hristo-ws"
   },

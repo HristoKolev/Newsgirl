@@ -10,13 +10,19 @@ namespace Newsgirl.Shared.Tests
     {
         private static ErrorReporterImpl CreateReporter()
         {
-            var errorReporter = new ErrorReporterImpl(new ErrorReporterConfig
+            var errorReporterConfig = new ErrorReporterConfig
+            {
+                SentryDsn = "http://daefbbb645b74db1a5f5060b8d4b1dd3@home-sentry.lan/9",
+            };
+
+            var appInfoConfig = new AppInfoConfig
             {
                 Environment = "testing",
-                Release = "1.0.0.0",
+                AppVersion = "1.0.0.0",
                 ServerName = "xunit-test",
-                SentryDsn = "http://daefbbb645b74db1a5f5060b8d4b1dd3@home-sentry.lan/9",
-            });
+            };
+
+            var errorReporter = new ErrorReporterImpl(errorReporterConfig, appInfoConfig);
 
             return errorReporter;
         }

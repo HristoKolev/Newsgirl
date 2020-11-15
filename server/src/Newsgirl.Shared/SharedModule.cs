@@ -1,6 +1,7 @@
 namespace Newsgirl.Shared
 {
     using Autofac;
+    using Logging;
 
     public class SharedModule : Module
     {
@@ -9,6 +10,7 @@ namespace Newsgirl.Shared
             builder.RegisterType<SystemSettingsService>().InstancePerLifetimeScope();
             builder.RegisterType<DbTransactionServiceImpl>().As<DbTransactionService>().InstancePerLifetimeScope();
             builder.RegisterType<DateTimeServiceImpl>().As<DateTimeService>().InstancePerLifetimeScope();
+            builder.RegisterType<LogPreprocessor>().InstancePerLifetimeScope();
 
             builder.RegisterType<RngServiceImpl>().As<RngService>().SingleInstance();
             builder.RegisterType<PasswordServiceImpl>().As<PasswordService>().SingleInstance();

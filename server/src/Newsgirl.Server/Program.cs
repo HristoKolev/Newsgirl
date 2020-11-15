@@ -1,17 +1,14 @@
 namespace Newsgirl.Server
 {
     using System;
-    using System.Buffers;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
     using Http;
     using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.ObjectPool;
     using Shared;
     using Shared.Logging;
     using Shared.Postgres;
@@ -102,7 +99,6 @@ namespace Newsgirl.Server
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
                         this.ErrorReporter,
-                        this.IoC.Resolve<DateTimeService>(),
                         this.AppConfig.Logging.Elasticsearch,
                         this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
                     )
@@ -133,7 +129,7 @@ namespace Newsgirl.Server
 
             this.Log = loggerBuilder.Build();
 
-            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
+            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
@@ -234,9 +230,9 @@ namespace Newsgirl.Server
                 this.AppConfig = this.InjectedAppConfig;
             }
 
-            this.AppConfig.ErrorReporter.Release = this.AppVersion;
+            this.AppConfig.AppInfo.AppVersion = this.AppVersion;
 
-            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
@@ -255,7 +251,7 @@ namespace Newsgirl.Server
             {
                 this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
-                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
+                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
             }
             catch (Exception exception)
             {
@@ -359,54 +355,6 @@ namespace Newsgirl.Server
         }
     }
 
-    public class HttpServerAppConfig
-    {
-        public string ConnectionString { get; set; }
-
-        public ErrorReporterConfig ErrorReporter { get; set; }
-
-        public LoggingConfig Logging { get; set; }
-    }
-
-    public class LoggingConfig
-    {
-        public EventStreamConfig[] StructuredLogger { get; set; }
-
-        public ElasticsearchConfig Elasticsearch { get; set; }
-
-        public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
-    }
-
-    public class ElasticsearchIndexConfig
-    {
-        public string GeneralLogIndex { get; set; }
-
-        public string HttpLogIndex { get; set; }
-    }
-
-    public class SessionCertificatePool : DefaultObjectPool<X509Certificate2>
-    {
-        private const int MAXIMUM_RETAINED = 128;
-
-        public SessionCertificatePool(SystemSettingsModel systemSettings) :
-            base(new SessionCertificatePoolPolicy(systemSettings.SessionCertificate), MAXIMUM_RETAINED) { }
-
-        private class SessionCertificatePoolPolicy : DefaultPooledObjectPolicy<X509Certificate2>
-        {
-            public SessionCertificatePoolPolicy(byte[] certificateBytes)
-            {
-                this.certificateBytes = certificateBytes;
-            }
-
-            private readonly byte[] certificateBytes;
-
-            public override X509Certificate2 Create()
-            {
-                return new X509Certificate2(this.certificateBytes);
-            }
-        }
-    }
-
     public class HttpServerIoCModule : Module
     {
         private readonly HttpServerApp app;
@@ -420,14 +368,16 @@ namespace Newsgirl.Server
         {
             // Globally managed
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).ExternallyOwned().As<Log>();
+            builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
             builder.Register((c, p) => this.app.SessionCertificatePool).ExternallyOwned();
+            builder.Register((c, p) => this.app.AppConfig.AppInfo).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
-            builder.Register((c, p) => (ErrorReporter) new ErrorReporterImpl(this.app.AppConfig.ErrorReporter)).InstancePerLifetimeScope();
+            builder.Register((c, p) => (ErrorReporter) new ErrorReporterImpl(this.app.AppConfig.ErrorReporter, this.app.AppConfig.AppInfo))
+                .InstancePerLifetimeScope();
             builder.RegisterType<AuthServiceImpl>().As<AuthService>().InstancePerLifetimeScope();
             builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
@@ -446,192 +396,6 @@ namespace Newsgirl.Server
             }
 
             base.Load(builder);
-        }
-    }
-
-    public class HttpRequestState : IDisposable
-    {
-        public HttpContext HttpContext { get; set; }
-
-        public AuthResult AuthResult { get; set; }
-
-        public DateTime RequestStart { get; set; }
-
-        public DateTime RequestEnd { get; set; }
-
-        public RpcRequestState RpcState { get; set; }
-
-        public void Dispose()
-        {
-            this.RpcState?.Dispose();
-        }
-    }
-
-    public static class HttpContextExtensions
-    {
-        public static void AddErrorIdHeader(this HttpContext httpContext, string errorID)
-        {
-            if (!httpContext.Response.HasStarted)
-            {
-                httpContext.Response.Headers["errorID"] = errorID;
-            }
-        }
-    }
-
-    public class RpcRequestState : IDisposable
-    {
-        public string RpcRequestType { get; set; }
-
-        public IMemoryOwner<byte> RpcRequestBody { get; set; }
-
-        public object RpcRequestPayload { get; set; }
-
-        public Result<object> RpcResponse { get; set; }
-
-        public void Dispose()
-        {
-            this.RpcRequestBody?.Dispose();
-        }
-    }
-
-    public class HttpLogData
-    {
-        // ReSharper disable MemberCanBePrivate.Global
-        // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
-        // ReSharper disable UnusedAutoPropertyAccessor.Global
-
-        public HttpLogData(HttpRequestState httpRequestState, bool detailedLog)
-        {
-            var context = httpRequestState.HttpContext;
-            var connectionInfo = context.Connection;
-            var httpRequest = context.Request;
-
-            this.LocalIp = connectionInfo.LocalIpAddress + ":" + connectionInfo.LocalPort;
-            this.RemoteIp = connectionInfo.RemoteIpAddress + ":" + connectionInfo.RemotePort;
-            this.HttpRequestID = connectionInfo.Id;
-            this.Method = httpRequest.Method;
-            this.Path = httpRequest.Path.ToString();
-            this.Query = httpRequest.QueryString.ToString();
-            this.Protocol = httpRequest.Protocol;
-            this.Scheme = httpRequest.Scheme;
-            this.Aborted = context.RequestAborted.IsCancellationRequested;
-            this.StatusCode = context.Response.StatusCode;
-
-            // --------
-
-            this.RequestStart = httpRequestState.RequestStart;
-            this.RequestEnd = httpRequestState.RequestEnd;
-            this.RequestDurationMs = (httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
-
-            // --------
-
-            if (httpRequestState.AuthResult != null)
-            {
-                this.SessionID = httpRequestState.AuthResult.SessionID;
-                this.LoginID = httpRequestState.AuthResult.LoginID;
-                this.ProfileID = httpRequestState.AuthResult.ProfileID;
-                this.ValidCsrfToken = httpRequestState.AuthResult.ValidCsrfToken;
-            }
-
-            var rpcState = httpRequestState.RpcState;
-
-            if (rpcState != null)
-            {
-                this.RpcRequestType = rpcState.RpcRequestType;
-            }
-
-            if (detailedLog)
-            {
-                this.HeadersJson = JsonHelper.Serialize(httpRequest.Headers.ToDictionary(x => x.Key, x => x.Value));
-
-                if (rpcState != null)
-                {
-                    if (rpcState.RpcRequestBody != null)
-                    {
-                        this.RpcRequestBodyBase64 = Convert.ToBase64String(rpcState.RpcRequestBody.Memory.Span);
-                    }
-
-                    if (rpcState.RpcRequestPayload != null)
-                    {
-                        this.RpcRequestPayloadJson = JsonHelper.Serialize(rpcState.RpcRequestPayload);
-                    }
-
-                    if (rpcState.RpcResponse != null)
-                    {
-                        this.RpcResponseJson = JsonHelper.Serialize(rpcState.RpcResponse);
-                    }
-                }
-            }
-        }
-
-        public string LocalIp { get; set; }
-
-        public string RemoteIp { get; set; }
-
-        public string HttpRequestID { get; set; }
-
-        public string Method { get; set; }
-
-        public string Path { get; set; }
-
-        public string Query { get; set; }
-
-        public string Protocol { get; set; }
-
-        public string Scheme { get; set; }
-
-        public bool Aborted { get; set; }
-
-        public int StatusCode { get; set; }
-
-        public string HeadersJson { get; set; }
-
-        // --------
-
-        public DateTime RequestStart { get; set; }
-
-        public DateTime RequestEnd { get; set; }
-
-        public double RequestDurationMs { get; set; }
-
-        // --------
-
-        public int SessionID { get; set; }
-
-        public int LoginID { get; set; }
-
-        public int ProfileID { get; set; }
-
-        public bool ValidCsrfToken { get; set; }
-
-        // --------
-
-        public string RpcRequestType { get; set; }
-
-        public string RpcRequestBodyBase64 { get; set; }
-
-        public string RpcRequestPayloadJson { get; set; }
-
-        public string RpcResponseJson { get; set; }
-
-        // ReSharper restore UnusedAutoPropertyAccessor.Global
-        // ReSharper restore AutoPropertyCanBeMadeGetOnly.Global
-        // ReSharper restore MemberCanBePrivate.Global
-    }
-
-    public static class HttpLoggingExtensions
-    {
-        public const string HTTP_KEY = "HTTP_REQUESTS";
-        public const string HTTP_DETAILED_KEY = "HTTP_REQUESTS_DETAILED";
-
-        public static void Http(this Log log, Func<HttpLogData> func)
-        {
-            log.Log(HTTP_KEY, func);
-        }
-
-        public static void HttpDetailed(this Log log, Func<HttpLogData> func)
-        {
-            log.Log(HTTP_DETAILED_KEY, func);
         }
     }
 
@@ -687,7 +451,7 @@ namespace Newsgirl.Server
             }
             catch (Exception exception)
             {
-                if (app.Log != null)
+                if (app.ErrorReporter != null)
                 {
                     await app.ErrorReporter.Error(exception);
                 }

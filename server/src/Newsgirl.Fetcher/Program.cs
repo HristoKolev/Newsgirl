@@ -52,7 +52,6 @@
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
                         this.ErrorReporter,
-                        this.IoC.Resolve<DateTimeService>(),
                         this.AppConfig.Logging.Elasticsearch,
                         this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
                     )
@@ -61,7 +60,7 @@
 
             this.Log = loggerBuilder.Build();
 
-            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
+            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
 
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
@@ -78,12 +77,12 @@
                 this.AppConfig = this.InjectedAppConfig;
             }
 
-            this.AppConfig.ErrorReporter.Release = this.AppVersion;
+            this.AppConfig.AppInfo.AppVersion = this.AppVersion;
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
             {
-                this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter);
+                this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
             }
         }
 
@@ -93,7 +92,7 @@
             {
                 this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
-                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger);
+                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
             }
             catch (Exception exception)
             {
@@ -148,6 +147,8 @@
 
         public ErrorReporterConfig ErrorReporter { get; set; }
 
+        public AppInfoConfig AppInfo { get; set; }
+
         public LoggingConfig Logging { get; set; }
     }
 
@@ -180,6 +181,7 @@
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
             builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
+            builder.Register((c, p) => this.app.AppConfig.AppInfo).ExternallyOwned();
 
             // Single instance
             builder.RegisterType<Hasher>().SingleInstance();
@@ -189,7 +191,6 @@
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
-
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
 
@@ -227,7 +228,7 @@
             }
             catch (Exception exception)
             {
-                if (app.Log != null)
+                if (app.ErrorReporter != null)
                 {
                     await app.ErrorReporter.Error(exception);
                 }

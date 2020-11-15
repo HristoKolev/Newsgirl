@@ -2,6 +2,7 @@ namespace Newsgirl.Shared.Logging
 {
     using System;
     using System.Buffers;
+    using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using System.Net.Http;
@@ -19,55 +20,47 @@ namespace Newsgirl.Shared.Logging
         {
             for (int i = 0; i < data.Count; i++)
             {
-                var log = data[i];
-
-                string json = JsonHelper.Serialize(new Dictionary<string, object>(log.Fields));
-
+                string json = JsonHelper.Serialize(data[i].Fields);
                 await Console.Out.WriteLineAsync(json);
             }
         }
     }
 
     /// <summary>
-    /// Sends LogData events to ELK.
+    /// Sends <see cref="LogData" /> events to ELK.
     /// </summary>
     public class ElasticsearchEventDestination : EventDestination<LogData>
     {
         private readonly string indexName;
         private readonly ElasticsearchClient elasticsearchClient;
-        private readonly DateTimeService dateTimeService;
 
         public ElasticsearchEventDestination(
             ErrorReporter errorReporter,
-            DateTimeService dateTimeService,
             ElasticsearchConfig config,
             string indexName) : base(errorReporter)
         {
-            this.dateTimeService = dateTimeService;
             this.indexName = indexName;
             this.elasticsearchClient = new ElasticsearchClient(config);
         }
 
         protected override ValueTask Flush(ArraySegment<LogData> data)
         {
-            var array = ArrayPool<Dictionary<string, object>>.Shared.Rent(data.Count);
+            var buffer = ArrayPool<Dictionary<string, object>>.Shared.Rent(data.Count);
 
             try
             {
                 for (int i = 0; i < data.Count; i++)
                 {
-                    data[i].Fields.Add("log_date", this.dateTimeService.CurrentTime().ToString("O"));
-                    array[i] = data[i].Fields;
+                    buffer[i] = data[i].Fields;
                 }
 
-                return this.elasticsearchClient.BulkCreate(
-                    this.indexName,
-                    new ArraySegment<Dictionary<string, object>>(array, 0, data.Count)
-                );
+                var segment = new ArraySegment<Dictionary<string, object>>(buffer, 0, data.Count);
+
+                return this.elasticsearchClient.BulkCreate(this.indexName, segment);
             }
             finally
             {
-                ArrayPool<Dictionary<string, object>>.Shared.Return(array);
+                ArrayPool<Dictionary<string, object>>.Shared.Return(buffer);
             }
         }
     }
@@ -133,10 +126,7 @@ namespace Newsgirl.Shared.Logging
 
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            var response = await this.httpClient.PostAsync(
-                new Uri(index + "/_bulk", UriKind.Relative),
-                content
-            );
+            var response = await this.httpClient.PostAsync(new Uri(index + "/_bulk", UriKind.Relative), content);
 
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -169,6 +159,104 @@ namespace Newsgirl.Shared.Logging
         private class ElasticsearchBulkResponse
         {
             public bool Errors { get; set; }
+        }
+    }
+
+    public class AppInfoEventData
+    {
+        public virtual string ServerName { get; set; }
+
+        public virtual string Environment { get; set; }
+
+        public virtual string AppVersion { get; set; }
+    }
+
+    /// <summary>
+    /// Using this extension method allows us to not specify the stream name and the event data structure.
+    /// </summary>
+    public static class GeneralLoggingExtensions
+    {
+        public const string GENERAL_EVENT_STREAM = "GENERAL_LOG";
+
+        public static void General(this Log log, Func<LogData> func)
+        {
+            log.Log(GENERAL_EVENT_STREAM, func);
+        }
+    }
+
+    /// <summary>
+    /// This is used as a most general log data structure.
+    /// </summary>
+    public class LogData : AppInfoEventData, IEnumerable
+    {
+        public Dictionary<string, object> Fields { get; } = new Dictionary<string, object>();
+
+        public LogData(string message)
+        {
+            this.Fields.Add("message", message);
+        }
+
+        /// <summary>
+        /// This is not meant to be used explicitly, but with he collection initialization syntax.
+        /// </summary>
+        public void Add(string key, object val)
+        {
+            this.Fields.Add(key, val);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        public static implicit operator LogData(string x)
+        {
+            return new LogData(x);
+        }
+
+        public override string ServerName
+        {
+            get => (string) this.Fields[nameof(this.ServerName)];
+            set => this.Fields[nameof(this.ServerName)] = value;
+        }
+
+        public override string Environment
+        {
+            get => (string) this.Fields[nameof(this.Environment)];
+            set => this.Fields[nameof(this.Environment)] = value;
+        }
+
+        public override string AppVersion
+        {
+            get => (string) this.Fields[nameof(this.AppVersion)];
+            set => this.Fields[nameof(this.AppVersion)] = value;
+        }
+    }
+
+    public class LogPreprocessor : EventPreprocessor
+    {
+        private readonly DateTimeService dateTimeService;
+        private readonly AppInfoConfig appInfoConfig;
+
+        public LogPreprocessor(DateTimeService dateTimeService, AppInfoConfig appInfoConfig)
+        {
+            this.dateTimeService = dateTimeService;
+            this.appInfoConfig = appInfoConfig;
+        }
+
+        public void ProcessItem<TData>(ref TData item)
+        {
+            if (item is LogData logData)
+            {
+                logData.Fields.Add("log_date", this.dateTimeService.EventTime().ToString("O"));
+            }
+
+            if (item is AppInfoEventData appInfoEventData)
+            {
+                appInfoEventData.AppVersion = this.appInfoConfig.AppVersion;
+                appInfoEventData.Environment = this.appInfoConfig.Environment;
+                appInfoEventData.ServerName = this.appInfoConfig.ServerName;
+            }
         }
     }
 

@@ -41,21 +41,20 @@ namespace Newsgirl.Fetcher.Tests
         {
             await using var app = await this.CreateFetcherApp();
 
-            var ignored = new[]
-            {
-                typeof(ILifetimeScope),
-                typeof(IComponentContext),
-            };
+            var container = app.IoC;
 
-            var registeredTypes = app.IoC.ComponentRegistry.Registrations
+            var registeredTypes = container
+                .ComponentRegistry.Registrations
                 .SelectMany(x => x.Services)
-                .Select(x => ((TypedService) x).ServiceType)
-                .Where(x => !ignored.Contains(x))
+                .Cast<TypedService>()
+                .Select(x => x.ServiceType)
+                .Where(x => x != typeof(ILifetimeScope) && x != typeof(IComponentContext))
+                .Distinct()
                 .ToList();
 
             foreach (var registeredType in registeredTypes)
             {
-                app.IoC.Resolve(registeredType);
+                container.Resolve(registeredType);
             }
         }
     }
