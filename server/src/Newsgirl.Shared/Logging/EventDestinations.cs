@@ -5,6 +5,7 @@ namespace Newsgirl.Shared.Logging
     using System.Collections;
     using System.Collections.Generic;
     using System.IO;
+    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Threading.Tasks;
@@ -111,18 +112,15 @@ namespace Newsgirl.Shared.Logging
 
         public async ValueTask BulkCreate<T>(string index, ArraySegment<T> data)
         {
-            await using var memStream = new MemoryStream();
-
-            for (int i = 0; i < data.Count; i++)
+            var content = new CustomStreamContent(async stream =>
             {
-                await memStream.WriteAsync(this.bulkHeaderBytes);
-                await JsonHelper.SerializeGenericType(memStream, data[i]);
-                await memStream.WriteAsync(this.bulkNewLineBytes);
-            }
-
-            memStream.Position = 0;
-
-            var content = new StreamContent(memStream);
+                for (int i = 0; i < data.Count; i++)
+                {
+                    await stream.WriteAsync(this.bulkHeaderBytes);
+                    await JsonHelper.SerializeGenericType(stream, data[i]);
+                    await stream.WriteAsync(this.bulkNewLineBytes);
+                }
+            });
 
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
@@ -169,6 +167,27 @@ namespace Newsgirl.Shared.Logging
         public virtual string Environment { get; set; }
 
         public virtual string AppVersion { get; set; }
+    }
+
+    public class CustomStreamContent : HttpContent
+    {
+        private readonly Func<Stream, Task> func;
+
+        public CustomStreamContent(Func<Stream, Task> func)
+        {
+            this.func = func;
+        }
+
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        {
+            return this.func(stream);
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
+        }
     }
 
     /// <summary>

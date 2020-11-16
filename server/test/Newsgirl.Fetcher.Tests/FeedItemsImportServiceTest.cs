@@ -17,14 +17,13 @@ namespace Newsgirl.Fetcher.Tests
 
             var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
-            var feeds = Enumerable.Range(1, 10)
-                .Select(i => new FeedPoco
-                {
-                    FeedItemsHash = i,
-                    FeedContentHash = i,
-                    FeedName = $"feed {i}",
-                    FeedUrl = $"url {i}",
-                }).ToList();
+            var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
+            {
+                FeedItemsHash = i,
+                FeedContentHash = i,
+                FeedName = $"feed {i}",
+                FeedUrl = $"url {i}",
+            }).ToList();
 
             await this.Db.BulkInsert(feeds);
 
@@ -40,12 +39,11 @@ namespace Newsgirl.Fetcher.Tests
 
             var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
-            var feeds = Enumerable.Range(1, 10)
-                .Select(i => new FeedPoco
-                {
-                    FeedName = $"feed {i}",
-                    FeedUrl = $"url {i}",
-                }).ToList();
+            var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
+            {
+                FeedName = $"feed {i}",
+                FeedUrl = $"url {i}",
+            }).ToList();
 
             foreach (var feed in feeds)
             {
@@ -56,31 +54,29 @@ namespace Newsgirl.Fetcher.Tests
             {
                 new FeedUpdateModel
                 {
-                    NewItems = Enumerable.Range(1, 10)
-                        .Select(i => new FeedItemPoco
-                        {
-                            FeedID = 1,
-                            FeedItemDescription = $"desc {i}",
-                            FeedItemHash = i,
-                            FeedItemTitle = $"title {i}",
-                            FeedItemUrl = $"url {i}",
-                            FeedItemAddedTime = TestHelper.Date3000,
-                        }).ToList(),
+                    NewItems = Enumerable.Range(1, 10).Select(i => new FeedItemPoco
+                    {
+                        FeedID = 1,
+                        FeedItemDescription = $"desc {i}",
+                        FeedItemHash = i,
+                        FeedItemTitle = $"title {i}",
+                        FeedItemUrl = $"url {i}",
+                        FeedItemAddedTime = TestHelper.Date3000,
+                    }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 1),
                     NewFeedItemsHash = 1,
                 },
                 new FeedUpdateModel
                 {
-                    NewItems = Enumerable.Range(100, 10)
-                        .Select(i => new FeedItemPoco
-                        {
-                            FeedID = 2,
-                            FeedItemDescription = $"desc {100 + i}",
-                            FeedItemHash = i,
-                            FeedItemTitle = $"title {100 + i}",
-                            FeedItemUrl = $"url {100 + i}",
-                            FeedItemAddedTime = TestHelper.Date3000,
-                        }).ToList(),
+                    NewItems = Enumerable.Range(100, 10).Select(i => new FeedItemPoco
+                    {
+                        FeedID = 2,
+                        FeedItemDescription = $"desc {100 + i}",
+                        FeedItemHash = i,
+                        FeedItemTitle = $"title {100 + i}",
+                        FeedItemUrl = $"url {100 + i}",
+                        FeedItemAddedTime = TestHelper.Date3000,
+                    }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 2),
                     NewFeedItemsHash = 2,
                 },
@@ -96,16 +92,15 @@ namespace Newsgirl.Fetcher.Tests
                 },
                 new FeedUpdateModel
                 {
-                    NewItems = Enumerable.Range(200, 10)
-                        .Select(i => new FeedItemPoco
-                        {
-                            FeedID = 5,
-                            FeedItemDescription = null,
-                            FeedItemHash = i,
-                            FeedItemTitle = $"title {i}",
-                            FeedItemUrl = null,
-                            FeedItemAddedTime = TestHelper.Date3000,
-                        }).ToList(),
+                    NewItems = Enumerable.Range(200, 10).Select(i => new FeedItemPoco
+                    {
+                        FeedID = 5,
+                        FeedItemDescription = null,
+                        FeedItemHash = i,
+                        FeedItemTitle = $"title {i}",
+                        FeedItemUrl = null,
+                        FeedItemAddedTime = TestHelper.Date3000,
+                    }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 5),
                     NewFeedItemsHash = 5,
                 },
@@ -126,36 +121,33 @@ namespace Newsgirl.Fetcher.Tests
 
             var importService = new FeedItemsImportService(this.Db, this.Connection, log);
 
-            var feeds = Enumerable.Range(1, 10)
-                .Select(i => new FeedPoco
-                {
-                    FeedName = $"feed {i}",
-                    FeedUrl = $"url {i}",
-                }).ToList();
+            var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
+            {
+                FeedName = $"feed {i}",
+                FeedUrl = $"url {i}",
+            }).ToList();
 
             await this.Db.BulkInsert(feeds);
 
-            var feedItems = Enumerable.Range(1, 10)
-                .Select(i => new FeedItemPoco
-                {
-                    FeedID = 1,
-                    FeedItemHash = i,
-                    FeedItemDescription = $"desc {i}",
-                    FeedItemTitle = $"title {i}",
-                    FeedItemUrl = $"url {i}",
-                    FeedItemAddedTime = TestHelper.Date3000,
-                }).ToList();
+            var feedItems = Enumerable.Range(1, 10).Select(i => new FeedItemPoco
+            {
+                FeedID = 1,
+                FeedItemHash = i,
+                FeedItemDescription = $"desc {i}",
+                FeedItemTitle = $"title {i}",
+                FeedItemUrl = $"url {i}",
+                FeedItemAddedTime = TestHelper.Date3000,
+            }).ToList();
 
-            feedItems.AddRange(Enumerable.Range(30, 10)
-                .Select(i => new FeedItemPoco
-                {
-                    FeedID = 2,
-                    FeedItemHash = i,
-                    FeedItemDescription = $"desc {i}",
-                    FeedItemTitle = $"title {i}",
-                    FeedItemUrl = $"url {i}",
-                    FeedItemAddedTime = TestHelper.Date3000,
-                }));
+            feedItems.AddRange(Enumerable.Range(30, 10).Select(i => new FeedItemPoco
+            {
+                FeedID = 2,
+                FeedItemHash = i,
+                FeedItemDescription = $"desc {i}",
+                FeedItemTitle = $"title {i}",
+                FeedItemUrl = $"url {i}",
+                FeedItemAddedTime = TestHelper.Date3000,
+            }));
 
             await this.Db.BulkInsert(feedItems);
 

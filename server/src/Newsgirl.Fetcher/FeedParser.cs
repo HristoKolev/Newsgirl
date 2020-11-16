@@ -1,20 +1,19 @@
 namespace Newsgirl.Fetcher
 {
+    using System.Buffers;
     using System.Collections.Generic;
-    using System.IO;
     using CodeHollow.FeedReader;
+    using Microsoft.Toolkit.HighPerformance.Buffers;
     using Shared;
     using Shared.Logging;
 
     public class FeedParser : IFeedParser
     {
         private readonly DateTimeService dateTimeService;
-        private readonly Hasher hasher;
         private readonly Log log;
 
-        public FeedParser(Hasher hasher, DateTimeService dateTimeService, Log log)
+        public FeedParser(DateTimeService dateTimeService, Log log)
         {
-            this.hasher = hasher;
             this.dateTimeService = dateTimeService;
             this.log = log;
         }
@@ -27,7 +26,7 @@ namespace Newsgirl.Fetcher
 
             var parsedFeed = new ParsedFeed(allItems.Count);
 
-            using (var memoryStream = new MemoryStream(allItems.Count * 8))
+            using (var bufferWriter = new ArrayPoolBufferWriter<byte>(allItems.Count * 8))
             {
                 for (int i = allItems.Count - 1; i >= 0; i--)
                 {
@@ -47,7 +46,7 @@ namespace Newsgirl.Fetcher
 
                     var stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
 
-                    long feedItemHash = this.hasher.ComputeHash(stringIDBytes);
+                    long feedItemHash = HashHelper.ComputeXx64Hash(stringIDBytes);
 
                     if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
                     {
@@ -68,12 +67,10 @@ namespace Newsgirl.Fetcher
                         FeedItemHash = feedItemHash,
                     });
 
-                    memoryStream.Write(stringIDBytes, 0, stringIDBytes.Length);
+                    bufferWriter.Write(stringIDBytes);
                 }
 
-                var allBytes = memoryStream.ToArray();
-
-                parsedFeed.FeedItemsHash = this.hasher.ComputeHash(allBytes);
+                parsedFeed.FeedItemsHash = HashHelper.ComputeXx64Hash(bufferWriter.WrittenSpan);
             }
 
             return parsedFeed;

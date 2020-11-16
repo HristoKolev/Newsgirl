@@ -52,14 +52,13 @@ namespace Newsgirl.Fetcher.Tests
 
             var fetcher = new FeedFetcher(
                 TestResourceContentProvider,
-                new FeedParser(new Hasher(), TestHelper.DateTimeServiceStub, TestHelper.LogStub),
+                new FeedParser(TestHelper.DateTimeServiceStub, TestHelper.LogStub),
                 importService,
                 new SystemSettingsModel
                 {
                     ParallelFeedFetching = parallelFetching,
                 },
                 TestHelper.TransactionServiceStub,
-                new Hasher(),
                 TestHelper.LogStub,
                 TestHelper.ErrorReporterStub
             );
@@ -93,11 +92,10 @@ namespace Newsgirl.Fetcher.Tests
 
             var fetcher = new FeedFetcher(
                 contentProvider,
-                new FeedParser(new Hasher(), TestHelper.DateTimeServiceStub, log),
+                new FeedParser(TestHelper.DateTimeServiceStub, log),
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(),
                 log,
                 errorReporter
             );
@@ -130,7 +128,6 @@ namespace Newsgirl.Fetcher.Tests
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(),
                 log,
                 errorReporter
             );
@@ -168,7 +165,6 @@ namespace Newsgirl.Fetcher.Tests
                 importService,
                 new SystemSettingsModel(),
                 TestHelper.TransactionServiceStub,
-                new Hasher(),
                 log,
                 errorReporter
             );

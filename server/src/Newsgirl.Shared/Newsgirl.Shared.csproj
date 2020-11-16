@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="6.1.1" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="3.1.9" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
+    <PackageReference Include="Standart.Hash.xxHash" Version="3.1.0" />
   </ItemGroup>
 
 </Project>

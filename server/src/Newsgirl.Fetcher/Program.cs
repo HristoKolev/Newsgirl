@@ -184,7 +184,6 @@
             builder.Register((c, p) => this.app.AppConfig.AppInfo).ExternallyOwned();
 
             // Single instance
-            builder.RegisterType<Hasher>().SingleInstance();
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
             builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 

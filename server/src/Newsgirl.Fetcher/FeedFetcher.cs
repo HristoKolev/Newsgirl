@@ -14,7 +14,6 @@ namespace Newsgirl.Fetcher
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
         private readonly DbTransactionService transactionService;
-        private readonly Hasher hasher;
         private readonly Log log;
         private readonly ErrorReporter errorReporter;
         private readonly AsyncLock dbLock;
@@ -25,7 +24,6 @@ namespace Newsgirl.Fetcher
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
             DbTransactionService transactionService,
-            Hasher hasher,
             Log log,
             ErrorReporter errorReporter)
         {
@@ -34,7 +32,6 @@ namespace Newsgirl.Fetcher
             this.feedItemsImportService = feedItemsImportService;
             this.systemSettings = systemSettings;
             this.transactionService = transactionService;
-            this.hasher = hasher;
             this.log = log;
             this.errorReporter = errorReporter;
             this.dbLock = new AsyncLock();
@@ -114,7 +111,7 @@ namespace Newsgirl.Fetcher
                     };
                 }
 
-                long feedContentHash = this.hasher.ComputeHash(feedContentBytes);
+                long feedContentHash = HashHelper.ComputeXx64Hash(feedContentBytes);
 
                 if (feedContentHash == feed.FeedContentHash)
                 {

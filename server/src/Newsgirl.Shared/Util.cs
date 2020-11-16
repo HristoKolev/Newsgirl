@@ -151,41 +151,14 @@ namespace Newsgirl.Shared
 
     public static class ReflectionEmmitHelper
     {
-        private static bool initialized;
-        private static readonly object SyncRoot = new object();
-        private static ModuleBuilder moduleBuilder;
-
-        private static void Initialize()
+        static ReflectionEmmitHelper()
         {
-            if (initialized)
-            {
-                return;
-            }
-
-            lock (SyncRoot)
-            {
-                if (initialized)
-                {
-                    return;
-                }
-
-                var assemblyName = new AssemblyName("DynamicAssembly+" + nameof(ReflectionEmmitHelper));
-                var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-                moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
-
-                initialized = true;
-            }
+            var assemblyName = new AssemblyName("DynamicAssembly+" + nameof(ReflectionEmmitHelper));
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
+            ModuleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
         }
 
-        public static ModuleBuilder ModuleBuilder
-        {
-            get
-            {
-                Initialize();
-
-                return moduleBuilder;
-            }
-        }
+        public static ModuleBuilder ModuleBuilder { get; }
 
         public static T CreateDelegate<T>(this MethodInfo methodInfo) where T : Delegate
         {
