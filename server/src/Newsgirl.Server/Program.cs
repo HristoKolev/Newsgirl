@@ -250,9 +250,7 @@ namespace Newsgirl.Server
             try
             {
                 this.Log.General(() => "Reloading config...");
-
                 await this.LoadConfig();
-
                 await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
             }
             catch (Exception exception)

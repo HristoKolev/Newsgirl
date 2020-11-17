@@ -149,6 +149,16 @@ namespace Newsgirl.Shared
         }
     }
 
+    public static class DateTimeExtensions
+    {
+        private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        public static long ToUnixEpochTime(this DateTime time)
+        {
+            return (long) (time - Epoch).TotalSeconds;
+        }
+    }
+
     public static class ReflectionEmmitHelper
     {
         static ReflectionEmmitHelper()

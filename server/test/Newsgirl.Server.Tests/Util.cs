@@ -70,22 +70,6 @@ namespace Newsgirl.Server.Tests
         }
     }
 
-    public class FunctionAutofacModule : Module
-    {
-        private readonly Action<ContainerBuilder> func;
-
-        public FunctionAutofacModule(Action<ContainerBuilder> func)
-        {
-            this.func = func;
-        }
-
-        protected override void Load(ContainerBuilder builder)
-        {
-            this.func(builder);
-            base.Load(builder);
-        }
-    }
-
     public class HttpServerAppTester : IAsyncDisposable
     {
         public HttpServerApp App { get; private set; }

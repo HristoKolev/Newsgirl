@@ -21,6 +21,7 @@ namespace Newsgirl.Testing
     using ApprovalTests;
     using ApprovalTests.Core;
     using ApprovalUtilities.Utilities;
+    using Autofac;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
@@ -694,6 +695,22 @@ namespace Newsgirl.Testing
         IEnumerator IEnumerable.GetEnumerator()
         {
             return this.GetEnumerator();
+        }
+    }
+
+    public class FunctionAutofacModule : Autofac.Module
+    {
+        private readonly Action<ContainerBuilder> func;
+
+        public FunctionAutofacModule(Action<ContainerBuilder> func)
+        {
+            this.func = func;
+        }
+
+        protected override void Load(ContainerBuilder builder)
+        {
+            this.func(builder);
+            base.Load(builder);
         }
     }
 }

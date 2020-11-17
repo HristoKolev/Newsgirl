@@ -2,6 +2,7 @@ namespace Newsgirl.Server
 {
     using System;
     using System.ComponentModel.DataAnnotations;
+    using System.Text.Json.Serialization;
     using System.Threading.Tasks;
     using Http;
     using JWT;
@@ -125,11 +126,20 @@ namespace Newsgirl.Server
 
         private string FormatCookie(UserSessionPoco session)
         {
-            var jwtPayload = new JwtPayload {SessionID = session.SessionID};
+            var now = this.dateTimeService.EventTime();
+
+            var expirationDate = session.ExpirationDate ?? now.AddYears(1000);
+
+            var jwtPayload = new JwtPayload
+            {
+                SessionID = session.SessionID,
+                JwtID = session.SessionID,
+                ExpirationTime = expirationDate.ToUnixEpochTime(),
+                IssuedAt = now.ToUnixEpochTime(),
+                NotBefore = now.ToUnixEpochTime(),
+            };
 
             string jwt = this.jwtService.EncodeSession(jwtPayload);
-
-            DateTime expirationDate = session.ExpirationDate ?? this.dateTimeService.EventTime().AddYears(1000);
 
             string cookie = $"jwt={jwt}; Expires={expirationDate:R}; Path=/; Secure; HttpOnly";
 
@@ -297,14 +307,27 @@ namespace Newsgirl.Server
 
             public DateTimeOffset GetNow()
             {
-                return this.dateTimeService.CurrentTime();
+                return this.dateTimeService.EventTime();
             }
         }
     }
 
     public class JwtPayload
     {
+        [JsonPropertyName("sub")]
         public int SessionID { get; set; }
+
+        [JsonPropertyName("exp")]
+        public long ExpirationTime { get; set; }
+
+        [JsonPropertyName("nbf")]
+        public long NotBefore { get; set; }
+
+        [JsonPropertyName("iat")]
+        public long IssuedAt { get; set; }
+
+        [JsonPropertyName("jti")]
+        public int JwtID { get; set; }
     }
 
     public class ProfileInfoRequest { }

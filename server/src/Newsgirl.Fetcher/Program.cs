@@ -18,6 +18,8 @@
 
         public FetcherAppConfig AppConfig { get; set; }
 
+        public FetcherAppConfig InjectedAppConfig { get; set; }
+
         public SystemSettingsModel SystemSettings { get; set; }
 
         public StructuredLogger Log { get; set; }
@@ -28,7 +30,7 @@
 
         public IContainer IoC { get; set; }
 
-        public FetcherAppConfig InjectedAppConfig { get; set; }
+        public Module InjectedIoCModule { get; set; }
 
         public async Task Initialize()
         {
@@ -42,6 +44,12 @@
             var builder = new ContainerBuilder();
             builder.RegisterModule<SharedModule>();
             builder.RegisterModule(new FetcherIoCModule(this));
+
+            if (this.InjectedIoCModule != null)
+            {
+                builder.RegisterModule(this.InjectedIoCModule);
+            }
+
             this.IoC = builder.Build();
 
             var loggerBuilder = new StructuredLoggerBuilder();
@@ -79,10 +87,16 @@
 
             this.AppConfig.AppInfo.AppVersion = this.AppVersion;
 
+            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
+
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
             {
-                this.ErrorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
+                this.ErrorReporter = errorReporter;
+            }
+            else
+            {
+                this.ErrorReporter.SetInnerReporter(errorReporter);
             }
         }
 

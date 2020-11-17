@@ -83,10 +83,54 @@ namespace Newsgirl.Shared.Tests
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowException()
+        [Fact]
+        public async Task Error_call_hooks_if_available()
         {
-            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
+            var reporter = CreateReporter();
+
+            reporter.AddDataHook(() => new Dictionary<string, object>
+            {
+                {"test_hook_key", "test_hook_value"},
+            });
+
+            try
+            {
+                ThrowException();
+            }
+            catch (Exception exception)
+            {
+                await reporter.Error(exception, "TESTING_FINGERPRINT", new Dictionary<string, object>
+                {
+                    {"test_key", "test_value"},
+                });
+            }
+        }
+
+        [Fact]
+        public async Task Error_takes_fingerprint_from_exception()
+        {
+            var reporter = CreateReporter();
+
+            try
+            {
+                ThrowException("TESTING_FINGERPRINT");
+            }
+            catch (Exception exception)
+            {
+                await reporter.Error(exception, new Dictionary<string, object>
+                {
+                    {"test_key", "test_value"},
+                });
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowException(string fingerprint = null)
+        {
+            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.")
+            {
+                Fingerprint = fingerprint,
+            };
         }
     }
 }
