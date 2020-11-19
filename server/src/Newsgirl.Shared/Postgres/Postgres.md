@@ -15,11 +15,6 @@ Extension methods can be divided in several categories:
   * `QueryOne<T>`: Runs a parameterized query and returns a single row read into an object of type `T`.
 
 
-* Methods that abstract away the `NpgsqlTransaction` API:
-  * `ExecuteInTransaction`: Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
-  * `ExecuteInTransactionAndCommit`: Invokes the given delegate instance in a transaction and commits it automatically.
-
-
 * `CreateParameter`: Creates `NpgsqlParameter` and `NpgsqlParameter<T>` objects with given arguments.
 
 

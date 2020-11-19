@@ -1,6 +1,20 @@
 ﻿[
   {
-    "Details": {},
+    "Details": {
+      "feedProcessingState": {
+        "Feed": {
+          "FeedContentHash": 123,
+          "FeedID": 1,
+          "FeedItemsHash": 351563459839931092,
+          "FeedName": null,
+          "FeedUrl": "fetcher-1.xml"
+        },
+        "FeedContent": null,
+        "FeedContentHash": 0,
+        "FeedContentString": null,
+        "ParsedFeed": null
+      }
+    },
     "Fingerprint": "FEED_HTTP_REQUEST_FAILED",
     "Message": "The http request for the feed failed.",
     "Data": {},

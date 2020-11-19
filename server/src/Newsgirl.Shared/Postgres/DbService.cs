@@ -46,30 +46,6 @@ namespace Newsgirl.Shared.Postgres
             return await this.connection.BeginTransactionAsync();
         }
 
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
-        /// </summary>
-        public Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
-        {
-            return this.connection.ExecuteInTransaction(body, cancellationToken);
-        }
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        public Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default)
-        {
-            return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
-        }
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        public Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default)
-        {
-            return this.connection.ExecuteInTransactionAndCommit(body, cancellationToken);
-        }
-
         #endregion
 
         #region Query
@@ -596,21 +572,6 @@ namespace Newsgirl.Shared.Postgres
         /// Opens the connection if needed.
         /// </summary>
         Task<NpgsqlTransaction> BeginTransaction();
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
-        /// </summary>
-        Task ExecuteInTransaction(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        Task ExecuteInTransactionAndCommit(Func<NpgsqlTransaction, Task> body, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        Task ExecuteInTransactionAndCommit(Func<Task> body, CancellationToken cancellationToken = default);
 
         #endregion
 

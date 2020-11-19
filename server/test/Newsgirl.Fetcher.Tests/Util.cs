@@ -1,3 +1,12 @@
+using ApprovalTests.Namers;
+using ApprovalTests.Reporters;
+using Newsgirl.Testing;
+using Xunit;
+
+[assembly: UseReporter(typeof(CustomReporter))]
+[assembly: UseApprovalSubdirectory("./snapshots")]
+[assembly: CollectionBehavior(MaxParallelThreads = 32)]
+
 namespace Newsgirl.Fetcher.Tests
 {
     using System;
@@ -6,7 +15,6 @@ namespace Newsgirl.Fetcher.Tests
     using Autofac;
     using Shared;
     using Testing;
-    using Xunit;
 
     public class FetcherAppTest : AppDatabaseTest
     {

@@ -355,49 +355,6 @@ namespace Newsgirl.Shared.Postgres
         }
 
         /// <summary>
-        /// Invokes the given delegate instance in a transaction. You have to commit the transaction manually.
-        /// </summary>
-        public static async Task ExecuteInTransaction(this NpgsqlConnection connection,
-            Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default)
-        {
-            await EnsureOpenState(connection, cancellationToken);
-
-            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
-            {
-                await body(transaction);
-            }
-        }
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        public static async Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection,
-            Func<NpgsqlTransaction, Task> body,
-            CancellationToken cancellationToken = default)
-        {
-            await EnsureOpenState(connection, cancellationToken);
-
-            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
-            {
-                await body(transaction);
-
-                if (!transaction.IsCompleted)
-                {
-                    await transaction.CommitAsync(cancellationToken);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Invokes the given delegate instance in a transaction and commits it automatically.
-        /// </summary>
-        public static Task ExecuteInTransactionAndCommit(this NpgsqlConnection connection, Func<Task> body, CancellationToken cancellationToken = default)
-        {
-            return connection.ExecuteInTransactionAndCommit(tr => body(), cancellationToken);
-        }
-
-        /// <summary>
         /// Creates a parameter of type T with NpgsqlDbType from the default type map 'defaultNpgsqlDbTypeMap'.
         /// </summary>
         public static NpgsqlParameter CreateParameter<T>(this NpgsqlConnection connection, string parameterName, T value)

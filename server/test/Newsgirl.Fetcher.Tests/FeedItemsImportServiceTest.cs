@@ -13,9 +13,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task GetFeedsForUpdate_Returns_All_Feeds()
         {
-            var log = new StructuredLogMock();
-
-            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {
@@ -35,9 +33,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task ImportItems_Copies_Items_Correctly()
         {
-            var log = new StructuredLogMock();
-
-            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {
@@ -117,9 +113,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task GetMissingFeedItems_Returns_Correct_Result()
         {
-            var log = new StructuredLogMock();
-
-            var importService = new FeedItemsImportService(this.Db, this.Connection, log);
+            var importService = new FeedItemsImportService(this.Db, this.Connection);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {

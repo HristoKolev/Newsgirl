@@ -5,7 +5,6 @@ namespace Newsgirl.Fetcher
     using System.Linq;
     using System.Threading.Tasks;
     using Shared;
-    using Shared.Logging;
 
     public class FeedFetcher
     {
@@ -13,8 +12,7 @@ namespace Newsgirl.Fetcher
         private readonly IFeedParser feedParser;
         private readonly IFeedItemsImportService feedItemsImportService;
         private readonly SystemSettingsModel systemSettings;
-        private readonly DbTransactionService transactionService;
-        private readonly Log log;
+        private readonly DateTimeService dateTimeService;
         private readonly ErrorReporter errorReporter;
         private readonly AsyncLock dbLock;
 
@@ -23,188 +21,170 @@ namespace Newsgirl.Fetcher
             IFeedParser feedParser,
             IFeedItemsImportService feedItemsImportService,
             SystemSettingsModel systemSettings,
-            DbTransactionService transactionService,
-            Log log,
+            DateTimeService dateTimeService,
             ErrorReporter errorReporter)
         {
             this.feedContentProvider = feedContentProvider;
             this.feedParser = feedParser;
             this.feedItemsImportService = feedItemsImportService;
             this.systemSettings = systemSettings;
-            this.transactionService = transactionService;
-            this.log = log;
+            this.dateTimeService = dateTimeService;
             this.errorReporter = errorReporter;
             this.dbLock = new AsyncLock();
         }
 
-        public async Task FetchFeeds()
+        public async Task<FetcherRunData> FetchFeeds()
         {
-            this.log.General(() => "Beginning fetch cycle...");
+            var fetcherRunData = new FetcherRunData
+            {
+                StartTime = this.dateTimeService.EventTime(),
+            };
 
             var feeds = await this.feedItemsImportService.GetFeedsForUpdate();
 
-            this.log.General(() => new LogData("Feeds ready for update.")
-            {
-                {"feedCount", feeds.Count},
-            });
+            fetcherRunData.FeedCount = feeds.Length;
 
             FeedUpdateModel[] updates;
 
             if (this.systemSettings.ParallelFeedFetching)
             {
-                var tasks = new List<Task<FeedUpdateModel>>(feeds.Count);
+                var tasks = new Task<FeedUpdateModel>[feeds.Length];
 
-                for (int i = 0; i < feeds.Count; i++)
+                for (int i = 0; i < feeds.Length; i++)
                 {
-                    var feed = feeds[i];
-                    tasks.Add(this.ProcessFeed(feed));
+                    tasks[i] = this.ProcessFeed(feeds[i]);
                 }
 
                 updates = await Task.WhenAll(tasks);
             }
             else
             {
-                updates = new FeedUpdateModel[feeds.Count];
+                updates = new FeedUpdateModel[feeds.Length];
 
-                for (int i = 0; i < feeds.Count; i++)
+                for (int i = 0; i < feeds.Length; i++)
                 {
-                    var feed = feeds[i];
-                    updates[i] = await this.ProcessFeed(feed);
+                    updates[i] = await this.ProcessFeed(feeds[i]);
                 }
             }
 
-            this.log.General(() =>
-            {
-                int changedCount = updates.Count(update => update.NewItems != null && update.NewItems.Any());
-                int unchangedCount = updates.Count(update => update.NewItems == null || !update.NewItems.Any());
+            await this.feedItemsImportService.ImportItems(updates);
 
-                return new LogData("Updates ready for import.")
+            (int feedCount, int feedItemCount) = GetChangedFeedCount(updates);
+
+            fetcherRunData.ChangedFeedCount = feedCount;
+            fetcherRunData.ChangedFeedItemCount = feedItemCount;
+
+            fetcherRunData.EndTime = this.dateTimeService.CurrentTime();
+            fetcherRunData.Duration = (long) (fetcherRunData.EndTime - fetcherRunData.StartTime).TotalMilliseconds;
+
+            return fetcherRunData;
+        }
+
+        private static (int, int) GetChangedFeedCount(FeedUpdateModel[] updates)
+        {
+            int feedCount = 0;
+            int feedItemCount = 0;
+
+            for (int i = 0; i < updates.Length; i++)
+            {
+                var items = updates[i].NewItems;
+
+                if (items != null && items.Count != 0)
                 {
-                    {"changedCount", changedCount},
-                    {"unchangedCount", unchangedCount},
-                };
-            });
+                    feedCount += 1;
+                    feedItemCount += items.Count;
+                }
+            }
 
-            await this.transactionService.ExecuteInTransactionAndCommit(async () =>
-            {
-                await this.feedItemsImportService.ImportItems(updates);
-            });
-
-            this.log.General(() => "Fetch cycle complete.");
+            return (feedCount, feedItemCount);
         }
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
         {
+            var state = new FeedProcessingState
+            {
+                Feed = feed,
+            };
+
             try
             {
-                byte[] feedContentBytes;
-
+                // Get the bytes from the network.
                 try
                 {
-                    feedContentBytes = await this.feedContentProvider.GetFeedContent(feed);
+                    state.FeedContent = await this.feedContentProvider.GetFeedContent(feed);
                 }
-                catch (Exception err)
+                catch (Exception ex)
                 {
-                    throw new DetailedException("The http request for the feed failed.", err)
+                    throw new DetailedException("The http request for the feed failed.", ex)
                     {
                         Fingerprint = "FEED_HTTP_REQUEST_FAILED",
+                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
-                long feedContentHash = HashHelper.ComputeXx64Hash(feedContentBytes);
+                state.FeedContentHash = HashHelper.ComputeXx64Hash(state.FeedContent);
 
-                if (feedContentHash == feed.FeedContentHash)
+                // The bytes have not changed. 
+                if (state.FeedContentHash == feed.FeedContentHash)
                 {
-                    this.log.General(() => new LogData("Feed not changed. Matching content hash.")
-                    {
-                        {"feedID", feed.FeedID},
-                    });
-
-                    return new FeedUpdateModel
-                    {
-                        Feed = feed,
-                    };
+                    return new FeedUpdateModel {Feed = feed};
                 }
 
-                string feedContent;
-
+                // Parse into a string.
                 try
                 {
-                    feedContent = EncodingHelper.UTF8.GetString(feedContentBytes);
+                    state.FeedContentString = EncodingHelper.UTF8.GetString(state.FeedContent);
                 }
-                catch (Exception err)
+                catch (Exception ex)
                 {
-                    throw new DetailedException("Failed to parse UTF-8 feed content.", err)
+                    throw new DetailedException("Failed to parse UTF-8 feed content.", ex)
                     {
                         Fingerprint = "FEED_CONTENT_UTF8_PARSE_FAILED",
-                        Details =
-                        {
-                            {"feedContentBytes", Convert.ToBase64String(feedContentBytes)},
-                        },
+                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
-                ParsedFeed parsedFeed;
-
+                // Parse the RSS.
                 try
                 {
-                    parsedFeed = this.feedParser.Parse(feedContent);
+                    state.ParsedFeed = this.feedParser.Parse(state.FeedContentString);
                 }
                 catch (Exception err)
                 {
                     throw new DetailedException("Failed to parse feed content.", err)
                     {
                         Fingerprint = "FEED_CONTENT_PARSE_FAILED",
-                        Details =
-                        {
-                            {"content", feedContent},
-                        },
+                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
-                if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
+                // The information that we care about has not changed.
+                if (feed.FeedItemsHash == state.ParsedFeed.FeedItemsHash)
                 {
-                    this.log.General(() => new LogData("Feed not changed. Matching items hash.")
-                    {
-                        {"feedID", feed.FeedID},
-                    });
-
-                    return new FeedUpdateModel
-                    {
-                        Feed = feed,
-                    };
+                    return new FeedUpdateModel {Feed = feed};
                 }
 
-                long[] itemHashes = parsedFeed.FeedItemHashes.ToArray();
-
+                // Get the hashes of items that don't appear in the database.
                 HashSet<long> newHashes;
-
+                long[] itemHashes = state.ParsedFeed.FeedItemHashes.ToArray();
                 using (await this.dbLock.Lock())
                 {
                     var newHashArray = await this.feedItemsImportService.GetMissingFeedItems(feed.FeedID, itemHashes);
-
                     newHashes = new HashSet<long>(newHashArray);
                 }
 
-                this.log.General(() => new LogData("Feed changed.")
-                {
-                    {"feedID", feed.FeedID},
-                    {"updateCount", newHashes.Count},
-                });
-
+                // Get the items that don't appear in the database.
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
-                for (int i = 0; i < parsedFeed.Items.Count; i++)
+                for (int i = 0; i < state.ParsedFeed.Items.Count; i++)
                 {
-                    var feedItem = parsedFeed.Items[i];
-
+                    var feedItem = state.ParsedFeed.Items[i];
                     if (!newHashes.Contains(feedItem.FeedItemHash))
                     {
                         continue;
                     }
 
                     feedItem.FeedID = feed.FeedID;
-
                     newItems.Add(feedItem);
                 }
 
@@ -212,27 +192,28 @@ namespace Newsgirl.Fetcher
                 {
                     Feed = feed,
                     NewItems = newItems,
-                    NewFeedItemsHash = parsedFeed.FeedItemsHash,
-                    NewFeedContentHash = feedContentHash,
+                    NewFeedItemsHash = state.ParsedFeed.FeedItemsHash,
+                    NewFeedContentHash = state.FeedContentHash,
                 };
             }
             catch (Exception err)
             {
-                this.log.General(() => new LogData("An error occurred while fetching feed.")
-                {
-                    {"feedID", feed.FeedID},
-                });
-
-                await this.errorReporter.Error(err, new Dictionary<string, object>
-                {
-                    {"feed", feed},
-                });
-
-                return new FeedUpdateModel
-                {
-                    Feed = feed,
-                };
+                await this.errorReporter.Error(err, new Dictionary<string, object> {{"feedProcessingState", state}});
+                return new FeedUpdateModel {Feed = feed};
             }
+        }
+
+        private class FeedProcessingState
+        {
+            public FeedPoco Feed { get; set; }
+
+            public byte[] FeedContent { get; set; }
+
+            public long FeedContentHash { get; set; }
+
+            public string FeedContentString { get; set; }
+
+            public ParsedFeed ParsedFeed { get; set; }
         }
     }
 }

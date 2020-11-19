@@ -66,6 +66,17 @@
                 },
             });
 
+            loggerBuilder.AddEventStream(FetcherRunDataExtensions.FETCHER_EVENT_STREAM, new Dictionary<string, Func<EventDestination<FetcherRunData>>>
+            {
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<FetcherRunData>(
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                    )
+                },
+            });
+
             this.Log = loggerBuilder.Build();
 
             await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
@@ -142,16 +153,43 @@
 
         public async Task RunCycle()
         {
-            await using (var subContainer = this.IoC.BeginLifetimeScope())
+            await using (var scope = this.IoC.BeginLifetimeScope())
             {
-                var fetcherInstance = subContainer.Resolve<FeedFetcher>();
+                var fetcherInstance = scope.Resolve<FeedFetcher>();
+                var fetcherRunData = await fetcherInstance.FetchFeeds();
 
-                await fetcherInstance.FetchFeeds();
-
-                this.Log.General(() => $"Waiting {this.SystemSettings.FetcherCyclePause} seconds...");
+                this.Log.FetcherLog(() => fetcherRunData);
 
                 await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
             }
+        }
+    }
+
+    public class FetcherRunData
+    {
+        public DateTime StartTime { get; set; }
+
+        public DateTime EndTime { get; set; }
+
+        public long Duration { get; set; }
+
+        public int FeedCount { get; set; }
+
+        public int ChangedFeedCount { get; set; }
+
+        public int ChangedFeedItemCount { get; set; }
+    }
+
+    /// <summary>
+    /// Using this extension method allows us to not specify the stream name and the event data structure.
+    /// </summary>
+    public static class FetcherRunDataExtensions
+    {
+        public const string FETCHER_EVENT_STREAM = "FETCHER_LOG";
+
+        public static void FetcherLog(this Log log, Func<FetcherRunData> func)
+        {
+            log.Log(FETCHER_EVENT_STREAM, func);
         }
     }
 

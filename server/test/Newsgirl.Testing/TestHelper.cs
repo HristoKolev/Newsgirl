@@ -94,25 +94,6 @@ namespace Newsgirl.Testing
             }
         }
 
-        public static DbTransactionService TransactionServiceStub
-        {
-            get
-            {
-                var transactionService = Substitute.For<DbTransactionService>();
-
-                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<Task>>())
-                    .Returns(info => info.Arg<Func<Task>>()());
-
-                transactionService.ExecuteInTransactionAndCommit(Arg.Any<Func<NpgsqlTransaction, Task>>())
-                    .Returns(Task.CompletedTask);
-
-                transactionService.ExecuteInTransaction(Arg.Any<Func<NpgsqlTransaction, Task>>())
-                    .Returns(Task.CompletedTask);
-
-                return transactionService;
-            }
-        }
-
         public static TestConfig TestConfig
         {
             get
