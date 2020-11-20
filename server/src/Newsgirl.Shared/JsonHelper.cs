@@ -57,6 +57,49 @@ namespace Newsgirl.Shared
             return JsonSerializer.SerializeAsync(outputStream, value, SerializationOptions);
         }
 
+        public static object Deserialize(string json, Type returnType)
+        {
+            if (json == null)
+            {
+                throw new ArgumentNullException(nameof(json));
+            }
+
+            if (returnType == null)
+            {
+                throw new ArgumentNullException(nameof(returnType));
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize(json, returnType, SerializationOptions);
+            }
+            catch (Exception err)
+            {
+                long? bytePositionInLine = null;
+                long? lineNumber = null;
+                string jsonPath = null;
+
+                if (err is JsonException jsonException)
+                {
+                    bytePositionInLine = jsonException.BytePositionInLine;
+                    lineNumber = jsonException.LineNumber;
+                    jsonPath = jsonException.Path;
+                }
+
+                throw new JsonHelperException("Failed deserialize json.")
+                {
+                    Details =
+                    {
+                        {"bytePositionInLine", bytePositionInLine},
+                        {"lineNumber", lineNumber},
+                        {"jsonPath", jsonPath},
+                        {"inputJson", json},
+                        {"outputType", returnType.FullName},
+                    },
+                };
+            }
+        }
+
         public static T Deserialize<T>(string json) where T : class
         {
             if (json == null)
@@ -140,7 +183,40 @@ namespace Newsgirl.Shared
 
         public static T Deserialize<T>(ReadOnlySpan<byte> utf8Bytes)
         {
-            return (T) Deserialize(utf8Bytes, typeof(T));
+            if (utf8Bytes == default)
+            {
+                throw new ArgumentException("The utf8Bytes parameter must not be empty.", nameof(utf8Bytes));
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<T>(utf8Bytes, SerializationOptions);
+            }
+            catch (Exception err)
+            {
+                long? bytePositionInLine = null;
+                long? lineNumber = null;
+                string jsonPath = null;
+
+                if (err is JsonException jsonException)
+                {
+                    bytePositionInLine = jsonException.BytePositionInLine;
+                    lineNumber = jsonException.LineNumber;
+                    jsonPath = jsonException.Path;
+                }
+
+                throw new JsonHelperException("Failed deserialize json.")
+                {
+                    Details =
+                    {
+                        {"bytePositionInLine", bytePositionInLine},
+                        {"lineNumber", lineNumber},
+                        {"jsonPath", jsonPath},
+                        {"base64Data", Convert.ToBase64String(utf8Bytes)},
+                        {"outputType", typeof(T).FullName},
+                    },
+                };
+            }
         }
     }
 

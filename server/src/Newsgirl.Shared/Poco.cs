@@ -407,14 +407,14 @@ namespace Newsgirl.Shared
         /// <summary>
         /// <para>Column name: 'setting_value'.</para>
         /// <para>Table name: 'system_settings'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'text'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>This column is nullable.</para>
+        /// <para>PostgreSQL data type: 'jsonb'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Jsonb'.</para>
         /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// <para>linq2db data type: 'DataType.BinaryJson'.</para>
         /// </summary>
-        [LinqToDB.Mapping.NotNull]
-        [Column(Name = "setting_value", DataType = DataType.Text)]
+        [Nullable]
+        [Column(Name = "setting_value", DataType = DataType.BinaryJson)]
         public string SettingValue { get; set; }
 
         public NpgsqlParameter[] GetNonPkParameters()
@@ -430,7 +430,7 @@ namespace Newsgirl.Shared
                 new NpgsqlParameter<string>
                 {
                     TypedValue = this.SettingValue,
-                    NpgsqlDbType = NpgsqlDbType.Text,
+                    NpgsqlDbType = NpgsqlDbType.Jsonb,
                 },
             };
         }
@@ -467,7 +467,7 @@ namespace Newsgirl.Shared
             }
             else
             {
-                await importer.WriteAsync(this.SettingValue, NpgsqlDbType.Text);
+                await importer.WriteAsync(this.SettingValue, NpgsqlDbType.Jsonb);
             }
         }
 
@@ -1564,8 +1564,8 @@ namespace Newsgirl.Shared
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "setting_value",
-                        DbDataType = "text",
-                        IsNullable = bool.Parse("False"),
+                        DbDataType = "jsonb",
+                        IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
                         IsForeignKey = bool.Parse("False"),
@@ -1584,15 +1584,15 @@ namespace Newsgirl.Shared
                             ClrNonNullableType = typeof(string),
                             ClrNullableTypeName = "string",
                             ClrNullableType = typeof(string),
-                            DbDataType = "text",
-                            IsNullable = bool.Parse("False"),
+                            DbDataType = "jsonb",
+                            IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("False"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.Text",
-                            Linq2DbDataType = DataType.Text,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
-                            NpgsqlDbType = NpgsqlDbType.Text,
+                            Linq2DbDataTypeName = "DataType.BinaryJson",
+                            Linq2DbDataType = DataType.BinaryJson,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Jsonb",
+                            NpgsqlDbType = NpgsqlDbType.Jsonb,
                         },
                     },
                 },

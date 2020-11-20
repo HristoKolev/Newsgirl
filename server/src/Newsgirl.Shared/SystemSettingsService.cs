@@ -36,15 +36,11 @@ namespace Newsgirl.Shared
                         $"No system_settings entry found for property '{prop.Name}' of type '{modelType.Name}').");
                 }
 
-                object value;
+                object value = null;
 
-                if (prop.PropertyType == typeof(byte[]))
+                if (entry.SettingValue != null)
                 {
-                    value = Convert.FromBase64String(entry.SettingValue);
-                }
-                else
-                {
-                    value = Convert.ChangeType(entry.SettingValue, prop.PropertyType);
+                    value = JsonHelper.Deserialize(entry.SettingValue, prop.PropertyType);
                 }
 
                 prop.SetValue(instance, value);

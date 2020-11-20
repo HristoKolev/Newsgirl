@@ -97,19 +97,53 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize<TestJsonPayload>((string) null);
+                JsonHelper.Deserialize((string) null, typeof(TestJsonPayload));
+            });
+        }
+
+        [Fact]
+        public void Deserialize_throws_on_null_return_type()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize(JsonTestFiles.TEST1, null);
             });
         }
 
         [Fact]
         public void Deserialize_returns_correct_result()
         {
-            var obj = JsonHelper.Deserialize<TestJsonPayload>(JsonTestFiles.TEST1);
+            var obj = (TestJsonPayload) JsonHelper.Deserialize(JsonTestFiles.TEST1, typeof(TestJsonPayload));
             TestJsonPayload.AssertCorrectObject(obj);
         }
 
         [Fact]
         public void Deserialize_throws_on_invalid_json()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize(JsonTestFiles.INVALID_JSON, typeof(TestJsonPayload));
+            });
+        }
+
+        [Fact]
+        public void DeserializeOfT_throws_on_null_json()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.Deserialize<TestJsonPayload>((string) null);
+            });
+        }
+
+        [Fact]
+        public void DeserializeOfT_returns_correct_result()
+        {
+            var obj = JsonHelper.Deserialize<TestJsonPayload>(JsonTestFiles.TEST1);
+            TestJsonPayload.AssertCorrectObject(obj);
+        }
+
+        [Fact]
+        public void DeserializeOfT_throws_on_invalid_json()
         {
             Snapshot.MatchError(() =>
             {
@@ -122,7 +156,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize(default, typeof(TestJsonPayload));
+                JsonHelper.Deserialize((ReadOnlySpan<byte>) default, typeof(TestJsonPayload));
             });
         }
 
