@@ -31,24 +31,24 @@ namespace Newsgirl.Shared
 
     public class ErrorReporterImpl : ErrorReporter
     {
+        private readonly ErrorReporterImplConfig config;
         private static readonly TimeSpan SentryFlushTimeout = TimeSpan.FromSeconds(60);
         private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
 
-        private readonly AppInfoConfig appInfoConfig;
         private readonly ISentryClient sentryClient;
         private readonly AsyncLock sentryFlushLock;
         private readonly List<Func<Dictionary<string, object>>> dataHooks;
 
-        public ErrorReporterImpl(ErrorReporterConfig config, AppInfoConfig appInfoConfig)
+        public ErrorReporterImpl(ErrorReporterImplConfig config)
         {
-            this.appInfoConfig = appInfoConfig;
+            this.config = config;
             this.sentryFlushLock = new AsyncLock();
             this.dataHooks = new List<Func<Dictionary<string, object>>>();
             this.sentryClient = new SentryClient(new SentryOptions
             {
                 AttachStacktrace = true,
                 Dsn = new Dsn(config.SentryDsn),
-                Release = this.appInfoConfig.AppVersion,
+                Release = config.AppVersion,
             });
         }
 
@@ -93,8 +93,8 @@ namespace Newsgirl.Shared
             var sentryEvent = new SentryEvent(exception)
             {
                 Level = SentryLevel.Error,
-                ServerName = this.appInfoConfig.ServerName,
-                Environment = this.appInfoConfig.Environment,
+                ServerName = this.config.InstanceName,
+                Environment = this.config.Environment,
             };
 
             var exceptionChain = GetExceptionChain(exception);
@@ -209,9 +209,15 @@ namespace Newsgirl.Shared
         }
     }
 
-    public class ErrorReporterConfig
+    public class ErrorReporterImplConfig
     {
         public string SentryDsn { get; set; }
+
+        public string InstanceName { get; set; }
+
+        public string Environment { get; set; }
+
+        public string AppVersion { get; set; }
     }
 
     public class DetailedException : Exception

@@ -199,27 +199,11 @@ namespace Newsgirl.Server.Http
     {
         public string ConnectionString { get; set; }
 
-        public AppInfoConfig AppInfo { get; set; }
+        public string SentryDsn { get; set; }
 
-        public ErrorReporterConfig ErrorReporter { get; set; }
+        public string InstanceName { get; set; }
 
-        public LoggingConfig Logging { get; set; }
-    }
-
-    public class LoggingConfig
-    {
-        public EventStreamConfig[] StructuredLogger { get; set; }
-
-        public ElasticsearchConfig Elasticsearch { get; set; }
-
-        public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
-    }
-
-    public class ElasticsearchIndexConfig
-    {
-        public string GeneralLogIndex { get; set; }
-
-        public string HttpLogIndex { get; set; }
+        public string Environment { get; set; }
     }
 
     public class SessionCertificatePool : DefaultObjectPool<X509Certificate2>

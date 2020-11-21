@@ -7,6 +7,7 @@ namespace Newsgirl.Server
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
+    using Autofac.Core;
     using Http;
     using Microsoft.AspNetCore.Http;
     using Shared;
@@ -15,8 +16,7 @@ namespace Newsgirl.Server
 
     public class HttpServerApp : IAsyncDisposable
     {
-        // ReSharper disable once InconsistentNaming
-        private readonly string AppVersion = typeof(HttpServerApp).Assembly.GetName().Version?.ToString();
+        public readonly string AppVersion = typeof(HttpServerApp).Assembly.GetName().Version?.ToString();
 
         private TaskCompletionSource<object> shutdownTriggered;
         private ManualResetEventSlim shutdownCompleted;
@@ -91,49 +91,15 @@ namespace Newsgirl.Server
 
             this.IoC = builder.Build();
 
-            var loggerBuilder = new StructuredLoggerBuilder();
-
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
-            {
-                {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
-                {
-                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
-                    )
-                },
-            });
-
-            loggerBuilder.AddEventStream(HttpLoggingExtensions.HTTP_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
-            {
-                {
-                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                    )
-                },
-            });
-
-            loggerBuilder.AddEventStream(HttpLoggingExtensions.HTTP_DETAILED_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
-            {
-                {
-                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.HttpLogIndex
-                    )
-                },
-            });
-
-            this.Log = loggerBuilder.Build();
-
-            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
-
             var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
             this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
             this.SessionCertificatePool = new SessionCertificatePool(this.SystemSettings);
+
+            this.Log = await CreateLogger(
+                this.SystemSettings.HttpServerAppLoggingConfig,
+                this.ErrorReporter,
+                this.IoC.Resolve<LogPreprocessor>()
+            );
 
             this.Server = new CustomHttpServerImpl();
             this.Server.Started += addresses => this.Log.General(() => $"HTTP server is UP on {string.Join("; ", addresses)} ...");
@@ -145,78 +111,54 @@ namespace Newsgirl.Server
             this.Started = true;
         }
 
-        private async Task ProcessHttpRequest(HttpContext context)
+        private static async Task<StructuredLogger> CreateLogger(
+            HttpServerAppLoggingConfig loggingConfig,
+            ErrorReporter errorReporter,
+            EventPreprocessor eventPreprocessor)
         {
-            await using (var requestScope = this.IoC.BeginLifetimeScope())
+            var builder = new StructuredLoggerBuilder();
+
+            builder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
             {
-                ErrorReporter scopedErrorReporter = null;
-
-                try
                 {
-                    scopedErrorReporter = requestScope.Resolve<ErrorReporter>();
-
-                    // Resolve this to set the event timestamp.
-                    var dateTimeService = requestScope.Resolve<DateTimeService>();
-
-                    // Use this for request scoped state like the reference to the HttpContext object.
-                    var httpRequestState = requestScope.Resolve<HttpRequestState>();
-
-                    scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> {{"httpRequestState", httpRequestState}});
-
-                    // Set the context first before resolving anything else.
-                    httpRequestState.HttpContext = context;
-
-                    try
-                    {
-                        httpRequestState.RequestStart = dateTimeService.EventTime();
-
-                        // Set the result of the authentication step.
-                        httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
-                            .Authenticate(context.Request.Headers);
-
-                        // The value that we route on.
-                        string requestPath = context.Request.Path.Value;
-
-                        const string RPC_ROUTE_PATH = "/rpc/";
-
-                        if (requestPath.StartsWith(RPC_ROUTE_PATH))
-                        {
-                            httpRequestState.RpcState = new RpcRequestState();
-
-                            if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
-                            {
-                                httpRequestState.RpcState.RpcRequestType = null;
-                            }
-                            else
-                            {
-                                httpRequestState.RpcState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
-                            }
-
-                            await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
-
-                            return;
-                        }
-
-                        // other http endpoints come here
-
-                        // otherwise 404
-                        context.Response.StatusCode = 404;
-                    }
-                    finally
-                    {
-                        httpRequestState.RequestEnd = dateTimeService.CurrentTime();
-
-                        this.Log.Http(() => new HttpLogData(httpRequestState, false));
-                        this.Log.HttpDetailed(() => new HttpLogData(httpRequestState, true));
-                    }
-                }
-                catch (Exception error)
+                    "ConsoleConsumer", () => new ConsoleEventDestination(errorReporter)
+                },
                 {
-                    var errorReporter = scopedErrorReporter ?? this.ErrorReporter;
-                    await errorReporter.Error(error, "GENERAL_HTTP_ERROR");
-                    throw;
-                }
-            }
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
+                        errorReporter,
+                        loggingConfig.Elasticsearch,
+                        loggingConfig.ElkIndexes.GeneralLogIndex
+                    )
+                },
+            });
+
+            builder.AddEventStream(HttpLoggingExtensions.HTTP_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
+            {
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
+                        errorReporter,
+                        loggingConfig.Elasticsearch,
+                        loggingConfig.ElkIndexes.HttpLogIndex
+                    )
+                },
+            });
+
+            builder.AddEventStream(HttpLoggingExtensions.HTTP_DETAILED_KEY, new Dictionary<string, Func<EventDestination<HttpLogData>>>
+            {
+                {
+                    "ElasticsearchConsumer", () => new ElasticsearchEventDestination<HttpLogData>(
+                        errorReporter,
+                        loggingConfig.Elasticsearch,
+                        loggingConfig.ElkIndexes.HttpLogIndex
+                    )
+                },
+            });
+
+            var log = builder.Build();
+
+            await log.Reconfigure(loggingConfig.StructuredLogger, eventPreprocessor);
+
+            return log;
         }
 
         private async Task LoadConfig()
@@ -230,9 +172,13 @@ namespace Newsgirl.Server
                 this.AppConfig = this.InjectedAppConfig;
             }
 
-            this.AppConfig.AppInfo.AppVersion = this.AppVersion;
-
-            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
+            var errorReporter = new ErrorReporterImpl(new ErrorReporterImplConfig
+            {
+                SentryDsn = this.AppConfig.SentryDsn,
+                Environment = this.AppConfig.Environment,
+                InstanceName = this.AppConfig.InstanceName,
+                AppVersion = this.AppVersion,
+            });
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
@@ -251,7 +197,6 @@ namespace Newsgirl.Server
             {
                 this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
-                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
             }
             catch (Exception exception)
             {
@@ -353,6 +298,80 @@ namespace Newsgirl.Server
         {
             return this.Server.BoundAddresses.First();
         }
+
+        private async Task ProcessHttpRequest(HttpContext context)
+        {
+            await using (var requestScope = this.IoC.BeginLifetimeScope())
+            {
+                ErrorReporter scopedErrorReporter = null;
+
+                try
+                {
+                    scopedErrorReporter = requestScope.Resolve<ErrorReporter>();
+
+                    // Resolve this to set the event timestamp.
+                    var dateTimeService = requestScope.Resolve<DateTimeService>();
+
+                    // Use this for request scoped state like the reference to the HttpContext object.
+                    var httpRequestState = requestScope.Resolve<HttpRequestState>();
+
+                    scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> {{"httpRequestState", httpRequestState}});
+
+                    // Set the context first before resolving anything else.
+                    httpRequestState.HttpContext = context;
+
+                    try
+                    {
+                        httpRequestState.RequestStart = dateTimeService.EventTime();
+
+                        // Set the result of the authentication step.
+                        httpRequestState.AuthResult = await requestScope.Resolve<AuthenticationFilter>()
+                            .Authenticate(context.Request.Headers);
+
+                        // The value that we route on.
+                        string requestPath = context.Request.Path.Value;
+
+                        const string RPC_ROUTE_PATH = "/rpc/";
+
+                        if (requestPath.StartsWith(RPC_ROUTE_PATH))
+                        {
+                            httpRequestState.RpcState = new RpcRequestState();
+
+                            if (requestPath.Length < RPC_ROUTE_PATH.Length + 1)
+                            {
+                                httpRequestState.RpcState.RpcRequestType = null;
+                            }
+                            else
+                            {
+                                httpRequestState.RpcState.RpcRequestType = requestPath.Remove(0, RPC_ROUTE_PATH.Length);
+                            }
+
+                            await requestScope.Resolve<RpcRequestHandler>().HandleRpcRequest(httpRequestState);
+
+                            return;
+                        }
+
+                        // other http endpoints come here
+
+                        // otherwise 404
+                        context.Response.StatusCode = 404;
+                    }
+                    finally
+                    {
+                        httpRequestState.RequestEnd = dateTimeService.CurrentTime();
+
+                        this.Log.Http(() => new HttpLogData(httpRequestState, false));
+                        this.Log.HttpDetailed(() => new HttpLogData(httpRequestState, true));
+                    }
+                }
+                catch (Exception error)
+                {
+                    var errorReporter = scopedErrorReporter ?? this.ErrorReporter;
+                    await errorReporter.Error(error, "GENERAL_HTTP_ERROR");
+                    throw;
+                }
+            }
+        }
     }
 
     public class HttpServerIoCModule : Module
@@ -371,13 +390,13 @@ namespace Newsgirl.Server
             builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
             builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
             builder.Register((c, p) => this.app.SessionCertificatePool).ExternallyOwned();
-            builder.Register((c, p) => this.app.AppConfig.AppInfo).ExternallyOwned();
 
             // Per scope
             builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
-            builder.Register((c, p) => (ErrorReporter) new ErrorReporterImpl(this.app.AppConfig.ErrorReporter, this.app.AppConfig.AppInfo))
-                .InstancePerLifetimeScope();
+
+            builder.Register(this.CreateErrorReporter).InstancePerLifetimeScope();
+            builder.Register(this.CreateLogProcessor).InstancePerLifetimeScope();
             builder.RegisterType<AuthServiceImpl>().As<AuthService>().InstancePerLifetimeScope();
             builder.RegisterType<JwtServiceImpl>().As<JwtService>().InstancePerLifetimeScope();
             builder.RegisterType<RpcRequestHandler>().InstancePerLifetimeScope();
@@ -396,6 +415,33 @@ namespace Newsgirl.Server
             }
 
             base.Load(builder);
+        }
+
+        private ErrorReporter CreateErrorReporter(IComponentContext context, IEnumerable<Parameter> parameters)
+        {
+            var config = new ErrorReporterImplConfig
+            {
+                SentryDsn = this.app.AppConfig.SentryDsn,
+                Environment = this.app.AppConfig.Environment,
+                InstanceName = this.app.AppConfig.InstanceName,
+                AppVersion = this.app.AppVersion,
+            };
+
+            return new ErrorReporterImpl(config);
+        }
+
+        private LogPreprocessor CreateLogProcessor(IComponentContext context, IEnumerable<Parameter> parameters)
+        {
+            var dateTimeService = context.Resolve<DateTimeService>();
+
+            var config = new LogPreprocessorConfig
+            {
+                Environment = this.app.AppConfig.Environment,
+                InstanceName = this.app.AppConfig.InstanceName,
+                AppVersion = this.app.AppVersion,
+            };
+
+            return new LogPreprocessor(dateTimeService, config);
         }
     }
 

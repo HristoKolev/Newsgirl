@@ -162,7 +162,7 @@ namespace Newsgirl.Shared.Logging
 
     public class AppInfoEventData
     {
-        public virtual string ServerName { get; set; }
+        public virtual string InstanceName { get; set; }
 
         public virtual string Environment { get; set; }
 
@@ -208,7 +208,7 @@ namespace Newsgirl.Shared.Logging
     /// </summary>
     public class LogData : AppInfoEventData, IEnumerable
     {
-        private const string SERVER_NAME_KEY = "serverName";
+        private const string INSTANCE_NAME_KEY = "instanceName";
         private const string ENVIRONMENT_KEY = "environment";
         private const string APP_VERSION_KEY = "appVersion";
 
@@ -237,10 +237,10 @@ namespace Newsgirl.Shared.Logging
             return new LogData(x);
         }
 
-        public override string ServerName
+        public override string InstanceName
         {
-            get => (string) this.Fields[SERVER_NAME_KEY];
-            set => this.Fields[SERVER_NAME_KEY] = value;
+            get => (string) this.Fields[INSTANCE_NAME_KEY];
+            set => this.Fields[INSTANCE_NAME_KEY] = value;
         }
 
         public override string Environment
@@ -259,12 +259,12 @@ namespace Newsgirl.Shared.Logging
     public class LogPreprocessor : EventPreprocessor
     {
         private readonly DateTimeService dateTimeService;
-        private readonly AppInfoConfig appInfoConfig;
+        private readonly LogPreprocessorConfig logPreprocessorConfig;
 
-        public LogPreprocessor(DateTimeService dateTimeService, AppInfoConfig appInfoConfig)
+        public LogPreprocessor(DateTimeService dateTimeService, LogPreprocessorConfig logPreprocessorConfig)
         {
             this.dateTimeService = dateTimeService;
-            this.appInfoConfig = appInfoConfig;
+            this.logPreprocessorConfig = logPreprocessorConfig;
         }
 
         public void ProcessItem<TData>(ref TData item)
@@ -276,11 +276,20 @@ namespace Newsgirl.Shared.Logging
 
             if (item is AppInfoEventData appInfoEventData)
             {
-                appInfoEventData.AppVersion = this.appInfoConfig.AppVersion;
-                appInfoEventData.Environment = this.appInfoConfig.Environment;
-                appInfoEventData.ServerName = this.appInfoConfig.ServerName;
+                appInfoEventData.AppVersion = this.logPreprocessorConfig.AppVersion;
+                appInfoEventData.Environment = this.logPreprocessorConfig.Environment;
+                appInfoEventData.InstanceName = this.logPreprocessorConfig.InstanceName;
             }
         }
+    }
+
+    public class LogPreprocessorConfig
+    {
+        public string InstanceName { get; set; }
+
+        public string Environment { get; set; }
+
+        public string AppVersion { get; set; }
     }
 
     public class ElasticsearchConfig

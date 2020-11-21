@@ -5,14 +5,14 @@
     using System.IO;
     using System.Threading.Tasks;
     using Autofac;
+    using Autofac.Core;
     using Shared;
     using Shared.Logging;
     using Shared.Postgres;
 
     public class FetcherApp : IAsyncDisposable
     {
-        // ReSharper disable once InconsistentNaming
-        private readonly string AppVersion = typeof(FetcherApp).Assembly.GetName().Version?.ToString();
+        public readonly string AppVersion = typeof(FetcherApp).Assembly.GetName().Version?.ToString();
 
         public string AppConfigPath => EnvVariableHelper.Get("APP_CONFIG_PATH");
 
@@ -52,37 +52,53 @@
 
             this.IoC = builder.Build();
 
-            var loggerBuilder = new StructuredLoggerBuilder();
+            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
+            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
 
-            loggerBuilder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
+            this.Log = await CreateLogger(
+                this.SystemSettings.FetcherAppLoggingConfig,
+                this.ErrorReporter,
+                this.IoC.Resolve<LogPreprocessor>()
+            );
+        }
+
+        private static async Task<StructuredLogger> CreateLogger(
+            FetcherAppLoggingConfig loggingConfig,
+            ErrorReporter errorReporter,
+            EventPreprocessor eventPreprocessor)
+        {
+            var builder = new StructuredLoggerBuilder();
+
+            builder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
             {
-                {"ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)},
+                {
+                    "ConsoleConsumer", () => new ConsoleEventDestination(errorReporter)
+                },
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                        errorReporter,
+                        loggingConfig.Elasticsearch,
+                        loggingConfig.ElkIndexes.GeneralLogIndex
                     )
                 },
             });
 
-            loggerBuilder.AddEventStream(FetcherRunDataExtensions.FETCHER_EVENT_STREAM, new Dictionary<string, Func<EventDestination<FetcherRunData>>>
+            builder.AddEventStream(FetcherRunDataExtensions.FETCHER_EVENT_STREAM, new Dictionary<string, Func<EventDestination<FetcherRunData>>>
             {
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination<FetcherRunData>(
-                        this.ErrorReporter,
-                        this.AppConfig.Logging.Elasticsearch,
-                        this.AppConfig.Logging.ElasticsearchIndexes.GeneralLogIndex
+                        errorReporter,
+                        loggingConfig.Elasticsearch,
+                        loggingConfig.ElkIndexes.FetcherLogIndex
                     )
                 },
             });
 
-            this.Log = loggerBuilder.Build();
+            var log = builder.Build();
 
-            await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
+            await log.Reconfigure(loggingConfig.StructuredLogger, eventPreprocessor);
 
-            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
+            return log;
         }
 
         private async Task LoadConfig()
@@ -96,9 +112,13 @@
                 this.AppConfig = this.InjectedAppConfig;
             }
 
-            this.AppConfig.AppInfo.AppVersion = this.AppVersion;
-
-            var errorReporter = new ErrorReporterImpl(this.AppConfig.ErrorReporter, this.AppConfig.AppInfo);
+            var errorReporter = new ErrorReporterImpl(new ErrorReporterImplConfig
+            {
+                SentryDsn = this.AppConfig.SentryDsn,
+                Environment = this.AppConfig.Environment,
+                InstanceName = this.AppConfig.InstanceName,
+                AppVersion = this.AppVersion,
+            });
 
             // If ErrorReporter is not ErrorReporterImpl - do not replace it. Done for testing purposes.
             if (this.ErrorReporter == null || this.ErrorReporter is ErrorReporterImpl)
@@ -117,7 +137,6 @@
             {
                 this.Log.General(() => "Reloading config...");
                 await this.LoadConfig();
-                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
             }
             catch (Exception exception)
             {
@@ -197,25 +216,11 @@
     {
         public string ConnectionString { get; set; }
 
-        public ErrorReporterConfig ErrorReporter { get; set; }
+        public string SentryDsn { get; set; }
 
-        public AppInfoConfig AppInfo { get; set; }
+        public string InstanceName { get; set; }
 
-        public LoggingConfig Logging { get; set; }
-    }
-
-    public class LoggingConfig
-    {
-        public EventStreamConfig[] StructuredLogger { get; set; }
-
-        public ElasticsearchConfig Elasticsearch { get; set; }
-
-        public ElasticsearchIndexConfig ElasticsearchIndexes { get; set; }
-    }
-
-    public class ElasticsearchIndexConfig
-    {
-        public string GeneralLogIndex { get; set; }
+        public string Environment { get; set; }
     }
 
     public class FetcherIoCModule : Module
@@ -233,7 +238,6 @@
             builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
             builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
-            builder.Register((c, p) => this.app.AppConfig.AppInfo).ExternallyOwned();
 
             // Single instance
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
@@ -244,8 +248,23 @@
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();
+            builder.Register(this.CreateLogProcessor).InstancePerLifetimeScope();
 
             base.Load(builder);
+        }
+
+        private LogPreprocessor CreateLogProcessor(IComponentContext context, IEnumerable<Parameter> parameters)
+        {
+            var dateTimeService = context.Resolve<DateTimeService>();
+
+            var config = new LogPreprocessorConfig
+            {
+                Environment = this.app.AppConfig.Environment,
+                InstanceName = this.app.AppConfig.InstanceName,
+                AppVersion = this.app.AppVersion,
+            };
+
+            return new LogPreprocessor(dateTimeService, config);
         }
     }
 

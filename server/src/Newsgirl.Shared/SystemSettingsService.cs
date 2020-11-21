@@ -4,6 +4,7 @@ namespace Newsgirl.Shared
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
+    using Logging;
     using Postgres;
 
     public class SystemSettingsService
@@ -76,5 +77,41 @@ namespace Newsgirl.Shared
         /// The pfx certificate that is used to create JWT tokens.
         /// </summary>
         public byte[] SessionCertificate { get; set; }
+
+        public HttpServerAppLoggingConfig HttpServerAppLoggingConfig { get; set; }
+
+        public FetcherAppLoggingConfig FetcherAppLoggingConfig { get; set; }
+    }
+
+    public class HttpServerAppLoggingConfig
+    {
+        public EventStreamConfig[] StructuredLogger { get; set; }
+
+        public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public HttpServerAppElkIndexConfig ElkIndexes { get; set; }
+    }
+
+    public class HttpServerAppElkIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
+
+        public string HttpLogIndex { get; set; }
+    }
+
+    public class FetcherAppLoggingConfig
+    {
+        public EventStreamConfig[] StructuredLogger { get; set; }
+
+        public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public FetcherAppElkIndexConfig ElkIndexes { get; set; }
+    }
+
+    public class FetcherAppElkIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
+
+        public string FetcherLogIndex { get; set; }
     }
 }
