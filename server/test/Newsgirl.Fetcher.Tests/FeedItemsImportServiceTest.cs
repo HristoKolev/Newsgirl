@@ -41,6 +41,7 @@ namespace Newsgirl.Fetcher.Tests
                 FeedUrl = $"url {i}",
             }).ToList();
 
+            // Insert one by one in order to set the PK value.
             foreach (var feed in feeds)
             {
                 await this.Db.Insert(feed);

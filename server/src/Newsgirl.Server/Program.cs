@@ -442,9 +442,7 @@ namespace Newsgirl.Server
                 Console.CancelKeyPress += OnCancelKeyPress;
 
                 await app.Start("http://127.0.0.1:5000");
-
                 await app.AwaitShutdownTrigger();
-
                 await app.Stop();
 
                 return 0;
