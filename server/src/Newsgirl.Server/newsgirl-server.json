@@ -21,7 +21,6 @@
         "Name": "HTTP_REQUESTS",
         "Enabled": false,
         "Destinations": [
-          { "Name": "ConsoleConsumer", "Enabled": false },
           { "Name": "ElasticsearchConsumer", "Enabled": false }
         ]
       },
@@ -29,7 +28,6 @@
         "Name": "HTTP_REQUESTS_DETAILED",
         "Enabled": true,
         "Destinations": [
-          { "Name": "ConsoleConsumer", "Enabled": true },
           { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
       }

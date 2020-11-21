@@ -13,14 +13,8 @@
         "Name": "GENERAL_LOG",
         "Enabled": true,
         "Destinations": [
-          {
-            "Name": "ConsoleConsumer",
-            "Enabled": true
-          },
-          {
-            "Name": "ElasticsearchConsumer",
-            "Enabled": true
-          }
+          { "Name": "ConsoleConsumer", "Enabled": true },
+          { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
       }
     ],
