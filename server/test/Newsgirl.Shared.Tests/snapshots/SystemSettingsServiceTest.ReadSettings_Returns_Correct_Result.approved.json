@@ -23,6 +23,16 @@
         ],
         "Enabled": true,
         "Name": "GENERAL_LOG"
+      },
+      {
+        "Destinations": [
+          {
+            "Enabled": true,
+            "Name": "ElasticsearchConsumer"
+          }
+        ],
+        "Enabled": true,
+        "Name": "FETCHER_LOG"
       }
     ]
   },

@@ -62,6 +62,7 @@ namespace Newsgirl.Fetcher.Tests
                     }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 1),
                     NewFeedItemsHash = 1,
+                    NewFeedContentHash = 1,
                 },
                 new FeedUpdateModel
                 {
@@ -76,6 +77,7 @@ namespace Newsgirl.Fetcher.Tests
                     }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 2),
                     NewFeedItemsHash = 2,
+                    NewFeedContentHash = 2,
                 },
                 new FeedUpdateModel
                 {
@@ -86,6 +88,7 @@ namespace Newsgirl.Fetcher.Tests
                     Feed = feeds.First(x => x.FeedID == 4),
                     NewItems = new List<FeedItemPoco>(),
                     NewFeedItemsHash = 4,
+                    NewFeedContentHash = 4,
                 },
                 new FeedUpdateModel
                 {
@@ -100,6 +103,7 @@ namespace Newsgirl.Fetcher.Tests
                     }).ToList(),
                     Feed = feeds.First(x => x.FeedID == 5),
                     NewFeedItemsHash = 5,
+                    NewFeedContentHash = 5,
                 },
             };
 

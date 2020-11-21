@@ -308,16 +308,16 @@
       "FeedUrl": "url 6"
     },
     {
-      "FeedContentHash": null,
+      "FeedContentHash": 5,
       "FeedID": 5,
-      "FeedItemsHash": null,
+      "FeedItemsHash": 5,
       "FeedName": "feed 5",
       "FeedUrl": "url 5"
     },
     {
-      "FeedContentHash": null,
+      "FeedContentHash": 4,
       "FeedID": 4,
-      "FeedItemsHash": null,
+      "FeedItemsHash": 4,
       "FeedName": "feed 4",
       "FeedUrl": "url 4"
     },
@@ -329,16 +329,16 @@
       "FeedUrl": "url 3"
     },
     {
-      "FeedContentHash": null,
+      "FeedContentHash": 2,
       "FeedID": 2,
-      "FeedItemsHash": null,
+      "FeedItemsHash": 2,
       "FeedName": "feed 2",
       "FeedUrl": "url 2"
     },
     {
-      "FeedContentHash": null,
+      "FeedContentHash": 1,
       "FeedID": 1,
-      "FeedItemsHash": null,
+      "FeedItemsHash": 1,
       "FeedName": "feed 1",
       "FeedUrl": "url 1"
     }

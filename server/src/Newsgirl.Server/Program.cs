@@ -71,7 +71,7 @@ namespace Newsgirl.Server
             this.shutdownTriggered = new TaskCompletionSource<object>();
             this.shutdownCompleted = new ManualResetEventSlim();
 
-            await this.LoadConfig();
+            await this.LoadStartupConfig();
 
             if (this.InjectedAppConfig == null)
             {
@@ -161,7 +161,7 @@ namespace Newsgirl.Server
             return log;
         }
 
-        private async Task LoadConfig()
+        private async Task LoadStartupConfig()
         {
             if (this.InjectedAppConfig == null)
             {
@@ -196,7 +196,7 @@ namespace Newsgirl.Server
             try
             {
                 this.Log.General(() => "Reloading config...");
-                await this.LoadConfig();
+                await this.LoadStartupConfig();
             }
             catch (Exception exception)
             {

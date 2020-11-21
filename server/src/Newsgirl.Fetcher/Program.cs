@@ -34,7 +34,7 @@
 
         public async Task Initialize()
         {
-            await this.LoadConfig();
+            await this.LoadStartupConfig();
 
             if (this.InjectedAppConfig == null)
             {
@@ -101,7 +101,7 @@
             return log;
         }
 
-        private async Task LoadConfig()
+        private async Task LoadStartupConfig()
         {
             if (this.InjectedAppConfig == null)
             {
@@ -136,7 +136,7 @@
             try
             {
                 this.Log.General(() => "Reloading config...");
-                await this.LoadConfig();
+                await this.LoadStartupConfig();
             }
             catch (Exception exception)
             {

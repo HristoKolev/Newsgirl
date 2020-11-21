@@ -140,6 +140,13 @@ INSERT into public.system_settings(setting_name, setting_value) VALUES
           { "Name": "ConsoleConsumer", "Enabled": true },
           { "Name": "ElasticsearchConsumer", "Enabled": true }
         ]
+      },
+      {
+        "Name": "FETCHER_LOG",
+        "Enabled": true,
+        "Destinations": [
+          { "Name": "ElasticsearchConsumer", "Enabled": true }
+        ]
       }
     ],
     "Elasticsearch": {
