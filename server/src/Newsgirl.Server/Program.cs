@@ -386,13 +386,13 @@ namespace Newsgirl.Server
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
-            builder.Register((c, p) => this.app.RpcEngine).ExternallyOwned();
-            builder.Register((c, p) => this.app.SessionCertificatePool).ExternallyOwned();
+            builder.Register((_, _) => this.app.SystemSettings).ExternallyOwned();
+            builder.Register((_, _) => this.app.Log).As<Log>().ExternallyOwned();
+            builder.Register((_, _) => this.app.RpcEngine).ExternallyOwned();
+            builder.Register((_, _) => this.app.SessionCertificatePool).ExternallyOwned();
 
             // Per scope
-            builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
+            builder.Register((_, _) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
 
             builder.Register(this.CreateErrorReporter).InstancePerLifetimeScope();

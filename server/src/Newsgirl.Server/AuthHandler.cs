@@ -189,7 +189,7 @@ namespace Newsgirl.Server
                 LoginDate = this.dateTimeService.EventTime(),
                 LoginID = loginID,
                 ProfileID = userProfileID,
-                ExpirationDate = rememberMe ? (DateTime?) null : this.dateTimeService.EventTime().AddHours(3),
+                ExpirationDate = rememberMe ? null : this.dateTimeService.EventTime().AddHours(3),
                 CsrfToken = this.rngService.GenerateSecureString(40),
             };
 

@@ -204,7 +204,7 @@
             var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
-                .Select(i => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27)))
+                .Select(_ => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27)))
                 .ToArray();
         }
 
@@ -213,7 +213,7 @@
             var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
-                .Select(i => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27), random.Next(1, 24),
+                .Select(_ => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27), random.Next(1, 24),
                     random.Next(1, 60), random.Next(1, 60)))
                 .ToArray();
         }
@@ -223,7 +223,7 @@
             var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
-                .Select(i => new DateTimeOffset(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27),
+                .Select(_ => new DateTimeOffset(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27),
                     random.Next(1, 24), random.Next(1, 60), random.Next(1, 60),
                     TimeSpan.FromHours(2)))
                 .ToArray();
@@ -283,8 +283,8 @@
             template = template + template.ToUpper();
 
             return Enumerable.Range(0, 2)
-                .Select(x => new string(Enumerable.Range(0, 50)
-                    .Select(i => template[random.Next(0, template.Length)])
+                .Select(_ => new string(Enumerable.Range(0, 50)
+                    .Select(_ => template[random.Next(0, template.Length)])
                     .ToArray()))
                 .ToArray();
         }

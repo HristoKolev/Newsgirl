@@ -235,16 +235,16 @@
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((c, p) => this.app.SystemSettings).ExternallyOwned();
-            builder.Register((c, p) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
-            builder.Register((c, p) => this.app.Log).As<Log>().ExternallyOwned();
+            builder.Register((_, _) => this.app.SystemSettings).ExternallyOwned();
+            builder.Register((_, _) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
+            builder.Register((_, _) => this.app.Log).As<Log>().ExternallyOwned();
 
             // Single instance
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
             builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
 
             // Per scope
-            builder.Register((c, p) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
+            builder.Register((_, _) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
             builder.RegisterType<DbService>().As<IDbService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedItemsImportService>().As<IFeedItemsImportService>().InstancePerLifetimeScope();
             builder.RegisterType<FeedFetcher>().InstancePerLifetimeScope();

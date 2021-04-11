@@ -55,7 +55,7 @@ namespace Newsgirl.Shared
             void RestartTimer()
             {
                 timer?.Dispose();
-                timer = new Timer(s =>
+                timer = new Timer(_ =>
                 {
                     semaphore.Wait();
 

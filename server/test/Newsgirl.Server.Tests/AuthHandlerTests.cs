@@ -12,7 +12,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub).SingleInstance();
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub).SingleInstance();
             builder.RegisterType<RngServiceMock>().As<RngService>().SingleInstance();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>().SingleInstance();
             builder.RegisterType<StructuredLogMock>().As<Log>().SingleInstance();
@@ -38,7 +38,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
@@ -70,7 +70,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
@@ -93,7 +93,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
@@ -119,7 +119,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
@@ -147,7 +147,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
@@ -173,7 +173,7 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((c, p) => TestHelper.DateTimeServiceStub);
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub);
             builder.RegisterType<RngServiceMock>().As<RngService>();
             builder.RegisterType<PasswordServiceMock>().As<PasswordService>();
             builder.RegisterType<StructuredLogMock>().As<Log>();
