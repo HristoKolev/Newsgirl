@@ -200,7 +200,7 @@ namespace Newsgirl.Shared.Logging
         /// This counts how many concurrent calls to Log are executing at a specific moment.
         /// Gets incremented at the start of the Log call and gets decremented at the end.
         /// </summary>
-        protected int ConcurrentLogCalls = 0;
+        protected int ConcurrentLogCalls;
 
         /// <summary>
         /// Gets implemented by the generated class.

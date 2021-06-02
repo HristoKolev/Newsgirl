@@ -8,7 +8,6 @@ namespace Newsgirl.Shared
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using Sentry;
-    using Sentry.Protocol;
 
     public interface ErrorReporter
     {
@@ -47,7 +46,7 @@ namespace Newsgirl.Shared
             this.sentryClient = new SentryClient(new SentryOptions
             {
                 AttachStacktrace = true,
-                Dsn = new Dsn(config.SentryDsn),
+                Dsn = config.SentryDsn,
                 Release = config.AppVersion,
             });
         }
@@ -108,7 +107,7 @@ namespace Newsgirl.Shared
                 }
             }
 
-            // Set extras from parameter. 
+            // Set extras from parameter.
             ApplyExtras(sentryEvent, additionalInfo);
 
             // Set extras from hooks.
@@ -155,7 +154,7 @@ namespace Newsgirl.Shared
             return exceptions.Select(GetFingerprint).ToArray();
         }
 
-        private static void ApplyExtras(BaseScope sentryEvent, Dictionary<string, object> data)
+        private static void ApplyExtras(IHasExtra sentryEvent, Dictionary<string, object> data)
         {
             if (data == null)
             {

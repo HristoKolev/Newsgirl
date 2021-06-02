@@ -3,7 +3,7 @@
     "Details": {
       "bytePositionInLine": 15,
       "lineNumber": 0,
-      "jsonPath": "$",
+      "jsonPath": "$.data",
       "inputJson": "{ \"data\": 12345CAT }",
       "outputType": "Newsgirl.Shared.Tests.JsonHelperTest+TestJsonPayload"
     },

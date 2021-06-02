@@ -154,7 +154,7 @@ namespace Newsgirl.Server.Tests
         private readonly HttpClientHandler httpClientHandler;
 
         public Dictionary<string, string> Cookies =>
-            this.httpClientHandler.CookieContainer.GetCookies(this.httpClient.BaseAddress)
+            this.httpClientHandler.CookieContainer.GetCookies(this.httpClient.BaseAddress!)
                 .ToDictionary(x => x.Name, x => x.Value);
 
         public string CsrfToken { get; set; }

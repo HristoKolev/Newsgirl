@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Newsgirl.Server\Newsgirl.Server.csproj" />
-    <ProjectReference Include="..\..\src\Newsgirl.Shared\Newsgirl.Shared.csproj" />
+    <ProjectReference Include="..\..\server\src\Newsgirl.Server\Newsgirl.Server.csproj" />
+    <ProjectReference Include="..\..\server\src\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
 
 </Project>

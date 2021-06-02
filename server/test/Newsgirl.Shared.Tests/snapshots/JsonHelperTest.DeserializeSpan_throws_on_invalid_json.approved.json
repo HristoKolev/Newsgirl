@@ -3,7 +3,7 @@
     "Details": {
       "bytePositionInLine": 15,
       "lineNumber": 0,
-      "jsonPath": "$",
+      "jsonPath": "$.data",
       "base64Data": "eyAiZGF0YSI6IDEyMzQ1Q0FUIH0=",
       "outputType": "Newsgirl.Shared.Tests.JsonHelperTest+TestJsonPayload"
     },

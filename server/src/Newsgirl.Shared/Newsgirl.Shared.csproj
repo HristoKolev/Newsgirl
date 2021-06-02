@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>latest</LangVersion>
 
     <IsPackable>false</IsPackable>
@@ -11,15 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.0.0" />
-    <PackageReference Include="JWT" Version="7.3.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Npgsql" Version="4.1.5" />
+    <PackageReference Include="Autofac" Version="6.2.0" />
+    <PackageReference Include="JWT" Version="8.2.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Npgsql" Version="5.0.5" />
     <PackageReference Include="linq2db.Core" Version="1.10.2" />
-    <PackageReference Include="Sentry" Version="2.1.6" />
-    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="6.1.1" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="3.1.9" />
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
+    <PackageReference Include="Sentry" Version="3.4.0" />
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.0.2" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.6" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
     <PackageReference Include="Standart.Hash.xxHash" Version="3.1.0" />
   </ItemGroup>
 
