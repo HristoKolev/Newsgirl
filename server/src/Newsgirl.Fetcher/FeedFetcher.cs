@@ -5,31 +5,32 @@ namespace Newsgirl.Fetcher
     using System.Linq;
     using System.Threading.Tasks;
     using Shared;
+    using Shared.Postgres;
 
     public class FeedFetcher
     {
         private readonly IFeedContentProvider feedContentProvider;
         private readonly IFeedParser feedParser;
         private readonly IFeedItemsImportService feedItemsImportService;
-        private readonly SystemSettingsModel systemSettings;
         private readonly DateTimeService dateTimeService;
         private readonly ErrorReporter errorReporter;
+        private readonly IDbService dbService;
         private readonly AsyncLock dbLock;
 
         public FeedFetcher(
             IFeedContentProvider feedContentProvider,
             IFeedParser feedParser,
             IFeedItemsImportService feedItemsImportService,
-            SystemSettingsModel systemSettings,
             DateTimeService dateTimeService,
-            ErrorReporter errorReporter)
+            ErrorReporter errorReporter,
+            IDbService dbService)
         {
             this.feedContentProvider = feedContentProvider;
             this.feedParser = feedParser;
             this.feedItemsImportService = feedItemsImportService;
-            this.systemSettings = systemSettings;
             this.dateTimeService = dateTimeService;
             this.errorReporter = errorReporter;
+            this.dbService = dbService;
             this.dbLock = new AsyncLock();
         }
 
@@ -44,59 +45,14 @@ namespace Newsgirl.Fetcher
 
             fetcherRunData.FeedCount = feeds.Length;
 
-            FeedUpdateModel[] updates;
+            var updates = (await Task.WhenAll(feeds.Select(this.ProcessFeed))).Where(x => x != null).ToArray();
 
-            if (this.systemSettings.ParallelFeedFetching)
-            {
-                var tasks = new Task<FeedUpdateModel>[feeds.Length];
-
-                for (int i = 0; i < feeds.Length; i++)
-                {
-                    tasks[i] = this.ProcessFeed(feeds[i]);
-                }
-
-                updates = await Task.WhenAll(tasks);
-            }
-            else
-            {
-                updates = new FeedUpdateModel[feeds.Length];
-
-                for (int i = 0; i < feeds.Length; i++)
-                {
-                    updates[i] = await this.ProcessFeed(feeds[i]);
-                }
-            }
-
-            await this.feedItemsImportService.ImportItems(updates);
-
-            (int feedCount, int feedItemCount) = GetChangedFeedCount(updates);
-
-            fetcherRunData.ChangedFeedCount = feedCount;
-            fetcherRunData.ChangedFeedItemCount = feedItemCount;
-
+            fetcherRunData.ChangedFeedCount = updates.Length;
+            fetcherRunData.ChangedFeedItemCount = updates.SelectMany(x => x.NewItems).Count();
             fetcherRunData.EndTime = this.dateTimeService.CurrentTime();
             fetcherRunData.Duration = (long) (fetcherRunData.EndTime - fetcherRunData.StartTime).TotalMilliseconds;
 
             return fetcherRunData;
-        }
-
-        private static (int, int) GetChangedFeedCount(FeedUpdateModel[] updates)
-        {
-            int feedCount = 0;
-            int feedItemCount = 0;
-
-            for (int i = 0; i < updates.Length; i++)
-            {
-                var items = updates[i].NewItems;
-
-                if (items != null && items.Count != 0)
-                {
-                    feedCount += 1;
-                    feedItemCount += items.Count;
-                }
-            }
-
-            return (feedCount, feedItemCount);
         }
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
@@ -127,7 +83,7 @@ namespace Newsgirl.Fetcher
                 // The bytes have not changed. 
                 if (state.FeedContentHash == feed.FeedContentHash)
                 {
-                    return new FeedUpdateModel {Feed = feed};
+                    return null;
                 }
 
                 // Parse into a string.
@@ -161,24 +117,25 @@ namespace Newsgirl.Fetcher
                 // The information that we care about has not changed.
                 if (feed.FeedItemsHash == state.ParsedFeed.FeedItemsHash)
                 {
-                    return new FeedUpdateModel {Feed = feed};
+                    return null;
                 }
 
                 // Get the hashes of items that don't appear in the database.
-                HashSet<long> newHashes;
                 long[] itemHashes = state.ParsedFeed.FeedItemHashes.ToArray();
+
+                long[] newHashArray;
                 using (await this.dbLock.Lock())
                 {
-                    var newHashArray = await this.feedItemsImportService.GetMissingFeedItems(feed.FeedID, itemHashes);
-                    newHashes = new HashSet<long>(newHashArray);
+                    newHashArray = await this.feedItemsImportService.GetMissingFeedItems(feed.FeedID, itemHashes);
                 }
+
+                var newHashes = new HashSet<long>(newHashArray);
 
                 // Get the items that don't appear in the database.
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
-                for (int i = 0; i < state.ParsedFeed.Items.Count; i++)
+                foreach (var feedItem in state.ParsedFeed.Items)
                 {
-                    var feedItem = state.ParsedFeed.Items[i];
                     if (!newHashes.Contains(feedItem.FeedItemHash))
                     {
                         continue;
@@ -188,18 +145,30 @@ namespace Newsgirl.Fetcher
                     newItems.Add(feedItem);
                 }
 
-                return new FeedUpdateModel
+                var update = new FeedUpdateModel
                 {
                     Feed = feed,
                     NewItems = newItems,
                     NewFeedItemsHash = state.ParsedFeed.FeedItemsHash,
                     NewFeedContentHash = state.FeedContentHash,
                 };
+
+                using (await this.dbLock.Lock())
+                {
+                    await using (var tx = await this.dbService.BeginTransaction())
+                    {
+                        await this.feedItemsImportService.ApplyUpdate(update);
+
+                        await tx.CommitAsync();
+                    }
+                }
+
+                return update;
             }
             catch (Exception err)
             {
                 await this.errorReporter.Error(err, new Dictionary<string, object> {{"feedProcessingState", state}});
-                return new FeedUpdateModel {Feed = feed};
+                return null;
             }
         }
 

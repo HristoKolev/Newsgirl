@@ -12,11 +12,14 @@ namespace Newsgirl.Testing
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Data;
+    using System.Data.Common;
     using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.ExceptionServices;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using ApprovalTests;
     using ApprovalTests.Core;
@@ -26,6 +29,7 @@ namespace Newsgirl.Testing
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
     using Npgsql;
+    using NpgsqlTypes;
     using NSubstitute;
     using Shared;
     using Shared.Logging;
@@ -37,7 +41,7 @@ namespace Newsgirl.Testing
     {
         // ReSharper disable once InconsistentNaming
         private static TestConfig _testConfig;
-        private static readonly object TestConfigSync = new object();
+        private static readonly object TestConfigSync = new();
 
         public static async Task<string> GetResourceText(string name)
         {
@@ -59,7 +63,6 @@ namespace Newsgirl.Testing
         public static async Task<string> GetSql(string name)
         {
             string content = await ResourceHelper.GetString($"sql.{name}");
-
             return content;
         }
 
@@ -113,6 +116,217 @@ namespace Newsgirl.Testing
 
                 return _testConfig;
             }
+        }
+
+        public static IDbService DbTxServiceStub => new DbServiceStub();
+    }
+
+    // TODO: Make this into a mock. Make sure you can't open multiple transactions and that you have to call the methods in the correct order.
+    public class DbTransactionStub : DbTransaction
+    {
+        public override Task CommitAsync(CancellationToken cancellationToken = new())
+        {
+            return Task.CompletedTask;
+        }
+
+        public override Task RollbackAsync(CancellationToken cancellationToken = new())
+        {
+            return Task.CompletedTask;
+        }
+
+        protected override void Dispose(bool disposing) { }
+
+        public override ValueTask DisposeAsync()
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        protected override DbConnection DbConnection => throw new NotImplementedException();
+
+        public override IsolationLevel IsolationLevel => throw new NotImplementedException();
+
+        public override void Commit()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Rollback()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task SaveAsync(string savepointName, CancellationToken cancellationToken = new())
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task RollbackAsync(string savepointName, CancellationToken cancellationToken = new())
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task ReleaseAsync(string savepointName, CancellationToken cancellationToken = new())
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Save(string savepointName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Rollback(string savepointName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Release(string savepointName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool SupportsSavepoints => throw new NotImplementedException();
+    }
+
+    public class DbServiceStub : IDbService
+    {
+        public Task<DbTransaction> BeginTransaction()
+        {
+            return Task.FromResult((DbTransaction) new DbTransactionStub());
+        }
+
+        public void Dispose() { }
+
+        public DbPocos Poco => throw new NotImplementedException();
+
+        public Task<int> ExecuteNonQuery(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> ExecuteNonQuery(string sql, params NpgsqlParameter[] parameters)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> ExecuteNonQuery(string sql, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> ExecuteScalar<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> ExecuteScalar<T>(string sql, params NpgsqlParameter[] parameters)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> ExecuteScalar<T>(string sql, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<T>> Query<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<T>> Query<T>(string sql, params NpgsqlParameter[] parameters) where T : new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<T>> Query<T>(string sql, CancellationToken cancellationToken = default) where T : new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> QueryOne<T>(string sql, IEnumerable<NpgsqlParameter> parameters, CancellationToken cancellationToken = default) where T : class, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> QueryOne<T>(string sql, CancellationToken cancellationToken = default) where T : class, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> QueryOne<T>(string sql, params NpgsqlParameter[] parameters) where T : class, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> FindByID<T>(int id, CancellationToken cancellationToken = default) where T : class, IPoco<T>, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public NpgsqlParameter CreateParameter<T>(string parameterName, T value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public NpgsqlParameter CreateParameter<T>(string parameterName, T value, NpgsqlDbType dbType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public NpgsqlParameter CreateParameter(string parameterName, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> Insert<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> InsertWithoutMutating<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Update<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> Save<T>(T poco, CancellationToken cancellationToken = default) where T : class, IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Delete<T>(T poco, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> Delete<T>(int[] ids, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Delete<T>(int id, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task BulkInsert<T>(IEnumerable<T> pocos, CancellationToken cancellationToken = default) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Copy<T>(IEnumerable<T> pocos) where T : IPoco<T>
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetCopyHeader<T>() where T : IReadOnlyPoco<T>
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -433,6 +647,7 @@ namespace Newsgirl.Testing
             var testMasterConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
             {
                 Enlist = false,
+                IncludeErrorDetails = true,
             };
 
             this.testMasterConnection = new NpgsqlConnection(testMasterConnectionStringBuilder.ToString());
@@ -444,6 +659,7 @@ namespace Newsgirl.Testing
                 Database = this.testDatabaseName,
                 Pooling = false,
                 Enlist = false,
+                IncludeErrorDetails = true,
             };
 
             this.ConnectionString = testConnectionStringBuilder.ToString();

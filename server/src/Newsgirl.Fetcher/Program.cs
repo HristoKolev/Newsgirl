@@ -276,7 +276,7 @@
 
             async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
             {
-                await app.ErrorReporter.Error(e.Exception?.InnerException);
+                await app.ErrorReporter.Error(e.Exception.InnerException);
             }
 
             async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

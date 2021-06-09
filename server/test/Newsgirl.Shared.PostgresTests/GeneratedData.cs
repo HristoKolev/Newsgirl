@@ -110,7 +110,7 @@
                 NpgsqlDbType.Json => GenerateJsonArray().Cast<object>().ToArray(),
                 NpgsqlDbType.Jsonb => GenerateJsonArray().Cast<object>().ToArray(),
                 NpgsqlDbType.TimestampTz => GenerateDateTimeOffsetArray().Cast<object>().ToArray(),
-                _ => throw new ArgumentOutOfRangeException(nameof(dbType), dbType, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(dbType), dbType, null),
             };
         }
 

@@ -10,12 +10,6 @@ SCRIPT_PATH="$( cd -P "$( dirname "$TMP_SOURCE" )" >/dev/null 2>&1 && pwd )"
 
 export $(cat $SCRIPT_PATH/env | xargs);
 
-HERE=$(pwd)
-
 set -exu
 
-cd $SCRIPT_PATH
-
-docker-compose -p $STACK_NAME down
-
-cd $HERE
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME down

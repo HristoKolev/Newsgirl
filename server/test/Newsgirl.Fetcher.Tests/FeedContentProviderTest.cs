@@ -11,10 +11,7 @@ namespace Newsgirl.Fetcher.Tests
         [InlineData("https://v8project.blogspot.com/feeds/posts/default")]
         public async Task HTTP_Request_Returns_Correct_Result(string feedUrl)
         {
-            var feed = new FeedPoco
-            {
-                FeedUrl = feedUrl,
-            };
+            var feed = new FeedPoco {FeedUrl = feedUrl};
 
             var contentProvider = new FeedContentProvider(new SystemSettingsModel
             {

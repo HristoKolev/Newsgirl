@@ -33,8 +33,7 @@ namespace Newsgirl.Shared
 
                 if (entry == null)
                 {
-                    throw new ApplicationException(
-                        $"No system_settings entry found for property '{prop.Name}' of type '{modelType.Name}').");
+                    throw new ApplicationException($"No system_settings entry found for property '{prop.Name}' of type '{modelType.Name}').");
                 }
 
                 object value = null;
@@ -70,8 +69,6 @@ namespace Newsgirl.Shared
         /// The pause between fetch cycles.
         /// </summary>
         public int FetcherCyclePause { get; set; }
-
-        public bool ParallelFeedFetching { get; set; }
 
         /// <summary>
         /// The pfx certificate that is used to create JWT tokens.

@@ -13,7 +13,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task GetFeedsForUpdate_Returns_All_Feeds()
         {
-            var importService = new FeedItemsImportService(this.Db, this.Connection);
+            var importService = new FeedItemsImportService(this.Db);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {
@@ -33,7 +33,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task ImportItems_Copies_Items_Correctly()
         {
-            var importService = new FeedItemsImportService(this.Db, this.Connection);
+            var importService = new FeedItemsImportService(this.Db);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {
@@ -81,33 +81,25 @@ namespace Newsgirl.Fetcher.Tests
                 },
                 new FeedUpdateModel
                 {
-                    Feed = feeds.First(x => x.FeedID == 3),
-                },
-                new FeedUpdateModel
-                {
-                    Feed = feeds.First(x => x.FeedID == 4),
-                    NewItems = new List<FeedItemPoco>(),
-                    NewFeedItemsHash = 4,
-                    NewFeedContentHash = 4,
-                },
-                new FeedUpdateModel
-                {
                     NewItems = Enumerable.Range(200, 10).Select(i => new FeedItemPoco
                     {
-                        FeedID = 5,
+                        FeedID = 3,
                         FeedItemDescription = null,
                         FeedItemHash = i,
                         FeedItemTitle = $"title {i}",
                         FeedItemUrl = null,
                         FeedItemAddedTime = TestHelper.Date3000,
                     }).ToList(),
-                    Feed = feeds.First(x => x.FeedID == 5),
-                    NewFeedItemsHash = 5,
-                    NewFeedContentHash = 5,
+                    Feed = feeds.First(x => x.FeedID == 3),
+                    NewFeedItemsHash = 3,
+                    NewFeedContentHash = 3,
                 },
             };
 
-            await importService.ImportItems(updates.ToArray());
+            foreach (var update in updates)
+            {
+                await importService.ApplyUpdate(update);
+            }
 
             var resultFeeds = this.Db.Poco.Feeds.OrderByDescending(x => x.FeedID).ToList();
             var resultFeedItems = this.Db.Poco.FeedItems.OrderByDescending(x => x.FeedItemID).ToList();
@@ -118,7 +110,7 @@ namespace Newsgirl.Fetcher.Tests
         [Fact]
         public async Task GetMissingFeedItems_Returns_Correct_Result()
         {
-            var importService = new FeedItemsImportService(this.Db, this.Connection);
+            var importService = new FeedItemsImportService(this.Db);
 
             var feeds = Enumerable.Range(1, 10).Select(i => new FeedPoco
             {

@@ -1,6 +1,6 @@
 {
   "ConnectionString": "Server=dev-host.lan;Port=4203;Database=test;Uid=test;Pwd=test123;",
-  "SentryDsn": "http://1de969f387b749e2b2bf3361d844f461@home-sentry.lan/7",
+  "SentryDsn": "http://eb81bb9796314f64bd9b6c262fd67cf1@home-sentry.lan/4",
   "Environment": "testing",
   "InstanceName": "hristo-ws"
 }

@@ -1,7 +1,7 @@
 ﻿{
   "resultFeedItems": [
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 209,
@@ -10,7 +10,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 208,
@@ -19,7 +19,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 207,
@@ -28,7 +28,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 206,
@@ -37,7 +37,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 205,
@@ -46,7 +46,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 204,
@@ -55,7 +55,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 203,
@@ -64,7 +64,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 202,
@@ -73,7 +73,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 201,
@@ -82,7 +82,7 @@
       "FeedItemUrl": null
     },
     {
-      "FeedID": 5,
+      "FeedID": 3,
       "FeedItemAddedTime": "3000-01-01T00:00:00",
       "FeedItemDescription": null,
       "FeedItemHash": 200,
@@ -308,23 +308,23 @@
       "FeedUrl": "url 6"
     },
     {
-      "FeedContentHash": 5,
+      "FeedContentHash": null,
       "FeedID": 5,
-      "FeedItemsHash": 5,
+      "FeedItemsHash": null,
       "FeedName": "feed 5",
       "FeedUrl": "url 5"
     },
     {
-      "FeedContentHash": 4,
+      "FeedContentHash": null,
       "FeedID": 4,
-      "FeedItemsHash": 4,
+      "FeedItemsHash": null,
       "FeedName": "feed 4",
       "FeedUrl": "url 4"
     },
     {
-      "FeedContentHash": null,
+      "FeedContentHash": 3,
       "FeedID": 3,
-      "FeedItemsHash": null,
+      "FeedItemsHash": 3,
       "FeedName": "feed 3",
       "FeedUrl": "url 3"
     },

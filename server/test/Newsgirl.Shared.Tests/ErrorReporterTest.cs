@@ -12,7 +12,7 @@ namespace Newsgirl.Shared.Tests
         {
             var errorReporter = new ErrorReporterImpl(new ErrorReporterImplConfig
             {
-                SentryDsn = "http://daefbbb645b74db1a5f5060b8d4b1dd3@home-sentry.lan/9",
+                SentryDsn = "http://06bc5208938e4f36abdd1ebe11a763c2@home-sentry.lan/5",
                 Environment = "testing",
                 AppVersion = "1.0.0.0",
                 InstanceName = "xunit-test",

@@ -333,7 +333,7 @@ namespace Newsgirl.Server
 
                         const string RPC_ROUTE_PATH = "/rpc/";
 
-                        if (requestPath.StartsWith(RPC_ROUTE_PATH))
+                        if (requestPath!.StartsWith(RPC_ROUTE_PATH))
                         {
                             httpRequestState.RpcState = new RpcRequestState();
 

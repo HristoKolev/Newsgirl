@@ -4,11 +4,11 @@ networks:
     br0:
 
 volumes:
-  db-data:  
+  db-data:
 
 services:
   db:
-    image: postgres
+    image: postgres:12
     restart: unless-stopped
     init: true
     networks:

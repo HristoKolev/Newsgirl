@@ -219,6 +219,7 @@ namespace Newsgirl.Server.Tests
         {
             var cookieValues = new List<Cookie>();
 
+            // ReSharper disable once PossibleMultipleEnumeration
             var setCookieHeaderValues = headers
                 .Where(x => string.Equals(x.Key, "Set-Cookie", StringComparison.CurrentCultureIgnoreCase))
                 .SelectMany(x => x.Value)
@@ -234,6 +235,7 @@ namespace Newsgirl.Server.Tests
                     {
                         Details =
                         {
+                            // ReSharper disable once PossibleMultipleEnumeration
                             {"headers", headers},
                         },
                     };
@@ -256,7 +258,7 @@ namespace Newsgirl.Server.Tests
                     if (i == 0)
                     {
                         cookie.Name = key;
-                        cookie.Value = value;
+                        cookie.Value = value!;
                     }
                     else
                     {
@@ -264,7 +266,7 @@ namespace Newsgirl.Server.Tests
                         {
                             case "path":
                             {
-                                cookie.Path = value;
+                                cookie.Path = value!;
                                 break;
                             }
                             case "secure":

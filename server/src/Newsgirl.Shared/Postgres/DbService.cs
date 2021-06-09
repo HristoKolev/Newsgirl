@@ -3,6 +3,7 @@ namespace Newsgirl.Shared.Postgres
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Data.Common;
     using System.Linq;
     using System.Reflection;
     using System.Text;
@@ -40,7 +41,7 @@ namespace Newsgirl.Shared.Postgres
 
         #region Transactions
 
-        public async Task<NpgsqlTransaction> BeginTransaction()
+        public async Task<DbTransaction> BeginTransaction()
         {
             await this.connection.EnsureOpenState();
             return await this.connection.BeginTransactionAsync();
@@ -571,7 +572,7 @@ namespace Newsgirl.Shared.Postgres
         /// Calls `BeginTransaction` on the connection and returns the result.
         /// Opens the connection if needed.
         /// </summary>
-        Task<NpgsqlTransaction> BeginTransaction();
+        Task<DbTransaction> BeginTransaction();
 
         #endregion
 

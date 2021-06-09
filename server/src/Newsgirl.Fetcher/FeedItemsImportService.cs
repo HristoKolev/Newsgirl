@@ -4,7 +4,6 @@ namespace Newsgirl.Fetcher
     using System.Linq;
     using System.Threading.Tasks;
     using LinqToDB;
-    using Npgsql;
     using NpgsqlTypes;
     using Shared;
     using Shared.Postgres;
@@ -12,12 +11,10 @@ namespace Newsgirl.Fetcher
     public class FeedItemsImportService : IFeedItemsImportService
     {
         private readonly IDbService db;
-        private readonly NpgsqlConnection dbConnection;
 
-        public FeedItemsImportService(IDbService db, NpgsqlConnection dbConnection)
+        public FeedItemsImportService(IDbService db)
         {
             this.db = db;
-            this.dbConnection = dbConnection;
         }
 
         public Task<FeedPoco[]> GetFeedsForUpdate()
@@ -25,48 +22,16 @@ namespace Newsgirl.Fetcher
             return this.db.Poco.Feeds.OrderByDescending(x => x.FeedID).ToArrayAsync();
         }
 
-        public async Task ImportItems(FeedUpdateModel[] updates)
+        public async Task ApplyUpdate(FeedUpdateModel update)
         {
-            await using (var tx = await this.db.BeginTransaction())
-            {
-                await using (var importer = this.dbConnection.BeginBinaryImport(this.db.GetCopyHeader<FeedItemPoco>()))
-                {
-                    for (int i = 0; i < updates.Length; i++)
-                    {
-                        var update = updates[i];
+            await this.db.Copy(update.NewItems);
 
-                        if (update.NewItems == null || update.NewItems.Count == 0)
-                        {
-                            continue;
-                        }
-
-                        for (int j = 0; j < update.NewItems.Count; j++)
-                        {
-                            await importer.StartRowAsync();
-                            await update.NewItems[j].WriteToImporter(importer);
-                        }
-                    }
-
-                    await importer.CompleteAsync();
-                }
-
-                for (int i = 0; i < updates.Length; i++)
-                {
-                    var update = updates[i];
-
-                    if (update.NewFeedContentHash.HasValue && update.NewFeedItemsHash.HasValue && update.Feed != null)
-                    {
-                        await this.db.ExecuteNonQuery(
-                            "update public.feeds set feed_items_hash = :items_hash, feed_content_hash = :content_hash where feed_id = :feed_id;",
-                            this.db.CreateParameter("items_hash", update.NewFeedItemsHash.Value),
-                            this.db.CreateParameter("content_hash", update.NewFeedContentHash.Value),
-                            this.db.CreateParameter("feed_id", update.Feed.FeedID)
-                        );
-                    }
-                }
-
-                await tx.CommitAsync();
-            }
+            await this.db.ExecuteNonQuery(
+                "update public.feeds set feed_items_hash = :items_hash, feed_content_hash = :content_hash where feed_id = :feed_id;",
+                this.db.CreateParameter("items_hash", update.NewFeedItemsHash),
+                this.db.CreateParameter("content_hash", update.NewFeedContentHash),
+                this.db.CreateParameter("feed_id", update.Feed.FeedID)
+            );
         }
 
         public Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes)
@@ -83,7 +48,7 @@ namespace Newsgirl.Fetcher
     {
         Task<FeedPoco[]> GetFeedsForUpdate();
 
-        Task ImportItems(FeedUpdateModel[] updates);
+        Task ApplyUpdate(FeedUpdateModel update);
 
         Task<long[]> GetMissingFeedItems(int feedID, long[] feedItemHashes);
     }
@@ -92,9 +57,9 @@ namespace Newsgirl.Fetcher
     {
         public List<FeedItemPoco> NewItems { get; set; }
 
-        public long? NewFeedItemsHash { get; set; }
+        public long NewFeedItemsHash { get; set; }
 
-        public long? NewFeedContentHash { get; set; }
+        public long NewFeedContentHash { get; set; }
 
         public FeedPoco Feed { get; set; }
     }

@@ -10,18 +10,12 @@ SCRIPT_PATH="$( cd -P "$( dirname "$TMP_SOURCE" )" >/dev/null 2>&1 && pwd )"
 
 export $(cat $SCRIPT_PATH/env | xargs);
 
-export LOCAL_IP=$(ip route | grep '192.168.1.0/24' | grep -Eo '192\.168\.1\.[1-9][0-9]*')
-
-HERE=$(pwd)
+export LOCAL_IP=$(ip route | grep '192.168.0.0/24' | grep -Eo '192\.168\.0\.[1-9][0-9]*');
 
 set -exu
 
-cd $SCRIPT_PATH
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME pull
 
-docker-compose -p $STACK_NAME pull
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME down
 
-docker-compose -p $STACK_NAME down
-
-docker-compose -p $STACK_NAME up -d
-
-cd $HERE
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME up -d

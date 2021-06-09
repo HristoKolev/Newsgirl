@@ -7,7 +7,7 @@ namespace Newsgirl.Shared
 
     public static class JsonHelper
     {
-        private static readonly JsonSerializerOptions SerializationOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions SerializationOptions = new()
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -86,7 +86,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new JsonHelperException("Failed deserialize json.")
+                throw new DetailedException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -124,7 +124,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new JsonHelperException("Failed deserialize json.")
+                throw new DetailedException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -142,7 +142,7 @@ namespace Newsgirl.Shared
         {
             if (utf8Bytes == default)
             {
-                throw new ArgumentException("The utf8Bytes parameter must not be empty.", nameof(utf8Bytes));
+                throw new ArgumentException($"The {nameof(utf8Bytes)} parameter must not be empty.", nameof(utf8Bytes));
             }
 
             if (returnType == null)
@@ -167,7 +167,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new JsonHelperException("Failed deserialize json.")
+                throw new DetailedException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -185,7 +185,7 @@ namespace Newsgirl.Shared
         {
             if (utf8Bytes == default)
             {
-                throw new ArgumentException("The utf8Bytes parameter must not be empty.", nameof(utf8Bytes));
+                throw new ArgumentException($"The {nameof(utf8Bytes)} parameter must not be empty.", nameof(utf8Bytes));
             }
 
             try
@@ -205,7 +205,7 @@ namespace Newsgirl.Shared
                     jsonPath = jsonException.Path;
                 }
 
-                throw new JsonHelperException("Failed deserialize json.")
+                throw new DetailedException("Failed deserialize json.")
                 {
                     Details =
                     {
@@ -218,10 +218,5 @@ namespace Newsgirl.Shared
                 };
             }
         }
-    }
-
-    public class JsonHelperException : DetailedException
-    {
-        public JsonHelperException(string message) : base(message) { }
     }
 }
