@@ -218,6 +218,26 @@ namespace Newsgirl.Shared.Tests
             });
         }
 
+        [Fact]
+        public void GetJsonSize_returns_correct_result()
+        {
+            var obj = TestJsonPayload.Create();
+
+            int expectedSize = EncodingHelper.UTF8.GetBytes(JsonHelper.Serialize(obj)).Length;
+            int actualSize = JsonHelper.GetJsonSize(obj);
+
+            Assert.Equal(expectedSize, actualSize);
+        }
+
+        [Fact]
+        public void GetJsonSize_throws_on_null_value()
+        {
+            Snapshot.MatchError(() =>
+            {
+                JsonHelper.GetJsonSize<object>(null);
+            });
+        }
+
         public class TestJsonPayload
         {
             private static readonly DateTime TestDate1 = new DateTime(3000, 1, 1, 1, 1, 1, DateTimeKind.Utc);

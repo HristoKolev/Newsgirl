@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newsgirl.Shared.PostgresTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CorsTest", "..\research\CorsTest\CorsTest.csproj", "{E9E268A2-C9A5-4E02-920C-D5F2510C20D5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ErrorReporterTest", "..\research\ErrorReporterTest\ErrorReporterTest.csproj", "{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{E9E268A2-C9A5-4E02-920C-D5F2510C20D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9E268A2-C9A5-4E02-920C-D5F2510C20D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9E268A2-C9A5-4E02-920C-D5F2510C20D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,5 +115,6 @@ Global
 		{0C64DDF1-5458-4F31-BF45-F1FFBA163A01} = {A85B23BC-64B2-4955-B6E6-B672F0C0C516}
 		{3D10E0F8-1D73-42FB-B21B-051FB8B2C569} = {5D38EA31-38B4-4DF1-828C-C1DEB9E9E490}
 		{E9E268A2-C9A5-4E02-920C-D5F2510C20D5} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
+		{994CA5A1-67D7-4DDA-87BF-3D09DDF7828A} = {397EC4FE-1C53-4584-B17D-130ED0C4C80D}
 	EndGlobalSection
 EndGlobal

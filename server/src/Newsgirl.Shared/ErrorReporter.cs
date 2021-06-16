@@ -5,8 +5,10 @@ namespace Newsgirl.Shared
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq;
+    using System.Text.Json;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
+    using Microsoft.Toolkit.HighPerformance.Buffers;
     using Sentry;
 
     public interface ErrorReporter
@@ -48,6 +50,7 @@ namespace Newsgirl.Shared
                 AttachStacktrace = true,
                 Dsn = config.SentryDsn,
                 Release = config.AppVersion,
+                Debug = config.SentryDebugMode,
             });
         }
 
@@ -119,6 +122,8 @@ namespace Newsgirl.Shared
             // Set the fingerprint.
             sentryEvent.SetFingerprint(GetFingerprint(exceptionChain, explicitFingerprint));
 
+            TrimEvent(sentryEvent);
+
             var eventId = this.sentryClient.CaptureEvent(sentryEvent);
 
             using (await this.sentryFlushLock.Lock())
@@ -127,6 +132,46 @@ namespace Newsgirl.Shared
             }
 
             return eventId.ToString();
+        }
+
+        private static void TrimEvent(SentryEvent sentryEvent)
+        {
+            // The keys of the `Extra` dictionary in order of the size of the JSON representation of the value.
+            var keysInOrderOfSize = new Queue<string>(sentryEvent.Extra
+                .OrderByDescending(pair => JsonHelper.GetJsonSize(pair.Value))
+                .Select(x => x.Key)
+                .ToList());
+
+            const int MAX_EVENT_SIZE = 1_000_000;
+
+            // Replace elements from the `Extra` dictionary until the event size is below the threshold.  
+            while (GetEventSize(sentryEvent) >= MAX_EVENT_SIZE)
+            {
+                if (keysInOrderOfSize.TryDequeue(out string key))
+                {
+                    sentryEvent.SetExtra(key, "__OBJECT_TOO_LARGE__");
+                }
+                else
+                {
+                    // Exit if the there are no `Extra` elements left.
+                    // This means that somehow the event is over the threshold while having no extras.
+                    return;
+                }
+            }
+        }
+
+        private static int GetEventSize(SentryEvent sentryEvent)
+        {
+            using (var arrayPoolBufferWriter = new ArrayPoolBufferWriter<byte>())
+            {
+                using (var utf8JsonWriter = new Utf8JsonWriter(arrayPoolBufferWriter))
+                {
+                    sentryEvent.WriteTo(utf8JsonWriter);
+                }
+
+                // Dispose the `Utf8JsonWriter` in order to flush before accessing this.
+                return arrayPoolBufferWriter.WrittenCount;
+            }
         }
 
         private static IEnumerable<string> GetFingerprint(IReadOnlyList<Exception> exceptions, string explicitFingerprint)
@@ -211,6 +256,8 @@ namespace Newsgirl.Shared
     public class ErrorReporterImplConfig
     {
         public string SentryDsn { get; set; }
+
+        public bool SentryDebugMode { get; set; }
 
         public string InstanceName { get; set; }
 

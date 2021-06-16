@@ -4,6 +4,7 @@ namespace Newsgirl.Shared
     using System.IO;
     using System.Text.Json;
     using System.Threading.Tasks;
+    using Microsoft.Toolkit.HighPerformance.Buffers;
 
     public static class JsonHelper
     {
@@ -216,6 +217,26 @@ namespace Newsgirl.Shared
                         {"outputType", typeof(T).FullName},
                     },
                 };
+            }
+        }
+
+        /// <summary>
+        /// Returns the size (in bytes) of the JSON representation of an object, without allocating the memory to hold it.
+        /// </summary>
+        public static int GetJsonSize<T>(T value) where T : class
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            var inputType = value.GetType();
+
+            using (var bufferWriter = new ArrayPoolBufferWriter<byte>())
+            using (var utf8JsonWriter = new Utf8JsonWriter(bufferWriter))
+            {
+                JsonSerializer.Serialize(utf8JsonWriter, value, inputType, SerializationOptions);
+                return bufferWriter.WrittenCount;
             }
         }
     }
