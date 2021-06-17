@@ -358,10 +358,10 @@ namespace Newsgirl.Testing
                 }
                 else
                 {
-                    message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n\n";
+                    message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'";
                 }
 
-                message += new string('=', 30) + "\n\n\n";
+                message += "\n\n\n" + new string('=', 30) + "\n\n\n";
 
                 message += $"mv '{received}' '{approved}'\n\n\n";
 
