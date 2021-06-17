@@ -36,15 +36,14 @@ namespace Newsgirl.Shared
         private static readonly TimeSpan SentryFlushTimeout = TimeSpan.FromSeconds(60);
         private static readonly Regex GiudRegex = new Regex("[0-9A-f]{8}(-[0-9A-f]{4}){3}-[0-9A-f]{12}", RegexOptions.Compiled);
 
-        private readonly ISentryClient sentryClient;
         private readonly AsyncLock sentryFlushLock;
+        private readonly ISentryClient sentryClient;
         private readonly List<Func<Dictionary<string, object>>> dataHooks;
 
         public ErrorReporterImpl(ErrorReporterImplConfig config)
         {
             this.config = config;
             this.sentryFlushLock = new AsyncLock();
-            this.dataHooks = new List<Func<Dictionary<string, object>>>();
             this.sentryClient = new SentryClient(new SentryOptions
             {
                 AttachStacktrace = true,
@@ -52,6 +51,7 @@ namespace Newsgirl.Shared
                 Release = config.AppVersion,
                 Debug = config.SentryDebugMode,
             });
+            this.dataHooks = new List<Func<Dictionary<string, object>>>();
         }
 
         public async Task<string> Error(Exception exception, string explicitFingerprint, Dictionary<string, object> additionalInfo)
@@ -134,6 +134,12 @@ namespace Newsgirl.Shared
             return eventId.ToString();
         }
 
+        /// <summary>
+        /// Reduce the event's size if necessary.
+        /// Sentry has a 1MB/event limit and if the event exceeds that size - it will be dropped.
+        /// Currently there is no way of detecting when an event is dropped. The server doesn't register it as an error,
+        /// also `Sentry` package doesn't have a way of handling network/protocol errors.
+        /// </summary>
         private static void TrimEvent(SentryEvent sentryEvent)
         {
             // The keys of the `Extra` dictionary in order of the size of the JSON representation of the value.
@@ -182,7 +188,6 @@ namespace Newsgirl.Shared
             }
 
             string exceptionFingerprint = null;
-
             foreach (var ex in exceptions)
             {
                 if (ex is DetailedException dex && !string.IsNullOrWhiteSpace(dex.Fingerprint))
@@ -222,6 +227,9 @@ namespace Newsgirl.Shared
 
                 exception = exception.InnerException;
             }
+
+            // Reverse the list so that the exceptions are in most inner to most outer order.
+            list.Reverse();
 
             return list;
         }
