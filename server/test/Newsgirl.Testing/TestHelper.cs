@@ -763,6 +763,11 @@ namespace Newsgirl.Testing
                     throw new ApplicationException("SingleException is called with more that 1 error in the list.");
                 }
 
+                if (this.Errors.Count == 0)
+                {
+                    throw new ApplicationException("SingleException is called with zero errors in the list.");
+                }
+
                 return this.Errors.Single().Item1;
             }
         }
