@@ -18,6 +18,7 @@ namespace Newsgirl.Testing
     using System.Linq;
     using System.Reflection;
     using System.Runtime.ExceptionServices;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -350,9 +351,20 @@ namespace Newsgirl.Testing
             {
                 string message = ex.Message + "\n\n";
                 message += new string('=', 30) + "\n\n\n";
-                message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n\n";
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    message += $"New-Item '{approved}' -ItemType File -ErrorAction Ignore; winmergeu '{received}' '{approved}'";
+                }
+                else
+                {
+                    message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'\n\n\n";
+                }
+
                 message += new string('=', 30) + "\n\n\n";
+
                 message += $"mv '{received}' '{approved}'\n\n\n";
+
                 message += new string('=', 30);
 
                 var field = typeof(EqualException)
