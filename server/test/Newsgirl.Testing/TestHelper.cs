@@ -338,10 +338,16 @@ namespace Newsgirl.Testing
 
     public class CustomReporter : IApprovalFailureReporter
     {
-        public void Report(string approved, string received)
+        public void Report(string approvedFilePath, string receivedFilePath)
         {
-            string approvedContent = File.Exists(approved) ? File.ReadAllText(approved) : "";
-            string receivedContent = File.ReadAllText(received);
+            // Create the approved file if it doesn't exist.
+            if (File.Exists(approvedFilePath))
+            {
+                File.WriteAllText(approvedFilePath, "");
+            }
+
+            string approvedContent = File.ReadAllText(approvedFilePath);
+            string receivedContent = File.ReadAllText(receivedFilePath);
 
             try
             {
@@ -349,26 +355,28 @@ namespace Newsgirl.Testing
             }
             catch (EqualException ex)
             {
-                string message = ex.Message + "\n\n";
-                message += new string('=', 30) + "\n\n\n";
+                string message = ex.Message;
+                message += "\n\n\n";
+                message += new string('=', 30);
+                message += "\n\n\n";
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    message += $"New-Item '{approved}' -ItemType File -ErrorAction Ignore; winmergeu '{received}' '{approved}'";
+                    message += $"winmergeu '{receivedFilePath}' '{approvedFilePath}'";
                 }
                 else
                 {
-                    message += $"touch '{approved}' && kdiff3 '{received}' '{approved}'";
+                    message += $"kdiff3 '{receivedFilePath}' '{approvedFilePath}'";
                 }
 
-                message += "\n\n\n" + new string('=', 30) + "\n\n\n";
-
-                message += $"mv '{received}' '{approved}'\n\n\n";
-
+                message += "\n\n\n";
+                message += new string('=', 30);
+                message += "\n\n\n";
+                message += $"mv '{receivedFilePath}' '{approvedFilePath}'";
+                message += "\n\n\n";
                 message += new string('=', 30);
 
-                var field = typeof(EqualException)
-                    .GetField("message", BindingFlags.Instance | BindingFlags.NonPublic);
+                var field = typeof(EqualException).GetField("message", BindingFlags.Instance | BindingFlags.NonPublic);
 
                 field!.SetValue(ex, message);
 
