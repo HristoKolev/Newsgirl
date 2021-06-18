@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <AssemblyName>newsgirl-server</AssemblyName>
     <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
@@ -24,5 +23,4 @@
   <ItemGroup>
     <None Include="newsgirl-server.json" />
   </ItemGroup>
-
 </Project>
