@@ -341,7 +341,7 @@ namespace Newsgirl.Testing
         public void Report(string approvedFilePath, string receivedFilePath)
         {
             // Create the approved file if it doesn't exist.
-            if (File.Exists(approvedFilePath))
+            if (!File.Exists(approvedFilePath))
             {
                 File.WriteAllText(approvedFilePath, "");
             }
@@ -356,7 +356,7 @@ namespace Newsgirl.Testing
             catch (EqualException ex)
             {
                 string message = ex.Message;
-                message += "\n\n\n";
+                message += "\n";
                 message += new string('=', 30);
                 message += "\n\n\n";
 
