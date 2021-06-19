@@ -222,7 +222,7 @@ namespace Newsgirl.Server.Tests
                     GC.Collect(0, GCCollectionMode.Default, false);
                 }
 
-                Snapshot.MatchError(tester.Exception);
+                Snapshot.MatchTopLevelError(tester.Exception);
             }
         }
     }

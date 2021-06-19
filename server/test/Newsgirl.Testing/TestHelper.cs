@@ -372,7 +372,9 @@ namespace Newsgirl.Testing
                 message += "\n\n\n";
                 message += new string('=', 30);
                 message += "\n\n\n";
+
                 message += $"mv '{receivedFilePath}' '{approvedFilePath}'";
+
                 message += "\n\n\n";
                 message += new string('=', 30);
 
@@ -420,28 +422,22 @@ namespace Newsgirl.Testing
 
         public static void MatchError(Exception exception, string[] parameters = null)
         {
-            var exceptions = new List<Exception>();
+            string json = SerializeException(exception, false);
 
-            while (exception != null)
+            // Add additional information.
+            if (parameters != null)
             {
-                exceptions.Add(exception);
-                exception = exception.InnerException;
+                NamerFactory.AdditionalInformation = string.Join("_", parameters);
             }
 
-            string json = JsonConvert.SerializeObject(exceptions);
+            Approvals.VerifyWithExtension(json, ".json");
+        }
 
-            var jsonExceptions = JArray.Parse(json);
+        public static void MatchTopLevelError(Exception exception, string[] parameters = null)
+        {
+            string json = SerializeException(exception, true);
 
-            foreach (var obj in jsonExceptions.Cast<JObject>())
-            {
-                foreach (string ignoredPropertyName in IgnoredExceptionFields)
-                {
-                    obj.Property(ignoredPropertyName)?.Remove();
-                }
-            }
-
-            json = Serialize(jsonExceptions);
-
+            // Add additional information.
             if (parameters != null)
             {
                 NamerFactory.AdditionalInformation = string.Join("_", parameters);
@@ -480,6 +476,72 @@ namespace Newsgirl.Testing
             }
 
             MatchError(exception, parameters);
+        }
+
+        public static void MatchTopLevelError(Action func, string[] parameters = null)
+        {
+            Exception exception = null;
+
+            try
+            {
+                func();
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            MatchTopLevelError(exception, parameters);
+        }
+
+        public static async Task MatchTopLevelError(Func<Task> func, string[] parameters = null)
+        {
+            Exception exception = null;
+
+            try
+            {
+                await func();
+            }
+            catch (Exception err)
+            {
+                exception = err;
+            }
+
+            MatchTopLevelError(exception, parameters);
+        }
+
+        private static string SerializeException(Exception exception, bool topLevelOnly)
+        {
+            // Spread the exception chain into a list.
+            var exceptions = new List<Exception>();
+
+            if (topLevelOnly)
+            {
+                exceptions.Add(exception);
+            }
+            else
+            {
+                while (exception != null)
+                {
+                    exceptions.Add(exception);
+                    exception = exception.InnerException;
+                }
+            }
+
+            // Clear all properties that appear in the `IgnoredExceptionFields`.
+            string json = JsonConvert.SerializeObject(exceptions);
+            var jsonExceptions = JArray.Parse(json);
+            foreach (var obj in jsonExceptions.Cast<JObject>())
+            {
+                foreach (string ignoredPropertyName in IgnoredExceptionFields)
+                {
+                    obj.Property(ignoredPropertyName)?.Remove();
+                }
+            }
+
+            json = Serialize(jsonExceptions);
+
+            return json;
         }
 
         private static string Serialize(object obj)
