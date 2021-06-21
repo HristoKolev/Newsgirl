@@ -2,25 +2,20 @@ namespace Newsgirl.Shared.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Runtime.CompilerServices;
+    using System.Security.Cryptography;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Testing;
     using Xunit;
 
-    public class ErrorReporterTest
+    public class ErrorReporterTestError1ReturnsWithoutError : ErrorReporterTest
     {
-        private static ErrorReporterImpl CreateReporter()
-        {
-            var errorReporter = new ErrorReporterImpl(new ErrorReporterImplConfig
-            {
-                SentryDsn = "http://06bc5208938e4f36abdd1ebe11a763c2@home-sentry.lan/5",
-                Environment = "testing",
-                AppVersion = "1.0.0.0",
-                InstanceName = "xunit-test",
-            });
-
-            return errorReporter;
-        }
-
         [Fact]
         public async Task Error1_returns_without_error()
         {
@@ -32,10 +27,15 @@ namespace Newsgirl.Shared.Tests
             }
             catch (Exception exception)
             {
-                await reporter.Error(exception);
+                string eventID = await reporter.Error(exception);
+
+                await AssertEventSentToServer(eventID);
             }
         }
+    }
 
+    public class ErrorReporterTestError2ReturnsWithoutError : ErrorReporterTest
+    {
         [Fact]
         public async Task Error2_returns_without_error()
         {
@@ -43,9 +43,14 @@ namespace Newsgirl.Shared.Tests
 
             var testException = new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
 
-            await reporter.Error(testException, "TESTING_FINGERPRINT");
-        }
+            string eventID = await reporter.Error(testException, "TESTING_FINGERPRINT");
 
+            await AssertEventSentToServer(eventID);
+        }
+    }
+
+    public class ErrorReporterTestError3ReturnsWithoutError : ErrorReporterTest
+    {
         [Fact]
         public async Task Error3_returns_without_error()
         {
@@ -53,12 +58,17 @@ namespace Newsgirl.Shared.Tests
 
             var testException = new DetailedException($"Testing {nameof(ErrorReporterImpl)}.");
 
-            await reporter.Error(testException, new Dictionary<string, object>
+            string eventID = await reporter.Error(testException, new Dictionary<string, object>
             {
                 {"testkey", "testvalue"},
             });
-        }
 
+            await AssertEventSentToServer(eventID);
+        }
+    }
+
+    public class ErrorReporterTestError4ReturnsWithoutError : ErrorReporterTest
+    {
         [Fact]
         public async Task Error4_returns_without_error()
         {
@@ -70,21 +80,33 @@ namespace Newsgirl.Shared.Tests
             }
             catch (Exception exception)
             {
-                await reporter.Error(exception, "TESTING_FINGERPRINT", new Dictionary<string, object>
+                string eventID = await reporter.Error(exception, "TESTING_FINGERPRINT", new Dictionary<string, object>
                 {
                     {"test_key", "test_value"},
                 });
+
+                await AssertEventSentToServer(eventID);
             }
         }
+    }
 
+    public class ErrorReporterTestErrorCallHooksIfAvailable : ErrorReporterTest
+    {
         [Fact]
         public async Task Error_call_hooks_if_available()
         {
             var reporter = CreateReporter();
 
-            reporter.AddDataHook(() => new Dictionary<string, object>
+            bool called = false;
+
+            reporter.AddDataHook(() =>
             {
-                {"test_hook_key", "test_hook_value"},
+                called = true;
+
+                return new Dictionary<string, object>
+                {
+                    {"test_hook_key", "test_hook_value"},
+                };
             });
 
             try
@@ -98,33 +120,110 @@ namespace Newsgirl.Shared.Tests
                     {"test_key", "test_value"},
                 });
             }
-        }
 
+            Assert.True(called);
+        }
+    }
+
+    public class ErrorReporterTestErrorTakesFingerprintFromException : ErrorReporterTest
+    {
         [Fact]
         public async Task Error_takes_fingerprint_from_exception()
         {
+            const string TESTING_FINGERPRINT = "TESTING_FINGERPRINT";
+
             var reporter = CreateReporter();
 
             try
             {
-                ThrowException("TESTING_FINGERPRINT");
+                ThrowException(TESTING_FINGERPRINT);
             }
             catch (Exception exception)
             {
-                await reporter.Error(exception, new Dictionary<string, object>
+                string eventID = await reporter.Error(exception, new Dictionary<string, object>
                 {
                     {"test_key", "test_value"},
                 });
+
+                string eventJson = await GetServerEvent(eventID);
+
+                var eventObject = JsonDocument.Parse(eventJson).RootElement;
+
+                // ReSharper disable once HeapView.BoxingAllocation
+                string[] fingerprint = eventObject.GetProperty("fingerprints")
+                    .EnumerateArray()
+                    .Select(x => x.GetString())
+                    .ToArray();
+
+                AssertExt.SequentialEqual(new[] {Md5(TESTING_FINGERPRINT)}, fingerprint);
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowException(string fingerprint = null)
+        private static string Md5(string data)
         {
-            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.")
+            return BitConverter.ToString(MD5.Create().ComputeHash(Encoding.ASCII.GetBytes(data))).Replace("-", "").ToLower();
+        }
+    }
+
+    public class ErrorReporterTest
+    {
+        private const string SENTRY_HOSTNAME = "home-sentry.lan";
+        private const string SENTRY_ORG_NAME = "sentry";
+
+        private const string SENTRY_PROJECT_NAME = "error-reporter-test";
+        private const string SENTRY_PROJECT_KEY = "06bc5208938e4f36abdd1ebe11a763c2";
+        private const int SENTRY_PROJECT_ID = 5;
+
+        private const string SENTRY_BEARER_TOKEN = "4ffd242024d447479ef2200cac0c115b23d9a3ba05aa457290645b706fd2334d";
+
+        protected static ErrorReporterImpl CreateReporter()
+        {
+            var errorReporter = new ErrorReporterImpl(new ErrorReporterImplConfig
             {
-                Fingerprint = fingerprint,
-            };
+                SentryDsn = $"http://{SENTRY_PROJECT_KEY}@{SENTRY_HOSTNAME}/{SENTRY_PROJECT_ID}",
+                Environment = "testing",
+                AppVersion = "1.0.0.0",
+                InstanceName = "xunit-test",
+            });
+
+            return errorReporter;
+        }
+
+        protected static async Task AssertEventSentToServer(string eventID)
+        {
+            string eventJson = await GetServerEvent(eventID);
+            var eventObject = JsonDocument.Parse(eventJson).RootElement;
+            string serverEventID = eventObject.GetProperty("eventID").GetString();
+
+            Assert.Equal(eventID, serverEventID);
+        }
+
+        protected static async Task<string> GetServerEvent(string eventID)
+        {
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var token = cts.Token;
+
+            string responseString = "Event not found";
+            while (responseString.Contains("Event not found"))
+            {
+                var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SENTRY_BEARER_TOKEN);
+                var httpResponse = await httpClient.GetAsync(
+                    $"http://{SENTRY_HOSTNAME}/api/0/projects/{SENTRY_ORG_NAME}/{SENTRY_PROJECT_NAME}/events/{eventID}/",
+                    token);
+                responseString = await httpResponse.Content.ReadAsStringAsync(token);
+
+                token.ThrowIfCancellationRequested();
+                await Task.Delay(200, token);
+            }
+
+            return responseString;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected static void ThrowException(string fingerprint = null)
+        {
+            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.") {Fingerprint = fingerprint};
         }
     }
 }
