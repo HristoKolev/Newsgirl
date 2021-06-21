@@ -997,6 +997,7 @@ namespace Newsgirl.Shared
 
         internal static readonly TableMetadataModel UserSessionPocoMetadata;
 
+        // ReSharper disable once CollectionNeverQueried.Global
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
 
         // ReSharper disable once FunctionComplexityOverflow

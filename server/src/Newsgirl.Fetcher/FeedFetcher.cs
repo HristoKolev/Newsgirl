@@ -57,31 +57,30 @@ namespace Newsgirl.Fetcher
 
         private async Task<FeedUpdateModel> ProcessFeed(FeedPoco feed)
         {
-            var state = new FeedProcessingState
-            {
-                Feed = feed,
-            };
+            byte[] feedContent = null;
+            long feedContentHash = 0;
+            string feedContentString = null;
+            ParsedFeed parsedFeed = null;
 
             try
             {
                 // Get the bytes from the network.
                 try
                 {
-                    state.FeedContent = await this.feedContentProvider.GetFeedContent(feed);
+                    feedContent = await this.feedContentProvider.GetFeedContent(feed);
                 }
                 catch (Exception ex)
                 {
                     throw new DetailedException("The http request for the feed failed.", ex)
                     {
                         Fingerprint = "FEED_HTTP_REQUEST_FAILED",
-                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
-                state.FeedContentHash = HashHelper.ComputeXx64Hash(state.FeedContent);
+                feedContentHash = HashHelper.ComputeXx64Hash(feedContent);
 
                 // The bytes have not changed. 
-                if (state.FeedContentHash == feed.FeedContentHash)
+                if (feedContentHash == feed.FeedContentHash)
                 {
                     return null;
                 }
@@ -89,39 +88,37 @@ namespace Newsgirl.Fetcher
                 // Parse into a string.
                 try
                 {
-                    state.FeedContentString = EncodingHelper.UTF8.GetString(state.FeedContent);
+                    feedContentString = EncodingHelper.UTF8.GetString(feedContent);
                 }
                 catch (Exception ex)
                 {
                     throw new DetailedException("Failed to parse UTF-8 feed content.", ex)
                     {
                         Fingerprint = "FEED_CONTENT_UTF8_PARSE_FAILED",
-                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
                 // Parse the RSS.
                 try
                 {
-                    state.ParsedFeed = this.feedParser.Parse(state.FeedContentString);
+                    parsedFeed = this.feedParser.Parse(feedContentString);
                 }
                 catch (Exception err)
                 {
                     throw new DetailedException("Failed to parse feed content.", err)
                     {
                         Fingerprint = "FEED_CONTENT_PARSE_FAILED",
-                        Details = {{"feedProcessingState", state}},
                     };
                 }
 
                 // The information that we care about has not changed.
-                if (feed.FeedItemsHash == state.ParsedFeed.FeedItemsHash)
+                if (feed.FeedItemsHash == parsedFeed.FeedItemsHash)
                 {
                     return null;
                 }
 
                 // Get the hashes of items that don't appear in the database.
-                long[] itemHashes = state.ParsedFeed.FeedItemHashes.ToArray();
+                long[] itemHashes = parsedFeed.FeedItemHashes.ToArray();
 
                 long[] newHashArray;
                 using (await this.dbLock.Lock())
@@ -134,7 +131,7 @@ namespace Newsgirl.Fetcher
                 // Get the items that don't appear in the database.
                 var newItems = new List<FeedItemPoco>(newHashes.Count);
 
-                foreach (var feedItem in state.ParsedFeed.Items)
+                foreach (var feedItem in parsedFeed.Items)
                 {
                     if (!newHashes.Contains(feedItem.FeedItemHash))
                     {
@@ -149,8 +146,8 @@ namespace Newsgirl.Fetcher
                 {
                     Feed = feed,
                     NewItems = newItems,
-                    NewFeedItemsHash = state.ParsedFeed.FeedItemsHash,
-                    NewFeedContentHash = state.FeedContentHash,
+                    NewFeedItemsHash = parsedFeed.FeedItemsHash,
+                    NewFeedContentHash = feedContentHash,
                 };
 
                 using (await this.dbLock.Lock())
@@ -167,22 +164,17 @@ namespace Newsgirl.Fetcher
             }
             catch (Exception err)
             {
-                await this.errorReporter.Error(err, new Dictionary<string, object> {{"feedProcessingState", state}});
+                await this.errorReporter.Error(err, new Dictionary<string, object>
+                {
+                    {"feed", feed},
+                    {"feedContent", feedContent == null ? null : Convert.ToBase64String(feedContent, 0, feedContent.Length)},
+                    {"feedContentHash", feedContentHash},
+                    {"feedContentString", feedContentString},
+                    {"parsedFeed", parsedFeed},
+                });
+
                 return null;
             }
-        }
-
-        private class FeedProcessingState
-        {
-            public FeedPoco Feed { get; set; }
-
-            public byte[] FeedContent { get; set; }
-
-            public long FeedContentHash { get; set; }
-
-            public string FeedContentString { get; set; }
-
-            public ParsedFeed ParsedFeed { get; set; }
         }
     }
 }

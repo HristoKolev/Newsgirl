@@ -67,7 +67,7 @@ namespace Newsgirl.Testing
             return content;
         }
 
-        public static DateTime Date3000 = new DateTime(3000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static DateTime Date3000 = new(3000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static DateTimeService DateTimeServiceStub
         {
@@ -830,11 +830,9 @@ namespace Newsgirl.Testing
 
         private ErrorReporter innerReporter;
 
-        public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new List<(Exception, string, Dictionary<string, object>)>();
+        public List<(Exception, string, Dictionary<string, object>)> Errors { get; } = new();
 
         public ErrorReporterMock() : this(new ErrorReporterMockConfig()) { }
-
-        public Exception FirstException => this.Errors.First().Item1;
 
         public Exception SingleException
         {
@@ -850,7 +848,17 @@ namespace Newsgirl.Testing
                     throw new ApplicationException("SingleException is called with zero errors in the list.");
                 }
 
-                return this.Errors.Single().Item1;
+                var exception = this.Errors.Single().Item1;
+
+                if (exception is DetailedException dex)
+                {
+                    foreach ((string key, object value) in this.Errors.SelectMany(tuple => tuple.Item3))
+                    {
+                        dex.Details.Add(key, value);
+                    }
+                }
+
+                return exception;
             }
         }
 
@@ -920,7 +928,7 @@ namespace Newsgirl.Testing
 
     public class StructuredLogMock : Log
     {
-        public Dictionary<string, List<object>> Logs { get; } = new Dictionary<string, List<object>>();
+        public Dictionary<string, List<object>> Logs { get; } = new();
 
         public void Log<T>(string eventStreamName, Func<T> func)
         {
@@ -941,7 +949,7 @@ namespace Newsgirl.Testing
     {
         public string GenerateSecureString(int length)
         {
-            return new string('X', length);
+            return new('X', length);
         }
     }
 

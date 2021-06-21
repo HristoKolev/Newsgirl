@@ -1126,6 +1126,7 @@ namespace Newsgirl.Shared.PostgresTests
 
         internal static readonly TableMetadataModel View1PocoMetadata;
 
+        // ReSharper disable once CollectionNeverQueried.Global
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
 
         // ReSharper disable once FunctionComplexityOverflow

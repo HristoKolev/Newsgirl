@@ -194,6 +194,7 @@ else
         @:internal static readonly TableMetadataModel @(table.ClassName)PocoMetadata;
 @:
     }
+        // ReSharper disable once CollectionNeverQueried.Global
         internal static readonly List<FunctionMetadataModel> Functions = new List<FunctionMetadataModel>();
 
         // ReSharper disable once FunctionComplexityOverflow

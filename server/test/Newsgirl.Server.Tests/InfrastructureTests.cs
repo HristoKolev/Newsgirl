@@ -607,7 +607,7 @@ namespace Newsgirl.Server.Tests
                 );
 
                 var requestPath = context.Request.Path;
-                httpRequestState.RpcState.RpcRequestType = requestPath.Value.Remove(0, "/rpc/".Length);
+                httpRequestState.RpcState.RpcRequestType = requestPath.Value!.Remove(0, "/rpc/".Length);
                 return handler.HandleRpcRequest(httpRequestState);
             }
 
