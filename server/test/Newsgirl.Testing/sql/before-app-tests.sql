@@ -33,19 +33,20 @@ CREATE TABLE feed_items (
   feed_item_added_time timestamp(0) NOT NULL,
   feed_item_description text,
 
-  feed_item_hash bigint not null,
+  feed_item_string_id_hash bigint not null,
+  feed_item_string_id text not null,
 
   PRIMARY KEY (feed_item_id)
 );
 
 create index idx__feed_items__feed_id on feed_items using btree(feed_id);
-create unique index idx__feed_items__feed_item_hash on feed_items using btree(feed_item_hash);
+create unique index idx__feed_items__feed_item_string_id_hash on feed_items using btree(feed_item_string_id_hash);
 
 CREATE FUNCTION get_missing_feed_items(p_feed_id int, p_new_item_hashes bigint[]) RETURNS bigint[] AS $$
   SELECT array(
     SELECT unnest(p_new_item_hashes)
     EXCEPT
-    SELECT fi.feed_item_hash from feed_items fi where fi.feed_id = p_feed_id
+    SELECT fi.feed_item_string_id_hash from feed_items fi where fi.feed_id = p_feed_id
   )
 $$
 language sql stable;

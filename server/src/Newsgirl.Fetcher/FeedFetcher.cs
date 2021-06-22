@@ -101,7 +101,7 @@ namespace Newsgirl.Fetcher
                 // Parse the RSS.
                 try
                 {
-                    parsedFeed = this.feedParser.Parse(feedContentString);
+                    parsedFeed = this.feedParser.Parse(feedContentString, feed.FeedID);
                 }
                 catch (Exception err)
                 {
@@ -133,7 +133,7 @@ namespace Newsgirl.Fetcher
 
                 foreach (var feedItem in parsedFeed.Items)
                 {
-                    if (!newHashes.Contains(feedItem.FeedItemHash))
+                    if (!newHashes.Contains(feedItem.FeedItemStringIDHash))
                     {
                         continue;
                     }

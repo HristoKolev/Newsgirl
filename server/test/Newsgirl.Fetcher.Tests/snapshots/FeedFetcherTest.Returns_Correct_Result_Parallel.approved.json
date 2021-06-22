@@ -8,68 +8,15 @@
       "FeedUrl": "fetcher-3.xml"
     },
     "NewFeedContentHash": -3358014450743895681,
-    "NewFeedItemsHash": 6333359339447268841,
+    "NewFeedItemsHash": -4191616221703923597,
     "NewItems": [
       {
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -1507418612056533925,
         "FeedItemID": 0,
-        "FeedItemTitle": "HTML CSS Tutorial for Beginners - Web Development Tutorials For Beginners",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=J35jug1uHzE"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": -8697008161537247325,
-        "FeedItemID": 0,
-        "FeedItemTitle": "EASY! Hand-code an HTML + CSS layout",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=dMK_3lH1YPo"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": 2510213096561895059,
-        "FeedItemID": 0,
-        "FeedItemTitle": "Build an HTML + CSS Layout with Flexbox in just a few lines of code",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=aRMIdKRYg6c"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": -2746829091025710157,
-        "FeedItemID": 0,
-        "FeedItemTitle": "Flexispot Standing Desk Review - And Why You Need a Sit Stand Desk!",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=QYEHwW4bzG4"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": 2360840350416225665,
-        "FeedItemID": 0,
-        "FeedItemTitle": "HTML CSS TUTORIAL FOR BEGINNERS - multiple pages",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=iXSSHlOe47s"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": 8965723004171521064,
-        "FeedItemID": 0,
-        "FeedItemTitle": "CSS SELECTORS MADE EASY - HTML CSS Tutorial for Beginners",
-        "FeedItemUrl": "https://www.youtube.com/watch?v=dcCCOiQ1ZuM"
-      },
-      {
-        "FeedID": 3,
-        "FeedItemAddedTime": "3000-01-01T00:00:00Z",
-        "FeedItemDescription": null,
-        "FeedItemHash": 7289494943622635202,
-        "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:rqrh5d__uoI)",
+        "FeedItemStringIDHash": -39090232001415865,
         "FeedItemTitle": "MOST AMAZING ERGODOX YET! - ERGODOX EZ GLOW REVIEW w/ Kailh Copper keyswitches",
         "FeedItemUrl": "https://www.youtube.com/watch?v=rqrh5d__uoI"
       },
@@ -77,8 +24,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -8445893864808695247,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:7cwRaTqR4k0)",
+        "FeedItemStringIDHash": 1188453321312640271,
         "FeedItemTitle": "HTML & CSS Tutorial - Ways to code images...and how to do it well",
         "FeedItemUrl": "https://www.youtube.com/watch?v=7cwRaTqR4k0"
       },
@@ -86,8 +34,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": 6375332702440675798,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:fgOO9YUFlGI)",
+        "FeedItemStringIDHash": 1492601088394989502,
         "FeedItemTitle": "Responsive Design Tutorial - Tips for making web sites look great on any device",
         "FeedItemUrl": "https://www.youtube.com/watch?v=fgOO9YUFlGI"
       },
@@ -95,8 +44,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -7759121901289213525,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:5iUB31h2Hzs)",
+        "FeedItemStringIDHash": -2150618170820951992,
         "FeedItemTitle": "How To Make A Website From HTML & CSS - FAST, CHEAP, EASY",
         "FeedItemUrl": "https://www.youtube.com/watch?v=5iUB31h2Hzs"
       },
@@ -104,8 +54,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": 2964174542053753594,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:tcBRvjYw5xQ)",
+        "FeedItemStringIDHash": -6436752113978185786,
         "FeedItemTitle": "CSS Units - Which ones to use and which to stop using! - HTML CSS Tutorial",
         "FeedItemUrl": "https://www.youtube.com/watch?v=tcBRvjYw5xQ"
       },
@@ -113,8 +64,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -5998688724958208100,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:4C4zqhXwCKs)",
+        "FeedItemStringIDHash": -5826802281122435694,
         "FeedItemTitle": "ArangoDB Tutorial - Databases every developer should know about",
         "FeedItemUrl": "https://www.youtube.com/watch?v=4C4zqhXwCKs"
       },
@@ -122,8 +74,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -1090036373795188332,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:v38H67xWfOI)",
+        "FeedItemStringIDHash": -1675851118135962577,
         "FeedItemTitle": "Ultimate Hacking Keyboard UHK60 - Mechanical Keyboard Review",
         "FeedItemUrl": "https://www.youtube.com/watch?v=v38H67xWfOI"
       },
@@ -131,8 +84,9 @@
         "FeedID": 3,
         "FeedItemAddedTime": "3000-01-01T00:00:00Z",
         "FeedItemDescription": null,
-        "FeedItemHash": -3576275959696435186,
         "FeedItemID": 0,
+        "FeedItemStringID": "FEED_ID(3):ITEM_ID(yt:video:SBB1YtwODT0)",
+        "FeedItemStringIDHash": -3048427865047679478,
         "FeedItemTitle": "Web Development in 2020 - A complete roadmap",
         "FeedItemUrl": "https://www.youtube.com/watch?v=SBB1YtwODT0"
       }

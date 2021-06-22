@@ -16,7 +16,7 @@ namespace Newsgirl.Fetcher.Tests
 
             string feedContent = await TestHelper.GetResourceText(resourceName);
 
-            var parsedFeed = parser.Parse(feedContent);
+            var parsedFeed = parser.Parse(feedContent, 1);
 
             Snapshot.Match(parsedFeed, new[] {resourceName});
         }

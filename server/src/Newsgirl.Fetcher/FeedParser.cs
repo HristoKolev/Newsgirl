@@ -18,23 +18,23 @@ namespace Newsgirl.Fetcher
             this.log = log;
         }
 
-        public ParsedFeed Parse(string feedContent)
+        public ParsedFeed Parse(string feedContent, int feedID)
         {
             var materializedFeed = FeedReader.ReadFromString(feedContent);
 
-            var allItems = (List<FeedItem>) materializedFeed.Items;
+            var feedItems = (List<FeedItem>) materializedFeed.Items;
 
-            var parsedFeed = new ParsedFeed(allItems.Count);
+            var parsedFeed = new ParsedFeed(feedItems.Count);
 
-            using (var bufferWriter = new ArrayPoolBufferWriter<byte>(allItems.Count * 8))
+            using (var bufferWriter = new ArrayPoolBufferWriter<byte>(feedItems.Count * 8))
             {
-                for (int i = allItems.Count - 1; i >= 0; i--)
+                for (int i = feedItems.Count - 1; i >= 0; i--)
                 {
-                    var feedItem = allItems[i];
+                    var feedItem = feedItems[i];
 
-                    string stringID = GetItemStringID(feedItem);
+                    string feedItemStringID = GetItemStringID(feedItem, feedID);
 
-                    if (stringID == null)
+                    if (feedItemStringID == null)
                     {
                         this.log.General(() => new LogData("Cannot ID feed item.")
                         {
@@ -44,15 +44,15 @@ namespace Newsgirl.Fetcher
                         continue;
                     }
 
-                    var stringIDBytes = EncodingHelper.UTF8.GetBytes(stringID);
+                    var feedItemStringIDBytes = EncodingHelper.UTF8.GetBytes(feedItemStringID);
 
-                    long feedItemHash = HashHelper.ComputeXx64Hash(stringIDBytes);
+                    long feedItemStringIDHash = HashHelper.ComputeXx64Hash(feedItemStringIDBytes);
 
-                    if (!parsedFeed.FeedItemHashes.Add(feedItemHash))
+                    if (!parsedFeed.FeedItemHashes.Add(feedItemStringIDHash))
                     {
                         this.log.General(() => new LogData("Feed item already added.")
                         {
-                            {"stringID", stringID},
+                            {"stringID", feedItemStringID},
                         });
 
                         continue;
@@ -64,10 +64,11 @@ namespace Newsgirl.Fetcher
                         FeedItemTitle = feedItem.Title.SomethingOrNull()?.Trim(),
                         FeedItemDescription = feedItem.Description.SomethingOrNull()?.Trim(),
                         FeedItemAddedTime = this.dateTimeService.EventTime(),
-                        FeedItemHash = feedItemHash,
+                        FeedItemStringID = feedItemStringID,
+                        FeedItemStringIDHash = feedItemStringIDHash,
                     });
 
-                    bufferWriter.Write(stringIDBytes);
+                    bufferWriter.Write(feedItemStringIDBytes);
                 }
 
                 parsedFeed.FeedItemsHash = HashHelper.ComputeXx64Hash(bufferWriter.WrittenSpan);
@@ -76,25 +77,27 @@ namespace Newsgirl.Fetcher
             return parsedFeed;
         }
 
-        private static string GetItemStringID(FeedItem feedItem)
+        private static string GetItemStringID(FeedItem feedItem, int feedID)
         {
             string idValue = feedItem.Id?.Trim();
-            string linkValue = feedItem.Link?.Trim();
-            string titleValue = feedItem.Title?.Trim();
 
             if (!string.IsNullOrWhiteSpace(idValue))
             {
-                return $"ID({idValue})";
+                return $"FEED_ID({feedID}):ITEM_ID({idValue})";
             }
+
+            string linkValue = feedItem.Link?.Trim();
 
             if (!string.IsNullOrWhiteSpace(linkValue))
             {
-                return $"LINK({linkValue})";
+                return $"FEED_ID({feedID}):ITEM_LINK({linkValue})";
             }
+
+            string titleValue = feedItem.Title?.Trim();
 
             if (!string.IsNullOrWhiteSpace(titleValue))
             {
-                return $"TITLE({titleValue})";
+                return $"FEED_ID({feedID}):ITEM_TITLE({titleValue})";
             }
 
             return null;
@@ -122,7 +125,7 @@ namespace Newsgirl.Fetcher
 
     public interface IFeedParser
     {
-        ParsedFeed Parse(string feedContent);
+        ParsedFeed Parse(string feedContent, int feedID);
     }
 
     public class ParsedFeed

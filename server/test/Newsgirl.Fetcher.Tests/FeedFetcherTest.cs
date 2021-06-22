@@ -17,8 +17,13 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new[]
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 3780115545271156722, FeedContentHash = -8357694656887908712},
-                new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 351563459839931092, FeedContentHash = 0},
+                // This one will be ignored because of matching FeedContentHash.
+                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 0, FeedContentHash = -8357694656887908712},
+
+                // This one will be ignored because of matching FeedItemsHash.
+                new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 1864173257939033016, FeedContentHash = 0},
+
+                // This one will be processed.
                 new FeedPoco {FeedUrl = "fetcher-3.xml", FeedID = 3},
             };
 
@@ -27,7 +32,7 @@ namespace Newsgirl.Fetcher.Tests
             importService.GetMissingFeedItems(default, default).ReturnsForAnyArgs(info =>
             {
                 var arr = info.Arg<long[]>();
-                return arr.Skip(1).ToArray();
+                return arr.Skip(arr.Length / 2).ToArray();
             });
 
             var updates = new List<FeedUpdateModel>();
@@ -94,7 +99,7 @@ namespace Newsgirl.Fetcher.Tests
             var errorReporter = new ErrorReporterMock();
 
             var feedParser = Substitute.For<IFeedParser>();
-            feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
+            feedParser.Parse(null, 1).ThrowsForAnyArgs(new ApplicationException());
 
             var fetcher = new FeedFetcher(
                 TestResourceContentProvider,
@@ -124,7 +129,7 @@ namespace Newsgirl.Fetcher.Tests
             var errorReporter = new ErrorReporterMock();
 
             var feedParser = Substitute.For<IFeedParser>();
-            feedParser.Parse(null).ThrowsForAnyArgs(new ApplicationException());
+            feedParser.Parse(null, 1).ThrowsForAnyArgs(new ApplicationException());
 
             var invalidUtf8 = await TestHelper.GetResourceBytes("app-vnd.flatpak-icon.png");
 

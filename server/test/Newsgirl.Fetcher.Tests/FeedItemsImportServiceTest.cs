@@ -55,7 +55,8 @@ namespace Newsgirl.Fetcher.Tests
                     {
                         FeedID = 1,
                         FeedItemDescription = $"desc {i}",
-                        FeedItemHash = i,
+                        FeedItemStringID = $"string id {i}",
+                        FeedItemStringIDHash = i,
                         FeedItemTitle = $"title {i}",
                         FeedItemUrl = $"url {i}",
                         FeedItemAddedTime = TestHelper.Date3000,
@@ -70,7 +71,8 @@ namespace Newsgirl.Fetcher.Tests
                     {
                         FeedID = 2,
                         FeedItemDescription = $"desc {100 + i}",
-                        FeedItemHash = i,
+                        FeedItemStringID = $"string id {i}",
+                        FeedItemStringIDHash = i,
                         FeedItemTitle = $"title {100 + i}",
                         FeedItemUrl = $"url {100 + i}",
                         FeedItemAddedTime = TestHelper.Date3000,
@@ -85,7 +87,8 @@ namespace Newsgirl.Fetcher.Tests
                     {
                         FeedID = 3,
                         FeedItemDescription = null,
-                        FeedItemHash = i,
+                        FeedItemStringID = $"string id {i}",
+                        FeedItemStringIDHash = i,
                         FeedItemTitle = $"title {i}",
                         FeedItemUrl = null,
                         FeedItemAddedTime = TestHelper.Date3000,
@@ -123,7 +126,8 @@ namespace Newsgirl.Fetcher.Tests
             var feedItems = Enumerable.Range(1, 10).Select(i => new FeedItemPoco
             {
                 FeedID = 1,
-                FeedItemHash = i,
+                FeedItemStringID = $"string id {i}",
+                FeedItemStringIDHash = i,
                 FeedItemDescription = $"desc {i}",
                 FeedItemTitle = $"title {i}",
                 FeedItemUrl = $"url {i}",
@@ -133,7 +137,8 @@ namespace Newsgirl.Fetcher.Tests
             feedItems.AddRange(Enumerable.Range(30, 10).Select(i => new FeedItemPoco
             {
                 FeedID = 2,
-                FeedItemHash = i,
+                FeedItemStringID = $"string id {i}",
+                FeedItemStringIDHash = i,
                 FeedItemDescription = $"desc {i}",
                 FeedItemTitle = $"title {i}",
                 FeedItemUrl = $"url {i}",

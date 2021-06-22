@@ -144,7 +144,7 @@ namespace Newsgirl.Shared
         {
             // The keys of the `Extra` dictionary in order of the size of the JSON representation of the value.
             var keysInOrderOfSize = new Queue<string>(sentryEvent.Extra
-                .OrderByDescending(pair => JsonHelper.GetJsonSize(pair.Value))
+                .OrderByDescending(pair => pair.Value == null ? "null".Length : JsonHelper.GetJsonSize(pair.Value))
                 .Select(x => x.Key)
                 .ToList());
 

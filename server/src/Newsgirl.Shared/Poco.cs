@@ -64,19 +64,6 @@ namespace Newsgirl.Shared
         public string FeedItemDescription { get; set; }
 
         /// <summary>
-        /// <para>Column name: 'feed_item_hash'.</para>
-        /// <para>Table name: 'feed_items'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'bigint'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Bigint'.</para>
-        /// <para>CLR type: 'long'.</para>
-        /// <para>linq2db data type: 'DataType.Int64'.</para>
-        /// </summary>
-        [LinqToDB.Mapping.NotNull]
-        [Column(Name = "feed_item_hash", DataType = DataType.Int64)]
-        public long FeedItemHash { get; set; }
-
-        /// <summary>
         /// <para>Column name: 'feed_item_id'.</para>
         /// <para>Table name: 'feed_items'.</para>
         /// <para>Primary key of table: 'feed_items'.</para>
@@ -91,6 +78,32 @@ namespace Newsgirl.Shared
         [Identity]
         [Column(Name = "feed_item_id", DataType = DataType.Int32)]
         public int FeedItemID { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_item_string_id'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'text'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
+        /// <para>CLR type: 'string'.</para>
+        /// <para>linq2db data type: 'DataType.Text'.</para>
+        /// </summary>
+        [LinqToDB.Mapping.NotNull]
+        [Column(Name = "feed_item_string_id", DataType = DataType.Text)]
+        public string FeedItemStringID { get; set; }
+
+        /// <summary>
+        /// <para>Column name: 'feed_item_string_id_hash'.</para>
+        /// <para>Table name: 'feed_items'.</para>
+        /// <para>This column is not nullable.</para>
+        /// <para>PostgreSQL data type: 'bigint'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.Bigint'.</para>
+        /// <para>CLR type: 'long'.</para>
+        /// <para>linq2db data type: 'DataType.Int64'.</para>
+        /// </summary>
+        [LinqToDB.Mapping.NotNull]
+        [Column(Name = "feed_item_string_id_hash", DataType = DataType.Int64)]
+        public long FeedItemStringIDHash { get; set; }
 
         /// <summary>
         /// <para>Column name: 'feed_item_title'.</para>
@@ -138,9 +151,14 @@ namespace Newsgirl.Shared
                     TypedValue = this.FeedItemDescription,
                     NpgsqlDbType = NpgsqlDbType.Text,
                 },
+                new NpgsqlParameter<string>
+                {
+                    TypedValue = this.FeedItemStringID,
+                    NpgsqlDbType = NpgsqlDbType.Text,
+                },
                 new NpgsqlParameter<long>
                 {
-                    TypedValue = this.FeedItemHash,
+                    TypedValue = this.FeedItemStringIDHash,
                     NpgsqlDbType = NpgsqlDbType.Bigint,
                 },
                 new NpgsqlParameter<string>
@@ -186,7 +204,16 @@ namespace Newsgirl.Shared
                 await importer.WriteAsync(this.FeedItemDescription, NpgsqlDbType.Text);
             }
 
-            await importer.WriteAsync(this.FeedItemHash, NpgsqlDbType.Bigint);
+            if (this.FeedItemStringID == null)
+            {
+                await importer.WriteNullAsync();
+            }
+            else
+            {
+                await importer.WriteAsync(this.FeedItemStringID, NpgsqlDbType.Text);
+            }
+
+            await importer.WriteAsync(this.FeedItemStringIDHash, NpgsqlDbType.Bigint);
 
             if (this.FeedItemTitle == null)
             {
@@ -407,13 +434,13 @@ namespace Newsgirl.Shared
         /// <summary>
         /// <para>Column name: 'setting_value'.</para>
         /// <para>Table name: 'system_settings'.</para>
-        /// <para>This column is nullable.</para>
+        /// <para>This column is not nullable.</para>
         /// <para>PostgreSQL data type: 'jsonb'.</para>
         /// <para>NpgsqlDbType: 'NpgsqlDbType.Jsonb'.</para>
         /// <para>CLR type: 'string'.</para>
         /// <para>linq2db data type: 'DataType.BinaryJson'.</para>
         /// </summary>
-        [Nullable]
+        [LinqToDB.Mapping.NotNull]
         [Column(Name = "setting_value", DataType = DataType.BinaryJson)]
         public string SettingValue { get; set; }
 
@@ -1126,42 +1153,6 @@ namespace Newsgirl.Shared
                     {
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "feed_item_hash",
-                        DbDataType = "bigint",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "FeedItemHash",
-                        TableName = "feed_items",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "long",
-                            ClrType = typeof(long),
-                            ClrNonNullableTypeName = "long",
-                            ClrNonNullableType = typeof(long),
-                            ClrNullableTypeName = "long?",
-                            ClrNullableType = typeof(long?),
-                            DbDataType = "bigint",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Int64",
-                            Linq2DbDataType = DataType.Int64,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
-                            NpgsqlDbType = NpgsqlDbType.Bigint,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_id",
                         DbDataType = "integer",
                         IsNullable = bool.Parse("False"),
@@ -1192,6 +1183,78 @@ namespace Newsgirl.Shared
                             Linq2DbDataType = DataType.Int32,
                             NpgsqlDbTypeName = "NpgsqlDbType.Integer",
                             NpgsqlDbType = NpgsqlDbType.Integer,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_item_string_id",
+                        DbDataType = "text",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "FeedItemStringID",
+                        TableName = "feed_items",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "string",
+                            ClrType = typeof(string),
+                            ClrNonNullableTypeName = "string",
+                            ClrNonNullableType = typeof(string),
+                            ClrNullableTypeName = "string",
+                            ClrNullableType = typeof(string),
+                            DbDataType = "text",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("False"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("True"),
+                            Linq2DbDataTypeName = "DataType.Text",
+                            Linq2DbDataType = DataType.Text,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
+                            NpgsqlDbType = NpgsqlDbType.Text,
+                        },
+                    },
+                    new ColumnMetadataModel
+                    {
+                        ColumnComment = "" == string.Empty ? null : "",
+                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                        ColumnName = "feed_item_string_id_hash",
+                        DbDataType = "bigint",
+                        IsNullable = bool.Parse("False"),
+                        IsPrimaryKey = bool.Parse("False"),
+                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
+                        IsForeignKey = bool.Parse("False"),
+                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
+                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
+                        PropertyName = "FeedItemStringIDHash",
+                        TableName = "feed_items",
+                        TableSchema = "public",
+                        PropertyType = new SimpleType
+                        {
+                            ClrTypeName = "long",
+                            ClrType = typeof(long),
+                            ClrNonNullableTypeName = "long",
+                            ClrNonNullableType = typeof(long),
+                            ClrNullableTypeName = "long?",
+                            ClrNullableType = typeof(long?),
+                            DbDataType = "bigint",
+                            IsNullable = bool.Parse("False"),
+                            IsClrValueType = bool.Parse("True"),
+                            IsClrNullableType = bool.Parse("False"),
+                            IsClrReferenceType = bool.Parse("False"),
+                            Linq2DbDataTypeName = "DataType.Int64",
+                            Linq2DbDataType = DataType.Int64,
+                            NpgsqlDbTypeName = "NpgsqlDbType.Bigint",
+                            NpgsqlDbType = NpgsqlDbType.Bigint,
                         },
                     },
                     new ColumnMetadataModel
@@ -1272,7 +1335,8 @@ namespace Newsgirl.Shared
                     "feed_id",
                     "feed_item_added_time",
                     "feed_item_description",
-                    "feed_item_hash",
+                    "feed_item_string_id",
+                    "feed_item_string_id_hash",
                     "feed_item_title",
                     "feed_item_url",
                 },
@@ -1566,7 +1630,7 @@ namespace Newsgirl.Shared
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "setting_value",
                         DbDataType = "jsonb",
-                        IsNullable = bool.Parse("True"),
+                        IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
                         IsForeignKey = bool.Parse("False"),
@@ -1586,7 +1650,7 @@ namespace Newsgirl.Shared
                             ClrNullableTypeName = "string",
                             ClrNullableType = typeof(string),
                             DbDataType = "jsonb",
-                            IsNullable = bool.Parse("True"),
+                            IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("False"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("True"),
