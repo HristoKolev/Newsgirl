@@ -9,8 +9,8 @@ namespace Newsgirl.Shared
             builder.RegisterType<SystemSettingsService>().InstancePerLifetimeScope();
             builder.RegisterType<DateTimeServiceImpl>().As<DateTimeService>().InstancePerLifetimeScope();
 
-            builder.RegisterType<RngServiceImpl>().As<RngService>().SingleInstance();
-            builder.RegisterType<PasswordServiceImpl>().As<PasswordService>().SingleInstance();
+            builder.RegisterType<RngServiceImpl>().As<RngService>().InstancePerLifetimeScope();
+            builder.RegisterType<PasswordServiceImpl>().As<PasswordService>().InstancePerLifetimeScope();
 
             base.Load(builder);
         }

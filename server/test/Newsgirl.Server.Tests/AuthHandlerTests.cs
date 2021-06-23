@@ -12,10 +12,10 @@ namespace Newsgirl.Server.Tests
     {
         protected override void ConfigureMocks(ContainerBuilder builder)
         {
-            builder.Register((_, _) => TestHelper.DateTimeServiceStub).SingleInstance();
-            builder.RegisterType<RngServiceMock>().As<RngService>().SingleInstance();
-            builder.RegisterType<PasswordServiceMock>().As<PasswordService>().SingleInstance();
-            builder.RegisterType<StructuredLogMock>().As<Log>().SingleInstance();
+            builder.Register((_, _) => TestHelper.DateTimeServiceStub).InstancePerLifetimeScope();
+            builder.RegisterType<RngServiceMock>().As<RngService>().InstancePerLifetimeScope();
+            builder.RegisterType<PasswordServiceMock>().As<PasswordService>().InstancePerLifetimeScope();
+            builder.RegisterType<StructuredLogMock>().As<Log>().InstancePerLifetimeScope();
         }
 
         [Fact]
