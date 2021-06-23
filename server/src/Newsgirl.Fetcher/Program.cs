@@ -1,4 +1,4 @@
-﻿namespace Newsgirl.Fetcher
+namespace Newsgirl.Fetcher
 {
     using System;
     using System.Collections.Generic;
@@ -240,8 +240,8 @@
             builder.Register((_, _) => this.app.Log).As<Log>().ExternallyOwned();
 
             // Single instance
-            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().SingleInstance();
-            builder.RegisterType<FeedParser>().As<IFeedParser>().SingleInstance();
+            builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().InstancePerLifetimeScope();
+            builder.RegisterType<FeedParser>().As<IFeedParser>().InstancePerLifetimeScope();
 
             // Per scope
             builder.Register((_, _) => DbFactory.CreateConnection(this.app.AppConfig.ConnectionString)).InstancePerLifetimeScope();
