@@ -230,12 +230,11 @@ namespace Newsgirl.Shared.Tests
         }
 
         [Fact]
-        public void GetJsonSize_throws_on_null_value()
+        public void GetJsonSize_returns_correct_result_on_null_value()
         {
-            Snapshot.MatchError(() =>
-            {
-                JsonHelper.GetJsonSize<object>(null);
-            });
+            int result = JsonHelper.GetJsonSize<object>(null);
+
+            Assert.Equal(4, result);
         }
 
         public class TestJsonPayload

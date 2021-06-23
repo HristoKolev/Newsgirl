@@ -227,7 +227,7 @@ namespace Newsgirl.Shared
         {
             if (value == null)
             {
-                throw new ArgumentNullException(nameof(value));
+                return "null".Length;
             }
 
             var inputType = value.GetType();
