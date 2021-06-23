@@ -1,4 +1,4 @@
-namespace Newsgirl.Fetcher
+﻿namespace Newsgirl.Fetcher
 {
     using System;
     using System.Collections.Generic;
@@ -178,9 +178,9 @@ namespace Newsgirl.Fetcher
                 var fetcherRunData = await fetcherInstance.FetchFeeds();
 
                 this.Log.FetcherLog(() => fetcherRunData);
-
-                await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
             }
+
+            await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
         }
     }
 
