@@ -8,14 +8,14 @@ while [ -h "$TMP_SOURCE" ]; do
 done
 SCRIPT_PATH="$( cd -P "$( dirname "$TMP_SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-export $(cat $SCRIPT_PATH/env | xargs);
+export $(cat "$SCRIPT_PATH"/env | xargs);
 
 export LOCAL_IP=$(ip route | grep '192.168.0.0/24' | grep -Eo '192\.168\.0\.[1-9][0-9]*');
 
 set -exu
 
-docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME pull
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p "$STACK_NAME" pull
 
-docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME down
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p "$STACK_NAME" down
 
-docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p $STACK_NAME up -d
+docker-compose -f "$SCRIPT_PATH/docker-compose.yml" -p "$STACK_NAME" up -d

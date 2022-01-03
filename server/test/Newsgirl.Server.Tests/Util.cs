@@ -97,7 +97,7 @@ namespace Newsgirl.Server.Tests
 
             app.ErrorReporter = new ErrorReporterMock();
 
-            string appConfigPath = Path.GetFullPath("../../../newsgirl-server-test-config.json");
+            string appConfigPath = Path.GetFullPath("../../../newsgirl-server.json");
             var injectedConfig = JsonHelper.Deserialize<HttpServerAppConfig>(await File.ReadAllTextAsync(appConfigPath));
             injectedConfig.ConnectionString = connectionString;
             app.InjectedAppConfig = injectedConfig;

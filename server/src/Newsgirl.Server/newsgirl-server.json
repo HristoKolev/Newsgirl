@@ -1,5 +1,5 @@
 {
-  "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
+  "ConnectionString": "Server=xdxd-db-playground;Port=6000;Database=newsgirl;Uid=newsgirl;Pwd=6871091a-6c53-11ec-bbc6-479f17e49937;",
   "SentryDsn": "http://eb81bb9796314f64bd9b6c262fd67cf1@home-sentry.lan/4",
   "Environment": "development",
   "InstanceName": "hristo-ws"

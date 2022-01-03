@@ -1,6 +1,6 @@
 [
   {
-    "ConnectionString": "Server=dev-host.lan;Port=5101;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
+    "ConnectionString": "Server=xdxd-db-playground;Port=6000;Database=newsgirl;Uid=newsgirl;Pwd=6871091a-6c53-11ec-bbc6-479f17e49937;",
     "OutputPath": "../../../../../../server/src/Newsgirl.Shared/Poco.cs",
     "Namespace": "Newsgirl.Shared",
     "PocoClassName": "DbPocos",
@@ -8,7 +8,7 @@
     "TemplatePath": "poco-template.txt"
   },
   {
-    "ConnectionString": "Server=dev-host.lan;Port=5101;Database=test;Uid=test;Pwd=test",
+    "ConnectionString": "Server=xdxd-db-playground;Port=6000;Database=net_orm;Uid=net_orm;Pwd=c85d7fb0-6c63-11ec-8ceb-7bbaf9051440;",
     "OutputPath": "../../../../../../server/test/Newsgirl.Shared.PostgresTests/DbTests.cs",
     "Namespace": "Newsgirl.Shared.PostgresTests",
     "PocoClassName": "TestDbPocos",
@@ -16,7 +16,7 @@
     "TemplatePath": "tests-template.txt"
   },
   {
-    "ConnectionString": "Server=dev-host.lan;Port=5101;Database=test;Uid=test;Pwd=test",
+    "ConnectionString": "Server=xdxd-db-playground;Port=6000;Database=net_orm;Uid=net_orm;Pwd=c85d7fb0-6c63-11ec-8ceb-7bbaf9051440;",
     "OutputPath": "../../../../../../server/test/Newsgirl.Shared.PostgresTests/TestPocos.cs",
     "Namespace": "Newsgirl.Shared.PostgresTests",
     "PocoClassName": "TestDbPocos",

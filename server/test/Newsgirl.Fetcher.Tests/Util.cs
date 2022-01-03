@@ -64,7 +64,7 @@ namespace Newsgirl.Fetcher.Tests
 
             app.ErrorReporter = new ErrorReporterMock();
 
-            string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher-test-config.json");
+            string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher.json");
             var injectedConfig = JsonHelper.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
             injectedConfig.ConnectionString = connectionString;
             app.InjectedAppConfig = injectedConfig;

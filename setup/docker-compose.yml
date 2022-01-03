@@ -28,7 +28,7 @@ services:
       timeout: 5s
       retries: 5
   fetcher:
-    image: localhost:5000/newsgirl-fetcher
+    image: xdxd-registry.lan/newsgirl-fetcher
     restart: unless-stopped
     init: true
     depends_on:

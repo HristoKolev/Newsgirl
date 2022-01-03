@@ -39,7 +39,6 @@
             await using (var server = new CustomHttpServerImpl())
             {
                 await server.Start(Run, new[] {"http://localhost:7300"});
-
                 await Task.Delay(TimeSpan.FromHours(1));
             }
         }
