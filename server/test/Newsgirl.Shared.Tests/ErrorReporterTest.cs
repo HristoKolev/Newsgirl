@@ -167,14 +167,14 @@ namespace Newsgirl.Shared.Tests
 
     public class ErrorReporterTest
     {
-        private const string SENTRY_HOSTNAME = "home-sentry.lan";
+        private const string SENTRY_HOSTNAME = "xdxd-sentry";
         private const string SENTRY_ORG_NAME = "sentry";
 
         private const string SENTRY_PROJECT_NAME = "error-reporter-test";
-        private const string SENTRY_PROJECT_KEY = "06bc5208938e4f36abdd1ebe11a763c2";
-        private const int SENTRY_PROJECT_ID = 5;
+        private const string SENTRY_PROJECT_KEY = "8b4b38e072ad44a1be31fa178eab2762";
+        private const int SENTRY_PROJECT_ID = 4;
 
-        private const string SENTRY_BEARER_TOKEN = "4ffd242024d447479ef2200cac0c115b23d9a3ba05aa457290645b706fd2334d";
+        private const string SENTRY_BEARER_TOKEN = "15b09b26204e4dc780ba94a197f617f9b548126d5e8d40ddbc678fcb4d05baa1";
 
         protected static ErrorReporterImpl CreateReporter()
         {
