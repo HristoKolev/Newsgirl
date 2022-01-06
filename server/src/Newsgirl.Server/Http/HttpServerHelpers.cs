@@ -81,7 +81,7 @@ namespace Newsgirl.Server.Http
 
             this.RequestStart = httpRequestState.RequestStart;
             this.RequestEnd = httpRequestState.RequestEnd;
-            this.RequestDurationMs = (long) (httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
+            this.RequestDurationMs = (long)(httpRequestState.RequestEnd - httpRequestState.RequestStart).TotalMilliseconds;
 
             // --------
 
@@ -204,20 +204,43 @@ namespace Newsgirl.Server.Http
         public string InstanceName { get; set; }
 
         public string Environment { get; set; }
+
+        /// <summary>
+        /// The pfx certificate that is used to create JWT tokens.
+        /// </summary>
+        public string SessionCertificate { get; set; }
+
+        public HttpServerAppLoggingConfig Logging { get; set; }
+    }
+
+    public class HttpServerAppLoggingConfig
+    {
+        public EventStreamConfig[] StructuredLogger { get; set; }
+
+        public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public HttpServerAppElkIndexConfig ElkIndexes { get; set; }
+    }
+
+    public class HttpServerAppElkIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
+
+        public string HttpLogIndex { get; set; }
     }
 
     public class SessionCertificatePool : DefaultObjectPool<X509Certificate2>
     {
         private const int MAXIMUM_RETAINED = 128;
 
-        public SessionCertificatePool(SystemSettingsModel systemSettings) :
-            base(new SessionCertificatePoolPolicy(systemSettings.SessionCertificate), MAXIMUM_RETAINED) { }
+        public SessionCertificatePool(HttpServerAppConfig appConfig) :
+            base(new SessionCertificatePoolPolicy(appConfig.SessionCertificate), MAXIMUM_RETAINED) { }
 
         private class SessionCertificatePoolPolicy : DefaultPooledObjectPolicy<X509Certificate2>
         {
-            public SessionCertificatePoolPolicy(byte[] certificateBytes)
+            public SessionCertificatePoolPolicy(string certificateBase64)
             {
-                this.certificateBytes = certificateBytes;
+                this.certificateBytes = Convert.FromBase64String(certificateBase64);
             }
 
             private readonly byte[] certificateBytes;

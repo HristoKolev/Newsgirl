@@ -41,8 +41,6 @@ namespace Newsgirl.Server
 
         public HttpServerAppConfig InjectedAppConfig { get; set; }
 
-        public SystemSettingsModel SystemSettings { get; set; }
-
         public SessionCertificatePool SessionCertificatePool { get; set; }
 
         public StructuredLogger Log { get; set; }
@@ -91,12 +89,10 @@ namespace Newsgirl.Server
 
             this.IoC = builder.Build();
 
-            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-            this.SessionCertificatePool = new SessionCertificatePool(this.SystemSettings);
+            this.SessionCertificatePool = new SessionCertificatePool(this.AppConfig);
 
             this.Log = await CreateLogger(
-                this.SystemSettings.HttpServerAppLoggingConfig,
+                this.AppConfig.Logging,
                 this.ErrorReporter,
                 this.IoC.Resolve<LogPreprocessor>()
             );
@@ -231,7 +227,6 @@ namespace Newsgirl.Server
                 this.RpcEngine = null;
 
                 this.AppConfig = null;
-                this.SystemSettings = null;
                 this.SessionCertificatePool = null;
 
                 if (this.Log != null)
@@ -315,7 +310,7 @@ namespace Newsgirl.Server
                     // Use this for request scoped state like the reference to the HttpContext object.
                     var httpRequestState = requestScope.Resolve<HttpRequestState>();
 
-                    scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> {{"httpRequestState", httpRequestState}});
+                    scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> { { "httpRequestState", httpRequestState } });
 
                     // Set the context first before resolving anything else.
                     httpRequestState.HttpContext = context;
@@ -386,7 +381,7 @@ namespace Newsgirl.Server
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((_, _) => this.app.SystemSettings).ExternallyOwned();
+            builder.Register((_, _) => this.app.AppConfig).ExternallyOwned();
             builder.Register((_, _) => this.app.Log).As<Log>().ExternallyOwned();
             builder.Register((_, _) => this.app.RpcEngine).ExternallyOwned();
             builder.Register((_, _) => this.app.SessionCertificatePool).ExternallyOwned();
@@ -458,7 +453,7 @@ namespace Newsgirl.Server
 
             async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
             {
-                await app.ErrorReporter.Error((Exception) e.ExceptionObject);
+                await app.ErrorReporter.Error((Exception)e.ExceptionObject);
             }
 
             void OnProcessExit(object sender, EventArgs args)

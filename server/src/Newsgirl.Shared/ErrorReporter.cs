@@ -63,6 +63,7 @@ namespace Newsgirl.Shared
             }
             catch (Exception err)
             {
+                await Console.Error.WriteLineAsync("An error occured while trying to report an error to Sentry.");
                 await Console.Error.WriteLineAsync(err.ToString());
                 return null;
             }

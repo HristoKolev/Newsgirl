@@ -1,6 +1,46 @@
 {
   "ConnectionString": "Server=xdxd-db-playground;Port=6000;Database=newsgirl;Uid=newsgirl;Pwd=6871091a-6c53-11ec-bbc6-479f17e49937;",
-  "SentryDsn": "http://1adc247430ea428ab1c6a2dff7d1e234@home-sentry.lan/3",
+  "SentryDsn": "http://8ddfcebf3e824f7d898fd92782b6fbed@xdxd-sentry/2",
   "Environment": "development",
-  "InstanceName": "hristo-ws"
+  "InstanceName": "hristo-ws",
+  "HttpClientUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
+  "HttpClientRequestTimeout": 120,
+  "FetcherCyclePause": 60,
+  "Logging": {
+    "ElkIndexes": {
+      "FetcherLogIndex": "newsgirl-fetcher-log",
+      "GeneralLogIndex": "newsgirl-fetcher-general"
+    },
+    "Elasticsearch": {
+      "Url": "http://xdxd-elk",
+      "Password": "6871091a-6c53-11ec-bbc6-479f17e49937",
+      "Username": "newsgirl"
+    },
+    "StructuredLogger": [
+      {
+        "Name": "GENERAL_LOG",
+        "Enabled": true,
+        "Destinations": [
+          {
+            "Name": "ConsoleConsumer",
+            "Enabled": true
+          },
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      },
+      {
+        "Name": "FETCHER_LOG",
+        "Enabled": true,
+        "Destinations": [
+          {
+            "Name": "ElasticsearchConsumer",
+            "Enabled": true
+          }
+        ]
+      }
+    ]
+  }
 }

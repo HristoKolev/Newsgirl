@@ -1,6 +1,0 @@
-{
-  "ConnectionString": "Server=db;Port=5432;Database=newsgirl;Uid=newsgirl;Pwd=test123;",
-  "SentryDsn": "http://1adc247430ea428ab1c6a2dff7d1e234@home-sentry.lan/3",
-  "Environment": "staging",
-  "InstanceName": "docker-vm1"
-}

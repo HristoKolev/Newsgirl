@@ -395,113 +395,6 @@ namespace Newsgirl.Shared
     }
 
     /// <summary>
-    /// <para>Table name: 'system_settings'.</para>
-    /// <para>Table schema: 'public'.</para>
-    /// </summary>
-    [Table(Schema = "public", Name = "system_settings")]
-    [ExcludeFromCodeCoverage]
-    public class SystemSettingPoco : IPoco<SystemSettingPoco>
-    {
-        /// <summary>
-        /// <para>Column name: 'setting_id'.</para>
-        /// <para>Table name: 'system_settings'.</para>
-        /// <para>Primary key of table: 'system_settings'.</para>
-        /// <para>Primary key constraint name: 'system_settings_pkey'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'integer'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Integer'.</para>
-        /// <para>CLR type: 'int'.</para>
-        /// <para>linq2db data type: 'DataType.Int32'.</para>
-        /// </summary>
-        [PrimaryKey]
-        [Identity]
-        [Column(Name = "setting_id", DataType = DataType.Int32)]
-        public int SettingID { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'setting_name'.</para>
-        /// <para>Table name: 'system_settings'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'text'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Text'.</para>
-        /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.Text'.</para>
-        /// </summary>
-        [LinqToDB.Mapping.NotNull]
-        [Column(Name = "setting_name", DataType = DataType.Text)]
-        public string SettingName { get; set; }
-
-        /// <summary>
-        /// <para>Column name: 'setting_value'.</para>
-        /// <para>Table name: 'system_settings'.</para>
-        /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'jsonb'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Jsonb'.</para>
-        /// <para>CLR type: 'string'.</para>
-        /// <para>linq2db data type: 'DataType.BinaryJson'.</para>
-        /// </summary>
-        [LinqToDB.Mapping.NotNull]
-        [Column(Name = "setting_value", DataType = DataType.BinaryJson)]
-        public string SettingValue { get; set; }
-
-        public NpgsqlParameter[] GetNonPkParameters()
-        {
-            // ReSharper disable once RedundantExplicitArrayCreation
-            return new NpgsqlParameter[]
-            {
-                new NpgsqlParameter<string>
-                {
-                    TypedValue = this.SettingName,
-                    NpgsqlDbType = NpgsqlDbType.Text,
-                },
-                new NpgsqlParameter<string>
-                {
-                    TypedValue = this.SettingValue,
-                    NpgsqlDbType = NpgsqlDbType.Jsonb,
-                },
-            };
-        }
-
-        public int GetPrimaryKey()
-        {
-            return this.SettingID;
-        }
-
-        public void SetPrimaryKey(int value)
-        {
-            this.SettingID = value;
-        }
-
-        public bool IsNew()
-        {
-            return this.SettingID == default;
-        }
-
-        public async Task WriteToImporter(NpgsqlBinaryImporter importer)
-        {
-            if (this.SettingName == null)
-            {
-                await importer.WriteNullAsync();
-            }
-            else
-            {
-                await importer.WriteAsync(this.SettingName, NpgsqlDbType.Text);
-            }
-
-            if (this.SettingValue == null)
-            {
-                await importer.WriteNullAsync();
-            }
-            else
-            {
-                await importer.WriteAsync(this.SettingValue, NpgsqlDbType.Jsonb);
-            }
-        }
-
-        public static TableMetadataModel Metadata => DbMetadata.SystemSettingPocoMetadata;
-    }
-
-    /// <summary>
     /// <para>Table name: 'user_logins'.</para>
     /// <para>Table schema: 'public'.</para>
     /// </summary>
@@ -979,11 +872,6 @@ namespace Newsgirl.Shared
         public IQueryable<FeedPoco> Feeds => this.LinqProvider.GetTable<FeedPoco>();
 
         /// <summary>
-        /// <para>Database table 'system_settings'.</para>
-        /// </summary>
-        public IQueryable<SystemSettingPoco> SystemSettings => this.LinqProvider.GetTable<SystemSettingPoco>();
-
-        /// <summary>
         /// <para>Database table 'user_logins'.</para>
         /// </summary>
         public IQueryable<UserLoginPoco> UserLogins => this.LinqProvider.GetTable<UserLoginPoco>();
@@ -1015,8 +903,6 @@ namespace Newsgirl.Shared
         internal static readonly TableMetadataModel FeedItemPocoMetadata;
 
         internal static readonly TableMetadataModel FeedPocoMetadata;
-
-        internal static readonly TableMetadataModel SystemSettingPocoMetadata;
 
         internal static readonly TableMetadataModel UserLoginPocoMetadata;
 
@@ -1539,132 +1425,6 @@ namespace Newsgirl.Shared
                     "feed_items_hash",
                     "feed_name",
                     "feed_url",
-                },
-            };
-
-            SystemSettingPocoMetadata = new TableMetadataModel
-            {
-                ClassName = "SystemSetting",
-                PluralClassName = "SystemSettings",
-                TableName = "system_settings",
-                TableSchema = "public",
-                PrimaryKeyColumnName = "setting_id",
-                PrimaryKeyPropertyName = "SettingID",
-                Columns = new List<ColumnMetadataModel>
-                {
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "setting_id",
-                        DbDataType = "integer",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("True"),
-                        PrimaryKeyConstraintName = "system_settings_pkey" == string.Empty ? null : "system_settings_pkey",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "SettingID",
-                        TableName = "system_settings",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "int",
-                            ClrType = typeof(int),
-                            ClrNonNullableTypeName = "int",
-                            ClrNonNullableType = typeof(int),
-                            ClrNullableTypeName = "int?",
-                            ClrNullableType = typeof(int?),
-                            DbDataType = "integer",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("True"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("False"),
-                            Linq2DbDataTypeName = "DataType.Int32",
-                            Linq2DbDataType = DataType.Int32,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Integer",
-                            NpgsqlDbType = NpgsqlDbType.Integer,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "setting_name",
-                        DbDataType = "text",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "SettingName",
-                        TableName = "system_settings",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "string",
-                            ClrType = typeof(string),
-                            ClrNonNullableTypeName = "string",
-                            ClrNonNullableType = typeof(string),
-                            ClrNullableTypeName = "string",
-                            ClrNullableType = typeof(string),
-                            DbDataType = "text",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("False"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.Text",
-                            Linq2DbDataType = DataType.Text,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Text",
-                            NpgsqlDbType = NpgsqlDbType.Text,
-                        },
-                    },
-                    new ColumnMetadataModel
-                    {
-                        ColumnComment = "" == string.Empty ? null : "",
-                        Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
-                        ColumnName = "setting_value",
-                        DbDataType = "jsonb",
-                        IsNullable = bool.Parse("False"),
-                        IsPrimaryKey = bool.Parse("False"),
-                        PrimaryKeyConstraintName = "" == string.Empty ? null : "",
-                        IsForeignKey = bool.Parse("False"),
-                        ForeignKeyConstraintName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceColumnName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceSchemaName = "" == string.Empty ? null : "",
-                        ForeignKeyReferenceTableName = "" == string.Empty ? null : "",
-                        PropertyName = "SettingValue",
-                        TableName = "system_settings",
-                        TableSchema = "public",
-                        PropertyType = new SimpleType
-                        {
-                            ClrTypeName = "string",
-                            ClrType = typeof(string),
-                            ClrNonNullableTypeName = "string",
-                            ClrNonNullableType = typeof(string),
-                            ClrNullableTypeName = "string",
-                            ClrNullableType = typeof(string),
-                            DbDataType = "jsonb",
-                            IsNullable = bool.Parse("False"),
-                            IsClrValueType = bool.Parse("False"),
-                            IsClrNullableType = bool.Parse("False"),
-                            IsClrReferenceType = bool.Parse("True"),
-                            Linq2DbDataTypeName = "DataType.BinaryJson",
-                            Linq2DbDataType = DataType.BinaryJson,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Jsonb",
-                            NpgsqlDbType = NpgsqlDbType.Jsonb,
-                        },
-                    },
-                },
-                NonPkColumnNames = new[]
-                {
-                    "setting_name",
-                    "setting_value",
                 },
             };
 

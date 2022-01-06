@@ -53,7 +53,7 @@ namespace Newsgirl.Server.Tests
                 TestHelper.DateTimeServiceStub
             );
 
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, value}};
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, value } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             AssertAnonymous(authResult);
@@ -72,7 +72,7 @@ namespace Newsgirl.Server.Tests
                 TestHelper.DateTimeServiceStub
             );
 
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, value}};
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, value } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             AssertAnonymous(authResult);
@@ -87,7 +87,7 @@ namespace Newsgirl.Server.Tests
                 TestHelper.DateTimeServiceStub
             );
 
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, "jwt=x"}};
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, "jwt=x" } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             AssertAnonymous(authResult);
@@ -104,8 +104,8 @@ namespace Newsgirl.Server.Tests
                 TestHelper.DateTimeServiceStub
             );
 
-            string jwt = jwtService.EncodeSession(new JwtPayload {SessionID = 0});
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, $"jwt={jwt}"}};
+            string jwt = jwtService.EncodeSession(new JwtPayload { SessionID = 0 });
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, $"jwt={jwt}" } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             AssertAnonymous(authResult);
@@ -133,8 +133,8 @@ namespace Newsgirl.Server.Tests
                 dateTimeService
             );
 
-            string jwt = jwtService.EncodeSession(new JwtPayload {SessionID = 1});
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, $"jwt={jwt}"}};
+            string jwt = jwtService.EncodeSession(new JwtPayload { SessionID = 1 });
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, $"jwt={jwt}" } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             AssertAnonymous(authResult);
@@ -161,8 +161,8 @@ namespace Newsgirl.Server.Tests
                 dateTimeService
             );
 
-            string jwt = jwtService.EncodeSession(new JwtPayload {SessionID = 1});
-            var headers = new HeaderDictionary {{COOKIE_HEADER_NAME, $"jwt={jwt}"}};
+            string jwt = jwtService.EncodeSession(new JwtPayload { SessionID = 1 });
+            var headers = new HeaderDictionary { { COOKIE_HEADER_NAME, $"jwt={jwt}" } };
             var authResult = await authenticationFilter.Authenticate(headers);
 
             Assert.Equal(session.SessionID, authResult.SessionID);
@@ -193,11 +193,11 @@ namespace Newsgirl.Server.Tests
                 dateTimeService
             );
 
-            string jwt = jwtService.EncodeSession(new JwtPayload {SessionID = 1});
+            string jwt = jwtService.EncodeSession(new JwtPayload { SessionID = 1 });
             var headers = new HeaderDictionary
             {
-                {COOKIE_HEADER_NAME, $"jwt={jwt}"},
-                {CSRF_TOKEN_HEADER_NAME, CSRF_TOKEN + "wrong"},
+                { COOKIE_HEADER_NAME, $"jwt={jwt}" },
+                { CSRF_TOKEN_HEADER_NAME, CSRF_TOKEN + "wrong" },
             };
             var authResult = await authenticationFilter.Authenticate(headers);
 
@@ -230,11 +230,11 @@ namespace Newsgirl.Server.Tests
                 dateTimeService
             );
 
-            string jwt = jwtService.EncodeSession(new JwtPayload {SessionID = 1});
+            string jwt = jwtService.EncodeSession(new JwtPayload { SessionID = 1 });
             var headers = new HeaderDictionary
             {
-                {COOKIE_HEADER_NAME, $"jwt={jwt}"},
-                {CSRF_TOKEN_HEADER_NAME, CSRF_TOKEN},
+                { COOKIE_HEADER_NAME, $"jwt={jwt}" },
+                { CSRF_TOKEN_HEADER_NAME, CSRF_TOKEN },
             };
             var authResult = await authenticationFilter.Authenticate(headers);
 
@@ -278,9 +278,9 @@ namespace Newsgirl.Server.Tests
 
         private static JwtServiceImpl CreateJwtService()
         {
-            var pool = new SessionCertificatePool(new SystemSettingsModel
+            var pool = new SessionCertificatePool(new HttpServerAppConfig
             {
-                SessionCertificate = Convert.FromBase64String(SESSION_CERTIFICATE_BASE64),
+                SessionCertificate = SESSION_CERTIFICATE_BASE64,
             });
 
             var jwtService = new JwtServiceImpl(pool, TestHelper.DateTimeServiceStub, new ErrorReporterMock());

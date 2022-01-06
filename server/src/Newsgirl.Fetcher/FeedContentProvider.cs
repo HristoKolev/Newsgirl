@@ -9,15 +9,15 @@ namespace Newsgirl.Fetcher
     {
         private readonly HttpClient httpClient;
 
-        public FeedContentProvider(SystemSettingsModel systemSettings)
+        public FeedContentProvider(FetcherAppConfig appConfig)
         {
             this.httpClient = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(systemSettings.HttpClientRequestTimeout),
+                Timeout = TimeSpan.FromSeconds(appConfig.HttpClientRequestTimeout),
                 DefaultRequestVersion = new Version(2, 0),
             };
 
-            this.httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(systemSettings.HttpClientUserAgent);
+            this.httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(appConfig.HttpClientUserAgent);
         }
 
         public async Task<byte[]> GetFeedContent(FeedPoco feed)

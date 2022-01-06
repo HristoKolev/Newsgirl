@@ -20,8 +20,6 @@
 
         public FetcherAppConfig InjectedAppConfig { get; set; }
 
-        public SystemSettingsModel SystemSettings { get; set; }
-
         public StructuredLogger Log { get; set; }
 
         public ErrorReporter ErrorReporter { get; set; }
@@ -52,33 +50,23 @@
 
             this.IoC = builder.Build();
 
-            var systemSettingsService = this.IoC.Resolve<SystemSettingsService>();
-            this.SystemSettings = await systemSettingsService.ReadSettings<SystemSettingsModel>();
-
-            this.Log = await CreateLogger(
-                this.SystemSettings.FetcherAppLoggingConfig,
-                this.ErrorReporter,
-                this.IoC.Resolve<LogPreprocessor>()
-            );
+            this.Log = await this.CreateLogger();
         }
 
-        private static async Task<StructuredLogger> CreateLogger(
-            FetcherAppLoggingConfig loggingConfig,
-            ErrorReporter errorReporter,
-            EventPreprocessor eventPreprocessor)
+        private async Task<StructuredLogger> CreateLogger()
         {
             var builder = new StructuredLoggerBuilder();
 
             builder.AddEventStream(GeneralLoggingExtensions.GENERAL_EVENT_STREAM, new Dictionary<string, Func<EventDestination<LogData>>>
             {
                 {
-                    "ConsoleConsumer", () => new ConsoleEventDestination(errorReporter)
+                    "ConsoleConsumer", () => new ConsoleEventDestination(this.ErrorReporter)
                 },
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination(
-                        errorReporter,
-                        loggingConfig.Elasticsearch,
-                        loggingConfig.ElkIndexes.GeneralLogIndex
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElkIndexes.GeneralLogIndex
                     )
                 },
             });
@@ -87,16 +75,16 @@
             {
                 {
                     "ElasticsearchConsumer", () => new ElasticsearchEventDestination<FetcherRunData>(
-                        errorReporter,
-                        loggingConfig.Elasticsearch,
-                        loggingConfig.ElkIndexes.FetcherLogIndex
+                        this.ErrorReporter,
+                        this.AppConfig.Logging.Elasticsearch,
+                        this.AppConfig.Logging.ElkIndexes.FetcherLogIndex
                     )
                 },
             });
 
             var log = builder.Build();
 
-            await log.Reconfigure(loggingConfig.StructuredLogger, eventPreprocessor);
+            await log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
 
             return log;
         }
@@ -129,6 +117,11 @@
             {
                 this.ErrorReporter.SetInnerReporter(errorReporter);
             }
+
+            if (this.IoC != null)
+            {
+                await this.Log.Reconfigure(this.AppConfig.Logging.StructuredLogger, this.IoC.Resolve<LogPreprocessor>());
+            }
         }
 
         private async Task ReloadStartupConfig()
@@ -159,7 +152,6 @@
             }
 
             this.AppConfig = null;
-            this.SystemSettings = null;
 
             // ReSharper disable once SuspiciousTypeConversion.Global
             if (this.ErrorReporter is IAsyncDisposable disposableErrorReporter)
@@ -180,7 +172,7 @@
                 this.Log.FetcherLog(() => fetcherRunData);
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(this.SystemSettings.FetcherCyclePause));
+            await Task.Delay(TimeSpan.FromSeconds(this.AppConfig.FetcherCyclePause));
         }
     }
 
@@ -221,6 +213,39 @@
         public string InstanceName { get; set; }
 
         public string Environment { get; set; }
+
+        /// <summary>
+        /// The UserAgent used for http calls to the RSS endpoints.
+        /// </summary>
+        public string HttpClientUserAgent { get; set; }
+
+        /// <summary>
+        /// The timeout for the http calls.
+        /// </summary>
+        public int HttpClientRequestTimeout { get; set; }
+
+        /// <summary>
+        /// The pause between fetch cycles.
+        /// </summary>
+        public int FetcherCyclePause { get; set; }
+
+        public FetcherAppLoggingConfig Logging { get; set; }
+    }
+
+    public class FetcherAppLoggingConfig
+    {
+        public EventStreamConfig[] StructuredLogger { get; set; }
+
+        public ElasticsearchConfig Elasticsearch { get; set; }
+
+        public FetcherAppElkIndexConfig ElkIndexes { get; set; }
+    }
+    
+    public class FetcherAppElkIndexConfig
+    {
+        public string GeneralLogIndex { get; set; }
+
+        public string FetcherLogIndex { get; set; }
     }
 
     public class FetcherIoCModule : Module
@@ -235,9 +260,9 @@
         protected override void Load(ContainerBuilder builder)
         {
             // Globally managed
-            builder.Register((_, _) => this.app.SystemSettings).ExternallyOwned();
             builder.Register((_, _) => this.app.ErrorReporter).As<ErrorReporter>().ExternallyOwned();
             builder.Register((_, _) => this.app.Log).As<Log>().ExternallyOwned();
+            builder.Register((_, _) => this.app.AppConfig).ExternallyOwned();
 
             // Single instance
             builder.RegisterType<FeedContentProvider>().As<IFeedContentProvider>().InstancePerLifetimeScope();
@@ -281,7 +306,7 @@
 
             async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
             {
-                await app.ErrorReporter.Error((Exception) e.ExceptionObject);
+                await app.ErrorReporter.Error((Exception)e.ExceptionObject);
             }
 
             try

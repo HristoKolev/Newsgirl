@@ -60,7 +60,6 @@ namespace Newsgirl.Fetcher.Tests
             Assert.Null(app.AppConfig);
             Assert.Null(app.ErrorReporter);
             Assert.Null(app.IoC);
-            Assert.Null(app.SystemSettings);
 
             app.ErrorReporter = new ErrorReporterMock();
 
@@ -75,7 +74,6 @@ namespace Newsgirl.Fetcher.Tests
             Assert.NotNull(app.AppConfig);
             Assert.NotNull(app.ErrorReporter);
             Assert.NotNull(app.IoC);
-            Assert.NotNull(app.SystemSettings);
 
             tester.App = app;
 
@@ -100,7 +98,6 @@ namespace Newsgirl.Fetcher.Tests
             Assert.Null(this.App.AppConfig);
             Assert.Null(this.App.ErrorReporter);
             Assert.Null(this.App.IoC);
-            Assert.Null(this.App.SystemSettings);
 
             TaskScheduler.UnobservedTaskException -= this.OnUnobservedTaskException;
             AppDomain.CurrentDomain.UnhandledException -= this.OnUnhandledException;

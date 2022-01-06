@@ -91,7 +91,6 @@ namespace Newsgirl.Server.Tests
             Assert.Null(app.ErrorReporter);
             Assert.Null(app.IoC);
             Assert.Null(app.RpcEngine);
-            Assert.Null(app.SystemSettings);
             Assert.Null(app.SessionCertificatePool);
             Assert.False(app.Started);
 
@@ -109,7 +108,6 @@ namespace Newsgirl.Server.Tests
             Assert.NotNull(app.ErrorReporter);
             Assert.NotNull(app.IoC);
             Assert.NotNull(app.RpcEngine);
-            Assert.NotNull(app.SystemSettings);
             Assert.NotNull(app.SessionCertificatePool);
             Assert.True(app.Started);
 
@@ -137,7 +135,6 @@ namespace Newsgirl.Server.Tests
             Assert.Null(this.App.ErrorReporter);
             Assert.Null(this.App.IoC);
             Assert.Null(this.App.RpcEngine);
-            Assert.Null(this.App.SystemSettings);
             Assert.Null(this.App.SessionCertificatePool);
             Assert.False(this.App.Started);
 

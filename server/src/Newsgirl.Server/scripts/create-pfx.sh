@@ -23,4 +23,4 @@ openssl pkcs12 -export -out /tmp/certificate.pfx -inkey /tmp/private_key.key -in
 rm /tmp/private_key.key /tmp/public_key.pub /tmp/certificate.crt
 
 # Move the .pfx file where we need it.
-mv /tmp/certificate.pfx $OUT_PATH
+mv /tmp/certificate.pfx "$OUT_PATH"
