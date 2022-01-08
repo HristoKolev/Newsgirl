@@ -50,7 +50,7 @@ namespace Newsgirl.Fetcher
             fetcherRunData.ChangedFeedCount = updates.Length;
             fetcherRunData.ChangedFeedItemCount = updates.SelectMany(x => x.NewItems).Count();
             fetcherRunData.EndTime = this.dateTimeService.CurrentTime();
-            fetcherRunData.Duration = (long) (fetcherRunData.EndTime - fetcherRunData.StartTime).TotalMilliseconds;
+            fetcherRunData.Duration = (long)(fetcherRunData.EndTime - fetcherRunData.StartTime).TotalMilliseconds;
 
             return fetcherRunData;
         }
@@ -166,11 +166,11 @@ namespace Newsgirl.Fetcher
             {
                 await this.errorReporter.Error(err, new Dictionary<string, object>
                 {
-                    {"feed", feed},
-                    {"feedContent", feedContent == null ? null : Convert.ToBase64String(feedContent, 0, feedContent.Length)},
-                    {"feedContentHash", feedContentHash},
-                    {"feedContentString", feedContentString},
-                    {"parsedFeed", parsedFeed},
+                    { "feed", feed },
+                    { "feedContent", feedContent == null ? null : Convert.ToBase64String(feedContent, 0, feedContent.Length) },
+                    { "feedContentHash", feedContentHash },
+                    { "feedContentString", feedContentString },
+                    { "parsedFeed", parsedFeed },
                 });
 
                 return null;

@@ -23,7 +23,7 @@ namespace Newsgirl.Server.Tests
 
             var authResult = AuthResult.Anonymous;
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -43,7 +43,7 @@ namespace Newsgirl.Server.Tests
 
             var authResult = AuthResult.Anonymous;
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -69,7 +69,7 @@ namespace Newsgirl.Server.Tests
                 ValidCsrfToken = true,
             };
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -95,7 +95,7 @@ namespace Newsgirl.Server.Tests
                 ValidCsrfToken = false,
             };
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -115,7 +115,7 @@ namespace Newsgirl.Server.Tests
 
             var authResult = AuthResult.Anonymous;
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -141,7 +141,7 @@ namespace Newsgirl.Server.Tests
                 ValidCsrfToken = true,
             };
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
@@ -167,13 +167,13 @@ namespace Newsgirl.Server.Tests
                 ValidCsrfToken = true,
             };
 
-            var instanceProvider = GetInstanceProvider(new HttpRequestState {AuthResult = authResult});
+            var instanceProvider = GetInstanceProvider(new HttpRequestState { AuthResult = authResult });
 
             var result = await rpcEngine.Execute(requestMessage, instanceProvider);
 
             Assert.True(result.IsOk);
 
-            var response = (TestHandler.PrivateWithAuthParameterResponse) result.Payload;
+            var response = (TestHandler.PrivateWithAuthParameterResponse)result.Payload;
 
             Assert.Equal(authResult, response.AuthResult);
         }
@@ -182,9 +182,9 @@ namespace Newsgirl.Server.Tests
         {
             return new RpcEngine(new RpcEngineOptions
             {
-                PotentialHandlerTypes = new[] {typeof(TestHandler)},
-                MiddlewareTypes = new[] {typeof(RpcAuthorizationMiddleware)},
-                ParameterTypeWhitelist = new[] {typeof(AuthResult)},
+                PotentialHandlerTypes = new[] { typeof(TestHandler) },
+                MiddlewareTypes = new[] { typeof(RpcAuthorizationMiddleware) },
+                ParameterTypeWhitelist = new[] { typeof(AuthResult) },
             });
         }
 

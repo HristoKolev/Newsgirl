@@ -87,7 +87,7 @@ namespace Newsgirl.Fetcher.Tests
 
         private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            await this.App.ErrorReporter.Error((Exception) e.ExceptionObject);
+            await this.App.ErrorReporter.Error((Exception)e.ExceptionObject);
         }
 
         public async ValueTask DisposeAsync()

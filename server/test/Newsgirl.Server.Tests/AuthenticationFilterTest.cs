@@ -1,6 +1,5 @@
 namespace Newsgirl.Server.Tests
 {
-    using System;
     using System.Threading.Tasks;
     using Http;
     using Microsoft.AspNetCore.Http;

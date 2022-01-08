@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <OutputType>Exe</OutputType>
 
@@ -12,15 +12,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj" />
+    <ProjectReference Include="..\Newsgirl.Testing\Newsgirl.Testing.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="snapshots" />
+    <Folder Include="snapshots"/>
   </ItemGroup>
 </Project>

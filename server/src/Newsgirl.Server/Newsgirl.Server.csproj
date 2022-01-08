@@ -6,7 +6,7 @@
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <Version>1.0.0</Version>
 
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <OutputType>Exe</OutputType>
 
@@ -17,10 +17,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
+    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="newsgirl-server.json" />
+    <None Include="newsgirl-server.json"/>
   </ItemGroup>
 </Project>

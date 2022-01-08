@@ -18,13 +18,13 @@ namespace Newsgirl.Fetcher.Tests
             var feeds = new[]
             {
                 // This one will be ignored because of matching FeedContentHash.
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 0, FeedContentHash = -8357694656887908712},
+                new FeedPoco { FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 0, FeedContentHash = -8357694656887908712 },
 
                 // This one will be ignored because of matching FeedItemsHash.
-                new FeedPoco {FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 1864173257939033016, FeedContentHash = 0},
+                new FeedPoco { FeedUrl = "fetcher-2.xml", FeedID = 2, FeedItemsHash = 1864173257939033016, FeedContentHash = 0 },
 
                 // This one will be processed.
-                new FeedPoco {FeedUrl = "fetcher-3.xml", FeedID = 3},
+                new FeedPoco { FeedUrl = "fetcher-3.xml", FeedID = 3 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -58,7 +58,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new[]
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123},
+                new FeedPoco { FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -90,7 +90,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new[]
             {
-                new FeedPoco {FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123},
+                new FeedPoco { FeedUrl = "fetcher-1.xml", FeedID = 1, FeedItemsHash = 351563459839931092, FeedContentHash = 123 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();
@@ -120,7 +120,7 @@ namespace Newsgirl.Fetcher.Tests
         {
             var feeds = new[]
             {
-                new FeedPoco {FeedItemsHash = 0, FeedContentHash = 0},
+                new FeedPoco { FeedItemsHash = 0, FeedContentHash = 0 },
             };
 
             var importService = Substitute.For<IFeedItemsImportService>();

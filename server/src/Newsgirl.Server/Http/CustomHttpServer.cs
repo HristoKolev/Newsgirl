@@ -107,7 +107,7 @@ namespace Newsgirl.Server.Http
             await this.host.StopAsync();
 
             // ReSharper disable once SuspiciousTypeConversion.Global
-            var asyncDisposable = (IAsyncDisposable) this.host;
+            var asyncDisposable = (IAsyncDisposable)this.host;
             await asyncDisposable.DisposeAsync();
             this.host = null;
 
@@ -247,7 +247,7 @@ namespace Newsgirl.Server.Http
                     Fingerprint = "HTTP_FAILED_TO_DECODE_UTF8_REQUEST_BODY",
                     Details =
                     {
-                        {"requestBodyBytes", Convert.ToBase64String(requestContent.Memory.Span)},
+                        { "requestBodyBytes", Convert.ToBase64String(requestContent.Memory.Span) },
                     },
                 };
             }
@@ -262,7 +262,7 @@ namespace Newsgirl.Server.Http
         {
             if (request.ContentLength.HasValue)
             {
-                var memoryOwner = MemoryOwner<byte>.Allocate((int) request.ContentLength.Value);
+                var memoryOwner = MemoryOwner<byte>.Allocate((int)request.ContentLength.Value);
 
                 try
                 {
@@ -284,7 +284,7 @@ namespace Newsgirl.Server.Http
                         Fingerprint = "HTTP_FAILED_TO_READ_REQUEST_BODY",
                         Details =
                         {
-                            {"contentLength", request.ContentLength.Value},
+                            { "contentLength", request.ContentLength.Value },
                         },
                     };
                 }

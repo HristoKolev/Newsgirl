@@ -45,7 +45,7 @@ namespace Newsgirl.Shared.Logging
                 {
                     Details =
                     {
-                        {"eventStreamName", eventStreamName},
+                        { "eventStreamName", eventStreamName },
                     },
                 };
             }
@@ -224,7 +224,7 @@ namespace Newsgirl.Shared.Logging
             {
                 for (int i = 0; i < destinationsArray.Length; i++)
                 {
-                    var destination = (EventDestination) destinationsArray[i];
+                    var destination = (EventDestination)destinationsArray[i];
 
                     disposeTasks.Add(destination.Stop());
                 }
@@ -253,7 +253,7 @@ namespace Newsgirl.Shared.Logging
 
             var type = typeBuilder.CreateType();
 
-            var instance = (EventDestinationCollection) Activator.CreateInstance(type!);
+            var instance = (EventDestinationCollection)Activator.CreateInstance(type!);
 
             foreach (var (eventStreamName, destinationArray) in destinationsByEventStreamName)
             {
@@ -525,8 +525,8 @@ namespace Newsgirl.Shared.Logging
                             {
                                 await this.errorReporter.Error(exception, "STRUCTURED_LOGGER_FAILED_TO_FLUSH", new Dictionary<string, object>
                                 {
-                                    {"EventDestinationType", this.GetType().FullName},
-                                    {"EventDataType", typeof(TEventData).FullName},
+                                    { "EventDestinationType", this.GetType().FullName },
+                                    { "EventDataType", typeof(TEventData).FullName },
                                 });
 
                                 await Task.Delay(this.TimeBetweenRetries);
@@ -543,8 +543,8 @@ namespace Newsgirl.Shared.Logging
                 {
                     await this.errorReporter.Error(exception, "STRUCTURED_LOGGER_CRITICAL_ERROR", new Dictionary<string, object>
                     {
-                        {"EventDestinationType", this.GetType().FullName},
-                        {"EventDataType", typeof(TEventData).FullName},
+                        { "EventDestinationType", this.GetType().FullName },
+                        { "EventDataType", typeof(TEventData).FullName },
                     });
 
                     await Task.Delay(this.TimeBetweenMainLoopRestart);

@@ -60,7 +60,7 @@ namespace Newsgirl.Shared.Tests
 
             string eventID = await reporter.Error(testException, new Dictionary<string, object>
             {
-                {"testkey", "testvalue"},
+                { "testkey", "testvalue" },
             });
 
             await AssertEventSentToServer(eventID);
@@ -82,7 +82,7 @@ namespace Newsgirl.Shared.Tests
             {
                 string eventID = await reporter.Error(exception, "TESTING_FINGERPRINT", new Dictionary<string, object>
                 {
-                    {"test_key", "test_value"},
+                    { "test_key", "test_value" },
                 });
 
                 await AssertEventSentToServer(eventID);
@@ -105,7 +105,7 @@ namespace Newsgirl.Shared.Tests
 
                 return new Dictionary<string, object>
                 {
-                    {"test_hook_key", "test_hook_value"},
+                    { "test_hook_key", "test_hook_value" },
                 };
             });
 
@@ -117,7 +117,7 @@ namespace Newsgirl.Shared.Tests
             {
                 await reporter.Error(exception, "TESTING_FINGERPRINT", new Dictionary<string, object>
                 {
-                    {"test_key", "test_value"},
+                    { "test_key", "test_value" },
                 });
             }
 
@@ -142,7 +142,7 @@ namespace Newsgirl.Shared.Tests
             {
                 string eventID = await reporter.Error(exception, new Dictionary<string, object>
                 {
-                    {"test_key", "test_value"},
+                    { "test_key", "test_value" },
                 });
 
                 string eventJson = await GetServerEvent(eventID);
@@ -155,7 +155,7 @@ namespace Newsgirl.Shared.Tests
                     .Select(x => x.GetString())
                     .ToArray();
 
-                AssertExt.SequentialEqual(new[] {Md5(TESTING_FINGERPRINT)}, fingerprint);
+                AssertExt.SequentialEqual(new[] { Md5(TESTING_FINGERPRINT) }, fingerprint);
             }
         }
 
@@ -223,7 +223,7 @@ namespace Newsgirl.Shared.Tests
         [MethodImpl(MethodImplOptions.NoInlining)]
         protected static void ThrowException(string fingerprint = null)
         {
-            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.") {Fingerprint = fingerprint};
+            throw new DetailedException($"Testing {nameof(ErrorReporterImpl)}.") { Fingerprint = fingerprint };
         }
     }
 }

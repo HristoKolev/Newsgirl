@@ -26,7 +26,7 @@ namespace Newsgirl.Benchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.tempInstance = new MyClass {vvv1 = new string('x', 100_000)};
+            this.tempInstance = new MyClass { vvv1 = new string('x', 100_000) };
         }
 
         [GlobalCleanup]

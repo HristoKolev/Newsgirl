@@ -17,32 +17,32 @@ namespace Newsgirl.Shared
 
         public static Result<T> Ok<T>(T payload)
         {
-            return new Result<T> {Payload = payload};
+            return new Result<T> { Payload = payload };
         }
 
         public static Result<T> Ok<T>()
         {
-            return new Result<T> {Payload = default};
+            return new Result<T> { Payload = default };
         }
 
         public static Result<T> Error<T>(string message)
         {
-            return new Result<T> {ErrorMessages = new[] {message}};
+            return new Result<T> { ErrorMessages = new[] { message } };
         }
 
         public static Result<T> Error<T>(string[] errorMessages)
         {
-            return new Result<T> {ErrorMessages = errorMessages};
+            return new Result<T> { ErrorMessages = errorMessages };
         }
 
         public static Result Error(string message)
         {
-            return new Result {ErrorMessages = new[] {message}};
+            return new Result { ErrorMessages = new[] { message } };
         }
 
         public static Result Error(string[] errorMessages)
         {
-            return new Result {ErrorMessages = errorMessages};
+            return new Result { ErrorMessages = errorMessages };
         }
 
         public virtual Result<object> ToGeneralForm()

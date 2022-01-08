@@ -798,7 +798,7 @@ namespace Newsgirl.Shared.Postgres
         {
             static TableMetadataModel ValueFactory(Type type)
             {
-                return (TableMetadataModel) type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static)!
+                return (TableMetadataModel)type.GetProperty("Metadata", BindingFlags.Public | BindingFlags.Static)!
                     .GetValue(null);
             }
 

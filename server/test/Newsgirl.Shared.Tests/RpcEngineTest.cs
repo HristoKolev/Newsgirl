@@ -481,7 +481,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Single(metadata.SupplementalAttributes);
 
-            var attribute = (TestSupplementalAttribute) metadata.SupplementalAttributes.Single().Value;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
 
             Assert.Equal(123, attribute.Value);
         }
@@ -512,7 +512,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Single(metadata.SupplementalAttributes);
 
-            var attribute = (TestSupplementalAttribute) metadata.SupplementalAttributes.Single().Value;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
 
             Assert.Equal(456, attribute.Value);
         }
@@ -543,7 +543,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Single(metadata.SupplementalAttributes);
 
-            var attribute = (TestSupplementalAttribute) metadata.SupplementalAttributes.Single().Value;
+            var attribute = (TestSupplementalAttribute)metadata.SupplementalAttributes.Single().Value;
 
             Assert.Equal(456, attribute.Value);
         }
@@ -747,7 +747,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.Equal(result.Payload, ExecutorTestHandler.Response);
 
-            var payload = (ExecutorTestResponse) result.Payload;
+            var payload = (ExecutorTestResponse)result.Payload;
 
             Assert.Equal(43, payload.Number);
         }
@@ -927,7 +927,7 @@ namespace Newsgirl.Shared.Tests
         {
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                var request = (MiddlewareTestRequest) context.RequestMessage.Payload;
+                var request = (MiddlewareTestRequest)context.RequestMessage.Payload;
 
                 request.Trace.Add(this.GetType().Name + "_Before");
 
@@ -941,7 +941,7 @@ namespace Newsgirl.Shared.Tests
         {
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                var request = (MiddlewareTestRequest) context.RequestMessage.Payload;
+                var request = (MiddlewareTestRequest)context.RequestMessage.Payload;
 
                 request.Trace.Add(this.GetType().Name + "_Before");
 
@@ -955,7 +955,7 @@ namespace Newsgirl.Shared.Tests
         {
             public async Task Run(RpcContext context, InstanceProvider instanceProvider, RpcRequestDelegate next)
             {
-                var request = (MiddlewareTestRequest) context.RequestMessage.Payload;
+                var request = (MiddlewareTestRequest)context.RequestMessage.Payload;
 
                 request.Trace.Add(this.GetType().Name + "_Before");
 
@@ -1186,7 +1186,7 @@ namespace Newsgirl.Shared.Tests
 
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
-            var response = (ExecutorTestResponse) result.Payload;
+            var response = (ExecutorTestResponse)result.Payload;
 
             Assert.Equal(123, response.Number);
         }
@@ -1222,7 +1222,7 @@ namespace Newsgirl.Shared.Tests
 
             var result = await rpcEngine.Execute(rpcRequestMessage, GetDefaultInstanceProvider());
 
-            var response = (ExecutorTestResponse) result.Payload;
+            var response = (ExecutorTestResponse)result.Payload;
 
             Assert.Equal(123, response.Number);
         }

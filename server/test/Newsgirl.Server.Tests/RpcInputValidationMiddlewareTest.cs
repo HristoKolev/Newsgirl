@@ -50,7 +50,7 @@ namespace Newsgirl.Server.Tests
 
             Assert.True(result.IsOk);
 
-            var response = (TestHandler.TestResponse) result.Payload;
+            var response = (TestHandler.TestResponse)result.Payload;
 
             Assert.Equal(2, response.Number);
         }
@@ -83,8 +83,8 @@ namespace Newsgirl.Server.Tests
         {
             return new RpcEngine(new RpcEngineOptions
             {
-                PotentialHandlerTypes = new[] {typeof(TestHandler)},
-                MiddlewareTypes = new[] {typeof(RpcInputValidationMiddleware)},
+                PotentialHandlerTypes = new[] { typeof(TestHandler) },
+                MiddlewareTypes = new[] { typeof(RpcInputValidationMiddleware) },
             });
         }
 

@@ -13,20 +13,17 @@ namespace Newsgirl.Shared
     {
         public string GenerateSecureString(int length)
         {
-            using (var rngCryptoServiceProvider = new RNGCryptoServiceProvider())
-            {
-                var buffer = ArrayPool<byte>.Shared.Rent(length);
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
 
-                try
-                {
-                    rngCryptoServiceProvider.GetBytes(buffer, 0, length);
-                    string base64 = Convert.ToBase64String(buffer, 0, length);
-                    return base64[..length].Replace('+', '-').Replace('/', '_');
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(buffer);
-                }
+            try
+            {
+                RandomNumberGenerator.Fill(new Span<byte>(buffer, 0, length));
+                string base64 = Convert.ToBase64String(buffer, 0, length);
+                return base64[..length].Replace('+', '-').Replace('/', '_');
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
     }

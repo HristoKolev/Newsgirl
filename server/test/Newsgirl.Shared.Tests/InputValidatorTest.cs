@@ -55,7 +55,7 @@ namespace Newsgirl.Shared.Tests
 
             Assert.False(result.IsOk);
 
-            var expectedMessages = new[] {"__OuterNumber__", "__InnerNumber__"};
+            var expectedMessages = new[] { "__OuterNumber__", "__InnerNumber__" };
 
             AssertExt.SequentialEqual(expectedMessages, result.ErrorMessages);
         }

@@ -1,3 +1,3 @@
 {
-  "TestMasterConnectionString": "Server=xdxd-db-playground;Port=6000;Database=postgres;Uid=postgres;Pwd=b24e5316-633f-11ec-8d06-4333ded519b5;"
+  "TestMasterConnectionString": "Server=xdxd-db-playground;Port=6001;Database=postgres;Uid=postgres;Pwd=b24e5316-633f-11ec-8d06-4333ded519b5;"
 }

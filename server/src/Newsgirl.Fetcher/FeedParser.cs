@@ -22,7 +22,7 @@ namespace Newsgirl.Fetcher
         {
             var materializedFeed = FeedReader.ReadFromString(feedContent);
 
-            var feedItems = (List<FeedItem>) materializedFeed.Items;
+            var feedItems = (List<FeedItem>)materializedFeed.Items;
 
             var parsedFeed = new ParsedFeed(feedItems.Count);
 
@@ -38,7 +38,7 @@ namespace Newsgirl.Fetcher
                     {
                         this.log.General(() => new LogData("Cannot ID feed item.")
                         {
-                            {"feedItemJson", JsonHelper.Serialize(feedItem)},
+                            { "feedItemJson", JsonHelper.Serialize(feedItem) },
                         });
 
                         continue;
@@ -52,7 +52,7 @@ namespace Newsgirl.Fetcher
                     {
                         this.log.General(() => new LogData("Feed item already added.")
                         {
-                            {"stringID", feedItemStringID},
+                            { "stringID", feedItemStringID },
                         });
 
                         continue;

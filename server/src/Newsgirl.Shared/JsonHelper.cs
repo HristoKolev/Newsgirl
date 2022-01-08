@@ -91,11 +91,11 @@ namespace Newsgirl.Shared
                 {
                     Details =
                     {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                        {"inputJson", json},
-                        {"outputType", returnType.FullName},
+                        { "bytePositionInLine", bytePositionInLine },
+                        { "lineNumber", lineNumber },
+                        { "jsonPath", jsonPath },
+                        { "inputJson", json },
+                        { "outputType", returnType.FullName },
                     },
                 };
             }
@@ -129,11 +129,11 @@ namespace Newsgirl.Shared
                 {
                     Details =
                     {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                        {"inputJson", json},
-                        {"outputType", typeof(T).FullName},
+                        { "bytePositionInLine", bytePositionInLine },
+                        { "lineNumber", lineNumber },
+                        { "jsonPath", jsonPath },
+                        { "inputJson", json },
+                        { "outputType", typeof(T).FullName },
                     },
                 };
             }
@@ -172,11 +172,11 @@ namespace Newsgirl.Shared
                 {
                     Details =
                     {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                        {"base64Data", Convert.ToBase64String(utf8Bytes)},
-                        {"outputType", returnType.FullName},
+                        { "bytePositionInLine", bytePositionInLine },
+                        { "lineNumber", lineNumber },
+                        { "jsonPath", jsonPath },
+                        { "base64Data", Convert.ToBase64String(utf8Bytes) },
+                        { "outputType", returnType.FullName },
                     },
                 };
             }
@@ -210,11 +210,11 @@ namespace Newsgirl.Shared
                 {
                     Details =
                     {
-                        {"bytePositionInLine", bytePositionInLine},
-                        {"lineNumber", lineNumber},
-                        {"jsonPath", jsonPath},
-                        {"base64Data", Convert.ToBase64String(utf8Bytes)},
-                        {"outputType", typeof(T).FullName},
+                        { "bytePositionInLine", bytePositionInLine },
+                        { "lineNumber", lineNumber },
+                        { "jsonPath", jsonPath },
+                        { "base64Data", Convert.ToBase64String(utf8Bytes) },
+                        { "outputType", typeof(T).FullName },
                     },
                 };
             }

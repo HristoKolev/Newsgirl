@@ -193,7 +193,7 @@ namespace Newsgirl.Testing
     {
         public Task<DbTransaction> BeginTransaction()
         {
-            return Task.FromResult((DbTransaction) new DbTransactionStub());
+            return Task.FromResult((DbTransaction)new DbTransactionStub());
         }
 
         public void Dispose() { }
@@ -936,7 +936,7 @@ namespace Newsgirl.Testing
 
             if (!this.Logs.ContainsKey(eventStreamName))
             {
-                this.Logs.Add(eventStreamName, new List<object> {item});
+                this.Logs.Add(eventStreamName, new List<object> { item });
             }
             else
             {
@@ -970,18 +970,18 @@ namespace Newsgirl.Testing
     {
         private static readonly object[][] Data =
         {
-            new object[] {null},
-            new object[] {""},
-            new object[] {" "},
-            new object[] {"  "},
-            new object[] {"\t"},
-            new object[] {"\r"},
-            new object[] {"\n"},
+            new object[] { null },
+            new object[] { "" },
+            new object[] { " " },
+            new object[] { "  " },
+            new object[] { "\t" },
+            new object[] { "\r" },
+            new object[] { "\n" },
         };
 
         public IEnumerator<object[]> GetEnumerator()
         {
-            return ((IEnumerable<object[]>) Data).GetEnumerator();
+            return ((IEnumerable<object[]>)Data).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

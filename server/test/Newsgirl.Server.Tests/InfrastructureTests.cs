@@ -54,7 +54,7 @@ namespace Newsgirl.Server.Tests
 
                 int responseNum = int.Parse(responseString);
 
-                Assert.Equal(200, (int) response.StatusCode);
+                Assert.Equal(200, (int)response.StatusCode);
                 Assert.Equal(43, responseNum);
             }
         }
@@ -74,7 +74,7 @@ namespace Newsgirl.Server.Tests
 
             for (int i = 0; i < 10; i++)
             {
-                await server.Start(Handler, new[] {"http://127.0.0.1:0"});
+                await server.Start(Handler, new[] { "http://127.0.0.1:0" });
                 await server.Stop();
             }
         }
@@ -313,7 +313,7 @@ namespace Newsgirl.Server.Tests
 
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = (byte) random.Next(0, byte.MaxValue + 1);
+                    array[i] = (byte)random.Next(0, byte.MaxValue + 1);
                 }
 
                 return array;
@@ -630,7 +630,7 @@ namespace Newsgirl.Server.Tests
 
             public T Get<T>()
             {
-                return (T) this.Get(typeof(T));
+                return (T)this.Get(typeof(T));
             }
         }
     }

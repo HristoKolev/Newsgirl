@@ -18,7 +18,7 @@ namespace Newsgirl.Fetcher.Tests
 
             var parsedFeed = parser.Parse(feedContent, 1);
 
-            Snapshot.Match(parsedFeed, new[] {resourceName});
+            Snapshot.Match(parsedFeed, new[] { resourceName });
         }
     }
 }

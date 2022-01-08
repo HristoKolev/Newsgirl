@@ -123,7 +123,7 @@ namespace Newsgirl.Server.Tests
 
         private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            await this.App.ErrorReporter.Error((Exception) e.ExceptionObject);
+            await this.App.ErrorReporter.Error((Exception)e.ExceptionObject);
         }
 
         public async ValueTask DisposeAsync()
@@ -171,7 +171,7 @@ namespace Newsgirl.Server.Tests
             var response = await this.httpClient.SendAsync(new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
-                Headers = {{CSRF_TOKEN_HEADER, this.CsrfToken}},
+                Headers = { { CSRF_TOKEN_HEADER, this.CsrfToken } },
                 RequestUri = new Uri("/rpc/" + request.GetType().Name, UriKind.Relative),
                 Content = new StringContent(
                     JsonHelper.Serialize(request),
@@ -233,7 +233,7 @@ namespace Newsgirl.Server.Tests
                         Details =
                         {
                             // ReSharper disable once PossibleMultipleEnumeration
-                            {"headers", headers},
+                            { "headers", headers },
                         },
                     };
                 }
@@ -343,7 +343,7 @@ namespace Newsgirl.Server.Tests
 
             var server = new CustomHttpServerImpl();
 
-            await server.Start(Handler, new[] {"http://127.0.0.1:0"});
+            await server.Start(Handler, new[] { "http://127.0.0.1:0" });
 
             var client = new HttpClient
             {

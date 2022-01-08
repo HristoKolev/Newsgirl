@@ -28,27 +28,27 @@ namespace Newsgirl.Shared.Postgres
         /// </summary>
         private static readonly Dictionary<Type, NpgsqlDbType> DefaultNpgsqlDbTypeMap = new Dictionary<Type, NpgsqlDbType>
         {
-            {typeof(int), NpgsqlDbType.Integer},
-            {typeof(long), NpgsqlDbType.Bigint},
-            {typeof(bool), NpgsqlDbType.Boolean},
-            {typeof(float), NpgsqlDbType.Real},
-            {typeof(double), NpgsqlDbType.Double},
-            {typeof(short), NpgsqlDbType.Smallint},
-            {typeof(decimal), NpgsqlDbType.Numeric},
-            {typeof(string), NpgsqlDbType.Text},
-            {typeof(DateTime), NpgsqlDbType.Timestamp},
-            {typeof(byte[]), NpgsqlDbType.Bytea},
-            {typeof(int?), NpgsqlDbType.Integer},
-            {typeof(long?), NpgsqlDbType.Bigint},
-            {typeof(bool?), NpgsqlDbType.Boolean},
-            {typeof(float?), NpgsqlDbType.Real},
-            {typeof(double?), NpgsqlDbType.Double},
-            {typeof(short?), NpgsqlDbType.Smallint},
-            {typeof(decimal?), NpgsqlDbType.Numeric},
-            {typeof(DateTime?), NpgsqlDbType.Timestamp},
-            {typeof(string[]), NpgsqlDbType.Array | NpgsqlDbType.Text},
-            {typeof(int[]), NpgsqlDbType.Array | NpgsqlDbType.Integer},
-            {typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp},
+            { typeof(int), NpgsqlDbType.Integer },
+            { typeof(long), NpgsqlDbType.Bigint },
+            { typeof(bool), NpgsqlDbType.Boolean },
+            { typeof(float), NpgsqlDbType.Real },
+            { typeof(double), NpgsqlDbType.Double },
+            { typeof(short), NpgsqlDbType.Smallint },
+            { typeof(decimal), NpgsqlDbType.Numeric },
+            { typeof(string), NpgsqlDbType.Text },
+            { typeof(DateTime), NpgsqlDbType.Timestamp },
+            { typeof(byte[]), NpgsqlDbType.Bytea },
+            { typeof(int?), NpgsqlDbType.Integer },
+            { typeof(long?), NpgsqlDbType.Bigint },
+            { typeof(bool?), NpgsqlDbType.Boolean },
+            { typeof(float?), NpgsqlDbType.Real },
+            { typeof(double?), NpgsqlDbType.Double },
+            { typeof(short?), NpgsqlDbType.Smallint },
+            { typeof(decimal?), NpgsqlDbType.Numeric },
+            { typeof(DateTime?), NpgsqlDbType.Timestamp },
+            { typeof(string[]), NpgsqlDbType.Array | NpgsqlDbType.Text },
+            { typeof(int[]), NpgsqlDbType.Array | NpgsqlDbType.Integer },
+            { typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp },
         };
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace Newsgirl.Shared.Postgres
                     }
                 }
 
-                return (T) value;
+                return (T)value;
             }
         }
 
@@ -455,7 +455,7 @@ namespace Newsgirl.Shared.Postgres
 
                 foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.SetMethod != null))
                 {
-                    var builder = new DynamicMethod($"{property.Name}_setter", typeof(void), new[] {typeof(T), typeof(object)});
+                    var builder = new DynamicMethod($"{property.Name}_setter", typeof(void), new[] { typeof(T), typeof(object) });
                     var il = builder.GetILGenerator();
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldarg_1);
@@ -477,7 +477,7 @@ namespace Newsgirl.Shared.Postgres
                 return result;
             }
 
-            return (Dictionary<string, Action<T, object>>) SettersCache.GetOrAdd(typeof(T), ValueFactory);
+            return (Dictionary<string, Action<T, object>>)SettersCache.GetOrAdd(typeof(T), ValueFactory);
         }
 
         /// <summary>
@@ -493,7 +493,7 @@ namespace Newsgirl.Shared.Postgres
 
                 foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.GetMethod != null))
                 {
-                    var builder = new DynamicMethod($"{property.Name}_getter", typeof(object), new[] {typeof(T)});
+                    var builder = new DynamicMethod($"{property.Name}_getter", typeof(object), new[] { typeof(T) });
                     var il = builder.GetILGenerator();
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Call, property!.GetMethod!);
@@ -515,7 +515,7 @@ namespace Newsgirl.Shared.Postgres
                 return result;
             }
 
-            return (Dictionary<string, Func<T, object>>) GettersCache.GetOrAdd(typeof(T), ValueFactory);
+            return (Dictionary<string, Func<T, object>>)GettersCache.GetOrAdd(typeof(T), ValueFactory);
         }
 
         /// <summary>

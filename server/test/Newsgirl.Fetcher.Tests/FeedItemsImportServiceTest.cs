@@ -107,7 +107,7 @@ namespace Newsgirl.Fetcher.Tests
             var resultFeeds = this.Db.Poco.Feeds.OrderByDescending(x => x.FeedID).ToList();
             var resultFeedItems = this.Db.Poco.FeedItems.OrderByDescending(x => x.FeedItemID).ToList();
 
-            Snapshot.Match(new {resultFeeds, resultFeedItems});
+            Snapshot.Match(new { resultFeeds, resultFeedItems });
         }
 
         [Fact]

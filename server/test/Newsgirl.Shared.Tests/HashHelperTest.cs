@@ -8,7 +8,7 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public void Bytes_Overload_Returns_Correct_Result()
         {
-            var bytes = Enumerable.Range(0, 8).Select(x => (byte) x).ToArray();
+            var bytes = Enumerable.Range(0, 8).Select(x => (byte)x).ToArray();
 
             long value = HashHelper.ComputeXx64Hash(bytes);
 

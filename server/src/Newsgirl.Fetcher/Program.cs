@@ -240,7 +240,7 @@
 
         public FetcherAppElkIndexConfig ElkIndexes { get; set; }
     }
-    
+
     public class FetcherAppElkIndexConfig
     {
         public string GeneralLogIndex { get; set; }

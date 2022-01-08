@@ -134,8 +134,8 @@ namespace Newsgirl.Shared.Logging
                 {
                     Details =
                     {
-                        {"elasticsearchResponseStatusCode", (int) response.StatusCode},
-                        {"elasticsearchResponseJson", responseBody},
+                        { "elasticsearchResponseStatusCode", (int)response.StatusCode },
+                        { "elasticsearchResponseJson", responseBody },
                     },
                 };
             }
@@ -148,7 +148,7 @@ namespace Newsgirl.Shared.Logging
                 {
                     Details =
                     {
-                        {"elasticsearchResponseJson", responseBody},
+                        { "elasticsearchResponseJson", responseBody },
                     },
                 };
             }
@@ -239,19 +239,19 @@ namespace Newsgirl.Shared.Logging
 
         public override string InstanceName
         {
-            get => (string) this.Fields[INSTANCE_NAME_KEY];
+            get => (string)this.Fields[INSTANCE_NAME_KEY];
             set => this.Fields[INSTANCE_NAME_KEY] = value;
         }
 
         public override string Environment
         {
-            get => (string) this.Fields[ENVIRONMENT_KEY];
+            get => (string)this.Fields[ENVIRONMENT_KEY];
             set => this.Fields[ENVIRONMENT_KEY] = value;
         }
 
         public override string AppVersion
         {
-            get => (string) this.Fields[APP_VERSION_KEY];
+            get => (string)this.Fields[APP_VERSION_KEY];
             set => this.Fields[APP_VERSION_KEY] = value;
         }
     }

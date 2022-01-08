@@ -75,7 +75,7 @@ namespace Newsgirl.Shared.PostgresTests
         public async Task ExecuteScalar1()
         {
             int number = 123;
-            var parameters = new[] {this.Connection.CreateParameter("n", number)};
+            var parameters = new[] { this.Connection.CreateParameter("n", number) };
             int result = await this.Connection.ExecuteScalar<int>("select :n;", parameters, CancellationToken.None);
             Assert.Equal(number, result);
         }
@@ -424,7 +424,7 @@ namespace Newsgirl.Shared.PostgresTests
         public void CreateParameter_with_npgsql_type()
         {
             var parameter1 = this.Connection.CreateParameter("p1", 1, NpgsqlDbType.Integer);
-            Assert.Equal(1, (int) parameter1.Value);
+            Assert.Equal(1, (int)parameter1.Value);
             var parameter2 = this.Connection.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
             Assert.Equal(DBNull.Value, parameter2.Value);
         }
@@ -432,15 +432,15 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public void CreateParameter_boxed()
         {
-            var parameter1 = this.Connection.CreateParameter("p1", (object) 1);
-            Assert.Equal(1, (int) parameter1.Value);
+            var parameter1 = this.Connection.CreateParameter("p1", (object)1);
+            Assert.Equal(1, (int)parameter1.Value);
         }
 
         [Fact]
         public void CreateParameter_with_inferred_npgsql_type()
         {
             var parameter = this.Connection.CreateParameter("p1", 1);
-            Assert.Equal(1, (int) parameter.Value);
+            Assert.Equal(1, (int)parameter.Value);
         }
 
         [Fact]
@@ -518,7 +518,7 @@ namespace Newsgirl.Shared.PostgresTests
         public async Task ExecuteScalar1()
         {
             int number = 123;
-            var parameters = new[] {this.Db.CreateParameter("n", number)};
+            var parameters = new[] { this.Db.CreateParameter("n", number) };
             int result = await this.Db.ExecuteScalar<int>("select :n;", parameters, CancellationToken.None);
             Assert.Equal(number, result);
         }
@@ -631,7 +631,7 @@ namespace Newsgirl.Shared.PostgresTests
         public void CreateParameter_with_npgsql_type()
         {
             var parameter1 = this.Db.CreateParameter("p1", 1, NpgsqlDbType.Integer);
-            Assert.Equal(1, (int) parameter1.Value!);
+            Assert.Equal(1, (int)parameter1.Value!);
             var parameter2 = this.Db.CreateParameter<string>("p1", null, NpgsqlDbType.Text);
             Assert.Equal(DBNull.Value, parameter2.Value);
         }
@@ -639,15 +639,15 @@ namespace Newsgirl.Shared.PostgresTests
         [Fact]
         public void CreateParameter_boxed()
         {
-            var parameter1 = this.Db.CreateParameter("p1", (object) 1);
-            Assert.Equal(1, (int) parameter1.Value!);
+            var parameter1 = this.Db.CreateParameter("p1", (object)1);
+            Assert.Equal(1, (int)parameter1.Value!);
         }
 
         [Fact]
         public void CreateParameter_with_inferred_npgsql_type()
         {
             var parameter = this.Db.CreateParameter("p1", 1);
-            Assert.Equal(1, (int) parameter.Value!);
+            Assert.Equal(1, (int)parameter.Value!);
         }
 
         [Fact]

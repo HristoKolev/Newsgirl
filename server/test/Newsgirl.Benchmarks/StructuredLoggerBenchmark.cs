@@ -46,7 +46,7 @@ namespace Newsgirl.Benchmarks
 
             builder.AddEventStream(WarnConfig, new Dictionary<string, Func<EventDestination<T>>>
             {
-                {NoopConsumerName, () => consumer},
+                { NoopConsumerName, () => consumer },
             });
 
             var logger = builder.Build();
@@ -114,7 +114,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Log(DebugConfig, () => new StructLogData {Number = i});
+                this.smallStructLogger.Log(DebugConfig, () => new StructLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -124,7 +124,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData {Number = i});
+                this.smallClassLogger.Log(DebugConfig, () => new ClassLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -134,7 +134,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallStructLogger.Log(WarnConfig, () => new StructLogData {Number = i});
+                this.smallStructLogger.Log(WarnConfig, () => new StructLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -144,7 +144,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.smallClassLogger.Log(WarnConfig, () => new ClassLogData {Number = i});
+                this.smallClassLogger.Log(WarnConfig, () => new ClassLogData { Number = i });
                 int v = Math.Abs(i);
             }
         }
@@ -154,7 +154,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeStructLogger.Log(WarnConfig, () => new LargeStructLogData {Prop1 = i});
+                this.largeStructLogger.Log(WarnConfig, () => new LargeStructLogData { Prop1 = i });
                 int v = Math.Abs(i);
             }
         }
@@ -164,7 +164,7 @@ namespace Newsgirl.Benchmarks
         {
             for (int i = 0; i < this.N; i++)
             {
-                this.largeClassLogger.Log(WarnConfig, () => new LargeClassLogData {Prop1 = i});
+                this.largeClassLogger.Log(WarnConfig, () => new LargeClassLogData { Prop1 = i });
                 int v = Math.Abs(i);
             }
         }

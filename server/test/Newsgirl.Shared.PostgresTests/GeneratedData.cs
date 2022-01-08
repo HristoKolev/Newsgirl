@@ -13,7 +13,7 @@
         public IEnumerator<object[]> GetEnumerator()
         {
             return PocoDataGenerator.GenerateData<T>()
-                .Select(x => new object[] {x})
+                .Select(x => new object[] { x })
                 .GetEnumerator();
         }
 
@@ -65,7 +65,7 @@
 
                     if (column.IsNullable)
                     {
-                        values = values.Concat(new object[] {null}).ToArray();
+                        values = values.Concat(new object[] { null }).ToArray();
                     }
 
                     foreach (object value in values)
@@ -116,7 +116,7 @@
 
         private static bool[] GenerateBooleanArray()
         {
-            return new[] {true, false};
+            return new[] { true, false };
         }
 
         private static byte[][] GenerateByteArray()
@@ -139,7 +139,7 @@
 
         private static string[] GenerateCharArray()
         {
-            return new[] {"a", "b", "c"};
+            return new[] { "a", "b", "c" };
         }
 
         private static DateTime[] GenerateDateArray()
@@ -174,27 +174,27 @@
 
         private static decimal[] GenerateDecimalArray()
         {
-            return new[] {0m, 1.234m, -1.234m};
+            return new[] { 0m, 1.234m, -1.234m };
         }
 
         private static double[] GenerateDoubleArray()
         {
-            return new[] {0d, 1.234d, -1.234d};
+            return new[] { 0d, 1.234d, -1.234d };
         }
 
         private static float[] GenerateFloatArray()
         {
-            return new[] {0f, 1.234f, -1.234f};
+            return new[] { 0f, 1.234f, -1.234f };
         }
 
         private static string[] GenerateGuidArray()
         {
-            return new[] {"173e5661-e425-431a-a3b0-03e7d65b95aa"};
+            return new[] { "173e5661-e425-431a-a3b0-03e7d65b95aa" };
         }
 
         private static int[] GenerateIntArray()
         {
-            return new[] {-1, 0, 1};
+            return new[] { -1, 0, 1 };
         }
 
         private static string[] GenerateJsonArray()
@@ -210,12 +210,12 @@
 
         private static long[] GenerateLongArray()
         {
-            return new[] {-1L, 0L, 1L};
+            return new[] { -1L, 0L, 1L };
         }
 
         private static short[] GenerateShortArray()
         {
-            return new short[] {-1, 0, 1};
+            return new short[] { -1, 0, 1 };
         }
 
         private static string[] GenerateStringArray()

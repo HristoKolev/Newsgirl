@@ -155,7 +155,7 @@ namespace Newsgirl.Shared
 
         public static long ToUnixEpochTime(this DateTime time)
         {
-            return (long) (time - Epoch).TotalSeconds;
+            return (long)(time - Epoch).TotalSeconds;
         }
     }
 
@@ -172,7 +172,7 @@ namespace Newsgirl.Shared
 
         public static T CreateDelegate<T>(this MethodInfo methodInfo) where T : Delegate
         {
-            return (T) methodInfo.CreateDelegate(typeof(T));
+            return (T)methodInfo.CreateDelegate(typeof(T));
         }
     }
 }

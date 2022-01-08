@@ -173,7 +173,7 @@ namespace Newsgirl.Shared
             {
                 using (var utf8JsonWriter = new Utf8JsonWriter(arrayPoolBufferWriter))
                 {
-                    sentryEvent.WriteTo(utf8JsonWriter);
+                    sentryEvent.WriteTo(utf8JsonWriter, null);
                 }
 
                 // Dispose the `Utf8JsonWriter` in order to flush before accessing this.
@@ -185,7 +185,7 @@ namespace Newsgirl.Shared
         {
             if (!string.IsNullOrWhiteSpace(explicitFingerprint))
             {
-                return new[] {explicitFingerprint};
+                return new[] { explicitFingerprint };
             }
 
             string exceptionFingerprint = null;
@@ -199,7 +199,7 @@ namespace Newsgirl.Shared
 
             if (!string.IsNullOrWhiteSpace(exceptionFingerprint))
             {
-                return new[] {exceptionFingerprint};
+                return new[] { exceptionFingerprint };
             }
 
             return exceptions.Select(GetFingerprint).ToArray();

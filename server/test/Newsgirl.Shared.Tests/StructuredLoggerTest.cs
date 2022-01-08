@@ -46,7 +46,7 @@ namespace Newsgirl.Shared.Tests
 
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             await using (var logger = builder.Build())
@@ -98,7 +98,7 @@ namespace Newsgirl.Shared.Tests
 
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             await using (var logger = builder.Build())
@@ -154,7 +154,7 @@ namespace Newsgirl.Shared.Tests
             var builder = new StructuredLoggerBuilder();
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             await using (var logger = builder.Build())
@@ -212,7 +212,7 @@ namespace Newsgirl.Shared.Tests
             var builder = new StructuredLoggerBuilder();
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             await using (var logger = builder.Build())
@@ -278,7 +278,7 @@ namespace Newsgirl.Shared.Tests
             var builder = new StructuredLoggerBuilder();
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             await using (var logger = builder.Build())
@@ -328,7 +328,7 @@ namespace Newsgirl.Shared.Tests
 
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogData>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             var preprocessor = new TestEventPreprocessor();
@@ -389,7 +389,7 @@ namespace Newsgirl.Shared.Tests
 
             builder.AddEventStream(MOCK_KEY, new Dictionary<string, Func<EventDestination<TestLogDataStruct>>>
             {
-                {CONSUMER_NAME, () => consumerMock},
+                { CONSUMER_NAME, () => consumerMock },
             });
 
             var preprocessor = new TestEventPreprocessor();
@@ -449,7 +449,7 @@ namespace Newsgirl.Shared.Tests
             if (item is TestLogDataStruct y)
             {
                 y.Str1 = "test123";
-                item = (TData) (object) y;
+                item = (TData)(object)y;
             }
         }
     }

@@ -17,7 +17,7 @@ namespace Newsgirl.Shared.Tests
             await using (var memStream = new MemoryStream())
             {
                 await JsonHelper.Serialize(memStream, obj);
-                string json = EncodingHelper.UTF8.GetString(memStream.GetBuffer(), 0, (int) memStream.Length);
+                string json = EncodingHelper.UTF8.GetString(memStream.GetBuffer(), 0, (int)memStream.Length);
                 Snapshot.MatchJson(json);
             }
         }
@@ -50,7 +50,7 @@ namespace Newsgirl.Shared.Tests
             await using (var memStream = new MemoryStream())
             {
                 await JsonHelper.SerializeGenericType(memStream, value);
-                string json = EncodingHelper.UTF8.GetString(memStream.GetBuffer(), 0, (int) memStream.Length);
+                string json = EncodingHelper.UTF8.GetString(memStream.GetBuffer(), 0, (int)memStream.Length);
                 Snapshot.MatchJson(json);
             }
         }
@@ -97,7 +97,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize((string) null, typeof(TestJsonPayload));
+                JsonHelper.Deserialize((string)null, typeof(TestJsonPayload));
             });
         }
 
@@ -113,7 +113,7 @@ namespace Newsgirl.Shared.Tests
         [Fact]
         public void Deserialize_returns_correct_result()
         {
-            var obj = (TestJsonPayload) JsonHelper.Deserialize(JsonTestFiles.TEST1, typeof(TestJsonPayload));
+            var obj = (TestJsonPayload)JsonHelper.Deserialize(JsonTestFiles.TEST1, typeof(TestJsonPayload));
             TestJsonPayload.AssertCorrectObject(obj);
         }
 
@@ -131,7 +131,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize<TestJsonPayload>((string) null);
+                JsonHelper.Deserialize<TestJsonPayload>((string)null);
             });
         }
 
@@ -156,7 +156,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize((ReadOnlySpan<byte>) default, typeof(TestJsonPayload));
+                JsonHelper.Deserialize((ReadOnlySpan<byte>)default, typeof(TestJsonPayload));
             });
         }
 
@@ -175,7 +175,7 @@ namespace Newsgirl.Shared.Tests
         public void DeserializeSpan_returns_correct_result()
         {
             var bytes = EncodingHelper.UTF8.GetBytes(JsonTestFiles.TEST1);
-            var result = (TestJsonPayload) JsonHelper.Deserialize(bytes, typeof(TestJsonPayload));
+            var result = (TestJsonPayload)JsonHelper.Deserialize(bytes, typeof(TestJsonPayload));
             TestJsonPayload.AssertCorrectObject(result);
         }
 
@@ -195,7 +195,7 @@ namespace Newsgirl.Shared.Tests
         {
             Snapshot.MatchError(() =>
             {
-                JsonHelper.Deserialize<TestJsonPayload>((ReadOnlySpan<byte>) default);
+                JsonHelper.Deserialize<TestJsonPayload>((ReadOnlySpan<byte>)default);
             });
         }
 
@@ -261,9 +261,9 @@ namespace Newsgirl.Shared.Tests
                 obj.InnerObject = CreateSimple();
                 obj.InnerDict = new Dictionary<string, TestJsonPayload>
                 {
-                    {"key1", CreateSimple()},
-                    {"key2", CreateSimple()},
-                    {"key3", CreateSimple()},
+                    { "key1", CreateSimple() },
+                    { "key2", CreateSimple() },
+                    { "key3", CreateSimple() },
                 };
                 obj.InnerList = new List<TestJsonPayload>
                 {
@@ -352,9 +352,9 @@ namespace Newsgirl.Shared.Tests
                 var obj = CreateSimple();
                 obj.InnerDict = new Dictionary<string, TestJsonPayloadStruct>
                 {
-                    {"key1", CreateSimple()},
-                    {"key2", CreateSimple()},
-                    {"key3", CreateSimple()},
+                    { "key1", CreateSimple() },
+                    { "key2", CreateSimple() },
+                    { "key3", CreateSimple() },
                 };
                 obj.InnerList = new List<TestJsonPayloadStruct>
                 {

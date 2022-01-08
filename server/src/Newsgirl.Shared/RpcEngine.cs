@@ -111,7 +111,7 @@ namespace Newsgirl.Shared
                 }
 
                 // validate parameter types
-                var allowedParameterTypes = new List<Type> {metadata.RequestType};
+                var allowedParameterTypes = new List<Type> { metadata.RequestType };
 
                 if (options.ParameterTypeWhitelist != null)
                 {
@@ -182,7 +182,7 @@ namespace Newsgirl.Shared
 
         private static Func<Task, Result<object>> GetConvertReturnValue()
         {
-            var method = new DynamicMethod("convertReturnValue", typeof(Result<object>), new[] {typeof(Task)});
+            var method = new DynamicMethod("convertReturnValue", typeof(Result<object>), new[] { typeof(Task) });
 
             var il = method.GetILGenerator();
 
@@ -194,7 +194,7 @@ namespace Newsgirl.Shared
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Brtrue_S, afterNullCheckLabel);
             il.Emit(OpCodes.Ldstr, "Handler method return values must not be null.");
-            il.Emit(OpCodes.Newobj, typeof(DetailedException).GetConstructor(new[] {typeof(string)})!);
+            il.Emit(OpCodes.Newobj, typeof(DetailedException).GetConstructor(new[] { typeof(string) })!);
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(afterNullCheckLabel);
@@ -219,7 +219,7 @@ namespace Newsgirl.Shared
 
         private static RpcRequestDelegate CompileHandlerWithMiddleware(RpcRequestMetadata metadata)
         {
-            var getInstance = typeof(InstanceProvider).GetMethod(nameof(InstanceProvider.Get), new[] {typeof(Type)});
+            var getInstance = typeof(InstanceProvider).GetMethod(nameof(InstanceProvider.Get), new[] { typeof(Type) });
 
             var typeBuilder = ReflectionEmmitHelper.ModuleBuilder.DefineType(
                 "RpcMiddlewareDynamicType+" + Guid.NewGuid(),
@@ -233,7 +233,7 @@ namespace Newsgirl.Shared
                 "executeHandlerMethod",
                 MethodAttributes.Private | MethodAttributes.Static,
                 typeof(Task),
-                new[] {typeof(RpcContext), typeof(InstanceProvider)}
+                new[] { typeof(RpcContext), typeof(InstanceProvider) }
             );
 
             var executeHandlerGen = executeHandler.GetILGenerator();
@@ -243,22 +243,24 @@ namespace Newsgirl.Shared
             // load the handler instance from the instanceProvider
             executeHandlerGen.Emit(OpCodes.Ldarg_1);
             executeHandlerGen.Emit(OpCodes.Ldtoken, metadata.DeclaringType);
+            executeHandlerGen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle")!);
             executeHandlerGen.Emit(OpCodes.Callvirt, getInstance!);
 
-            foreach (var parameter in metadata.ParameterTypes)
+            foreach (var parameterType in metadata.ParameterTypes)
             {
-                if (parameter == metadata.RequestType)
+                if (parameterType == metadata.RequestType)
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.RequestMessage))?.GetMethod!);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(RpcRequestMessage).GetProperty(nameof(RpcRequestMessage.Payload))?.GetMethod!);
-                    executeHandlerGen.Emit(OpCodes.Castclass, parameter);
+                    executeHandlerGen.Emit(OpCodes.Castclass, parameterType);
                 }
                 else
                 {
                     executeHandlerGen.Emit(OpCodes.Ldarg_0);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(RpcContext).GetProperty(nameof(RpcContext.HandlerParameters))?.GetMethod!);
-                    executeHandlerGen.Emit(OpCodes.Ldtoken, parameter);
+                    executeHandlerGen.Emit(OpCodes.Ldtoken, parameterType);
+                    executeHandlerGen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle")!);
                     executeHandlerGen.Emit(OpCodes.Call, typeof(Dictionary<Type, object>).GetMethod("get_Item")!);
                 }
             }
@@ -288,7 +290,7 @@ namespace Newsgirl.Shared
                     "middlewareRun" + i,
                     MethodAttributes.Private | MethodAttributes.Static,
                     typeof(Task),
-                    new[] {typeof(RpcContext), typeof(InstanceProvider)}
+                    new[] { typeof(RpcContext), typeof(InstanceProvider) }
                 );
 
                 var gen = currentMethod.GetILGenerator();
@@ -296,6 +298,7 @@ namespace Newsgirl.Shared
                 // load the middleware instance from the instanceProvider
                 gen.Emit(OpCodes.Ldarg_1);
                 gen.Emit(OpCodes.Ldtoken, middlewareType);
+                gen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle")!);
                 gen.Emit(OpCodes.Callvirt, getInstance);
 
                 // load the context
@@ -434,7 +437,7 @@ namespace Newsgirl.Shared
 
         public T GetSupplementalAttribute<T>() where T : RpcSupplementalAttribute
         {
-            return (T) this.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(T));
+            return (T)this.RequestMetadata.SupplementalAttributes.GetValueOrDefault(typeof(T));
         }
     }
 

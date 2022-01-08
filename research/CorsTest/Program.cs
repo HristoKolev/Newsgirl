@@ -8,7 +8,7 @@
 
     internal static class Program
     {
-        private static readonly HashSet<string> OriginWhiteList = new(new[] {"http://localhost:3000"});
+        private static readonly HashSet<string> OriginWhiteList = new(new[] { "http://localhost:3000" });
 
         private static async Task Run(HttpContext context)
         {
@@ -38,7 +38,7 @@
         {
             await using (var server = new CustomHttpServerImpl())
             {
-                await server.Start(Run, new[] {"http://localhost:7300"});
+                await server.Start(Run, new[] { "http://localhost:7300" });
                 await Task.Delay(TimeSpan.FromHours(1));
             }
         }

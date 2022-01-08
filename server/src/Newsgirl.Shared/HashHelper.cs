@@ -7,7 +7,7 @@ namespace Newsgirl.Shared
     {
         public static long ComputeXx64Hash(ReadOnlySpan<byte> data)
         {
-            return (long) xxHash64.ComputeHash(data, data.Length);
+            return (long)xxHash64.ComputeHash(data, data.Length);
         }
     }
 }

@@ -73,7 +73,7 @@ namespace Newsgirl.Shared
 
         public override bool IsValid(object value)
         {
-            return string.IsNullOrWhiteSpace((string) value) || EmailRegex.IsOnlyMatch((string) value);
+            return string.IsNullOrWhiteSpace((string)value) || EmailRegex.IsOnlyMatch((string)value);
         }
     }
 }
