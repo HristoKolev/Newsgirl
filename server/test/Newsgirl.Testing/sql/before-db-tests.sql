@@ -8,8 +8,8 @@ create table "public"."test1" (
     test_name2 varchar(255),
     test_date1 date not null,
     test_date2 date,
-    test_timestamp1 timestamp not null,
-    test_timestamp2 timestamp,
+    test_timestamp1 timestamptz(0) not null,
+    test_timestamp2 timestamptz(0),
     test_boolean1 boolean not null,
     test_boolean2 boolean,
     test_integer1 integer,
@@ -33,7 +33,7 @@ create table "public"."test1" (
 CREATE TABLE "public"."test2" (
     test_id serial,
     test_name text NOT NULL,
-    test_date timestamp NOT NULL,
+    test_date timestamptz(0) NOT NULL,
     test_number integer not null,
 
     PRIMARY KEY (test_id)

@@ -302,8 +302,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_timestamp1'.</para>
         /// <para>Table name: 'test1'.</para>
         /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -315,8 +315,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_timestamp2'.</para>
         /// <para>Table name: 'test1'.</para>
         /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime?'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -418,10 +418,10 @@ namespace Newsgirl.Shared.PostgresTests
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.TestTimestamp1,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                    NpgsqlDbType = NpgsqlDbType.TimestampTz,
                 },
                 this.TestTimestamp2.HasValue
-                    ? new NpgsqlParameter<DateTime> {TypedValue = this.TestTimestamp2.Value, NpgsqlDbType = NpgsqlDbType.Timestamp}
+                    ? new NpgsqlParameter<DateTime> {TypedValue = this.TestTimestamp2.Value, NpgsqlDbType = NpgsqlDbType.TimestampTz}
                     : new NpgsqlParameter {Value = DBNull.Value},
             };
         }
@@ -574,7 +574,7 @@ namespace Newsgirl.Shared.PostgresTests
                 await importer.WriteAsync(this.TestText2, NpgsqlDbType.Text);
             }
 
-            await importer.WriteAsync(this.TestTimestamp1, NpgsqlDbType.Timestamp);
+            await importer.WriteAsync(this.TestTimestamp1, NpgsqlDbType.TimestampTz);
 
             if (!this.TestTimestamp2.HasValue)
             {
@@ -582,7 +582,7 @@ namespace Newsgirl.Shared.PostgresTests
             }
             else
             {
-                await importer.WriteAsync(this.TestTimestamp2.Value, NpgsqlDbType.Timestamp);
+                await importer.WriteAsync(this.TestTimestamp2.Value, NpgsqlDbType.TimestampTz);
             }
         }
 
@@ -601,8 +601,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_date'.</para>
         /// <para>Table name: 'test2'.</para>
         /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -660,7 +660,7 @@ namespace Newsgirl.Shared.PostgresTests
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.TestDate,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                    NpgsqlDbType = NpgsqlDbType.TimestampTz,
                 },
                 new NpgsqlParameter<string>
                 {
@@ -692,7 +692,7 @@ namespace Newsgirl.Shared.PostgresTests
 
         public async Task WriteToImporter(NpgsqlBinaryImporter importer)
         {
-            await importer.WriteAsync(this.TestDate, NpgsqlDbType.Timestamp);
+            await importer.WriteAsync(this.TestDate, NpgsqlDbType.TimestampTz);
 
             if (this.TestName == null)
             {
@@ -849,8 +849,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_date'.</para>
         /// <para>Table name: 'view1'.</para>
         /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime?'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -1057,8 +1057,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_timestamp1'.</para>
         /// <para>Table name: 'view1'.</para>
         /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime?'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -1070,8 +1070,8 @@ namespace Newsgirl.Shared.PostgresTests
         /// <para>Column name: 'test_timestamp2'.</para>
         /// <para>Table name: 'view1'.</para>
         /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime?'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -1904,7 +1904,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_timestamp1",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -1924,15 +1924,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("False"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -1940,7 +1940,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_timestamp2",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -1960,15 +1960,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("True"),
                             IsClrReferenceType = bool.Parse("True"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                 },
@@ -2014,7 +2014,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_date",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -2034,15 +2034,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("False"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -2514,7 +2514,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_date",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -2534,15 +2534,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("True"),
                             IsClrReferenceType = bool.Parse("True"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -3090,7 +3090,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_timestamp1",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -3110,15 +3110,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("True"),
                             IsClrReferenceType = bool.Parse("True"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -3126,7 +3126,7 @@ namespace Newsgirl.Shared.PostgresTests
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "test_timestamp2",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -3146,15 +3146,15 @@ namespace Newsgirl.Shared.PostgresTests
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("True"),
                             IsClrReferenceType = bool.Parse("True"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                 },

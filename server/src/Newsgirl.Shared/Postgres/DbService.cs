@@ -25,7 +25,7 @@ namespace Newsgirl.Shared.Postgres
 
         private readonly Linq2DbWrapper linqProvider;
 
-        private readonly ConcurrentDictionary<TableMetadataModel, string> copyHeaderMap = new ConcurrentDictionary<TableMetadataModel, string>();
+        private readonly ConcurrentDictionary<TableMetadataModel, string> copyHeaderMap = new();
 
         public TPocos Poco { get; }
 
@@ -805,7 +805,7 @@ namespace Newsgirl.Shared.Postgres
             return MetadataCache.GetOrAdd(typeof(TPoco), ValueFactory);
         }
 
-        private static readonly ConcurrentDictionary<Type, TableMetadataModel> MetadataCache = new ConcurrentDictionary<Type, TableMetadataModel>();
+        private static readonly ConcurrentDictionary<Type, TableMetadataModel> MetadataCache = new();
     }
 
     /// <summary>

@@ -41,8 +41,8 @@ namespace Newsgirl.Shared
         /// <para>Column name: 'feed_item_added_time'.</para>
         /// <para>Table name: 'feed_items'.</para>
         /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -144,7 +144,7 @@ namespace Newsgirl.Shared
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.FeedItemAddedTime,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                    NpgsqlDbType = NpgsqlDbType.TimestampTz,
                 },
                 new NpgsqlParameter<string>
                 {
@@ -193,7 +193,7 @@ namespace Newsgirl.Shared
         {
             await importer.WriteAsync(this.FeedID, NpgsqlDbType.Integer);
 
-            await importer.WriteAsync(this.FeedItemAddedTime, NpgsqlDbType.Timestamp);
+            await importer.WriteAsync(this.FeedItemAddedTime, NpgsqlDbType.TimestampTz);
 
             if (this.FeedItemDescription == null)
             {
@@ -615,8 +615,8 @@ namespace Newsgirl.Shared
         /// <para>Column name: 'registration_date'.</para>
         /// <para>Table name: 'user_profiles'.</para>
         /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -653,7 +653,7 @@ namespace Newsgirl.Shared
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.RegistrationDate,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                    NpgsqlDbType = NpgsqlDbType.TimestampTz,
                 },
             };
         }
@@ -684,7 +684,7 @@ namespace Newsgirl.Shared
                 await importer.WriteAsync(this.EmailAddress, NpgsqlDbType.Text);
             }
 
-            await importer.WriteAsync(this.RegistrationDate, NpgsqlDbType.Timestamp);
+            await importer.WriteAsync(this.RegistrationDate, NpgsqlDbType.TimestampTz);
         }
 
         public static TableMetadataModel Metadata => DbMetadata.UserProfilePocoMetadata;
@@ -715,8 +715,8 @@ namespace Newsgirl.Shared
         /// <para>Column name: 'expiration_date'.</para>
         /// <para>Table name: 'user_sessions'.</para>
         /// <para>This column is nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime?'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -728,8 +728,8 @@ namespace Newsgirl.Shared
         /// <para>Column name: 'login_date'.</para>
         /// <para>Table name: 'user_sessions'.</para>
         /// <para>This column is not nullable.</para>
-        /// <para>PostgreSQL data type: 'timestamp without time zone'.</para>
-        /// <para>NpgsqlDbType: 'NpgsqlDbType.Timestamp'.</para>
+        /// <para>PostgreSQL data type: 'timestamp with time zone'.</para>
+        /// <para>NpgsqlDbType: 'NpgsqlDbType.TimestampTz'.</para>
         /// <para>CLR type: 'DateTime'.</para>
         /// <para>linq2db data type: 'DataType.DateTime2'.</para>
         /// </summary>
@@ -794,12 +794,12 @@ namespace Newsgirl.Shared
                     NpgsqlDbType = NpgsqlDbType.Text,
                 },
                 this.ExpirationDate.HasValue
-                    ? new NpgsqlParameter<DateTime> {TypedValue = this.ExpirationDate.Value, NpgsqlDbType = NpgsqlDbType.Timestamp}
+                    ? new NpgsqlParameter<DateTime> {TypedValue = this.ExpirationDate.Value, NpgsqlDbType = NpgsqlDbType.TimestampTz}
                     : new NpgsqlParameter {Value = DBNull.Value},
                 new NpgsqlParameter<DateTime>
                 {
                     TypedValue = this.LoginDate,
-                    NpgsqlDbType = NpgsqlDbType.Timestamp,
+                    NpgsqlDbType = NpgsqlDbType.TimestampTz,
                 },
                 new NpgsqlParameter<int>
                 {
@@ -846,10 +846,10 @@ namespace Newsgirl.Shared
             }
             else
             {
-                await importer.WriteAsync(this.ExpirationDate.Value, NpgsqlDbType.Timestamp);
+                await importer.WriteAsync(this.ExpirationDate.Value, NpgsqlDbType.TimestampTz);
             }
 
-            await importer.WriteAsync(this.LoginDate, NpgsqlDbType.Timestamp);
+            await importer.WriteAsync(this.LoginDate, NpgsqlDbType.TimestampTz);
 
             await importer.WriteAsync(this.LoginID, NpgsqlDbType.Integer);
 
@@ -968,7 +968,7 @@ namespace Newsgirl.Shared
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "feed_item_added_time",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -988,15 +988,15 @@ namespace Newsgirl.Shared
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("False"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -1753,7 +1753,7 @@ namespace Newsgirl.Shared
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "registration_date",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -1773,15 +1773,15 @@ namespace Newsgirl.Shared
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("False"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -1879,7 +1879,7 @@ namespace Newsgirl.Shared
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "expiration_date",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("True"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -1899,15 +1899,15 @@ namespace Newsgirl.Shared
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("True"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("True"),
                             IsClrReferenceType = bool.Parse("True"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel
@@ -1915,7 +1915,7 @@ namespace Newsgirl.Shared
                         ColumnComment = "" == string.Empty ? null : "",
                         Comments = "".Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
                         ColumnName = "login_date",
-                        DbDataType = "timestamp without time zone",
+                        DbDataType = "timestamp with time zone",
                         IsNullable = bool.Parse("False"),
                         IsPrimaryKey = bool.Parse("False"),
                         PrimaryKeyConstraintName = "" == string.Empty ? null : "",
@@ -1935,15 +1935,15 @@ namespace Newsgirl.Shared
                             ClrNonNullableType = typeof(DateTime),
                             ClrNullableTypeName = "DateTime?",
                             ClrNullableType = typeof(DateTime?),
-                            DbDataType = "timestamp without time zone",
+                            DbDataType = "timestamp with time zone",
                             IsNullable = bool.Parse("False"),
                             IsClrValueType = bool.Parse("True"),
                             IsClrNullableType = bool.Parse("False"),
                             IsClrReferenceType = bool.Parse("False"),
                             Linq2DbDataTypeName = "DataType.DateTime2",
                             Linq2DbDataType = DataType.DateTime2,
-                            NpgsqlDbTypeName = "NpgsqlDbType.Timestamp",
-                            NpgsqlDbType = NpgsqlDbType.Timestamp,
+                            NpgsqlDbTypeName = "NpgsqlDbType.TimestampTz",
+                            NpgsqlDbType = NpgsqlDbType.TimestampTz,
                         },
                     },
                     new ColumnMetadataModel

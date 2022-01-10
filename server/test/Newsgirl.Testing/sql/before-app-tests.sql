@@ -21,7 +21,7 @@ CREATE TABLE feed_items (
   feed_item_url text,
 
   feed_id INTEGER NOT NULL REFERENCES feeds,
-  feed_item_added_time timestamp(0) NOT NULL,
+  feed_item_added_time timestamptz(0) NOT NULL,
   feed_item_description text,
 
   feed_item_string_id_hash bigint not null,
@@ -46,7 +46,7 @@ create table public.user_profiles (
     user_profile_id serial,
 
     email_address text not null,
-    registration_date timestamp(0)    not null,
+    registration_date timestamptz(0)    not null,
 
     primary key (user_profile_id)
 );
@@ -70,8 +70,8 @@ create table public.user_logins (
 create table public.user_sessions (
     session_id serial,
 
-    login_date timestamp(0) not null,
-    expiration_date timestamp(0),
+    login_date timestamptz(0) not null,
+    expiration_date timestamptz(0),
     csrf_token text not null,
 
     login_id int not null references user_logins,
@@ -79,5 +79,3 @@ create table public.user_sessions (
 
     primary key (session_id)
 );
-
---SPLIT_HERE

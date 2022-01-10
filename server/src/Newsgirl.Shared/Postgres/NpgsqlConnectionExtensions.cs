@@ -19,14 +19,14 @@ namespace Newsgirl.Shared.Postgres
     /// </summary>
     public static class NpgsqlConnectionExtensions
     {
-        private static readonly ConcurrentDictionary<Type, object> SettersCache = new ConcurrentDictionary<Type, object>();
+        private static readonly ConcurrentDictionary<Type, object> SettersCache = new();
 
-        private static readonly ConcurrentDictionary<Type, object> GettersCache = new ConcurrentDictionary<Type, object>();
+        private static readonly ConcurrentDictionary<Type, object> GettersCache = new();
 
         /// <summary>
         /// The default parameter type map that is used when creating parameters without specifying the NpgsqlDbType explicitly.
         /// </summary>
-        private static readonly Dictionary<Type, NpgsqlDbType> DefaultNpgsqlDbTypeMap = new Dictionary<Type, NpgsqlDbType>
+        private static readonly Dictionary<Type, NpgsqlDbType> DefaultNpgsqlDbTypeMap = new()
         {
             { typeof(int), NpgsqlDbType.Integer },
             { typeof(long), NpgsqlDbType.Bigint },
@@ -36,7 +36,7 @@ namespace Newsgirl.Shared.Postgres
             { typeof(short), NpgsqlDbType.Smallint },
             { typeof(decimal), NpgsqlDbType.Numeric },
             { typeof(string), NpgsqlDbType.Text },
-            { typeof(DateTime), NpgsqlDbType.Timestamp },
+            { typeof(DateTime), NpgsqlDbType.TimestampTz },
             { typeof(byte[]), NpgsqlDbType.Bytea },
             { typeof(int?), NpgsqlDbType.Integer },
             { typeof(long?), NpgsqlDbType.Bigint },
@@ -45,10 +45,10 @@ namespace Newsgirl.Shared.Postgres
             { typeof(double?), NpgsqlDbType.Double },
             { typeof(short?), NpgsqlDbType.Smallint },
             { typeof(decimal?), NpgsqlDbType.Numeric },
-            { typeof(DateTime?), NpgsqlDbType.Timestamp },
+            { typeof(DateTime?), NpgsqlDbType.TimestampTz },
             { typeof(string[]), NpgsqlDbType.Array | NpgsqlDbType.Text },
             { typeof(int[]), NpgsqlDbType.Array | NpgsqlDbType.Integer },
-            { typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.Timestamp },
+            { typeof(DateTime[]), NpgsqlDbType.Array | NpgsqlDbType.TimestampTz },
         };
 
         /// <summary>

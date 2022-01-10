@@ -729,7 +729,7 @@ namespace Newsgirl.Testing
             var testMasterConnectionStringBuilder = new NpgsqlConnectionStringBuilder(this.testMasterConnectionString)
             {
                 Enlist = false,
-                IncludeErrorDetails = true,
+                IncludeErrorDetail = true,
             };
 
             this.testMasterConnection = new NpgsqlConnection(testMasterConnectionStringBuilder.ToString());
@@ -741,7 +741,7 @@ namespace Newsgirl.Testing
                 Database = this.testDatabaseName,
                 Pooling = false,
                 Enlist = false,
-                IncludeErrorDetails = true,
+                IncludeErrorDetail = true,
             };
 
             this.ConnectionString = testConnectionStringBuilder.ToString();

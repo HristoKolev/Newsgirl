@@ -10,7 +10,7 @@
   },
   "profile": {
     "EmailAddress": "test@abc.de",
-    "RegistrationDate": "3000-01-01T00:00:00",
+    "RegistrationDate": "3000-01-01T00:00:00Z",
     "UserProfileID": 1
   },
   "result": {

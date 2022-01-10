@@ -109,7 +109,7 @@
                 NpgsqlDbType.Xml => GenerateXmlArray().Cast<object>().ToArray(),
                 NpgsqlDbType.Json => GenerateJsonArray().Cast<object>().ToArray(),
                 NpgsqlDbType.Jsonb => GenerateJsonArray().Cast<object>().ToArray(),
-                NpgsqlDbType.TimestampTz => GenerateDateTimeOffsetArray().Cast<object>().ToArray(),
+                NpgsqlDbType.TimestampTz => GenerateDateTimeArray().Cast<object>().ToArray(),
                 _ => throw new ArgumentOutOfRangeException(nameof(dbType), dbType, null),
             };
         }
@@ -147,7 +147,7 @@
             var random = new Random(RANDOM_SEED);
 
             return Enumerable.Range(0, 2)
-                .Select(_ => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27)))
+                .Select(_ => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27), 0, 0, 0, DateTimeKind.Utc))
                 .ToArray();
         }
 
@@ -157,18 +157,7 @@
 
             return Enumerable.Range(0, 2)
                 .Select(_ => new DateTime(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27), random.Next(1, 24),
-                    random.Next(1, 60), random.Next(1, 60)))
-                .ToArray();
-        }
-
-        private static DateTimeOffset[] GenerateDateTimeOffsetArray()
-        {
-            var random = new Random(RANDOM_SEED);
-
-            return Enumerable.Range(0, 2)
-                .Select(_ => new DateTimeOffset(random.Next(2000, 2100), random.Next(1, 13), random.Next(1, 27),
-                    random.Next(1, 24), random.Next(1, 60), random.Next(1, 60),
-                    TimeSpan.FromHours(2)))
+                    random.Next(1, 60), random.Next(1, 60), DateTimeKind.Utc))
                 .ToArray();
         }
 
