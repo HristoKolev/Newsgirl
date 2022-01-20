@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <AssemblyName>newsgirl-fetcher</AssemblyName>
     <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <VersionPrefix>1.0.0</VersionPrefix>
     <Version>1.0.0</Version>
-
+    <PackageVersion>1.0.0</PackageVersion>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <OutputType>Exe</OutputType>
-
     <IsPackable>false</IsPackable>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
@@ -17,10 +17,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj"/>
+    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CodeHollow.FeedReader" Version="1.2.2"/>
+    <PackageReference Include="CodeHollow.FeedReader" Version="1.2.2" />
+    <PackageReference Include="Standart.Hash.xxHash" Version="3.1.0" />
+    <PackageReference Include="Xdxd.DotNet.Logging" Version="1.0.0" />
   </ItemGroup>
 </Project>

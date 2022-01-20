@@ -1,106 +1,109 @@
-using ApprovalTests.Namers;
-using ApprovalTests.Reporters;
-using Newsgirl.Testing;
+namespace Newsgirl.Fetcher.Tests;
+
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Autofac;
+using Shared;
+using Xdxd.DotNet.Shared;
+using Xdxd.DotNet.Testing;
 using Xunit;
 
-[assembly: UseReporter(typeof(CustomReporter))]
-[assembly: UseApprovalSubdirectory("./snapshots")]
-[assembly: CollectionBehavior(MaxParallelThreads = 32)]
-
-namespace Newsgirl.Fetcher.Tests
+public abstract class AppDatabaseTest : DatabaseTest<IDbService, DbPocos>
 {
-    using System;
-    using System.IO;
-    using System.Threading.Tasks;
-    using Autofac;
-    using Shared;
-    using Testing;
+    protected AppDatabaseTest() : base(
+        "../../before-app-tests.sql",
+        TestHelper.TestConfig.TestMasterConnectionString,
+        x => new DbService(x)
+    ) { }
+}
 
-    public class FetcherAppTest : AppDatabaseTest
+public class DbTxServiceStub : DbServiceStub<DbPocos>, IDbService { }
+
+public class FetcherAppTest : AppDatabaseTest
+{
+    private FetcherAppTester tester;
+
+    protected FetcherApp App => this.tester.App;
+
+    public override async Task InitializeAsync()
     {
-        private FetcherAppTester tester;
+        await base.InitializeAsync();
 
-        protected FetcherApp App => this.tester.App;
+        var mockModule = new FunctionAutofacModule(this.ConfigureMocks);
 
-        public override async Task InitializeAsync()
-        {
-            await base.InitializeAsync();
-
-            var mockModule = new FunctionAutofacModule(this.ConfigureMocks);
-
-            this.tester = await FetcherAppTester.Create(this.ConnectionString, mockModule);
-        }
-
-        public override async Task DisposeAsync()
-        {
-            await this.tester.DisposeAsync();
-            await base.DisposeAsync();
-        }
-
-        protected virtual void ConfigureMocks(ContainerBuilder builder) { }
+        this.tester = await FetcherAppTester.Create(this.ConnectionString, mockModule);
     }
 
-    public class FetcherAppTester : IAsyncDisposable
+    public override async Task DisposeAsync()
     {
-        public FetcherApp App { get; private set; }
+        await this.tester.DisposeAsync();
+        await base.DisposeAsync();
+    }
 
-        public static async Task<FetcherAppTester> Create(string connectionString, Module mockModule)
+    protected virtual void ConfigureMocks(ContainerBuilder builder) { }
+}
+
+public class FetcherAppTester : IAsyncDisposable
+{
+    public FetcherApp App { get; private set; }
+
+    public static async Task<FetcherAppTester> Create(string connectionString, Module mockModule)
+    {
+        var tester = new FetcherAppTester();
+
+        var app = new FetcherApp
         {
-            var tester = new FetcherAppTester();
+            InjectedIoCModule = mockModule,
+        };
 
-            var app = new FetcherApp
-            {
-                InjectedIoCModule = mockModule,
-            };
+        TaskScheduler.UnobservedTaskException += tester.OnUnobservedTaskException;
+        AppDomain.CurrentDomain.UnhandledException += tester.OnUnhandledException;
 
-            TaskScheduler.UnobservedTaskException += tester.OnUnobservedTaskException;
-            AppDomain.CurrentDomain.UnhandledException += tester.OnUnhandledException;
+        Assert.Null(app.Log);
+        Assert.Null(app.AppConfig);
+        Assert.Null(app.ErrorReporter);
+        Assert.Null(app.IoC);
 
-            Assert.Null(app.Log);
-            Assert.Null(app.AppConfig);
-            Assert.Null(app.ErrorReporter);
-            Assert.Null(app.IoC);
+        app.ErrorReporter = new ErrorReporterMock();
 
-            app.ErrorReporter = new ErrorReporterMock();
+        string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher.json");
+        var injectedConfig = JsonHelper.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
+        injectedConfig.ConnectionString = connectionString;
+        app.InjectedAppConfig = injectedConfig;
 
-            string appConfigPath = Path.GetFullPath("../../../newsgirl-fetcher.json");
-            var injectedConfig = JsonHelper.Deserialize<FetcherAppConfig>(await File.ReadAllTextAsync(appConfigPath));
-            injectedConfig.ConnectionString = connectionString;
-            app.InjectedAppConfig = injectedConfig;
+        await app.Initialize();
 
-            await app.Initialize();
+        Assert.NotNull(app.Log);
+        Assert.NotNull(app.AppConfig);
+        Assert.NotNull(app.ErrorReporter);
+        Assert.NotNull(app.IoC);
 
-            Assert.NotNull(app.Log);
-            Assert.NotNull(app.AppConfig);
-            Assert.NotNull(app.ErrorReporter);
-            Assert.NotNull(app.IoC);
+        tester.App = app;
 
-            tester.App = app;
+        return tester;
+    }
 
-            return tester;
-        }
+    private async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+    {
+        await this.App.ErrorReporter.Error(e.Exception!.InnerException);
+    }
 
-        private async void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            await this.App.ErrorReporter.Error(e.Exception!.InnerException);
-        }
+    private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        await this.App.ErrorReporter.Error((Exception)e.ExceptionObject);
+    }
 
-        private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            await this.App.ErrorReporter.Error((Exception)e.ExceptionObject);
-        }
+    public async ValueTask DisposeAsync()
+    {
+        await this.App.DisposeAsync();
 
-        public async ValueTask DisposeAsync()
-        {
-            await this.App.DisposeAsync();
+        Assert.Null(this.App.Log);
+        Assert.Null(this.App.AppConfig);
+        Assert.Null(this.App.ErrorReporter);
+        Assert.Null(this.App.IoC);
 
-            Assert.Null(this.App.Log);
-            Assert.Null(this.App.AppConfig);
-            Assert.Null(this.App.ErrorReporter);
-            Assert.Null(this.App.IoC);
-
-            TaskScheduler.UnobservedTaskException -= this.OnUnobservedTaskException;
-            AppDomain.CurrentDomain.UnhandledException -= this.OnUnhandledException;
-        }
+        TaskScheduler.UnobservedTaskException -= this.OnUnobservedTaskException;
+        AppDomain.CurrentDomain.UnhandledException -= this.OnUnhandledException;
     }
 }

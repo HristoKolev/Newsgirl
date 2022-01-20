@@ -1,9 +1,0 @@
-﻿[
-  "MiddlewareOrderTestMiddleware1_Before",
-  "MiddlewareOrderTestMiddleware2_Before",
-  "MiddlewareOrderTestMiddleware3_Before",
-  "MiddlewareOrderTestHandler_HandlerMethod",
-  "MiddlewareOrderTestMiddleware3_After",
-  "MiddlewareOrderTestMiddleware2_After",
-  "MiddlewareOrderTestMiddleware1_After"
-]

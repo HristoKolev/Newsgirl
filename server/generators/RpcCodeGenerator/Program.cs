@@ -1,17 +1,17 @@
-﻿namespace RpcCodeGenerator
+﻿namespace RpcCodeGenerator;
+
+using System.IO;
+using System.Linq;
+using Newsgirl.Server;
+using Xdxd.DotNet.Rpc;
+
+public class Program
 {
-    using System.IO;
-    using System.Linq;
-    using Newsgirl.Server;
-    using Newsgirl.Shared;
-
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            var engine = new RpcEngine(HttpServerApp.RpcEngineOptions);
+        var engine = new RpcEngine(HttpServerApp.RpcEngineOptions);
 
-            const string FILE_TEMPLATE = @"namespace Newsgirl.Server
+        const string FILE_TEMPLATE = @"namespace Newsgirl.Server
 {
     using System.Threading.Tasks;
     using Shared;
@@ -25,30 +25,29 @@
     }
 }
 ";
-            var methods = engine.Metadata.Select(metadata =>
+        var methods = engine.Metadata.Select(metadata =>
+        {
+            string methodName = metadata.RequestType.Name;
+
+            const string REQUEST_POSTFIX = "request";
+
+            if (methodName.ToLower().EndsWith(REQUEST_POSTFIX))
             {
-                string methodName = metadata.RequestType.Name;
+                methodName = methodName.Remove(methodName.Length - REQUEST_POSTFIX.Length, REQUEST_POSTFIX.Length);
+            }
 
-                const string REQUEST_POSTFIX = "request";
+            return $"        public virtual Task<Result<{metadata.ResponseType.Name}>> " +
+                   $"{methodName}({metadata.RequestType.Name} request)\n        {{\n    " +
+                   $"        return this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);\n        }}";
+        });
 
-                if (methodName.ToLower().EndsWith(REQUEST_POSTFIX))
-                {
-                    methodName = methodName.Remove(methodName.Length - REQUEST_POSTFIX.Length, REQUEST_POSTFIX.Length);
-                }
+        string outputContents = FILE_TEMPLATE.Replace("{methods}", string.Join("\n\n", methods));
 
-                return $"        public virtual Task<Result<{metadata.ResponseType.Name}>> " +
-                       $"{methodName}({metadata.RequestType.Name} request)\n        {{\n    " +
-                       $"        return this.RpcExecute<{metadata.RequestType.Name}, {metadata.ResponseType.Name}>(request);\n        }}";
-            });
+        string outputFilePath = Path.Combine(
+            Path.GetDirectoryName(typeof(Program).Assembly.Location)!,
+            "../../../../../../server/src/Newsgirl.Server/RpcClient.cs"
+        );
 
-            string outputContents = FILE_TEMPLATE.Replace("{methods}", string.Join("\n\n", methods));
-
-            string outputFilePath = Path.Combine(
-                Path.GetDirectoryName(typeof(Program).Assembly.Location)!,
-                "../../../../../../server/src/Newsgirl.Server/RpcClient.cs"
-            );
-
-            File.WriteAllText(outputFilePath, outputContents);
-        }
+        File.WriteAllText(outputFilePath, outputContents);
     }
 }
