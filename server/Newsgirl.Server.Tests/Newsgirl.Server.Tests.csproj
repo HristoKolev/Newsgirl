@@ -1,20 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Newsgirl.Fetcher\Newsgirl.Fetcher.csproj" />
+    <ProjectReference Include="..\Newsgirl.Server\Newsgirl.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
     <PackageReference Include="NSubstitute" Version="4.2.2" />
-    <PackageReference Include="Xdxd.DotNet.Testing" Version="1.0.0" />
     <PackageReference Include="Xdxd.DotNet.Testing" Version="1.0.0" />
   </ItemGroup>
 </Project>
