@@ -17,14 +17,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj"/>
+    <ProjectReference Include="..\Newsgirl.Shared\Newsgirl.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="JWT" Version="8.8.1"/>
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.1"/>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.2"/>
+    <PackageReference Include="JWT" Version="8.8.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
     <PackageReference Include="Xdxd.DotNet.Http" Version="1.0.0" />
-    <PackageReference Include="Xdxd.DotNet.Logging" Version="1.0.0" />
+    <PackageReference Include="Xdxd.DotNet.Rpc" Version="1.0.0" />
   </ItemGroup>
 </Project>

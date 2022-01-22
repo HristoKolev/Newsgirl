@@ -194,13 +194,6 @@ FakesAssemblies/
 # Visual Studio 6 workspace options file
 *.opt
 
-#Content folder
-Uploads/
-
-#generated code
-src/TrackTV.WebClient/wwwroot/
-src/TrackTV.WebClient/dist/
-
 **/.ntvs_analysis.dat
 **/workspace.xml
 
@@ -213,17 +206,6 @@ src/TrackTV.WebClient/dist/
 dist/
 dll/
 
-**/thetvdb.json
-
-banners/
-
-logs/
-
-feeds\.sql
-
 *\.received\.json
 
 projectfiles.tar
-
-**/BenchmarkDotNet.Artifacts/
-server/test/Newsgirl.Benchmarks/Properties/launchSettings.json

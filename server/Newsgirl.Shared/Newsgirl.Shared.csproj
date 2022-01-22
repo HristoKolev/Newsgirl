@@ -13,9 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="6.3.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Xdxd.DotNet.Logging" Version="1.0.0" />
     <PackageReference Include="Xdxd.DotNet.Postgres" Version="1.0.0" />
-    <PackageReference Include="Xdxd.DotNet.Rpc" Version="1.0.0" />
     <PackageReference Include="Xdxd.DotNet.Shared" Version="1.0.0" />
   </ItemGroup>
 </Project>

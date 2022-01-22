@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine as dotnet-build
 
-# restore
+# Cached restore step that only includes files that are required for packages to be restored.
 WORKDIR /work
 COPY projectfiles.tar .
 RUN tar -xvf projectfiles.tar
@@ -10,8 +10,8 @@ RUN dotnet restore
 # build
 WORKDIR /work
 COPY . .
-WORKDIR /work/server/src/Newsgirl.Fetcher/
-RUN dotnet publish -c Release -o /build -r linux-musl-x64 --no-restore
+WORKDIR /work/server/Newsgirl.Fetcher/
+RUN dotnet publish -c Release -o /build -r linux-musl-x64 --no-restore --self-contained
 
 FROM alpine
 
