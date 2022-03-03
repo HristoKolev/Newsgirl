@@ -310,7 +310,11 @@ public class HttpServerApp : IAsyncDisposable
                 // Use this for request scoped state like the reference to the HttpContext object.
                 var httpRequestState = requestScope.Resolve<HttpRequestState>();
 
-                scopedErrorReporter.AddDataHook(() => new Dictionary<string, object> { { "httpRequestState", httpRequestState } });
+                scopedErrorReporter.AddDataHook(() => new Dictionary<string, object>
+                {
+                    { "detailedHttpLogData", new HttpLogData(httpRequestState, true) },
+                    { "httpLogData", new HttpLogData(httpRequestState, false) },
+                });
 
                 // Set the context first before resolving anything else.
                 httpRequestState.HttpContext = context;
